@@ -14,9 +14,8 @@ import 'package:billblaze/components/spread_sheet.dart';
 import 'package:billblaze/components/spread_sheet_lib/drag_drop_state.dart';
 import 'package:billblaze/components/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/components/spread_sheet_lib/text_editor_item.dart';
-import 'package:billblaze/models/DocumentPropertiesModel.dart';
+import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/TextFieldControllerModel.dart';
-import 'package:billblaze/models/WidgetNodeModel.dart';
 import 'package:billblaze/util/HexColorInputFormatter.dart';
 import 'package:billblaze/util/numeric_input_filter.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -62,7 +61,6 @@ class _LayoutDesignerState extends State<LayoutDesigner> {
   PageController pageViewIndicatorController = PageController();
   PageController pageTextFieldsController = PageController();
   ScrollController pdfScrollController = ScrollController();
-  LayoutWidgetNode widgetNodes = LayoutWidgetNode(page: []);
   // ParchmentDocument document = ParchmentDocument();
   // FleatherController controller = FleatherController(
   //   document: ParchmentDocument.fromJson([

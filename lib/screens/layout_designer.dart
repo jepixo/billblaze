@@ -1,6 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+// import 'package:billblaze/components/richtext_controller.dart';
 import 'package:billblaze/components/tab_container/tab_controller.dart';
+import 'package:billblaze/components/text_toolbar/list_item_model.dart';
+import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart';
 import 'package:billblaze/util/HexColorInputFormatter.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart'
     show ColorPicker, MaterialPicker;
@@ -9,13 +12,11 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/printing.dart'
     if (dart.library.html) 'package:printing/printing.dart';
-import 'package:billblaze/components/simple_grid/simple_grid.dart';
-import 'package:billblaze/components/simple_grid/sp_order.dart';
 // import 'package:printing/printing.dart';
 import 'package:billblaze/components/spread_sheet.dart';
 import 'package:billblaze/components/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/components/spread_sheet_lib/text_editor_item.dart';
-import 'package:billblaze/models/DocumentPropertiesModel.dart';
+import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/screens/deprecate.dart';
 import 'package:billblaze/util/numeric_input_filter.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -23,7 +24,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_quill/extensions.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
@@ -31,11 +31,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:standard_markdown/standard_markdown.dart';
-import 'package:text_style_editor/text_style_editor.dart';
-// import 'package:reorderable_staggered_scroll_view/reorderable_staggered_scroll_view.dart';
-// import 'package:pdf/widgets.dart';
-// import 'package:simple_animated_button/simple_animated_button.dart';
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -441,38 +436,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       return PdfColor.fromInt(color);
     }
 
-    pw.Widget buildCheckbox(bool checked) {
-      return pw.Container(
-        width: 15,
-        height: 15,
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColors.black),
-        ),
-        child: pw.Container(
-          width: 13,
-          height: 13,
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(
-              color: PdfColors.black,
-              width: 1.5,
-            ),
-            color: checked ? PdfColors.amber : pdfColorFromHex('#00FFFFFF'),
-          ),
-          child: checked
-              ? pw.Center(
-                  child: pw.Text(
-                    'X',
-                    style: pw.TextStyle(
-                      color: PdfColors.black,
-                      fontSize: 13 - 4,
-                    ),
-                  ),
-                )
-              : null,
-        ),
-      );
-    }
-
     final List<pw.InlineSpan> textSpans = [];
     pw.Widget checkbox = pw.Container();
     pw.TextAlign textAlign = pw.TextAlign.left;
@@ -600,38 +563,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             );
             continue;
           }
-          if (attributes.containsKey('list')) {
-            String listType = attributes['list'];
-            // checkbox = pw.Checkbox(name: 'yes', value: false);
-            switch (listType) {
-              case 'checked':
-                // if (text == '') {
-                //   // text = 'no ';
-                //   break;
-                // }
-                // if (text == null) {
-                //   // text = 'no ';
-                //   checkbox = null;
-                //   break;
-                // }
-                // Unicode character for checked box
-                // text = '\n${text.replaceAll('\n', 'yo  ')}';
-                checkbox = buildCheckbox(true);
-                break;
-              case 'unchecked':
-                // if (text == null) {
-                //   // text = 'no ';
-                //   checkbox = null;
-                //   break;
-                // }
-
-                checkbox =
-                    buildCheckbox(false); // Unicode character for unchecked box
-                break;
-            }
-          } else {
-            checkbox = pw.Container();
-          }
         }
         print('count');
         // textSpans.add(pw.WidgetSpan(
@@ -647,13 +578,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         //     ),
         //   ]),
         // ));
-        textSpans.addAll([
-          pw.TextSpan(text: '\n'),
-          pw.WidgetSpan(child: checkbox),
-          // pw.TextSpan(text: '${text.replaceAll('\n', '')}', style: textStyle)
-        ]);
-        textSpans.add(pw.TextSpan(
-            text: '${text.replaceAll('\n', '')}', style: textStyle));
+
+        textSpans.add(pw.TextSpan(text: text, style: textStyle));
       }
     }
 
@@ -730,7 +656,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     double topPadPosDistance = sHeight / 10;
     double leftPadPosDistance = sWidth / 15;
     double titleFontSize = sHeight / 11;
-
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: SafeArea(
@@ -1926,19 +1851,21 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                               height:
                                                   sHeight * hDividerPosition,
                                               width: sWidth * vDividerPosition,
-                                              child: Flex(
-                                                direction: Axis.vertical,
+                                              child: Stack(
+                                                // direction: Axis.vertical,
                                                 children: [
                                                   Row(
                                                     children: [
                                                       Expanded(
                                                           flex: 2,
                                                           child: Text(
-                                                            'Text Properties',
+                                                            'TEXT STYLE',
                                                             style: GoogleFonts
-                                                                .josefinSans(
+                                                                .bungee(
                                                                     fontSize:
-                                                                        20),
+                                                                        18,
+                                                                    letterSpacing:
+                                                                        0),
                                                           )),
                                                       Expanded(
                                                         child: IconButton(
@@ -2494,166 +2421,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                         borderRadius: BorderRadius.circular(10),
                                                                                       );
                                                                                     case 9:
-                                                                                      //OOLLLOOOLLLL
-                                                                                      return buildElevatedLayerButton(
-                                                                                        buttonHeight: iconHeight,
-                                                                                        buttonWidth: iconHeight,
-                                                                                        toggleOnTap: true,
-                                                                                        isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ol),
-                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                        animationCurve: Curves.ease,
-                                                                                        onClick: () {
-                                                                                          var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ol);
-                                                                                          item.textEditorController.formatSelection(
-                                                                                            currentValue ? Attribute.clone(Attribute.ol, null) : Attribute.ol,
-                                                                                          );
-                                                                                          final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.ul.key);
-                                                                                          if (uncurrentValue && currentValue) {
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              Attribute.clone(Attribute.ol, null),
-                                                                                            );
-                                                                                            currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ol);
-                                                                                          }
-                                                                                          print('$uncurrentValue && $currentValue');
-                                                                                          if (uncurrentValue && !currentValue) {
-                                                                                            print('un');
-                                                                                            print(uncurrentValue);
-                                                                                            item.textEditorController.formatSelection(Attribute.clone(Attribute.ul, null));
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              Attribute.ol,
-                                                                                            );
-                                                                                            setState(() {
-                                                                                              currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ol);
-                                                                                            });
-                                                                                            print('cu');
-                                                                                            print(currentValue);
-                                                                                            return;
-                                                                                          }
-                                                                                          item.textEditorController.formatSelection(
-                                                                                            currentValue ? Attribute.clone(Attribute.ol, null) : Attribute.ol,
-                                                                                          );
-                                                                                        },
-                                                                                        baseDecoration: BoxDecoration(
-                                                                                          color: Colors.green,
-                                                                                          border: Border.all(),
-                                                                                        ),
-                                                                                        topDecoration: BoxDecoration(
-                                                                                          color: Colors.black,
-                                                                                          border: Border.all(),
-                                                                                        ),
-                                                                                        topLayerChild: Icon(
-                                                                                          TablerIcons.list_numbers,
-                                                                                          color: Colors.white,
-                                                                                          size: 25,
-                                                                                        ),
-                                                                                        borderRadius: BorderRadius.circular(10),
-                                                                                      );
-                                                                                    case 10:
-                                                                                      //ULLLLLUUULLLLL
-                                                                                      return buildElevatedLayerButton(
-                                                                                        buttonHeight: iconHeight,
-                                                                                        buttonWidth: iconHeight,
-                                                                                        toggleOnTap: true,
-                                                                                        isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ul),
-                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                        animationCurve: Curves.ease,
-                                                                                        onClick: () {
-                                                                                          var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ul);
-                                                                                          item.textEditorController.formatSelection(
-                                                                                            currentValue ? Attribute.clone(Attribute.ul, null) : Attribute.ul,
-                                                                                          );
-                                                                                          final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.ol.key);
-                                                                                          if (uncurrentValue && currentValue) {
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              Attribute.clone(Attribute.ul, null),
-                                                                                            );
-                                                                                            currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ul);
-                                                                                          }
-                                                                                          print('$uncurrentValue && $currentValue');
-                                                                                          if (uncurrentValue && !currentValue) {
-                                                                                            print('un');
-                                                                                            print(uncurrentValue);
-                                                                                            item.textEditorController.formatSelection(Attribute.clone(Attribute.ol, null));
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              Attribute.ul,
-                                                                                            );
-                                                                                            setState(() {
-                                                                                              currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.ul);
-                                                                                            });
-                                                                                            print('cu');
-                                                                                            print(currentValue);
-                                                                                            return;
-                                                                                          }
-                                                                                          item.textEditorController.formatSelection(
-                                                                                            currentValue ? Attribute.clone(Attribute.ul, null) : Attribute.ul,
-                                                                                          );
-                                                                                        },
-                                                                                        baseDecoration: BoxDecoration(
-                                                                                          color: Colors.green,
-                                                                                          border: Border.all(),
-                                                                                        ),
-                                                                                        topDecoration: BoxDecoration(
-                                                                                          color: Colors.black,
-                                                                                          border: Border.all(),
-                                                                                        ),
-                                                                                        topLayerChild: Icon(
-                                                                                          TablerIcons.list_details,
-                                                                                          color: Colors.white,
-                                                                                          size: 25,
-                                                                                        ),
-                                                                                        borderRadius: BorderRadius.circular(10),
-                                                                                      );
-                                                                                    case 11:
-                                                                                      bool _getIsToggledList(Map<String, Attribute> attrs, Attribute attribute) {
-                                                                                        var attr = item.textEditorController.toolbarButtonToggler[attribute.key];
-
-                                                                                        if (attr == null) {
-                                                                                          attr = attrs[attribute.key];
-                                                                                        } else {
-                                                                                          item.textEditorController.toolbarButtonToggler.remove(attribute.key);
-                                                                                        }
-
-                                                                                        if (attr == null) {
-                                                                                          return false;
-                                                                                        }
-                                                                                        return attr.value == Attribute.unchecked.value || attr.value == Attribute.checked.value;
-                                                                                      }
-                                                                                      bool currentValue = _getIsToggledList(item.textEditorController.getSelectionStyle().attributes, Attribute.list);
-                                                                                      void _toggleAttribute(Attribute attribute, Attribute toggledAttribute) {
-                                                                                        item.textEditorController
-                                                                                          ..formatSelection(
-                                                                                            currentValue ? Attribute.clone(toggledAttribute, null) : toggledAttribute,
-                                                                                          );
-                                                                                      }
-                                                                                      return UtilityWidgets.maybeTooltip(
-                                                                                        message: 'CheckList',
-                                                                                        child: buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconHeight,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: currentValue,
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            _toggleAttribute(Attribute.list, Attribute.unchecked);
-                                                                                            // afterButtonPressed?.call();
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            Icons.format_list_bulleted,
-                                                                                            color: Colors.white,
-                                                                                            size: 25,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        ),
-                                                                                      );
                                                                                     default:
                                                                                       return Container(); // Fallback if index is out of range
                                                                                   }
@@ -3102,6 +2869,37 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                             ],
                                                           ),
                                                         ),
+                                                  Positioned(
+                                                      left: 0,
+                                                      top: 0,
+                                                      child: PlayableToolbarWidget(
+                                                          itemsGutter: 0,
+                                                          toolbarBackgroundRadius:
+                                                              0,
+                                                          toolbarWidth: (sWidth *
+                                                                  vDividerPosition) /
+                                                              4,
+                                                          toolbarShadow:
+                                                              defaultPalette
+                                                                  .black
+                                                                  .withOpacity(
+                                                                      0.05),
+                                                          toolbarHorizontalPadding:
+                                                              0,
+                                                          toolbarHeight: sHeight *
+                                                              hDividerPosition,
+                                                          itemsOffset: 0,
+                                                          toolbarItems: [
+                                                            ListItemModel(
+                                                              onTap: () {},
+                                                              title: 'Font',
+                                                              color:
+                                                                  defaultPalette
+                                                                      .primary,
+                                                              icon: TablerIcons
+                                                                  .a_b,
+                                                            )
+                                                          ]))
                                                 ],
                                               ),
                                             ),
@@ -3377,33 +3175,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                   //     toolbar: true,
                                   //     selectable: true,
                                   //     data: mdCunt),
-                                  TextField(
-                                    // 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                                    style: textStyle,
-                                    textAlign: textAlign,
-                                    maxLines: 10,
-                                  ),
-                                  TextStyleEditor(
-                                    fonts: fonts,
-                                    paletteColors: paletteColors,
-                                    textStyle: textStyle,
-                                    textAlign: textAlign,
-                                    initialTool:
-                                        EditorToolbarAction.fontFamilyTool,
-                                    onTextAlignEdited: (align) {
-                                      setState(() {
-                                        textAlign = align;
-                                      });
-                                    },
-                                    onTextStyleEdited: (style) {
-                                      setState(() {
-                                        textStyle = textStyle.merge(style);
-                                      });
-                                    },
-                                    onCpasLockTaggle: (caps) {
-                                      print(caps);
-                                    },
-                                  ),
+
+                                  // FormattingToolbar(controller: _contrroller),
                                 ],
                               ),
                             ),
@@ -3480,11 +3253,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 top: (sHeight / 20) - (sHeight / 18),
                 left: (sWidth / 40) - (sWidth / 12),
                 child: ElevatedLayerButton(
+                  // isTapped: false,
+                  // toggleOnTap: true,
                   onClick: () {},
                   buttonHeight: 60,
                   buttonWidth: 60,
                   borderRadius: BorderRadius.circular(100),
-                  animationDuration: const Duration(milliseconds: 200),
+                  animationDuration: const Duration(milliseconds: 100),
                   animationCurve: Curves.ease,
                   topDecoration: BoxDecoration(
                     color: Colors.white,
@@ -3555,115 +3330,4 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   }
 
   //
-}
-
-class TextEditorButtonConfig {
-  final IconData icon;
-  final Function(TextEditorItem) onClick;
-  final bool isTapped;
-
-  TextEditorButtonConfig({
-    required this.icon,
-    required this.onClick,
-    required this.isTapped,
-  });
-}
-
-class ColorPickerButton extends StatefulWidget {
-  final double buttonHeight;
-  final double buttonWidth;
-  final Duration animationDuration;
-  final Curve animationCurve;
-  final BoxDecoration baseDecoration;
-  final BoxDecoration topDecoration;
-  final Widget topLayerChild;
-  final BorderRadius borderRadius;
-  final void Function(Color) onColorChanged;
-  final bool toggleOnTap;
-
-  const ColorPickerButton({
-    required this.buttonHeight,
-    required this.buttonWidth,
-    required this.animationDuration,
-    required this.animationCurve,
-    required this.baseDecoration,
-    required this.topDecoration,
-    required this.topLayerChild,
-    required this.borderRadius,
-    required this.onColorChanged,
-    this.toggleOnTap = false,
-  });
-
-  @override
-  _ColorPickerButtonState createState() => _ColorPickerButtonState();
-}
-
-class _ColorPickerButtonState extends State<ColorPickerButton> {
-  bool _isPickerVisible = false;
-
-  void _toggleColorPicker() {
-    setState(() {
-      _isPickerVisible = !_isPickerVisible;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: widget.toggleOnTap ? _toggleColorPicker : null,
-          onTapDown: widget.toggleOnTap ? (_) => setState(() {}) : null,
-          onTapUp: widget.toggleOnTap ? (_) => setState(() {}) : null,
-          onTapCancel: widget.toggleOnTap ? () => setState(() {}) : null,
-          child: SizedBox(
-            height: widget.buttonHeight,
-            width: widget.buttonWidth,
-            child: Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: widget.buttonWidth - 10,
-                    height: widget.buttonHeight - 10,
-                    decoration: widget.baseDecoration.copyWith(
-                      borderRadius: widget.borderRadius,
-                    ),
-                  ),
-                ),
-                AnimatedPositioned(
-                  duration: widget.animationDuration,
-                  curve: widget.animationCurve,
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: widget.buttonWidth - 10,
-                    height: widget.buttonHeight - 10,
-                    alignment: Alignment.center,
-                    decoration: widget.topDecoration.copyWith(
-                      borderRadius: widget.borderRadius,
-                    ),
-                    child: widget.topLayerChild,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        AnimatedContainer(
-          duration: widget.animationDuration,
-          curve: widget.animationCurve,
-          height: _isPickerVisible ? 200 : 0, // Adjust the height as needed
-          child: ColorPicker(
-            pickerColor: Colors.black,
-            onColorChanged: widget.onColorChanged,
-            showLabel: false,
-            pickerAreaHeightPercent: 0.8,
-          ),
-        ),
-      ],
-    );
-  }
 }

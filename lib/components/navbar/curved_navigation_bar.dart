@@ -289,8 +289,8 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:billblaze/components/nav_button.dart';
-import 'package:billblaze/components/nav_custom_painter.dart';
+import 'package:billblaze/components/navbar/nav_button.dart';
+import 'package:billblaze/components/navbar/nav_custom_painter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:simple_animated_button/simple_animated_button.dart';

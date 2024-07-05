@@ -62,56 +62,43 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: _disabled ? 0.5 : 1,
-      child: GestureDetector(
-        onTap: () {}, // Required to register tap events
-        onTapDown: _handleTapDown,
-        onTapUp: _handleTapUp,
-        onTapCancel: _handleTapCancel,
-        child: SizedBox(
-          height: widget.buttonHeight,
-          width: widget.buttonWidth,
-          child: Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: (widget.buttonWidth ?? 100) - 10,
-                  height: (widget.buttonHeight ?? 40) - 10,
-                  decoration: widget.baseDecoration?.copyWith(
-                        borderRadius: widget.borderRadius,
-                      ) ??
-                      BoxDecoration(
-                        color: Colors.black,
-                        border: Border.all(color: Colors.black),
-                      ),
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: SizedBox(
+        height: widget.buttonHeight,
+        width: widget.buttonWidth,
+        child: Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: widget.buttonWidth! - 10,
+                height: widget.buttonHeight! - 10,
+                decoration: widget.baseDecoration!.copyWith(
+                  borderRadius: widget.borderRadius,
                 ),
               ),
-              AnimatedPositioned(
-                duration:
-                    widget.animationDuration ?? Duration(milliseconds: 300),
-                curve: widget.animationCurve ?? Curves.easeInOut,
-                bottom: _isTappedDown ? 4 : 0,
-                right: _isTappedDown ? 4 : 0,
-                child: Container(
-                  width: (widget.buttonWidth ?? 100) - 10,
-                  height: (widget.buttonHeight ?? 100) - 10,
-                  alignment: Alignment.center,
-                  decoration: widget.topDecoration?.copyWith(
-                        borderRadius: widget.borderRadius,
-                      ) ??
-                      BoxDecoration(
-                        color: Colors.black,
-                        border: Border.all(color: Colors.black),
-                      ),
-                  child: widget.topLayerChild,
+            ),
+            AnimatedPositioned(
+              duration: widget.animationDuration!,
+              curve: widget.animationCurve!,
+              bottom: !_isTappedDown ? 4 : 0,
+              right: !_isTappedDown ? 4 : 0,
+              child: Container(
+                width: widget.buttonWidth! - 10,
+                height: widget.buttonHeight! - 10,
+                alignment: Alignment.center,
+                decoration: widget.topDecoration!.copyWith(
+                  borderRadius: widget.borderRadius,
                 ),
+                child: widget.topLayerChild,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

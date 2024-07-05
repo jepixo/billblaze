@@ -1,8 +1,7 @@
-import 'package:billblaze/models/NodeFieldProperties.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-class TextFieldController extends NodeFieldProperties {
+class TextFieldController {
   TextEditingController textController;
   TextEditingController hintController;
   FocusNode hintFocusController;
@@ -28,7 +27,7 @@ class TextFieldController extends NodeFieldProperties {
     required this.style,
     required this.textAlign,
     required Uuid id,
-  }) : super(id.toString());
+  }) : super();
 
   // Method to dispose all controllers and focus nodes
   void dispose() {

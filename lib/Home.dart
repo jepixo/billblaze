@@ -4,7 +4,7 @@ import 'dart:math';
 // import 'package:billblaze/screens/layout_designer.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:billblaze/components/animated_stack.dart';
-import 'package:billblaze/components/curved_navigation_bar.dart';
+import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/main.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 // import 'package:billblaze/multi_board_list_example.dart';
@@ -52,7 +52,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   double _xValue = 0.0;
   double _xxValue = 0.0;
   late Animation<int> _graphLineSpeedTween;
-  List<int> _graphSpeed = [30, 60];
+  List<int> _graphSpeed = [60, 80];
   double appinioMinTabChanged = 0;
   double appinioMaxTabChanged = 10;
   bool even = true;

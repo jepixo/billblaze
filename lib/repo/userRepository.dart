@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:billblaze/providers/fireBaseProviders.dart';
-import 'package:billblaze/providers/authProvider.dart';
-import 'package:billblaze/providers/userProvider.dart';
+import 'package:billblaze/providers/firebase_providers.dart';
+import 'package:billblaze/providers/auth_provider.dart';
+import 'package:billblaze/providers/user_provider.dart';
 
 class UserRepository {
   final ProviderRef<UserRepository> ref;

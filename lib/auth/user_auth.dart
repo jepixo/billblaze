@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:platform/platform.dart';
-import 'package:billblaze/providers/authProvider.dart';
-import 'package:billblaze/providers/firebaseProviders.dart';
+import 'package:billblaze/providers/auth_provider.dart';
+import 'package:billblaze/providers/firebase_providers.dart';
 // Comment for web
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart'
     as gap;
