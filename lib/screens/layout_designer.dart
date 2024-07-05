@@ -31,6 +31,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:standard_markdown/standard_markdown.dart';
+import 'package:text_style_editor/text_style_editor.dart';
 // import 'package:reorderable_staggered_scroll_view/reorderable_staggered_scroll_view.dart';
 // import 'package:pdf/widgets.dart';
 // import 'package:simple_animated_button/simple_animated_button.dart';
@@ -111,8 +113,58 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   FocusNode marginLeftFocus = FocusNode();
   FocusNode marginRightFocus = FocusNode();
   bool pickColor = false;
-
+  TextEditingController mdCunt = TextEditingController();
   late TabController tabcunt;
+  List<String> fonts = [
+    'Billabong',
+    'AlexBrush',
+    'Allura',
+    'Arizonia',
+    'ChunkFive',
+    'GrandHotel',
+    'GreatVibes',
+    'Lobster',
+    'OpenSans',
+    'OstrichSans',
+    'Oswald',
+    'Pacifico',
+    'Quicksand',
+    'Roboto',
+    'SEASRN',
+    'Windsong',
+  ];
+  List<Color> paletteColors = [
+    Colors.black,
+    Colors.white,
+    Color(int.parse('0xffEA2027')),
+    Color(int.parse('0xff006266')),
+    Color(int.parse('0xff1B1464')),
+    Color(int.parse('0xff5758BB')),
+    Color(int.parse('0xff6F1E51')),
+    Color(int.parse('0xffB53471')),
+    Color(int.parse('0xffEE5A24')),
+    Color(int.parse('0xff009432')),
+    Color(int.parse('0xff0652DD')),
+    Color(int.parse('0xff9980FA')),
+    Color(int.parse('0xff833471')),
+    Color(int.parse('0xff112CBC4')),
+    Color(int.parse('0xffFDA7DF')),
+    Color(int.parse('0xffED4C67')),
+    Color(int.parse('0xffF79F1F')),
+    Color(int.parse('0xffA3CB38')),
+    Color(int.parse('0xff1289A7')),
+    Color(int.parse('0xffD980FA'))
+  ];
+  TextStyle textStyle = TextStyle(
+    fontSize: 15,
+    color: Colors.white,
+    fontFamily: 'OpenSans',
+  );
+  TextAlign textAlign = TextAlign.left;
+  //
+  //
+  //
+  //
   @override
   void initState() {
     super.initState();
@@ -3318,7 +3370,40 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                       direction: Axis.vertical,
                                       children: widgetList,
                                     );
-                                  })
+                                  }),
+                                  // StandardMarkdown(
+                                  //     oninit: (config) {},
+                                  //     mode: 0,
+                                  //     toolbar: true,
+                                  //     selectable: true,
+                                  //     data: mdCunt),
+                                  TextField(
+                                    // 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                                    style: textStyle,
+                                    textAlign: textAlign,
+                                    maxLines: 10,
+                                  ),
+                                  TextStyleEditor(
+                                    fonts: fonts,
+                                    paletteColors: paletteColors,
+                                    textStyle: textStyle,
+                                    textAlign: textAlign,
+                                    initialTool:
+                                        EditorToolbarAction.fontFamilyTool,
+                                    onTextAlignEdited: (align) {
+                                      setState(() {
+                                        textAlign = align;
+                                      });
+                                    },
+                                    onTextStyleEdited: (style) {
+                                      setState(() {
+                                        textStyle = textStyle.merge(style);
+                                      });
+                                    },
+                                    onCpasLockTaggle: (caps) {
+                                      print(caps);
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
