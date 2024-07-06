@@ -2063,9 +2063,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             ..text =
                                                                                 '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
                                                                       int crossAxisCount = width <
-                                                                              (width / vDividerPosition) / 1.8
+                                                                              (width / vDividerPosition) / 1.75
                                                                           ? 2
-                                                                          : width < (width / vDividerPosition) / 1.32
+                                                                          : width < (width / vDividerPosition) / 1.3
                                                                               ? 4
                                                                               : 4;
                                                                       var iconWidth = width /
@@ -2075,13 +2075,29 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           // 50.0;
                                                                           width < (width / vDividerPosition) / 2.2
                                                                               ? iconWidth
-                                                                              : width < (width / vDividerPosition) / 1.8
+                                                                              : width < (width / vDividerPosition) / 1.75
                                                                                   ? iconWidth / 1.3
                                                                                   : iconWidth;
                                                                       return PageView(
                                                                         controller:
                                                                             textStyleTabControler,
+                                                                        onPageChanged:
+                                                                            (value) {
+                                                                          print(
+                                                                              value);
+                                                                          setState(
+                                                                              () {
+                                                                            for (var i = 0;
+                                                                                i < isTapped.length;
+                                                                                i++) {
+                                                                              isTapped[i] = false;
+                                                                            }
+                                                                            isTapped[value + 1] =
+                                                                                true;
+                                                                          });
+                                                                        },
                                                                         children: [
+                                                                          //FONTS
                                                                           GridView
                                                                               .builder(
                                                                             gridDelegate:
@@ -2108,299 +2124,583 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             },
                                                                           ),
                                                                           //BOLD ITSALIC ALL THAT PAGE
-                                                                          Stack(
-                                                                            children: [
-                                                                              Positioned(
-                                                                                left: 0,
-                                                                                top: 0,
-                                                                                width: width - 10,
-                                                                                height: iconHeight * 3,
-                                                                                child: GridView.builder(
-                                                                                  physics: NeverScrollableScrollPhysics(),
-                                                                                  itemCount: 4,
-                                                                                  padding: EdgeInsets.all(0),
-                                                                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                      crossAxisCount: crossAxisCount,
-                                                                                      crossAxisSpacing: 0,
-                                                                                      mainAxisSpacing: 0,
-                                                                                      // mainAxisExtent: width/3
-                                                                                      childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                          ? 1
-                                                                                          : width < (width / vDividerPosition) / 1.8
-                                                                                              ? 1.3
-                                                                                              : 1),
-                                                                                  itemBuilder: (BuildContext context, int index) {
-                                                                                    switch (index) {
-                                                                                      case 0:
-                                                                                        // BOLD
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.bold),
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.bold.key);
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.bold, null) : Attribute.bold,
+                                                                          SingleChildScrollView(
+                                                                            child:
+                                                                                SizedBox(
+                                                                              width: width,
+                                                                              height: width < (width / vDividerPosition) / 2.2
+                                                                                  ? iconWidth * 7
+                                                                                  : width < (width / vDividerPosition) / 1.75
+                                                                                      ? (iconWidth / 1.3) * 7
+                                                                                      : iconWidth * 5,
+                                                                              child: Stack(
+                                                                                children: [
+                                                                                  // BOLD ITALIC UNDERLINE STRIKETHRU
+                                                                                  Positioned(
+                                                                                    left: 0,
+                                                                                    top: 0,
+                                                                                    width: width - 10,
+                                                                                    height: iconHeight * 3,
+                                                                                    child: GridView.builder(
+                                                                                      physics: NeverScrollableScrollPhysics(),
+                                                                                      itemCount: 4,
+                                                                                      padding: EdgeInsets.all(0),
+                                                                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                                                                          crossAxisCount: crossAxisCount,
+                                                                                          crossAxisSpacing: 0,
+                                                                                          mainAxisSpacing: 0,
+                                                                                          // mainAxisExtent: width/3
+                                                                                          childAspectRatio: width < (width / vDividerPosition) / 2.2
+                                                                                              ? 1
+                                                                                              : width < (width / vDividerPosition) / 1.75
+                                                                                                  ? 1.3
+                                                                                                  : 1),
+                                                                                      itemBuilder: (BuildContext context, int index) {
+                                                                                        switch (index) {
+                                                                                          case 0:
+                                                                                            // BOLD
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.bold),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.bold.key);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.bold, null) : Attribute.bold,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.bold,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            IconsaxPlusLinear.text_bold,
-                                                                                            color: Colors.white,
-                                                                                            size: 20,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        );
-                                                                                      case 1:
-                                                                                        //ITALIC
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.italic),
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.italic.key);
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.italic, null) : Attribute.italic,
+                                                                                          case 1:
+                                                                                            //ITALIC
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.italic),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.italic.key);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.italic, null) : Attribute.italic,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.italic,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            IconsaxPlusLinear.text_italic,
-                                                                                            color: Colors.white,
-                                                                                            size: 20,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        );
-                                                                                      case 2:
-                                                                                        //UNDERLINE
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.underline),
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.underline.key);
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.underline, null) : Attribute.underline,
+                                                                                          case 2:
+                                                                                            //UNDERLINE
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.underline),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.underline.key);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.underline, null) : Attribute.underline,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.underline,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            IconsaxPlusLinear.text_underline,
-                                                                                            color: Colors.white,
-                                                                                            size: 20,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        );
-                                                                                      case 3:
-                                                                                        //STRIKETHRU
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.strikeThrough),
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.strikeThrough.key);
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.strikeThrough, null) : Attribute.strikeThrough,
+                                                                                          case 3:
+                                                                                            //STRIKETHRU
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.strikeThrough),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.strikeThrough.key);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.strikeThrough, null) : Attribute.strikeThrough,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.strikethrough,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            CupertinoIcons.strikethrough,
-                                                                                            color: Colors.white,
-                                                                                            size: 20,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        );
-                                                                                      default:
-                                                                                        return Container();
-                                                                                    }
-                                                                                  },
-                                                                                ),
-                                                                              ),
-                                                                              Positioned(
-                                                                                top: width < (width / vDividerPosition) / 2.2
-                                                                                    ? iconWidth * 2.2
-                                                                                    : width < (width / vDividerPosition) / 1.8
-                                                                                        ? (iconWidth / 1.3) * 2.2
-                                                                                        : iconWidth/2,
-                                                                                left: 0,
-                                                                                width: width - 10,
-                                                                                height: iconHeight * 2,
-                                                                                child: GridView.builder(
-                                                                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                    crossAxisCount: 2,
-                                                                                    crossAxisSpacing: 0,
-                                                                                    mainAxisSpacing: 0,
-                                                                                    childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                        ? 1
-                                                                                        : width < (width / vDividerPosition) / 1.8
-                                                                                            ? 1.3
-                                                                                            : 1,
+                                                                                          default:
+                                                                                            return Container();
+                                                                                        }
+                                                                                      },
+                                                                                    ),
                                                                                   ),
-                                                                                  itemCount: 2,
-                                                                                  itemBuilder: (BuildContext context, int index) {
-                                                                                    switch (index) {
-                                                                                      case 0:
-                                                                                        //SUBSCRIPT
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript),
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
+                                                                                  // SUPER, SUBS, LTR, RTL
+                                                                                  Positioned(
+                                                                                    top: width < (width / vDividerPosition) / 2.2
+                                                                                        ? iconWidth * 2.2
+                                                                                        : width < (width / vDividerPosition) / 1.75
+                                                                                            ? (iconWidth / 1.3) * 2.2
+                                                                                            : iconWidth * 1.2,
+                                                                                    left: 0,
+                                                                                    width: width - 10,
+                                                                                    height: iconHeight * 2,
+                                                                                    child: GridView.builder(
+                                                                                      physics: NeverScrollableScrollPhysics(),
+                                                                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                                                                        crossAxisCount: crossAxisCount,
+                                                                                        crossAxisSpacing: 0,
+                                                                                        mainAxisSpacing: 0,
+                                                                                        childAspectRatio: width < (width / vDividerPosition) / 2.2
+                                                                                            ? 1
+                                                                                            : width < (width / vDividerPosition) / 1.75
+                                                                                                ? 1.3
+                                                                                                : 1,
+                                                                                      ),
+                                                                                      itemCount: 4,
+                                                                                      itemBuilder: (BuildContext context, int index) {
+                                                                                        switch (index) {
+                                                                                          case 0:
+                                                                                            //SUBSCRIPT
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
+                                                                                                );
+                                                                                                final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.superscript.key);
+                                                                                                if (uncurrentValue && currentValue) {
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.clone(Attribute.subscript, null),
+                                                                                                  );
+                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
+                                                                                                }
+                                                                                                print('$uncurrentValue && $currentValue');
+                                                                                                if (uncurrentValue && !currentValue) {
+                                                                                                  print('un');
+                                                                                                  print(uncurrentValue);
+                                                                                                  item.textEditorController.formatSelection(Attribute.clone(Attribute.superscript, null));
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.subscript,
+                                                                                                  );
+                                                                                                  setState(() {
+                                                                                                    currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
+                                                                                                  });
+                                                                                                  print('cu');
+                                                                                                  print(currentValue);
+                                                                                                  return;
+                                                                                                }
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.subscript,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                            final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.superscript.key);
-                                                                                            if (uncurrentValue && currentValue) {
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                Attribute.clone(Attribute.subscript, null),
-                                                                                              );
-                                                                                              currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                            }
-                                                                                            print('$uncurrentValue && $currentValue');
-                                                                                            if (uncurrentValue && !currentValue) {
-                                                                                              print('un');
-                                                                                              print(uncurrentValue);
-                                                                                              item.textEditorController.formatSelection(Attribute.clone(Attribute.superscript, null));
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                Attribute.subscript,
-                                                                                              );
-                                                                                              setState(() {
-                                                                                                currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                              });
-                                                                                              print('cu');
-                                                                                              print(currentValue);
-                                                                                              return;
-                                                                                            }
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
+                                                                                          case 1:
+                                                                                            //SUPERSCIPT
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
+                                                                                                );
+                                                                                                final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.subscript.key);
+                                                                                                if (uncurrentValue && currentValue) {
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.clone(Attribute.superscript, null),
+                                                                                                  );
+                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
+                                                                                                }
+                                                                                                print('$uncurrentValue && $currentValue');
+                                                                                                if (uncurrentValue && !currentValue) {
+                                                                                                  print('un');
+                                                                                                  print(uncurrentValue);
+                                                                                                  item.textEditorController.formatSelection(Attribute.clone(Attribute.subscript, null));
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.superscript,
+                                                                                                  );
+                                                                                                  setState(() {
+                                                                                                    currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
+                                                                                                  });
+                                                                                                  print('cu');
+                                                                                                  print(currentValue);
+                                                                                                  return;
+                                                                                                }
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.superscript,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            Icons.subscript,
-                                                                                            color: Colors.white,
-                                                                                            size: 20,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        );
-                                                                                      case 1:
-                                                                                        //SUPERSCIPT
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: iconHeight,
-                                                                                          buttonWidth: iconWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript),
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
+                                                                                          case 2:
+                                                                                            //DIRECTION LTR
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: !_getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.text_direction_ltr,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                            final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.subscript.key);
-                                                                                            if (uncurrentValue && currentValue) {
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                Attribute.clone(Attribute.superscript, null),
-                                                                                              );
-                                                                                              currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                            }
-                                                                                            print('$uncurrentValue && $currentValue');
-                                                                                            if (uncurrentValue && !currentValue) {
-                                                                                              print('un');
-                                                                                              print(uncurrentValue);
-                                                                                              item.textEditorController.formatSelection(Attribute.clone(Attribute.subscript, null));
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                Attribute.superscript,
-                                                                                              );
-                                                                                              setState(() {
-                                                                                                currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                              });
-                                                                                              print('cu');
-                                                                                              print(currentValue);
-                                                                                              return;
-                                                                                            }
-                                                                                            item.textEditorController.formatSelection(
-                                                                                              currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
+                                                                                          case 3:
+                                                                                            //DIRECTION RTL
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.text_direction_rtl,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.black,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Icon(
-                                                                                            Icons.superscript,
-                                                                                            color: Colors.white,
-                                                                                            size: 20,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(10),
-                                                                                        );
-                                                                                      default:
-                                                                                        return Container();
-                                                                                    }
-                                                                                  },
-                                                                                ),
+
+                                                                                          default:
+                                                                                            return Container();
+                                                                                        }
+                                                                                      },
+                                                                                    ),
+                                                                                  ),
+                                                                                  // LEFT RIGHT CENTER JUSTIFY
+                                                                                  Positioned(
+                                                                                    top: width < (width / vDividerPosition) / 2.2
+                                                                                        ? iconWidth * 2.2
+                                                                                            //height of the previous wdiget
+                                                                                            +
+                                                                                            iconHeight * 2.2
+                                                                                        : width < (width / vDividerPosition) / 1.75
+                                                                                            ? (iconWidth / 1.3) * 2.2
+                                                                                                //height of the previous wdiget
+                                                                                                +
+                                                                                                iconHeight * 2.2
+                                                                                            : iconWidth * 1.2
+                                                                                                //height of the previous wdiget
+                                                                                                +
+                                                                                                iconHeight * 1.2,
+                                                                                    left: 0,
+                                                                                    width: width - 10,
+                                                                                    height: iconHeight * 2,
+                                                                                    child: GridView.builder(
+                                                                                      physics: NeverScrollableScrollPhysics(),
+                                                                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                                                                        crossAxisCount: crossAxisCount,
+                                                                                        crossAxisSpacing: 0,
+                                                                                        mainAxisSpacing: 0,
+                                                                                        childAspectRatio: width < (width / vDividerPosition) / 2.2
+                                                                                            ? 1
+                                                                                            : width < (width / vDividerPosition) / 1.75
+                                                                                                ? 1.3
+                                                                                                : 1,
+                                                                                      ),
+                                                                                      itemCount: 4,
+                                                                                      itemBuilder: (BuildContext context, int index) {
+                                                                                        switch (index) {
+                                                                                          case 0:
+                                                                                            //LEFT ALIGN
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.leftAlignment, null) : Attribute.leftAlignment,
+                                                                                                );
+                                                                                                final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.rightAlignment.key);
+                                                                                                if (uncurrentValue && currentValue) {
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.clone(Attribute.leftAlignment, null),
+                                                                                                  );
+                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
+                                                                                                }
+                                                                                                print('$uncurrentValue && $currentValue');
+                                                                                                if (uncurrentValue && !currentValue) {
+                                                                                                  print('un');
+                                                                                                  print(uncurrentValue);
+                                                                                                  item.textEditorController.formatSelection(Attribute.clone(Attribute.rightAlignment, null));
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.leftAlignment,
+                                                                                                  );
+                                                                                                  setState(() {
+                                                                                                    currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
+                                                                                                  });
+                                                                                                  print('cu');
+                                                                                                  print(currentValue);
+                                                                                                  return;
+                                                                                                }
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.leftAlignment, null) : Attribute.leftAlignment,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.align_left,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
+                                                                                            );
+                                                                                          case 1:
+                                                                                            //RIGHT ALIGN
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.rightAlignment, null) : Attribute.rightAlignment,
+                                                                                                );
+                                                                                                final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.leftAlignment.key);
+                                                                                                if (uncurrentValue && currentValue) {
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.clone(Attribute.rightAlignment, null),
+                                                                                                  );
+                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
+                                                                                                }
+                                                                                                print('$uncurrentValue && $currentValue');
+                                                                                                if (uncurrentValue && !currentValue) {
+                                                                                                  print('un');
+                                                                                                  print(uncurrentValue);
+                                                                                                  item.textEditorController.formatSelection(Attribute.clone(Attribute.leftAlignment, null));
+                                                                                                  item.textEditorController.formatSelection(
+                                                                                                    Attribute.rightAlignment,
+                                                                                                  );
+                                                                                                  setState(() {
+                                                                                                    currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
+                                                                                                  });
+                                                                                                  print('cu');
+                                                                                                  print(currentValue);
+                                                                                                  return;
+                                                                                                }
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.rightAlignment, null) : Attribute.rightAlignment,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.align_right,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
+                                                                                            );
+                                                                                          case 2:
+                                                                                            //CENTER ALIGN
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.centerAlignment),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.centerAlignment);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.centerAlignment, null) : Attribute.centerAlignment,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.align_center,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
+                                                                                            );
+                                                                                          case 3:
+                                                                                            //JUSTIFY ALIGN
+                                                                                            return buildElevatedLayerButton(
+                                                                                              buttonHeight: iconHeight,
+                                                                                              buttonWidth: iconWidth,
+                                                                                              toggleOnTap: true,
+                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.justifyAlignment),
+                                                                                              animationDuration: const Duration(milliseconds: 100),
+                                                                                              animationCurve: Curves.ease,
+                                                                                              onClick: () {
+                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.justifyAlignment);
+                                                                                                item.textEditorController.formatSelection(
+                                                                                                  currentValue ? Attribute.clone(Attribute.justifyAlignment, null) : Attribute.justifyAlignment,
+                                                                                                );
+                                                                                              },
+                                                                                              baseDecoration: BoxDecoration(
+                                                                                                color: Colors.green,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topDecoration: BoxDecoration(
+                                                                                                color: Colors.white,
+                                                                                                border: Border.all(),
+                                                                                              ),
+                                                                                              topLayerChild: Icon(
+                                                                                                TablerIcons.align_justified,
+                                                                                                color: Colors.black,
+                                                                                                size: 20,
+                                                                                              ),
+                                                                                              borderRadius: BorderRadius.circular(10),
+                                                                                            );
+
+                                                                                          default:
+                                                                                            return Container();
+                                                                                        }
+                                                                                      },
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
                                                                               ),
-                                                                              // Container(
-                                                                              //   child: GridView(gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: sWidth / 2)),
-                                                                              // )
-                                                                            ],
+                                                                            ),
                                                                           )
+                                                                          //Font Size, Word Spacing, Letter Spacing, Line Spacing
                                                                         ],
                                                                       );
                                                                     },
@@ -2478,6 +2778,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                         }
                                                         setState(() {
                                                           isTapped[1] = true;
+                                                          textStyleTabControler
+                                                              .animateToPage(0,
+                                                                  duration:
+                                                                      Durations
+                                                                          .medium1,
+                                                                  curve: Curves
+                                                                      .easeIn);
                                                         });
                                                       },
                                                       title: 'Font',
@@ -2498,6 +2805,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                         }
                                                         setState(() {
                                                           isTapped[2] = true;
+                                                          textStyleTabControler
+                                                              .animateToPage(1,
+                                                                  duration:
+                                                                      Durations
+                                                                          .medium1,
+                                                                  curve: Curves
+                                                                      .easeIn);
                                                         });
                                                       },
                                                       title: 'Format',
@@ -2517,6 +2831,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                         }
                                                         setState(() {
                                                           isTapped[3] = true;
+                                                          textStyleTabControler
+                                                              .animateToPage(3,
+                                                                  duration:
+                                                                      Durations
+                                                                          .medium1,
+                                                                  curve: Curves
+                                                                      .easeIn);
                                                         });
                                                       },
                                                       title: 'Size',
@@ -2537,6 +2858,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                         }
                                                         setState(() {
                                                           isTapped[4] = true;
+                                                          textStyleTabControler
+                                                              .animateToPage(4,
+                                                                  duration:
+                                                                      Durations
+                                                                          .medium1,
+                                                                  curve: Curves
+                                                                      .easeIn);
                                                         });
                                                       },
                                                       title: 'Color',
