@@ -60,7 +60,6 @@ dependencies:
   flutter_tabler_icons: ^1.31.0
   standard_markdown: ^0.0.5
   text_style_editor: ^1.1.1
-  # playable_toolbar_flutter: ^0.0.2
 
 dev_dependencies:
   flutter_test:

@@ -116,7 +116,7 @@ class _PlayableToolbarWidgetState extends State<PlayableToolbarWidget> {
   }
 
   List<bool> longPressedItemsFlags = [];
-
+  List<bool> isTapped = [false, false, false, false, false];
   void _updateLongPressedItemsFlags({double longPressYLocation = 0}) {
     List<bool> _longPressedItemsFlags = [];
     for (int i = 0; i <= widget.toolbarItems.length - 1; i++) {
@@ -219,6 +219,39 @@ class _PlayableToolbarWidgetState extends State<PlayableToolbarWidget> {
                 isLongPressed = false;
                 _updateLongPressedItemsFlags(longPressYLocation: 0);
               },
+              onTapDown: (details) {
+                List<bool> _isTapped = [];
+                for (int i = 0; i <= widget.toolbarItems.length - 1; i++) {
+                  bool isLongPressed = itemYPositions[i] >= 0 &&
+                      details.localPosition.dy > itemYPositions[i] &&
+                      details.localPosition.dy <
+                          (itemYPositions.length > i + 1
+                              ? itemYPositions[i + 1]
+                              : widget.toolbarHeight);
+                  _isTapped.add(isLongPressed);
+                }
+                setState(() {
+                  isTapped = _isTapped;
+                });
+                print('herehere');
+              },
+              onTapUp: (details) {
+                List<bool> _isTapped = [];
+                for (int i = 0; i <= widget.toolbarItems.length - 1; i++) {
+                  bool isLongPressed = itemYPositions[i] >= 0 &&
+                      details.localPosition.dy > itemYPositions[i] &&
+                      details.localPosition.dy <
+                          (itemYPositions.length > i + 1
+                              ? itemYPositions[i + 1]
+                              : widget.toolbarHeight);
+                  _isTapped.add(isLongPressed);
+                }
+                setState(() {
+                  isTapped = _isTapped;
+                });
+                print('herehere');
+              },
+              behavior: HitTestBehavior.translucent,
               child: AnimatedContainer(
                 duration: Constants.longPressAnimationDuration,
                 width: isLongPressed
@@ -232,14 +265,26 @@ class _PlayableToolbarWidgetState extends State<PlayableToolbarWidget> {
                     itemCount: widget.toolbarItems.length,
                     padding: const EdgeInsets.all(0),
                     itemBuilder: (context, index) {
-                      return SideBarItem(
-                        widget.toolbarItems[index],
-                        height: itemHeight,
-                        scrollScale: itemScrollScaleValues[index],
-                        isLongPressed: longPressedItemsFlags[index],
-                        gutter: widget.itemsGutter,
-                        itemsOffset: widget.itemsOffset,
-                        toolbarWidth: widget.toolbarWidth,
+                      return GestureDetector(
+                        onTap: () {
+                          for (var i = 0; i < isTapped.length; i++) {
+                            isTapped[i] = false;
+                            if (isTapped[i] == isTapped[index]) {
+                              isTapped[i] = true;
+                            }
+                          }
+                          print('herehere');
+                        },
+                        child: SideBarItem(
+                          widget.toolbarItems[index],
+                          height: itemHeight,
+                          scrollScale: itemScrollScaleValues[index],
+                          isLongPressed: longPressedItemsFlags[index],
+                          gutter: widget.itemsGutter,
+                          itemsOffset: widget.itemsOffset,
+                          toolbarWidth: widget.toolbarWidth,
+                          isTapped: isTapped[index],
+                        ),
                       );
                     },
                   ),

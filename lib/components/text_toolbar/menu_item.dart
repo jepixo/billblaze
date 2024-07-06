@@ -1,3 +1,4 @@
+import 'package:billblaze/colors.dart';
 import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'list_item_model.dart';
@@ -9,6 +10,7 @@ class SideBarItem extends StatelessWidget {
     required this.height,
     required this.scrollScale,
     this.isLongPressed = false,
+    this.isTapped = false,
     this.gutter = 10,
     this.toolbarWidth,
     this.itemsOffset,
@@ -21,6 +23,7 @@ class SideBarItem extends StatelessWidget {
   final double gutter;
   final double? toolbarWidth;
   final double? itemsOffset;
+  final bool isTapped;
 
   @override
   Widget build(BuildContext context) {
@@ -41,15 +44,17 @@ class SideBarItem extends StatelessWidget {
                   duration: Constants.longPressAnimationDuration,
                   curve: Constants.scrollScaleAnimationCurve,
                   height: height + (isLongPressed ? 0 : 0),
-                  width: isLongPressed ? toolbarWidth! * 2 : height,
+                  width: isLongPressed ? toolbarWidth! * 2.5 : height,
                   decoration: BoxDecoration(
-                    color: toolbarItem.color,
-                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    color: toolbarItem.isTapped
+                        ? defaultPalette.tertiary
+                        : toolbarItem.color,
+                    borderRadius: const BorderRadius.all(Radius.circular(0)),
                     boxShadow: [
-                      BoxShadow(
-                        blurRadius: 10,
-                        color: Colors.black.withOpacity(0.1),
-                      ),
+                      // BoxShadow(
+                      //   blurRadius: 10,
+                      //   color: Colors.black.withOpacity(0.1),
+                      // ),
                     ],
                   ),
                   alignment: Alignment.center,
@@ -76,7 +81,8 @@ class SideBarItem extends StatelessWidget {
                         curve: Constants.scrollScaleAnimationCurve,
                         child: Icon(
                           toolbarItem.icon,
-                          color: Colors.white,
+                          color: Colors.black,
+                          size: height / 2.4,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -88,8 +94,8 @@ class SideBarItem extends StatelessWidget {
                           child: Text(
                             toolbarItem.title,
                             style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
+                              fontSize: 15,
+                              color: Colors.black,
                             ),
                             maxLines: 1,
                           ),
