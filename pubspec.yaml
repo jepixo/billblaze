@@ -58,8 +58,8 @@ dependencies:
   flutter_quill: ^9.4.0
   animated_custom_dropdown: ^3.1.1
   flutter_tabler_icons: ^1.31.0
-  standard_markdown: ^0.0.5
-  text_style_editor: ^1.1.1
+  flutter_to_pdf: ^0.2.1
+
 
 dev_dependencies:
   flutter_test:

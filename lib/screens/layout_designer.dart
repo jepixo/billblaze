@@ -1,10 +1,12 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:io';
 // import 'package:billblaze/components/richtext_controller.dart';
 import 'package:billblaze/components/tab_container/tab_controller.dart';
 import 'package:billblaze/components/text_toolbar/list_item_model.dart';
 import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart';
 import 'package:billblaze/util/HexColorInputFormatter.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart'
     show ColorPicker, MaterialPicker;
@@ -26,8 +28,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+// show
+//     QuillEditor,
+//     QuillController,
+//     Attribute,
+//     Document,
+//     QuillEditorConfigurations;
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
+import 'package:flutter_to_pdf/flutter_to_pdf.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pdf/pdf.dart';
@@ -158,7 +167,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     fontFamily: 'OpenSans',
   );
   TextAlign textAlign = TextAlign.left;
-  List<bool> isTapped = [false, false, false, false, false];
+  List<bool> isTapped = [false, true, false, false, false];
+  ExportDelegate exportDelegate = ExportDelegate();
+  late pw.Document genpdf;
   //
   //
   //
@@ -170,6 +181,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     _addPdfPage();
     _updatePdfPreview('');
     tabcunt = TabController(length: 2, vsync: this);
+    genpdf = _generatePdf();
   }
 
   @override
@@ -184,7 +196,19 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   // }
 
   void _addTextField({String id = ''}) {
-    var textController = QuillController.basic();
+    var textController = QuillController(
+      document: Document(),
+      selection: TextSelection.collapsed(offset: 0),
+      onSelectionChanged: (textSelection) {
+        setState(() {});
+      },
+      onDelete: (cursorPosition, forward) {
+        setState(() {});
+      },
+      onSelectionCompleted: () {
+        setState(() {});
+      },
+    );
     var index = spreadSheetList[currentPageIndex].length;
 
     setState(() {
@@ -372,8 +396,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   }
 
   void _removeTextField() {}
-
-  Future<Uint8List> _generatePdf(PdfPageFormat format) async {
+//
+// genPDF
+  pw.Document _generatePdf() {
     final pdf = pw.Document();
 
     for (int i = 0; i < pageCount; i++) {
@@ -411,7 +436,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       );
     }
 
-    return pdf.save();
+    return pdf;
   }
 
   pw.Widget _buildSheetListPdf(SheetList sheetList) {
@@ -536,21 +561,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             }
           }
 
-          if (attributes.containsKey('code-block')) {
-            textStyle = textStyle.copyWith(
-              font: pw.Font.courier(),
-              color: pdfColorFromHex('#FF000000'),
-              background: pw.BoxDecoration(color: pdfColorFromHex('#FFEEEEEE')),
-            );
-          }
-          if (attributes.containsKey('blockquote')) {
-            textStyle = textStyle.copyWith(
-              fontStyle: pw.FontStyle.italic,
-              background: pw.BoxDecoration(color: pdfColorFromHex('#FFEFEFEF')),
-            );
-          }
           if (attributes.containsKey('direction')) {
+            print('direction yes');
+            print(attributes['direction']);
             if (attributes['direction'] == 'rtl') {
+              print('direction yes');
               alignment = pw.TextDirection.rtl;
             } else {
               alignment = pw.TextDirection.ltr;
@@ -587,7 +602,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         //   ]),
         // ));
 
-        textSpans.add(pw.TextSpan(text: text, style: textStyle));
+        textSpans.add(pw.TextSpan(
+          text: text,
+          style: textStyle,
+        ));
       }
     }
 
@@ -595,14 +613,193 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     return
         // pw.Row(children: [
         //   if (checkbox != null) ...[checkbox, pw.SizedBox(width: 5)],
+        // pw.SizedBox(
+        //     width: double.maxFinite,
+        //     child:
         pw.RichText(
-      text: pw.TextSpan(
-        children: textSpans,
-      ),
-      textAlign: textAlign,
-      textDirection: alignment,
-    );
+            text: pw.TextSpan(
+              children: textSpans,
+            ),
+            textAlign: textAlign,
+            textDirection: alignment);
+    // );
     // ]);
+  }
+
+//
+//genWidget
+  Widget _generateWid(sWidth, sHeight) {
+    var width = sWidth * (1 - vDividerPosition);
+    return Container(
+      width: sWidth,
+      height: sHeight,
+      child: Center(
+        child: ListView.builder(
+          itemCount: pageCount,
+          itemBuilder: (context, i) {
+            var doc = documentPropertiesList[i];
+            var sheetList = spreadSheetList[i];
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AspectRatio(
+                aspectRatio: 1 / 1.414,
+                child: Container(
+                  // width: 1.414,
+                  // height: 1,
+                  color: Colors.white,
+                  padding: EdgeInsets.only(
+                    top: double.parse(doc.marginTopController.text) / 2,
+                    bottom: double.parse(doc.marginBottomController.text) / 2,
+                    left: double.parse(doc.marginLeftController.text) / 2,
+                    right: double.parse(doc.marginRightController.text) / 2,
+                  ),
+                  child: _buildSheetListWidget(sheetList),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetListWidget(SheetList sheetList) {
+    return ListView.builder(
+      padding: EdgeInsets.all(0),
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: sheetList.sheetList.length,
+      itemBuilder: (context, index) {
+        final item = sheetList.sheetList[index];
+        if (item is TextEditorItem) {
+          final delta = item.getTextEditorDocumentAsDelta();
+          return convertDeltaToFlutterWidget(delta);
+        } else if (item is SheetList) {
+          return _buildSheetListWidget(item);
+        }
+        return Container();
+      },
+    );
+  }
+
+  Widget convertDeltaToFlutterWidget(Delta delta) {
+    List<TextSpan> textSpans = [];
+    TextAlign textAlign = TextAlign.left;
+    TextDirection textDirection = TextDirection.ltr;
+
+    delta.toList().forEach((op) {
+      if (op.value is String) {
+        String text = op.value;
+        Map<String, dynamic>? attributes = op.attributes;
+        TextStyle textStyle = TextStyle(color: Colors.black, fontSize: 12 / 2);
+
+        if (attributes != null) {
+          if (attributes.containsKey('bold')) {
+            textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
+          }
+          if (attributes.containsKey('italic')) {
+            textStyle = textStyle.copyWith(fontStyle: FontStyle.italic);
+          }
+          if (attributes.containsKey('underline')) {
+            textStyle =
+                textStyle.copyWith(decoration: TextDecoration.underline);
+          }
+          if (attributes.containsKey('strike')) {
+            textStyle =
+                textStyle.copyWith(decoration: TextDecoration.lineThrough);
+          }
+          if (attributes.containsKey('code')) {
+            textStyle = textStyle.copyWith(
+              fontFamily: 'Courier',
+              color: Colors.black,
+              backgroundColor: Colors.white,
+              decoration: TextDecoration.none,
+            );
+          }
+          if (attributes.containsKey('color')) {
+            textStyle = textStyle.copyWith(
+                color: Color(
+                    int.parse(attributes['color'].substring(1, 7), radix: 16) +
+                        0xFF000000));
+          }
+          if (attributes.containsKey('background')) {
+            textStyle = textStyle.copyWith(
+              backgroundColor: Color(int.parse(
+                      attributes['background'].substring(1, 7),
+                      radix: 16) +
+                  0xFF000000),
+            );
+          }
+          if (attributes.containsKey('size')) {
+            textStyle = textStyle.copyWith(
+                fontSize: double.parse(attributes['size'].toString()));
+          }
+          if (attributes.containsKey('header')) {
+            int level = attributes['header'];
+            switch (level) {
+              case 1:
+                textStyle = textStyle.copyWith(
+                    fontSize: 24, fontWeight: FontWeight.bold);
+                break;
+              case 2:
+                textStyle = textStyle.copyWith(
+                    fontSize: 20, fontWeight: FontWeight.bold);
+                break;
+              case 3:
+                textStyle = textStyle.copyWith(
+                    fontSize: 18, fontWeight: FontWeight.bold);
+                break;
+              default:
+                textStyle = textStyle.copyWith(
+                    fontSize: 16, fontWeight: FontWeight.bold);
+            }
+          }
+          if (attributes.containsKey('align')) {
+            switch (attributes['align']) {
+              case 'center':
+                textAlign = TextAlign.center;
+                break;
+              case 'right':
+                textAlign = TextAlign.right;
+                break;
+              case 'justify':
+                textAlign = TextAlign.justify;
+                break;
+              default:
+                textAlign = TextAlign.left;
+            }
+          }
+          if (attributes.containsKey('direction')) {
+            if (attributes['direction'] == 'rtl') {
+              textDirection = TextDirection.rtl;
+            } else {
+              textDirection = TextDirection.ltr;
+            }
+          }
+          if (attributes.containsKey('link')) {
+            final link = attributes['link'];
+            textSpans.add(
+              TextSpan(
+                text: text,
+                style: textStyle.copyWith(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+                // recognizer: TapGestureRecognizer()..onTap = () => launch(link),
+              ),
+            );
+            return;
+          }
+        }
+        textSpans.add(TextSpan(text: text, style: textStyle));
+      }
+    });
+
+    return RichText(
+      text: TextSpan(children: textSpans),
+      textAlign: textAlign,
+      textDirection: textDirection,
+    );
   }
 
   void _updatePdfPreview(String text) {
@@ -2112,6 +2309,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 child: TextButton(
                                                                                     onPressed: () {
                                                                                       print('qwqwf');
+                                                                                      item.textEditorController.formatSelection(Attribute.fromKeyValue(
+                                                                                        Attribute.font.key,
+                                                                                        fonts[index] == 'Clear' ? null : fonts[index],
+                                                                                      ));
+                                                                                      setState(() {});
                                                                                     },
                                                                                     child: FittedBox(
                                                                                       fit: BoxFit.cover,
@@ -2305,7 +2507,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                 ? 1.3
                                                                                                 : 1,
                                                                                       ),
-                                                                                      itemCount: 4,
+                                                                                      itemCount: 2,
                                                                                       itemBuilder: (BuildContext context, int index) {
                                                                                         switch (index) {
                                                                                           case 0:
@@ -2418,66 +2620,66 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                               ),
                                                                                               borderRadius: BorderRadius.circular(10),
                                                                                             );
-                                                                                          case 2:
-                                                                                            //DIRECTION LTR
-                                                                                            return buildElevatedLayerButton(
-                                                                                              buttonHeight: iconHeight,
-                                                                                              buttonWidth: iconWidth,
-                                                                                              toggleOnTap: true,
-                                                                                              isTapped: !_getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
-                                                                                              animationDuration: const Duration(milliseconds: 100),
-                                                                                              animationCurve: Curves.ease,
-                                                                                              onClick: () {
-                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
-                                                                                                );
-                                                                                              },
-                                                                                              baseDecoration: BoxDecoration(
-                                                                                                color: Colors.green,
-                                                                                                border: Border.all(),
-                                                                                              ),
-                                                                                              topDecoration: BoxDecoration(
-                                                                                                color: Colors.white,
-                                                                                                border: Border.all(),
-                                                                                              ),
-                                                                                              topLayerChild: Icon(
-                                                                                                TablerIcons.text_direction_ltr,
-                                                                                                color: Colors.black,
-                                                                                                size: 20,
-                                                                                              ),
-                                                                                              borderRadius: BorderRadius.circular(10),
-                                                                                            );
-                                                                                          case 3:
-                                                                                            //DIRECTION RTL
-                                                                                            return buildElevatedLayerButton(
-                                                                                              buttonHeight: iconHeight,
-                                                                                              buttonWidth: iconWidth,
-                                                                                              toggleOnTap: true,
-                                                                                              isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
-                                                                                              animationDuration: const Duration(milliseconds: 100),
-                                                                                              animationCurve: Curves.ease,
-                                                                                              onClick: () {
-                                                                                                var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
-                                                                                                );
-                                                                                              },
-                                                                                              baseDecoration: BoxDecoration(
-                                                                                                color: Colors.green,
-                                                                                                border: Border.all(),
-                                                                                              ),
-                                                                                              topDecoration: BoxDecoration(
-                                                                                                color: Colors.white,
-                                                                                                border: Border.all(),
-                                                                                              ),
-                                                                                              topLayerChild: Icon(
-                                                                                                TablerIcons.text_direction_rtl,
-                                                                                                color: Colors.black,
-                                                                                                size: 20,
-                                                                                              ),
-                                                                                              borderRadius: BorderRadius.circular(10),
-                                                                                            );
+                                                                                          // case 2:
+                                                                                          //   //DIRECTION LTR
+                                                                                          //   return buildElevatedLayerButton(
+                                                                                          //     buttonHeight: iconHeight,
+                                                                                          //     buttonWidth: iconWidth,
+                                                                                          //     toggleOnTap: true,
+                                                                                          //     isTapped: !_getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
+                                                                                          //     animationDuration: const Duration(milliseconds: 100),
+                                                                                          //     animationCurve: Curves.ease,
+                                                                                          //     onClick: () {
+                                                                                          //       var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
+                                                                                          //       item.textEditorController.formatSelection(
+                                                                                          //         currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
+                                                                                          //       );
+                                                                                          //     },
+                                                                                          //     baseDecoration: BoxDecoration(
+                                                                                          //       color: Colors.green,
+                                                                                          //       border: Border.all(),
+                                                                                          //     ),
+                                                                                          //     topDecoration: BoxDecoration(
+                                                                                          //       color: Colors.white,
+                                                                                          //       border: Border.all(),
+                                                                                          //     ),
+                                                                                          //     topLayerChild: Icon(
+                                                                                          //       TablerIcons.text_direction_ltr,
+                                                                                          //       color: Colors.black,
+                                                                                          //       size: 20,
+                                                                                          //     ),
+                                                                                          //     borderRadius: BorderRadius.circular(10),
+                                                                                          //   );
+                                                                                          // case 3:
+                                                                                          //   //DIRECTION RTL
+                                                                                          //   return buildElevatedLayerButton(
+                                                                                          //     buttonHeight: iconHeight,
+                                                                                          //     buttonWidth: iconWidth,
+                                                                                          //     toggleOnTap: true,
+                                                                                          //     isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
+                                                                                          //     animationDuration: const Duration(milliseconds: 100),
+                                                                                          //     animationCurve: Curves.ease,
+                                                                                          //     onClick: () {
+                                                                                          //       var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
+                                                                                          //       item.textEditorController.formatSelection(
+                                                                                          //         currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
+                                                                                          //       );
+                                                                                          //     },
+                                                                                          //     baseDecoration: BoxDecoration(
+                                                                                          //       color: Colors.green,
+                                                                                          //       border: Border.all(),
+                                                                                          //     ),
+                                                                                          //     topDecoration: BoxDecoration(
+                                                                                          //       color: Colors.white,
+                                                                                          //       border: Border.all(),
+                                                                                          //     ),
+                                                                                          //     topLayerChild: Icon(
+                                                                                          //       TablerIcons.text_direction_rtl,
+                                                                                          //       color: Colors.black,
+                                                                                          //       size: 20,
+                                                                                          //     ),
+                                                                                          //     borderRadius: BorderRadius.circular(10),
+                                                                                          //   );
 
                                                                                           default:
                                                                                             return Container();
@@ -2491,12 +2693,12 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                         ? iconWidth * 2.2
                                                                                             //height of the previous wdiget
                                                                                             +
-                                                                                            iconHeight * 2.2
+                                                                                            iconHeight * 1.2
                                                                                         : width < (width / vDividerPosition) / 1.75
                                                                                             ? (iconWidth / 1.3) * 2.2
                                                                                                 //height of the previous wdiget
                                                                                                 +
-                                                                                                iconHeight * 2.2
+                                                                                                iconHeight * 1.2
                                                                                             : iconWidth * 1.2
                                                                                                 //height of the previous wdiget
                                                                                                 +
@@ -2758,7 +2960,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                           });
                                                         }
                                                         setState(() {
-                                                          isTapped[0] = true;
+                                                          isTapped[1] = true;
                                                         });
                                                       },
                                                       title: 'Duh',
@@ -2885,34 +3087,40 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                   child: AnimatedContainer(
                                     duration: Duration(milliseconds: 300),
                                     // color: Colors.green,
-                                    child: Center(
-                                      child: PdfPreview(
-                                        controller: pdfScrollController,
-                                        build: (format) => _generatePdf(format),
-                                        enableScrollToPage: true,
-                                        allowSharing: true,
-                                        allowPrinting: true,
-                                        canChangeOrientation: false,
-                                        canChangePageFormat: false,
-                                        canDebug: true,
-                                        actionBarTheme: PdfActionBarTheme(
-                                          height: 55, // Reduced height
-                                          actionSpacing: 2,
-                                          backgroundColor:
-                                              defaultPalette.transparent,
-                                          alignment: WrapAlignment.end,
-                                          iconColor: defaultPalette.black,
-                                          crossAxisAlignment:
-                                              WrapCrossAlignment.end,
-                                          runAlignment: WrapAlignment.end,
-                                          elevation: 50,
-                                        ),
-                                        previewPageMargin: EdgeInsets.all(5),
-                                        scrollViewDecoration: BoxDecoration(
-                                            color: defaultPalette.transparent),
-                                        useActions: true,
+                                    child: ExportFrame(
+                                      frameId: 'pdf',
+                                      exportDelegate: exportDelegate,
+                                      child: Center(
+                                        child: _generateWid(sWidth, sHeight),
+                                        // child: PdfPreview(
+                                        //   controller: pdfScrollController,
+                                        //   build: (format) =>
+                                        //       _generatePdf().save(),
+                                        //   enableScrollToPage: true,
+                                        //   allowSharing: true,
+                                        //   allowPrinting: true,
+                                        //   canChangeOrientation: false,
+                                        //   canChangePageFormat: false,
+                                        //   canDebug: true,
+                                        //   actionBarTheme: PdfActionBarTheme(
+                                        //     height: 55, // Reduced height
+                                        //     actionSpacing: 2,
+                                        //     backgroundColor:
+                                        //         defaultPalette.transparent,
+                                        //     alignment: WrapAlignment.end,
+                                        //     iconColor: defaultPalette.black,
+                                        //     crossAxisAlignment:
+                                        //         WrapCrossAlignment.end,
+                                        //     runAlignment: WrapAlignment.end,
+                                        //     elevation: 50,
+                                        //   ),
+                                        //   previewPageMargin: EdgeInsets.all(5),
+                                        //   scrollViewDecoration: BoxDecoration(
+                                        //       color: defaultPalette.transparent),
+                                        //   useActions: true,
+                                        // ),
+                                        //
                                       ),
-                                      //
                                     ),
                                   ),
                                 ),
@@ -3034,7 +3242,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                     )),
                                 //Add Image
                                 IconButton(
-                                    onPressed: () {},
+                                    onPressed: () async {
+                                      pw.Page pdf = await exportDelegate
+                                          .exportToPdfPage('2');
+                                      setState(() {
+                                        genpdf.addPage(pdf);
+                                      });
+                                    },
                                     icon: Icon(
                                       IconsaxPlusLinear.gallery_add,
                                       // size: 40,
@@ -3063,6 +3277,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                       // size: 40,
                                       color: defaultPalette.black,
                                     )),
+
                                 Container(
                                   height: 25,
                                   width: sWidth / 7,
@@ -3105,48 +3320,45 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                           ////// SPREADSHEET
                           Expanded(
                             flex: (8 * 10000),
-                            child: Container(
-                              // height: sHeight / 20,
-                              width: sWidth,
-                              color: defaultPalette.tertiary,
-                              child: Stack(
-                                children: [
-                                  Builder(builder: (context) {
-                                    List<Widget> widgetList = [];
-                                    for (int index = 0;
-                                        index <
-                                            spreadSheetList[currentPageIndex]
-                                                .length;
-                                        index++) {
-                                      if (spreadSheetList[currentPageIndex]
-                                          [index] is TextEditorItem) {
-                                        var textEditorItem =
-                                            spreadSheetList[currentPageIndex]
-                                                [index] as TextEditorItem;
-                                        print(
-                                            'editorID in buildWidget: ${spreadSheetList[currentPageIndex][index].id} ');
-                                        widgetList.add(QuillEditor(
-                                            configurations: textEditorItem
-                                                .textEditorConfigurations,
-                                            focusNode: textEditorItem.focusNode,
-                                            scrollController: textEditorItem
-                                                .scrollController));
+                            child: ExportFrame(
+                              exportDelegate: exportDelegate,
+                              frameId: '2',
+                              child: Container(
+                                // height: sHeight / 20,
+                                width: sWidth,
+                                color: defaultPalette.tertiary,
+                                child: Stack(
+                                  children: [
+                                    Builder(builder: (context) {
+                                      List<Widget> widgetList = [];
+                                      for (int index = 0;
+                                          index <
+                                              spreadSheetList[currentPageIndex]
+                                                  .length;
+                                          index++) {
+                                        if (spreadSheetList[currentPageIndex]
+                                            [index] is TextEditorItem) {
+                                          var textEditorItem =
+                                              spreadSheetList[currentPageIndex]
+                                                  [index] as TextEditorItem;
+                                          print(
+                                              'editorID in buildWidget: ${spreadSheetList[currentPageIndex][index].id} ');
+                                          widgetList.add(QuillEditor(
+                                              configurations: textEditorItem
+                                                  .textEditorConfigurations,
+                                              focusNode:
+                                                  textEditorItem.focusNode,
+                                              scrollController: textEditorItem
+                                                  .scrollController));
+                                        }
                                       }
-                                    }
-                                    return Flex(
-                                      direction: Axis.vertical,
-                                      children: widgetList,
-                                    );
-                                  }),
-                                  // StandardMarkdown(
-                                  //     oninit: (config) {},
-                                  //     mode: 0,
-                                  //     toolbar: true,
-                                  //     selectable: true,
-                                  //     data: mdCunt),
-
-                                  // FormattingToolbar(controller: _contrroller),
-                                ],
+                                      return Flex(
+                                        direction: Axis.vertical,
+                                        children: widgetList,
+                                      );
+                                    }),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

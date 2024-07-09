@@ -1,11 +1,12 @@
 // import 'package:billblaze/Home.dart';
+import 'package:billblaze/Home.dart';
 import 'package:billblaze/components/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/screens/LoginSignUp.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:billblaze/providers/authProvider.dart';
+import 'package:billblaze/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,13 +38,14 @@ class _MainAppState extends State<MainApp> {
           stream: ref.read(authPr).authStateChanges(),
           builder: (context, stream) {
             if (stream.hasData) {
-              return SafeArea(
-                child: Material(
-                  child: SpreadSheet(
-                      // items: ref.watch(itemListProvider),
-                      ),
-                ),
-              );
+              // return SafeArea(
+              //   child: Material(
+              //     child: SpreadSheet(
+              //         // items: ref.watch(itemListProvider),
+              //         ),
+              //   ),
+              // );
+              return Home();
             } else if (stream.hasError) {
               return const Center(child: Text('Something went wrong'));
             } else if (stream.connectionState == ConnectionState.waiting) {
