@@ -9,6 +9,7 @@ import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart'
 import 'package:billblaze/util/HexColorInputFormatter.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_balloon_slider/flutter_balloon_slider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart'
     show ColorPicker, MaterialPicker;
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
@@ -102,7 +103,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   int pageCount = 0;
   int currentPageIndex = 0;
   bool isReordering = false;
-  pw.Document? _pdfDocument;
+  pw.Document _pdfDocument = pw.Document();
   List<DocumentProperties2> documentPropertiesList = [];
   List<SelectedIndex> selectedIndex = [];
   PanelIndex panelIndex = PanelIndex(id: '', panelIndex: -1);
@@ -169,8 +170,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   );
   TextAlign textAlign = TextAlign.left;
   List<bool> isTapped = [false, true, false, false, false];
+  // List<ExportDelegate> exportDelegate = [];
   ExportDelegate exportDelegate = ExportDelegate();
-  late pw.Document genpdf;
   //
   //
   //
@@ -182,13 +183,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     _addPdfPage();
     _updatePdfPreview('');
     tabcunt = TabController(length: 2, vsync: this);
-    genpdf = _generatePdf();
   }
 
   @override
   void dispose() {
     pagePropertiesViewController.dispose();
     pageViewIndicatorController.dispose();
+    textStyleTabControler.dispose();
     super.dispose();
   }
 
@@ -201,7 +202,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       document: Document(),
       selection: TextSelection.collapsed(offset: 0),
       onSelectionChanged: (textSelection) {
-        setState(() {});
+        // setState(() {});
       },
       onDelete: (cursorPosition, forward) {
         setState(() {});
@@ -224,6 +225,30 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           //   focusNode.unfocus();
           // },
           // expands: true,
+          customStyleBuilder: (attribute) {
+            // Handle letter spacing
+            if (attribute.key == 'letterSpacing') {
+              String? letterSpacing = attribute.value as String?;
+              return TextStyle(
+                  letterSpacing: double.parse(letterSpacing ?? '0'));
+            }
+
+            // Handle word spacing (custom attribute example)
+            if (attribute.key == 'wordSpacing') {
+              String? wordSpacing = attribute.value as String?;
+              return TextStyle(wordSpacing: double.parse(wordSpacing ?? '0'));
+            }
+
+            // Handle line height (custom attribute example)
+            if (attribute.key == 'lineHeight') {
+              String? lineHeight = attribute.value as String?;
+              return TextStyle(height: double.parse(lineHeight ?? '0'));
+            }
+
+            // Return default TextStyle if attribute not handled
+            return TextStyle();
+          },
+
           builder: (context, rawEditor) {
             return Container(
                 // duration: Durations.short4,
@@ -399,7 +424,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   void _removeTextField() {}
 //
 // genPDF
-  pw.Document _generatePdf() {
+  pw.Document _generatePdf(sWidth) {
     final pdf = pw.Document();
 
     for (int i = 0; i < pageCount; i++) {
@@ -430,7 +455,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                   return pw.Container();
                 },
                 itemCount: sheetList.sheetList.length,
-              ),
+              )
             ];
           },
         ),
@@ -627,6 +652,14 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     // ]);
   }
 
+  void _addExportPage(ExportDelegate exportDel, i) async {
+    var page = await exportDel.exportToPdfPage(i.toString());
+    print('adding $page');
+    setState(() {
+      _pdfDocument.addPage(page);
+    });
+  }
+
 //
 //genWidget
   Widget _generateWid(sWidth, sHeight) {
@@ -639,25 +672,42 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       child: Column(
         children: [
           for (int i = 0; i < pageCount; i++)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: width,
-                height: width * sqrt2,
-                color: Colors.red,
-                padding: EdgeInsets.only(
-                  top: double.parse(doc[i].marginTopController.text) *
-                      (1 - vDividerPosition),
-                  bottom: double.parse(doc[i].marginBottomController.text) *
-                      (1 - vDividerPosition),
-                  left: double.parse(doc[i].marginLeftController.text) *
-                      (1 - vDividerPosition),
-                  right: double.parse(doc[i].marginRightController.text) *
-                      (1 - vDividerPosition),
+            Builder(builder: (context) {
+              var exportDel = ExportDelegate();
+              //  setState(() {
+              //    exportDelegate.add(exportDel);
+              //  });
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                child: Transform.scale(
+                  scale: 1,
+                  alignment: Alignment.topLeft,
+                  child: ExportFrame(
+                    frameId: i.toString(),
+                    exportDelegate: exportDelegate,
+                    child: Container(
+                      width: sWidth - 64,
+                      height: (sWidth - 64) * sqrt2,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                      ),
+                      padding: EdgeInsets.only(
+                        top: double.parse(doc[i].marginTopController.text) *
+                            (1 - vDividerPosition),
+                        bottom:
+                            double.parse(doc[i].marginBottomController.text) *
+                                (1 - vDividerPosition),
+                        left: double.parse(doc[i].marginLeftController.text) *
+                            (1 - vDividerPosition),
+                        right: double.parse(doc[i].marginRightController.text) *
+                            (1 - vDividerPosition),
+                      ),
+                      child: _buildSheetListWidget(sheetList[i], width),
+                    ),
+                  ),
                 ),
-                child: _buildSheetListWidget(sheetList[i]),
-              ),
-            )
+              );
+            })
         ],
       ),
     );
@@ -668,7 +718,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     // );
   }
 
-  Widget _buildSheetListWidget(SheetList sheetList) {
+  Widget _buildSheetListWidget(SheetList sheetList, width) {
     return ListView.builder(
       padding: EdgeInsets.all(0),
       // shrinkWrap: true,
@@ -678,16 +728,73 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         final item = sheetList.sheetList[index];
         if (item is TextEditorItem) {
           final delta = item.getTextEditorDocumentAsDelta();
-          return convertDeltaToFlutterWidget(delta);
+          return IgnorePointer(
+            key: ValueKey(item),
+            child: QuillEditor(
+              key: ValueKey(item.id),
+              configurations: QuillEditorConfigurations(
+                  scrollable: false,
+                  showCursor: false,
+                  enableInteractiveSelection: false,
+                  enableSelectionToolbar: false,
+                  requestKeyboardFocusOnCheckListChanged: false,
+                  customStyleBuilder: (attribute) {
+                    // Handle letter spacing
+                    if (attribute.key == 'letterSpacing') {
+                      String? letterSpacing = attribute.value as String?;
+                      return TextStyle(
+                          letterSpacing: double.parse(letterSpacing ?? '0'));
+                    }
+
+                    // Handle word spacing (custom attribute example)
+                    if (attribute.key == 'wordSpacing') {
+                      String? wordSpacing = attribute.value as String?;
+                      return TextStyle(
+                          wordSpacing: double.parse(wordSpacing ?? '0'));
+                    }
+
+                    // Handle line height (custom attribute example)
+                    if (attribute.key == 'lineHeight') {
+                      String? lineHeight = attribute.value as String?;
+                      return TextStyle(height: double.parse(lineHeight ?? '0'));
+                    }
+
+                    // Return default TextStyle if attribute not handled
+                    return TextStyle();
+                  },
+                  disableClipboard: true,
+                  controller: QuillController(
+                    document: (item).textEditorController.document,
+                    selection: (item).textEditorController.selection,
+                    readOnly: true,
+                    onSelectionChanged: (textSelection) {
+                      setState(() {});
+                    },
+                    onReplaceText: (index, len, data) {
+                      setState(() {});
+                      return false;
+                    },
+                    onSelectionCompleted: () {
+                      setState(() {});
+                    },
+                    onDelete: (cursorPosition, forward) {
+                      setState(() {});
+                    },
+                  )),
+              focusNode: FocusNode(),
+              scrollController: ScrollController(),
+            ),
+          );
+          // return convertDeltaToFlutterWidget(delta, width);
         } else if (item is SheetList) {
-          return _buildSheetListWidget(item);
+          return _buildSheetListWidget(item, width);
         }
-        // return SizedBox();
+        return SizedBox();
       },
     );
   }
 
-  Widget convertDeltaToFlutterWidget(Delta delta) {
+  Widget convertDeltaToFlutterWidget(Delta delta, width) {
     print('_____________DELTAA Widget Start______________');
     List<Widget> textWidgets = [];
     TextAlign textAlign = TextAlign.left;
@@ -700,9 +807,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
         Map<String, dynamic>? attributes = op.attributes;
         TextStyle textStyle = TextStyle(
-            color: Colors.black,
-            height: 1,
-            fontSize: 45 * (1 - vDividerPosition));
+          color: Colors.black,
+          height: 1,
+          fontSize: width / 12,
+        );
 
         if (attributes != null) {
           print('Attribute exists');
@@ -715,10 +823,34 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           if (attributes.containsKey('underline')) {
             textStyle =
                 textStyle.copyWith(decoration: TextDecoration.underline);
+            if (attributes.containsKey('strike')) {
+              textStyle = textStyle.copyWith(
+                  decoration: TextDecoration.combine(
+                      [TextDecoration.underline, TextDecoration.lineThrough]));
+            }
           }
           if (attributes.containsKey('strike')) {
             textStyle =
                 textStyle.copyWith(decoration: TextDecoration.lineThrough);
+            if (attributes.containsKey('underline')) {
+              textStyle = textStyle.copyWith(
+                  decoration: TextDecoration.combine(
+                      [TextDecoration.underline, TextDecoration.lineThrough]));
+            }
+          }
+          if (attributes.containsKey('script')) {
+            if (attributes['script'] == ScriptAttributes.sup.value) {
+              textStyle = textStyle.copyWith(
+                  fontSize: width / 20,
+                  height: 1,
+                  textBaseline: TextBaseline.alphabetic);
+            }
+            if (attributes['script'] == ScriptAttributes.sub.value) {
+              textStyle = textStyle.copyWith(
+                  fontSize: width / 20,
+                  height: 1,
+                  textBaseline: TextBaseline.alphabetic);
+            }
           }
           if (attributes.containsKey('code')) {
             textStyle = textStyle.copyWith(
@@ -809,17 +941,24 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         }
         // Check if text starts with '\n'
         bool startsWithNewLine = text.startsWith('\n');
+        //
         if (delta.toList().indexOf(op) == 0) {
           startsWithNewLine = true;
         }
         print(startsWithNewLine);
         if (startsWithNewLine) {
           print(text);
-          textWidgets.add(Text(
-            text.substring(0, text.length),
-            style: textStyle,
+          textWidgets.add(RichText(
+            text: TextSpan(children: [
+              TextSpan(
+                text: text.substring(
+                    0, text[text.length - 1] == '\n' ? text.length - 1 : null),
+                style: textStyle,
+              )
+            ]),
             textAlign: textAlign,
             textDirection: textDirection,
+            // textScaler: TextScaler.linear(1 - vDividerPosition),
           ));
           lastWidget = textWidgets[textWidgets.length - 1];
         } else {
@@ -834,6 +973,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           } else if (lastWidget is Text) {
             Text prev = textWidgets.removeAt(textWidgets.length - 1) as Text;
             textWidgets.add(RichText(
+              // textScaler: TextScaler.linear(1 - vDividerPosition),
               text: TextSpan(
                 children: [
                   TextSpan(
@@ -944,6 +1084,21 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     var curve = Curves.easeIn;
     pageViewIndicatorController.animateToPage(page,
         duration: duration, curve: curve);
+  }
+
+  Future<pw.Document> _generatePdfFromWid() async {
+    pw.Document pdf = pw.Document();
+    List<Future<pw.Page>> pageFutures = [];
+    for (var i = 0; i < pageCount; i++) {
+      var pageFuture = exportDelegate.exportToPdfPage(i.toString());
+      pageFutures.add(pageFuture);
+    }
+    List<pw.Page> pages = await Future.wait(pageFutures);
+    for (var page in pages) {
+      print('adding $page');
+      pdf.addPage(page);
+    }
+    return pdf;
   }
 
   @override
@@ -2373,6 +2528,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                       return PageView(
                                                                         controller:
                                                                             textStyleTabControler,
+                                                                        allowImplicitScrolling:
+                                                                            false,
+                                                                        physics:
+                                                                            NeverScrollableScrollPhysics(),
                                                                         onPageChanged:
                                                                             (value) {
                                                                           print(
@@ -2996,8 +3155,73 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 ],
                                                                               ),
                                                                             ),
-                                                                          )
+                                                                          ),
                                                                           //Font Size, Word Spacing, Letter Spacing, Line Spacing
+                                                                          Container(
+                                                                            width:
+                                                                                width,
+                                                                            height:
+                                                                                sHeight * hDividerPosition,
+                                                                            child:
+                                                                                Column(
+                                                                              children: [
+                                                                                SizedBox(
+                                                                                  height: 80,
+                                                                                ),
+                                                                                Transform.rotate(
+                                                                                  angle: 0,
+                                                                                  child: BalloonSlider(
+                                                                                      showRope: true,
+                                                                                      ropeLength: (sHeight * hDividerPosition) / 6,
+                                                                                      value: double.parse((item.textEditorController.getSelectionStyle().attributes[Attribute.size.key]?.value) ?? 20.toString()) / 100,
+                                                                                      onChanged: (val) {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          Attribute.clone(Attribute.size, (val * 100).toString()),
+                                                                                        );
+                                                                                      }),
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  height: 20,
+                                                                                ),
+                                                                                //LetterSpacing
+                                                                                BalloonSlider(
+                                                                                    showRope: true,
+                                                                                    ropeLength: (sHeight * hDividerPosition) / 6,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
+                                                                                    onChanged: (val) {
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        LetterSpacingAttribute((val * 100).toString()),
+                                                                                      );
+                                                                                    }),
+                                                                                SizedBox(
+                                                                                  height: 20,
+                                                                                ),
+                                                                                //WordSpacing
+                                                                                BalloonSlider(
+                                                                                    showRope: true,
+                                                                                    ropeLength: (sHeight * hDividerPosition) / 6,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
+                                                                                    onChanged: (val) {
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        WordSpacingAttribute((val * 100).toString()),
+                                                                                      );
+                                                                                    }),
+                                                                                SizedBox(
+                                                                                  height: 20,
+                                                                                ),
+                                                                                //LineHeight
+                                                                                BalloonSlider(
+                                                                                    showRope: true,
+                                                                                    ropeLength: (sHeight * hDividerPosition) / 6,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value) ?? 0.toString()) / 2,
+                                                                                    onChanged: (val) {
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        LineHeightAttribute((val * 2).toString()),
+                                                                                      );
+                                                                                    }),
+                                                                              ],
+                                                                            ),
+                                                                          ),
                                                                         ],
                                                                       );
                                                                     },
@@ -3182,41 +3406,36 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                   child: AnimatedContainer(
                                     duration: Duration(milliseconds: 300),
                                     // color: Colors.green,
-                                    child: ExportFrame(
-                                      frameId: 'pdf',
-                                      exportDelegate: exportDelegate,
-                                      child: Center(
-                                        // child: _generateWid(sWidth, sHeight),
-                                        child: PdfPreview(
-                                          controller: pdfScrollController,
-                                          build: (format) =>
-                                              _generatePdf().save(),
-                                          enableScrollToPage: true,
-                                          allowSharing: true,
-                                          allowPrinting: true,
-                                          canChangeOrientation: false,
-                                          canChangePageFormat: false,
-                                          canDebug: true,
-                                          actionBarTheme: PdfActionBarTheme(
-                                            height: 55, // Reduced height
-                                            actionSpacing: 2,
-                                            backgroundColor:
-                                                defaultPalette.transparent,
-                                            alignment: WrapAlignment.end,
-                                            iconColor: defaultPalette.black,
-                                            crossAxisAlignment:
-                                                WrapCrossAlignment.end,
-                                            runAlignment: WrapAlignment.end,
-                                            elevation: 50,
-                                          ),
-                                          previewPageMargin: EdgeInsets.all(5),
-                                          scrollViewDecoration: BoxDecoration(
-                                              color:
-                                                  defaultPalette.transparent),
-                                          useActions: true,
+                                    child: Center(
+                                      // child: _generateWid(sWidth, sHeight),
+                                      child: PdfPreview(
+                                        controller: pdfScrollController,
+                                        build: (format) =>
+                                            _generatePdf(sWidth).save(),
+                                        enableScrollToPage: true,
+                                        allowSharing: true,
+                                        allowPrinting: true,
+                                        canChangeOrientation: false,
+                                        canChangePageFormat: false,
+                                        canDebug: true,
+                                        actionBarTheme: PdfActionBarTheme(
+                                          height: 55, // Reduced height
+                                          actionSpacing: 2,
+                                          backgroundColor:
+                                              defaultPalette.transparent,
+                                          alignment: WrapAlignment.end,
+                                          iconColor: defaultPalette.black,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.end,
+                                          runAlignment: WrapAlignment.end,
+                                          elevation: 50,
                                         ),
-                                        //
+                                        previewPageMargin: EdgeInsets.all(5),
+                                        scrollViewDecoration: BoxDecoration(
+                                            color: defaultPalette.transparent),
+                                        useActions: true,
                                       ),
+                                      //
                                     ),
                                   ),
                                 ),
@@ -3339,11 +3558,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                 //Add Image
                                 IconButton(
                                     onPressed: () async {
-                                      pw.Page pdf = await exportDelegate
-                                          .exportToPdfPage('2');
-                                      setState(() {
-                                        genpdf.addPage(pdf);
-                                      });
+                                      // pw.Page pdf = await exportDelegate
+                                      //     .exportToPdfPage('2');
+                                      // setState(() {
+                                      //   genpdf.addPage(pdf);
+                                      // });
                                     },
                                     icon: Icon(
                                       IconsaxPlusLinear.gallery_add,
@@ -3416,45 +3635,40 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                           ////// SPREADSHEET
                           Expanded(
                             flex: (8 * 10000),
-                            child: ExportFrame(
-                              exportDelegate: exportDelegate,
-                              frameId: '2',
-                              child: Container(
-                                // height: sHeight / 20,
-                                width: sWidth,
-                                color: defaultPalette.tertiary,
-                                child: Stack(
-                                  children: [
-                                    Builder(builder: (context) {
-                                      List<Widget> widgetList = [];
-                                      for (int index = 0;
-                                          index <
-                                              spreadSheetList[currentPageIndex]
-                                                  .length;
-                                          index++) {
-                                        if (spreadSheetList[currentPageIndex]
-                                            [index] is TextEditorItem) {
-                                          var textEditorItem =
-                                              spreadSheetList[currentPageIndex]
-                                                  [index] as TextEditorItem;
-                                          print(
-                                              'editorID in buildWidget: ${spreadSheetList[currentPageIndex][index].id} ');
-                                          widgetList.add(QuillEditor(
-                                              configurations: textEditorItem
-                                                  .textEditorConfigurations,
-                                              focusNode:
-                                                  textEditorItem.focusNode,
-                                              scrollController: textEditorItem
-                                                  .scrollController));
-                                        }
+                            child: Container(
+                              // height: sHeight / 20,
+                              width: sWidth,
+                              color: defaultPalette.tertiary,
+                              child: Stack(
+                                children: [
+                                  Builder(builder: (context) {
+                                    List<Widget> widgetList = [];
+                                    for (int index = 0;
+                                        index <
+                                            spreadSheetList[currentPageIndex]
+                                                .length;
+                                        index++) {
+                                      if (spreadSheetList[currentPageIndex]
+                                          [index] is TextEditorItem) {
+                                        var textEditorItem =
+                                            spreadSheetList[currentPageIndex]
+                                                [index] as TextEditorItem;
+                                        print(
+                                            'editorID in buildWidget: ${spreadSheetList[currentPageIndex][index].id} ');
+                                        widgetList.add(QuillEditor(
+                                            configurations: textEditorItem
+                                                .textEditorConfigurations,
+                                            focusNode: textEditorItem.focusNode,
+                                            scrollController: textEditorItem
+                                                .scrollController));
                                       }
-                                      return Flex(
-                                        direction: Axis.vertical,
-                                        children: widgetList,
-                                      );
-                                    }),
-                                  ],
-                                ),
+                                    }
+                                    return Flex(
+                                      direction: Axis.vertical,
+                                      children: widgetList,
+                                    );
+                                  }),
+                                ],
                               ),
                             ),
                           ),
@@ -3552,23 +3766,85 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                   ),
                 ),
               ),
-              Positioned(
-                top: sHeight * appbarHeight,
-                left: sWidth * vDividerPosition,
-                width: sWidth * (1 - vDividerPosition),
-                height: sHeight * hDividerPosition,
-                child: AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: ExportFrame(
-                    frameId: 'pdf',
-                    exportDelegate: exportDelegate,
-                    child: Center(
-                      child: _generateWid(sWidth, sHeight),
-                    ),
-                  ),
-                ),
-              ),
+              //
+              //Right PDF
+              // Positioned(
+              //   top: sHeight * appbarHeight,
+              //   left: sWidth * vDividerPosition,
+              //   width: sWidth * (1 - vDividerPosition),
+              //   height: sHeight * hDividerPosition,
+              //   child: AnimatedContainer(
+              //     // width:  (sWidth-56),
+              //     // height:  (sWidth-56)*sqrt2,
+              //     duration: Duration(milliseconds: 300),
+              //     // padding: EdgeInsets.only(bottom: 8),
+              //     // color: Colors.black,
+              //     alignment: Alignment.center,
+              //     child: ExportFrame(
+              //       frameId: 'pdf',
+              //       exportDelegate: exportDelegate,
+              //       child: _generateWid(sWidth, sHeight),
+              //     ),
+              //   ),
+              // ),
+              //
+              //emulating the pdf preview
+              // Positioned(
+              //   top: sHeight * appbarHeight,
+              //   // left: (sWidth * vDividerPosition),
+              //   right: 8,
+              //   // width: sWidth * (1 - vDividerPosition),
+              //   // height: sHeight * hDividerPosition+126,
+              //   child: Transform.scale(
+              //     scale: (1 - vDividerPosition),
+              //     // scale:1,
+              //     alignment: Alignment.topRight,
+              //     child: AnimatedContainer(
+              //       width: (sWidth - 64),
+              //       // height: (sWidth-64)*sqrt2 ,
+              //       height:
+              //           (sHeight) * hDividerPosition / (1 - vDividerPosition),
+              //       duration: Duration(milliseconds: 100),
+              //       // padding: EdgeInsets.only(bottom: 25),
+              //       // color: Colors.black,
+              //       alignment: Alignment.center,
+              //       child: _generateWid(sWidth, sHeight),
+              //     ),
+              //   ),
+              // ),
+              //pdf from widgettopdf
+              // Positioned(
+              //   bottom: 1,
+              //   height: sHeight / 3,
+              //   width: sWidth / 2,
+              //   child: PdfPreview(
+              //     controller: pdfScrollController,
+              //     build: (format) => _generatePdf(sWidth).save(),
+              //     // build: (format) => _generatePdfFromWid().then((pdf) {
+              //     //   return pdf.save();
+              //     // }),
+              //     enableScrollToPage: true,
+              //     allowSharing: true,
+              //     allowPrinting: true,
+              //     canChangeOrientation: false,
+              //     canChangePageFormat: false,
+              //     canDebug: true,
+              //     actionBarTheme: PdfActionBarTheme(
+              //       height: 55, // Reduced height
+              //       actionSpacing: 2,
+              //       backgroundColor: defaultPalette.transparent,
+              //       alignment: WrapAlignment.end,
+              //       iconColor: defaultPalette.black,
+              //       crossAxisAlignment: WrapCrossAlignment.end,
+              //       runAlignment: WrapAlignment.end,
+              //       elevation: 50,
+              //     ),
+              //     previewPageMargin: EdgeInsets.all(5),
+              //     scrollViewDecoration:
+              //         BoxDecoration(color: defaultPalette.transparent),
+              //     useActions: true,
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -3624,4 +3900,22 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   }
 
   //
+}
+
+class WordSpacingAttribute extends Attribute<String?> {
+  static const _key = 'wordSpacing';
+  const WordSpacingAttribute(String? value)
+      : super('wordSpacing', AttributeScope.inline, value);
+}
+
+class LineHeightAttribute extends Attribute<String?> {
+  static const _key = 'lineHeight';
+  const LineHeightAttribute(String? value)
+      : super('lineHeight', AttributeScope.inline, value);
+}
+
+class LetterSpacingAttribute extends Attribute<String?> {
+  static const _key = 'letterSpacing';
+  const LetterSpacingAttribute(String? value)
+      : super('letterSpacing', AttributeScope.inline, value);
 }

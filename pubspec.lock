@@ -193,6 +193,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.4.6"
+  delta_to_html:
+    dependency: "direct main"
+    description:
+      name: delta_to_html
+      sha256: f366e50e5764a98f6be89da4881b159288ba60c2b8e1a77bd29282879ebc6145
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
   device_info_plus:
     dependency: transitive
     description:

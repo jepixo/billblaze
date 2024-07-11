@@ -59,6 +59,7 @@ dependencies:
   animated_custom_dropdown: ^3.1.1
   flutter_tabler_icons: ^1.31.0
   flutter_to_pdf: ^0.2.1
+  delta_to_html: ^0.2.2
 
 
 dev_dependencies:
