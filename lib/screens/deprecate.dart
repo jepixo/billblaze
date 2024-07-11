@@ -4609,3 +4609,793 @@ class _TestState extends ConsumerState<Test> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// itemBuilder: (context, index) {
+//                                                                                   switch (index) {
+//                                                                                     case 0:
+//                                                                                       //UNDO
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         toggleOnTap: false,
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           if (item.textEditorController.hasUndo) {
+//                                                                                             item.textEditorController.undo();
+//                                                                                           }
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           IconsaxPlusLinear.undo,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 1:
+//                                                                                       //REDO
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         toggleOnTap: false,
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           if (item.textEditorController.hasRedo) {
+//                                                                                             item.textEditorController.redo();
+//                                                                                           }
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           IconsaxPlusLinear.redo,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 2:
+//                                                                                       //BOLD
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.bold),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.bold.key);
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.bold, null) : Attribute.bold,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           IconsaxPlusLinear.text_bold,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 3:
+//                                                                                       //ITALIC
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.italic),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.italic.key);
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.italic, null) : Attribute.italic,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           IconsaxPlusLinear.text_italic,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 4:
+//                                                                                       //UNDERLINE
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.underline),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.underline.key);
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.underline, null) : Attribute.underline,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           IconsaxPlusLinear.text_underline,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 5:
+//                                                                                       //STRIKETHRU
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.strikeThrough),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.strikeThrough.key);
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.strikeThrough, null) : Attribute.strikeThrough,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           CupertinoIcons.strikethrough,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 6:
+//                                                                                       //SUBSCRIPT
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
+//                                                                                           );
+//                                                                                           final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.superscript.key);
+//                                                                                           if (uncurrentValue && currentValue) {
+//                                                                                             item.textEditorController.formatSelection(
+//                                                                                               Attribute.clone(Attribute.subscript, null),
+//                                                                                             );
+//                                                                                             currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
+//                                                                                           }
+//                                                                                           print('$uncurrentValue && $currentValue');
+//                                                                                           if (uncurrentValue && !currentValue) {
+//                                                                                             print('un');
+//                                                                                             print(uncurrentValue);
+//                                                                                             item.textEditorController.formatSelection(Attribute.clone(Attribute.superscript, null));
+//                                                                                             item.textEditorController.formatSelection(
+//                                                                                               Attribute.subscript,
+//                                                                                             );
+//                                                                                             setState(() {
+//                                                                                               currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
+//                                                                                             });
+//                                                                                             print('cu');
+//                                                                                             print(currentValue);
+//                                                                                             return;
+//                                                                                           }
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           Icons.subscript,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 7:
+//                                                                                       //SUPERSCIPT
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
+//                                                                                           );
+//                                                                                           final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.subscript.key);
+//                                                                                           if (uncurrentValue && currentValue) {
+//                                                                                             item.textEditorController.formatSelection(
+//                                                                                               Attribute.clone(Attribute.superscript, null),
+//                                                                                             );
+//                                                                                             currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
+//                                                                                           }
+//                                                                                           print('$uncurrentValue && $currentValue');
+//                                                                                           if (uncurrentValue && !currentValue) {
+//                                                                                             print('un');
+//                                                                                             print(uncurrentValue);
+//                                                                                             item.textEditorController.formatSelection(Attribute.clone(Attribute.subscript, null));
+//                                                                                             item.textEditorController.formatSelection(
+//                                                                                               Attribute.superscript,
+//                                                                                             );
+//                                                                                             setState(() {
+//                                                                                               currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
+//                                                                                             });
+//                                                                                             print('cu');
+//                                                                                             print(currentValue);
+//                                                                                             return;
+//                                                                                           }
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           Icons.superscript,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 8:
+//                                                                                       //CODE INLINE
+//                                                                                       return buildElevatedLayerButton(
+//                                                                                         buttonHeight: iconHeight,
+//                                                                                         buttonWidth: iconHeight,
+//                                                                                         toggleOnTap: true,
+//                                                                                         isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.inlineCode),
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         onClick: () {
+//                                                                                           var currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.inlineCode.key);
+//                                                                                           // item.textEditorController.formatSelection(ColorAttribute(null));
+//                                                                                           // item.textEditorController.formatSelection(BackgroundAttribute(null));
+//                                                                                           item.textEditorController.formatSelection(
+//                                                                                             currentValue ? Attribute.clone(Attribute.inlineCode, null) : Attribute.inlineCode,
+//                                                                                           );
+//                                                                                         },
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           IconsaxPlusLinear.code,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 25,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                       );
+//                                                                                     case 9:
+//                                                                                     default:
+//                                                                                       return Container(); // Fallback if index is out of range
+//                                                                                   }
+//                                                                                 },
+//                                                                               ),
+//                                                                               //COLORR AND BGCOLORRRR
+//                                                                               Positioned(
+//                                                                                 top: width < (width / vDividerPosition) / 2.1
+//                                                                                     ? 250
+//                                                                                     : width < (width / vDividerPosition) / 1.7
+//                                                                                         ? 180
+//                                                                                         : width < (width / vDividerPosition) / 1.38
+//                                                                                             ? 180
+//                                                                                             : width < (width / vDividerPosition) / 1.2
+//                                                                                                 ? 130
+//                                                                                                 : 120,
+//                                                                                 left: 4,
+//                                                                                 child: AnimatedContainer(
+//                                                                                   duration: Durations.short4,
+//                                                                                   height: pickColor ? 370 : 106,
+//                                                                                   width: width - 16,
+//                                                                                   decoration: BoxDecoration(color: defaultPalette.white, borderRadius: BorderRadius.circular(12), border: Border.all(width: 2)),
+//                                                                                   child: Stack(
+//                                                                                     children: [
+//                                                                                       TabContainer(
+//                                                                                           controller: tabcunt,
+//                                                                                           tabEdge: TabEdge.top,
+//                                                                                           tabsStart: 0.35,
+//                                                                                           tabExtent: 50,
+//                                                                                           childPadding: EdgeInsets.symmetric(vertical: 8),
+//                                                                                           colors: [
+//                                                                                             hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
+//                                                                                             hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+//                                                                                           ],
+//                                                                                           selectedTextStyle: GoogleFonts.lexend(
+//                                                                                             color: defaultPalette.primary,
+//                                                                                             fontSize: 14,
+//                                                                                           ),
+//                                                                                           unselectedTextStyle: const TextStyle(
+//                                                                                             color: Colors.black,
+//                                                                                             fontSize: 13.0,
+//                                                                                           ),
+//                                                                                           // borderRadius: BorderRadius.circular(20),
+//                                                                                           // tabBorderRadius: BorderRadius.circular(20),
+//                                                                                           tabs: [
+//                                                                                             Text(
+//                                                                                               'Font',
+//                                                                                             ),
+//                                                                                             Text('Bg')
+//                                                                                           ],
+//                                                                                           children: [
+//                                                                                             //FONT COLOR
+//                                                                                             DefaultTabController(
+//                                                                                               length: 2,
+//                                                                                               child: SingleChildScrollView(
+//                                                                                                 physics: NeverScrollableScrollPhysics(),
+//                                                                                                 child: AnimatedContainer(
+//                                                                                                   duration: Duration.zero,
+//                                                                                                   height: pickColor ? 290 : 37,
+//                                                                                                   width: width,
+//                                                                                                   child: Stack(
+//                                                                                                     children: [
+//                                                                                                       TabBar(
+//                                                                                                         dividerHeight: 0,
+//                                                                                                         indicatorSize: TabBarIndicatorSize.label,
+//                                                                                                         indicatorColor: defaultPalette.transparent,
+//                                                                                                         labelColor: defaultPalette.black,
+//                                                                                                         labelPadding: EdgeInsets.all(0),
+//                                                                                                         tabs: [
+//                                                                                                           //FONT COLOR
+//                                                                                                           Tab(
+//                                                                                                             height: 30,
+//                                                                                                             child: Container(
+//                                                                                                               padding: EdgeInsets.all(2),
+//                                                                                                               margin: EdgeInsets.only(left: 5, right: 5),
+//                                                                                                               height: 30,
+//                                                                                                               width: width,
+//                                                                                                               alignment: Alignment.center,
+//                                                                                                               decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.circular(10)),
+//                                                                                                               child: Text(
+//                                                                                                                 'Picker',
+//                                                                                                                 style: GoogleFonts.abrilFatface(),
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                           ), //FONT COLOR
+//                                                                                                           Tab(
+//                                                                                                             height: 30,
+//                                                                                                             child: Container(
+//                                                                                                               padding: EdgeInsets.all(2),
+//                                                                                                               margin: EdgeInsets.only(right: 5, left: 5),
+//                                                                                                               alignment: Alignment.center,
+//                                                                                                               height: 30,
+//                                                                                                               width: width,
+//                                                                                                               decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.circular(10)),
+//                                                                                                               child: Text(
+//                                                                                                                 'Palette',
+//                                                                                                                 style: GoogleFonts.abrilFatface(),
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                           ),
+//                                                                                                         ],
+//                                                                                                       ), //FONT COLOR
+//                                                                                                       //PICKER ND EVERYHTING
+//                                                                                                       Positioned(
+//                                                                                                         top: 35,
+//                                                                                                         width: width - 16,
+//                                                                                                         height: 320,
+//                                                                                                         child: TabBarView(
+//                                                                                                           physics: NeverScrollableScrollPhysics(),
+//                                                                                                           children: [
+//                                                                                                             SingleChildScrollView(
+//                                                                                                               physics: NeverScrollableScrollPhysics(),
+//                                                                                                               child: Padding(
+//                                                                                                                 padding: const EdgeInsets.all(8),
+//                                                                                                                 child: ColorPicker(
+//                                                                                                                   portraitOnly: true,
+//                                                                                                                   pickerAreaBorderRadius: BorderRadius.circular(12),
+//                                                                                                                   colorPickerWidth: 300,
+//                                                                                                                   labelTypes: [],
+//                                                                                                                   pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
+//                                                                                                                   onColorChanged: (color) {
+//                                                                                                                     item.textEditorController.formatSelection(
+//                                                                                                                       ColorAttribute('#${colorToHex(color)}'),
+//                                                                                                                     );
+//                                                                                                                     setState(() {
+//                                                                                                                       hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+//                                                                                                                     });
+//                                                                                                                   },
+//                                                                                                                   pickerAreaHeightPercent: 0.4,
+//                                                                                                                 ),
+//                                                                                                               ),
+//                                                                                                             ), //FONT COLOR
+//                                                                                                             SingleChildScrollView(
+//                                                                                                               physics: NeverScrollableScrollPhysics(),
+//                                                                                                               child: Padding(
+//                                                                                                                 padding: const EdgeInsets.all(8.0),
+//                                                                                                                 child: MaterialPicker(
+//                                                                                                                   pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
+//                                                                                                                   onColorChanged: (color) {
+//                                                                                                                     item.textEditorController.formatSelection(
+//                                                                                                                       ColorAttribute('#${colorToHex(color)}'),
+//                                                                                                                     );
+//                                                                                                                     setState(() {
+//                                                                                                                       hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+//                                                                                                                     });
+//                                                                                                                   },
+//                                                                                                                 ),
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                           ],
+//                                                                                                         ),
+//                                                                                                       ),
+//                                                                                                       //FONT COLOR
+//                                                                                                       //HEX TEXT FIEKLD
+//                                                                                                       Positioned(
+//                                                                                                         bottom: 0,
+//                                                                                                         left: 0,
+//                                                                                                         width: width - 16,
+//                                                                                                         child: Container(
+//                                                                                                           padding: EdgeInsets.only(left: 4, right: 8, top: 8),
+//                                                                                                           height: textFieldHeight + 5,
+//                                                                                                           child: TextFormField(
+//                                                                                                             controller: hexController,
+//                                                                                                             onTapOutside: (event) {},
+//                                                                                                             // initialValue: '${item.textEditorController.getSelectionStyle().attributes['color']?.value}',
+//                                                                                                             onChanged: (value) {
+//                                                                                                               final color = hexToColor(value);
+//                                                                                                               // setState(() {
+//                                                                                                               hexController.text = value;
+//                                                                                                               // });
+//                                                                                                               item.textEditorController.formatSelection(
+//                                                                                                                 ColorAttribute('#${colorToHex(color)}'),
+//                                                                                                               );
+//                                                                                                             }, //FONT COLOR
+//                                                                                                             onFieldSubmitted: (value) {
+//                                                                                                               final color = hexToColor(value);
+
+//                                                                                                               item.textEditorController.formatSelection(
+//                                                                                                                 ColorAttribute('#${colorToHex(color)}'),
+//                                                                                                               );
+//                                                                                                             },
+//                                                                                                             inputFormatters: [HexColorInputFormatter()],
+//                                                                                                             textAlignVertical: TextAlignVertical.top,
+//                                                                                                             decoration: InputDecoration(
+//                                                                                                               prefixIcon: Icon(IconsaxPlusBroken.text),
+//                                                                                                               prefixIconColor: hexToColor(hexController.text),
+//                                                                                                               suffixIcon: GestureDetector(
+//                                                                                                                 onTap: () {
+//                                                                                                                   setState(() {
+//                                                                                                                     hexController.text = 'null';
+//                                                                                                                     item.textEditorController.formatSelection(
+//                                                                                                                       ColorAttribute(null),
+//                                                                                                                     );
+//                                                                                                                   });
+//                                                                                                                 },
+//                                                                                                                 child: Icon(
+//                                                                                                                   TablerIcons.x,
+//                                                                                                                   size: 15,
+//                                                                                                                 ),
+//                                                                                                               ),
+//                                                                                                               filled: true,
+//                                                                                                               fillColor: defaultPalette.primary.withOpacity(1),
+//                                                                                                               border: OutlineInputBorder(
+//                                                                                                                 borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+//                                                                                                               ),
+//                                                                                                               enabledBorder: OutlineInputBorder(
+//                                                                                                                 borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+//                                                                                                                 borderRadius: BorderRadius.circular(12.0), // Same as border
+//                                                                                                               ),
+//                                                                                                               disabledBorder: OutlineInputBorder(
+//                                                                                                                 borderSide: BorderSide(width: 2, color: defaultPalette.black),
+//                                                                                                                 borderRadius: BorderRadius.circular(12.0), // Same as border
+//                                                                                                               ),
+//                                                                                                               focusedBorder: OutlineInputBorder(
+//                                                                                                                 borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
+//                                                                                                                 borderRadius: BorderRadius.circular(10.0), // Same as border
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                             cursorColor: defaultPalette.tertiary,
+//                                                                                                             //FONT COLOR
+
+//                                                                                                             style: TextStyle(color: defaultPalette.black, fontSize: 15),
+//                                                                                                           ),
+//                                                                                                         ),
+//                                                                                                       ),
+//                                                                                                     ],
+//                                                                                                   ),
+//                                                                                                 ),
+//                                                                                               ),
+//                                                                                             ),
+//                                                                                             //Background color
+//                                                                                             DefaultTabController(
+//                                                                                               length: 2,
+//                                                                                               child: SingleChildScrollView(
+//                                                                                                 physics: NeverScrollableScrollPhysics(),
+//                                                                                                 child: AnimatedContainer(
+//                                                                                                   duration: Duration.zero,
+//                                                                                                   height: pickColor ? 290 : 37,
+//                                                                                                   child: Stack(
+//                                                                                                     children: [
+//                                                                                                       TabBar(
+//                                                                                                         dividerHeight: 0,
+//                                                                                                         indicatorSize: TabBarIndicatorSize.label,
+//                                                                                                         indicatorColor: defaultPalette.transparent,
+//                                                                                                         labelColor: defaultPalette.black,
+//                                                                                                         labelPadding: EdgeInsets.all(0),
+//                                                                                                         tabs: [
+//                                                                                                           //BG COLOR
+//                                                                                                           Tab(
+//                                                                                                             height: 30,
+//                                                                                                             child: Container(
+//                                                                                                               padding: EdgeInsets.all(2),
+//                                                                                                               margin: EdgeInsets.only(left: 5, right: 5),
+//                                                                                                               height: 30,
+//                                                                                                               width: width,
+//                                                                                                               alignment: Alignment.center,
+//                                                                                                               decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.circular(10)),
+//                                                                                                               child: Text(
+//                                                                                                                 'Picker',
+//                                                                                                                 style: GoogleFonts.abrilFatface(),
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                           ), //BG COLOR
+//                                                                                                           Tab(
+//                                                                                                             height: 30,
+//                                                                                                             child: Container(
+//                                                                                                               padding: EdgeInsets.all(2),
+//                                                                                                               margin: EdgeInsets.only(right: 5, left: 5),
+//                                                                                                               alignment: Alignment.center,
+//                                                                                                               height: 30,
+//                                                                                                               width: width,
+//                                                                                                               decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.circular(10)),
+//                                                                                                               child: Text(
+//                                                                                                                 'Palette',
+//                                                                                                                 style: GoogleFonts.abrilFatface(),
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                           ),
+//                                                                                                         ],
+//                                                                                                       ), //BG COLOR
+//                                                                                                       //PALLETETEPICKER
+//                                                                                                       Positioned(
+//                                                                                                         top: 35,
+//                                                                                                         width: width - 16,
+//                                                                                                         height: 210,
+//                                                                                                         child: TabBarView(
+//                                                                                                           physics: NeverScrollableScrollPhysics(),
+//                                                                                                           children: [
+//                                                                                                             SingleChildScrollView(
+//                                                                                                               physics: NeverScrollableScrollPhysics(),
+//                                                                                                               child: Padding(
+//                                                                                                                 padding: const EdgeInsets.all(8),
+//                                                                                                                 child: ColorPicker(
+//                                                                                                                   portraitOnly: true,
+//                                                                                                                   pickerAreaBorderRadius: BorderRadius.circular(12),
+//                                                                                                                   colorPickerWidth: 300,
+//                                                                                                                   labelTypes: [],
+//                                                                                                                   pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+//                                                                                                                   onColorChanged: (color) {
+//                                                                                                                     item.textEditorController.formatSelection(
+//                                                                                                                       BackgroundAttribute('#${colorToHex(color)}'),
+//                                                                                                                     );
+//                                                                                                                     setState(() {
+//                                                                                                                       bghexController.text = '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
+//                                                                                                                     });
+//                                                                                                                   },
+//                                                                                                                   pickerAreaHeightPercent: 0.4,
+//                                                                                                                 ),
+//                                                                                                               ),
+//                                                                                                             ), //BG COLOR
+//                                                                                                             SingleChildScrollView(
+//                                                                                                               physics: NeverScrollableScrollPhysics(),
+//                                                                                                               child: Padding(
+//                                                                                                                 padding: const EdgeInsets.all(8.0),
+//                                                                                                                 child: MaterialPicker(
+//                                                                                                                   pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+//                                                                                                                   onColorChanged: (color) {
+//                                                                                                                     item.textEditorController.formatSelection(
+//                                                                                                                       BackgroundAttribute('#${colorToHex(color)}'),
+//                                                                                                                     );
+//                                                                                                                     setState(() {
+//                                                                                                                       bghexController.text = '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
+//                                                                                                                     });
+//                                                                                                                   },
+//                                                                                                                 ),
+//                                                                                                               ),
+//                                                                                                             ),
+//                                                                                                           ], //BG COLOR
+//                                                                                                         ),
+//                                                                                                       ),
+//                                                                                                       //BG HEX TEXT LEFT
+//                                                                                                       Positioned(
+//                                                                                                         bottom: 0,
+//                                                                                                         width: width - 16,
+//                                                                                                         child: Container(
+//                                                                                                           padding: EdgeInsets.only(left: 5, right: 8, top: 8),
+//                                                                                                           height: textFieldHeight + 5, // Adjust this height according to your design
+//                                                                                                           child: TextFormField(
+//                                                                                                             controller: bghexController,
+//                                                                                                             onTapOutside: (event) {},
+//                                                                                                             onChanged: (value) {
+//                                                                                                               final color = hexToColor(value);
+
+//                                                                                                               item.textEditorController.formatSelection(
+//                                                                                                                 BackgroundAttribute('#${colorToHex(color)}'),
+//                                                                                                               );
+//                                                                                                             }, //BG COLOR
+//                                                                                                             onFieldSubmitted: (value) {
+//                                                                                                               final color = hexToColor(value);
+
+//                                                                                                               item.textEditorController.formatSelection(
+//                                                                                                                 BackgroundAttribute('#${colorToHex(color)}'),
+//                                                                                                               );
+//                                                                                                             },
+//                                                                                                             inputFormatters: [HexColorInputFormatter()], //BG COLOR
+//                                                                                                             textAlignVertical: TextAlignVertical.top,
+//                                                                                                             decoration: InputDecoration(
+//                                                                                                               prefixIcon: Icon(
+//                                                                                                                 IconsaxPlusBold.text,
+//                                                                                                                 size: 30,
+//                                                                                                               ),
+//                                                                                                               prefixIconColor: hexToColor(bghexController.text),
+//                                                                                                               suffixIcon: GestureDetector(
+//                                                                                                                 onTap: () {
+//                                                                                                                   setState(() {
+//                                                                                                                     bghexController.text = 'null';
+//                                                                                                                     item.textEditorController.formatSelection(
+//                                                                                                                       BackgroundAttribute(null),
+//                                                                                                                     );
+//                                                                                                                   });
+//                                                                                                                 },
+//                                                                                                                 child: Icon(
+//                                                                                                                   TablerIcons.x,
+//                                                                                                                   size: 15,
+//                                                                                                                 ),
+//                                                                                                               ),
+//                                                                                                               filled: true,
+//                                                                                                               fillColor: defaultPalette.primary.withOpacity(1),
+//                                                                                                               border: OutlineInputBorder(
+//                                                                                                                 borderRadius: BorderRadius.circular(10.0),
+//                                                                                                               ),
+//                                                                                                               enabledBorder: OutlineInputBorder(
+//                                                                                                                 borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+//                                                                                                                 borderRadius: BorderRadius.circular(12.0),
+//                                                                                                               ),
+//                                                                                                               disabledBorder: OutlineInputBorder(
+//                                                                                                                 borderSide: BorderSide(width: 2, color: Colors.black),
+//                                                                                                                 borderRadius: BorderRadius.circular(12.0),
+//                                                                                                               ),
+//                                                                                                               focusedBorder: OutlineInputBorder(
+//                                                                                                                 borderSide: BorderSide(width: 3, color: Colors.transparent),
+//                                                                                                                 borderRadius: BorderRadius.circular(10.0),
+//                                                                                                               ), //BG COLOR
+//                                                                                                             ),
+//                                                                                                             cursorColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+//                                                                                                             style: TextStyle(color: Colors.black, fontSize: 15),
+//                                                                                                           ),
+//                                                                                                         ),
+//                                                                                                       ),
+//                                                                                                     ], //BG COLOR
+//                                                                                                   ),
+//                                                                                                 ),
+//                                                                                               ),
+//                                                                                             )
+//                                                                                           ]),
+//                                                                                       //
+//                                                                                       buildElevatedLayerButton(
+//                                                                                         buttonHeight: 45,
+//                                                                                         buttonWidth: 45,
+//                                                                                         isTapped: pickColor,
+//                                                                                         animationDuration: const Duration(milliseconds: 100),
+//                                                                                         animationCurve: Curves.ease,
+//                                                                                         baseDecoration: BoxDecoration(
+//                                                                                           color: Colors.green,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topDecoration: BoxDecoration(
+//                                                                                           color: Colors.black,
+//                                                                                           border: Border.all(),
+//                                                                                         ),
+//                                                                                         topLayerChild: Icon(
+//                                                                                           Icons.color_lens,
+//                                                                                           color: Colors.white,
+//                                                                                           size: 20,
+//                                                                                         ),
+//                                                                                         borderRadius: BorderRadius.circular(10),
+//                                                                                         onClick: () {
+//                                                                                           setState(() {
+//                                                                                             pickColor = !pickColor;
+//                                                                                           });
+//                                                                                         },
+//                                                                                         toggleOnTap: true,
+//                                                                                       )
+//                                                                                     ],
+//                                                                                   ),
+//                                                                                 ),
+//                                                                               ),
+//                                                                               // QuillSimpleToolbar(configurations: item.toolBarConfigurations)
+//                                                                             ],
+//                                                                           ),
+//                                                                         ),

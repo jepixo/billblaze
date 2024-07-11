@@ -1058,7 +1058,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   textAlign: TextAlign.right,
                   style: GoogleFonts.dongle(
                       color: Color(0xFF000000).withOpacity(0.7),
-                      fontSize: sHeight / 6.5,
+                      fontSize: sHeight / 8,
                       letterSpacing: -5,
                       height: 0.6)),
             ),
