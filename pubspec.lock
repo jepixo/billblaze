@@ -350,14 +350,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
-  flutter_balloon_slider:
-    dependency: "direct main"
-    description:
-      name: flutter_balloon_slider
-      sha256: "20efabbedd698c25a5a8768dd22188f7c6710e90a0206f1ddea4702cf0606057"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.1"
   flutter_colorpicker:
     dependency: transitive
     description:

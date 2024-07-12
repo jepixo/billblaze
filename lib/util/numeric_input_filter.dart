@@ -12,7 +12,7 @@ class NumericInputFormatter extends TextInputFormatter {
 
     // If the new value contains only legal characters
     if (regex.hasMatch(newValue.text)) {
-      // Remove starting zero if followed by another digit
+      // Handle leading zero
       if (newValue.text.length > 1 &&
           newValue.text.startsWith('0') &&
           newValue.text[1] != '.') {
@@ -22,12 +22,17 @@ class NumericInputFormatter extends TextInputFormatter {
           selection: TextSelection.collapsed(offset: newText.length),
         );
       }
-      // If the new value is empty, return '0'
+      // Allow empty value
       if (newValue.text.isEmpty) {
         return TextEditingValue(
-          text: '0',
-          selection: TextSelection.collapsed(offset: 1),
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
         );
+      }
+
+      // Handle case where last character is a dot
+      if (newValue.text.endsWith('.')) {
+        return newValue;
       }
 
       // Parse the new value as double
@@ -39,18 +44,23 @@ class NumericInputFormatter extends TextInputFormatter {
         return oldValue;
       }
 
-      // Round parsedValue to 5 decimals and remove trailing zeros
-      String formattedText = _formatNumber(parsedValue);
-
       // Limit the value to maxValue if provided
       if (maxValue != null && parsedValue > maxValue!) {
         parsedValue = maxValue!;
-        formattedText = _formatNumber(parsedValue);
+      }
+
+      // Round parsedValue to 3 decimals and remove trailing zeros
+      String formattedText = _formatNumber(parsedValue);
+
+      // Calculate the new selection offset
+      int offset = newValue.selection.end;
+      if (newValue.text.contains('.') && !formattedText.contains('.')) {
+        offset -= 1; // Adjust for removed dot
       }
 
       return TextEditingValue(
         text: formattedText,
-        selection: TextSelection.collapsed(offset: formattedText.length),
+        selection: TextSelection.collapsed(offset: offset),
       );
     }
 
@@ -59,7 +69,7 @@ class NumericInputFormatter extends TextInputFormatter {
   }
 
   String _formatNumber(double value) {
-    String formattedText = value.toStringAsFixed(3); // Format to 5 decimals
+    String formattedText = value.toStringAsFixed(3); // Format to 3 decimals
     // Remove trailing zeros and decimal point if all decimals are zeros
     formattedText = formattedText.contains('.')
         ? formattedText

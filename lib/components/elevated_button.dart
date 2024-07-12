@@ -63,6 +63,16 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isTappedDown = true;
+        });
+        Future.delayed(Durations.long1).then((y) {
+          setState(() {
+            _isTappedDown = false;
+          });
+        });
+      },
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
