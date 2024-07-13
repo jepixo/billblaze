@@ -110,9 +110,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   List<DocumentProperties2> documentPropertiesList = [];
   List<SelectedIndex> selectedIndex = [];
   PanelIndex panelIndex = PanelIndex(id: '', panelIndex: -1);
-  PageController pagePropertiesViewController = PageController();
+  PageController textStylePageController = PageController();
   PageController pageViewIndicatorController = PageController();
-  PageController pageTextFieldsController = PageController();
+  // PageController pageTextFieldsController = PageController();
   PageController textStyleTabControler = PageController();
   ScrollController pdfScrollController = ScrollController();
   List<SheetList> spreadSheetList = [];
@@ -198,7 +198,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
   @override
   void dispose() {
-    pagePropertiesViewController.dispose();
+    textStylePageController.dispose();
     pageViewIndicatorController.dispose();
     textStyleTabControler.dispose();
     super.dispose();
@@ -269,7 +269,12 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 margin: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                     color: defaultPalette.primary,
-                    border: Border.all(width: 2),
+                    border: Border.all(
+                      width: panelIndex.id == id ? 4 : 2,
+                      color: panelIndex.id == id
+                          ? defaultPalette.tertiary
+                          : defaultPalette.black,
+                    ),
                     borderRadius: BorderRadius.circular(10)),
                 child: Column(
                   children: [
@@ -293,12 +298,34 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 ));
           },
           onTapDown: (details, p1) {
+            var isTrue = false;
+            if (panelIndex.id == id) {
+              isTrue = true;
+            }
             setState(() {
               panelIndex = PanelIndex(id: newId, panelIndex: index);
               if (hDividerPosition > 0.48) {
                 hDividerPosition = 0.4;
               }
             });
+            Future.delayed(Duration.zero).then((_) {
+              textStylePageController.jumpToPage(panelIndex.panelIndex);
+            });
+            Future.delayed(Durations.short1).then((h) {
+              if (!isTrue) {
+                textStyleTabControler.animateToPage(0,
+                    curve: Curves.bounceIn, duration: Durations.short1);
+                for (var i = 0; i < isTapped.length; i++) {
+                  setState(() {
+                    isTapped[i] = false;
+                  });
+                }
+                setState(() {
+                  isTapped[1] = true;
+                });
+              }
+            });
+
             print('clicked');
 
             print(panelIndex);
@@ -2526,7 +2553,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                             physics:
                                                                 NeverScrollableScrollPhysics(),
                                                             controller:
-                                                                pagePropertiesViewController,
+                                                                textStylePageController,
                                                             children: [
                                                               for (int i = 0;
                                                                   i <
@@ -4360,7 +4387,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                         pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
                                                                                                         onColorChanged: (color) {
                                                                                                           item.textEditorController.formatSelection(
-                                                                                                            ColorAttribute('${colorToHex(color)}'),
+                                                                                                            ColorAttribute('#${colorToHex(color)}'),
                                                                                                           );
                                                                                                           setState(() {
                                                                                                             hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
@@ -5011,12 +5038,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                         const MaterialScrollBehavior(),
                                     controller: pageViewIndicatorController,
                                     onPageChanged: (value) {
-                                      pagePropertiesViewController.jumpToPage(
-                                        value,
-                                        // duration:
-                                        //     Duration(milliseconds: 500),
-                                        // curve: Curves.easeIn
-                                      );
                                       currentPageIndex = value;
                                     },
                                     children: [
@@ -5152,7 +5173,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 child: ElevatedLayerButton(
                   // isTapped: false,
                   // toggleOnTap: true,
-                  onClick: () {},
+                  onClick: () {
+                    Navigator.pop(context);
+                  },
                   buttonHeight: 60,
                   buttonWidth: 60,
                   borderRadius: BorderRadius.circular(100),
