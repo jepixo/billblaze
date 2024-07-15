@@ -1,3 +1,3 @@
 library flutter_balloon_slider;
 
-export 'src/widget.dart';
+export 'balloon_slider/widget.dart';

@@ -1,9 +1,10 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:billblaze/components/flutter_balloon_slider.dart';
+import 'package:billblaze/components/zoomable.dart';
+import 'package:expandable_menu/expandable_menu.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
@@ -102,7 +103,7 @@ class LayoutDesigner3 extends StatefulWidget {
 class _LayoutDesigner3State extends State<LayoutDesigner3>
     with SingleTickerProviderStateMixin {
   double hDividerPosition = 0.5;
-  double vDividerPosition = 0.5;
+  double vDividerPosition = 0.55;
   double appbarHeight = 0.065;
   DateTime dateTimeNow = DateTime.now();
   int pageCount = 0;
@@ -180,8 +181,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   List<bool> isTapped = [false, true, false, false, false];
   List<GlobalKey> globalKeys = [];
   ExportDelegate exportDelegate = ExportDelegate();
-
+  SheetItem? beingDragged = null;
+  SheetItem? beingDropped = null;
   List<dynamic> _images = [];
+  double get sWidth => MediaQuery.of(context).size.width;
   //
   //
   //
@@ -208,7 +211,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
   // }
 
-  void _addTextField({String id = ''}) {
+  TextEditorItem _addTextField({String id = '', bool shouldReturn = false}) {
     var textController = QuillController(
       document: Document(),
       selection: TextSelection.collapsed(offset: 0),
@@ -223,7 +226,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       },
     );
     var index = spreadSheetList[currentPageIndex].length;
-
+    var textEditorItem;
     setState(() {
       if (id == '') {
         String newId = Uuid().v4();
@@ -232,10 +235,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           padding: EdgeInsets.all(2),
           controller: textController,
           placeholder: 'Enter Text',
-          // onTapOutside: (event, focusNode) {
-          //   focusNode.unfocus();
-          // },
-          // expands: true,
           customStyleBuilder: (attribute) {
             // Handle letter spacing
             if (attribute.key == 'letterSpacing') {
@@ -259,51 +258,117 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             // Return default TextStyle if attribute not handled
             return TextStyle();
           },
-
+//
           builder: (context, rawEditor) {
-            return Container(
-                // duration: Durations.short4,
-                // height: !expand ? null : 40,
-                padding:
-                    EdgeInsets.only(top: 4, bottom: 8, left: 20, right: 20),
-                margin: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                    color: defaultPalette.primary,
-                    border: Border.all(
-                      width: panelIndex.id == id ? 4 : 2,
-                      color: panelIndex.id == id
-                          ? defaultPalette.tertiary
-                          : defaultPalette.black,
-                    ),
-                    borderRadius: BorderRadius.circular(10)),
-                child: Column(
-                  children: [
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      padding: EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        'id : $id',
-                        style: TextStyle(
-                          fontSize: 10,
+            return Stack(
+              children: [
+                Container(
+                    // duration: Durations.short4,
+                    // height: !expand ? null : 40,
+                    padding:
+                        EdgeInsets.only(top: 4, bottom: 8, left: 20, right: 20),
+                    margin: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: defaultPalette.primary,
+                        border: Border.all(
+                          width: panelIndex.id == id ? 4 : 2,
+                          color: panelIndex.id == id
+                              ? defaultPalette.tertiary
+                              : defaultPalette.black,
                         ),
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Column(
+                      children: [
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            'id : $id',
+                            style: TextStyle(
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                        Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                                color: defaultPalette.black.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10)),
+                            child: rawEditor),
+                      ],
+                    )),
+                AnimatedPositioned(
+                    duration: Durations.medium1,
+                    top: 0,
+                    left: 10,
+                    right: panelIndex.id == id ? 1 : -100,
+                    child: ExpandableMenu(
+                      width: 30.0,
+                      height: 30.0,
+                      items: [
+                        // Container(),
+                        // Container(),
+                        // Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                      ],
+                    )),
+                AnimatedPositioned(
+                    duration: Durations.medium1,
+                    bottom: 0,
+                    left: panelIndex.id == id ? 1 : -100,
+                    right: 10,
+                    child: Transform.flip(
+                      flipX: true,
+                      child: ExpandableMenu(
+                        width: 30.0,
+                        height: 30.0,
+                        items: [
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                          Container(),
+                        ],
                       ),
-                    ),
-                    Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                            color: defaultPalette.black.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10)),
-                        child: rawEditor),
-                  ],
-                ));
+                    )),
+              ],
+            );
           },
           onTapDown: (details, p1) {
             var isTrue = false;
+            SheetItem? itemE;
             if (panelIndex.id == id) {
               isTrue = true;
             }
             setState(() {
-              panelIndex = PanelIndex(id: newId, panelIndex: index);
+              itemE = _sheetItemIterator(id, spreadSheetList[currentPageIndex]);
+
+              if (itemE != null) {
+                index = _sheetListIterator(
+                        itemE!.parentId, spreadSheetList[currentPageIndex])
+                    .indexOf(itemE!);
+                panelIndex = PanelIndex(id: itemE!.id, panelIndex: index);
+              } else {
+                panelIndex = PanelIndex(id: newId, panelIndex: index);
+              }
+
+              // index = temp ?? index;
+
               if (hDividerPosition > 0.48) {
                 hDividerPosition = 0.4;
               }
@@ -332,25 +397,41 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             return false;
           },
         );
-        spreadSheetList[currentPageIndex].add(TextEditorItem(
+        if (!shouldReturn) {
+          spreadSheetList[currentPageIndex].add(TextEditorItem(
+            textEditorController: textController,
+            textEditorConfigurations: textEditorConfigurations,
+            id: newId,
+            parentId: spreadSheetList[currentPageIndex].id,
+            // initialValue: 'Enter Text.'
+          ));
+        }
+        textEditorItem = TextEditorItem(
           textEditorController: textController,
           textEditorConfigurations: textEditorConfigurations,
           id: newId,
           parentId: spreadSheetList[currentPageIndex].id,
           // initialValue: 'Enter Text.'
-        ));
-        return;
+        );
       } else {
         String newId = Uuid().v4();
         SheetList resultList =
             _sheetListIterator(id, spreadSheetList[currentPageIndex]);
-        resultList.add(TextEditorItem(
-            id: newId, parentId: spreadSheetList[currentPageIndex].id));
+        if (!shouldReturn) {
+          resultList.add(TextEditorItem(
+              id: newId, parentId: spreadSheetList[currentPageIndex].id));
+        }
+        textEditorItem = TextEditorItem(
+            id: newId, parentId: spreadSheetList[currentPageIndex].id);
       }
     });
+    return textEditorItem;
   }
 
   SheetList _sheetListIterator(String id, SheetList sheetList) {
+    if (sheetList.id == id) {
+      return sheetList;
+    }
     for (var i = 0; i < sheetList.length; i++) {
       if (sheetList[i].id == id) {
         return sheetList[i] as SheetList;
@@ -456,10 +537,52 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   }
 
   void _duplicateTextField() {
-    // print(selectedIndex[currentPageIndex]);
+    setState(() {
+      var itemField = _addTextField(shouldReturn: true);
+      var controller = QuillController(
+        document: (spreadSheetList[currentPageIndex][panelIndex.panelIndex]
+                as TextEditorItem)
+            .textEditorController
+            .document,
+        selection: (spreadSheetList[currentPageIndex][panelIndex.panelIndex]
+                as TextEditorItem)
+            .textEditorController
+            .selection,
+        onDelete: itemField.textEditorController.onDelete,
+        onReplaceText: itemField.textEditorController.onReplaceText,
+        onSelectionChanged: itemField.textEditorController.onSelectionChanged,
+        onSelectionCompleted:
+            itemField.textEditorController.onSelectionCompleted,
+      );
+      var editorConfig = QuillEditorConfigurations(
+        controller: controller,
+        builder: itemField.textEditorConfigurations.builder,
+        customStyles: itemField.textEditorConfigurations.customStyles,
+        onTapDown: itemField.textEditorConfigurations.onTapDown,
+        placeholder: itemField.textEditorConfigurations.placeholder,
+      );
+      if (panelIndex.panelIndex != -1) {
+        spreadSheetList[currentPageIndex].insert(
+            panelIndex.panelIndex + 1,
+            TextEditorItem(
+              id: itemField.id,
+              parentId: itemField.parentId,
+              focusNode: itemField.focusNode,
+              scrollController: itemField.scrollController,
+              textEditorConfigurations: editorConfig,
+              textEditorController: controller,
+            ));
+      }
+    });
   }
 
-  void _removeTextField() {}
+  void _removeTextField() {
+    setState(() {
+      spreadSheetList[currentPageIndex].removeAt(panelIndex.panelIndex);
+      panelIndex = PanelIndex(id: '', panelIndex: -1);
+    });
+  }
+
 //
 // genPDF
   pw.Document _generatePdf(sWidth) {
@@ -567,7 +690,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       if (op.value is String) {
         var text = op.value.toString();
         Map<String, dynamic>? attributes = op.attributes;
-        pw.EdgeInsets? padding;
+        // pw.EdgeInsets? padding;
         pw.TextStyle textStyle = const pw.TextStyle();
         PdfColor? backgroundColor;
         if (attributes != null) {
@@ -633,8 +756,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             }
           }
           if (attributes.containsKey('indent')) {
-            int level = attributes['indent'];
-            padding = pw.EdgeInsets.only(left: 20.0 * level);
+            // int level = attributes['indent'];
+            // padding = pw.EdgeInsets.only(left: 20.0 * level);
           }
           // if (attributes.containsKey('align')) {
           //   print('entering align');
@@ -665,7 +788,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           }
 
           if (attributes.containsKey('link')) {
-            final link = attributes['link'];
+            // final link = attributes['link'];
             // textSpans.add(
             //   pw.TextSpan(
             //     text: text,
@@ -853,14 +976,18 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                       // )
                     ]),
                     padding: EdgeInsets.only(
-                      top: double.parse(doc[i].marginTopController.text) *
-                          (1 - vDividerPosition),
-                      bottom: double.parse(doc[i].marginBottomController.text) *
-                          (1 - vDividerPosition),
-                      left: double.parse(doc[i].marginLeftController.text) *
-                          (1 - vDividerPosition),
-                      right: double.parse(doc[i].marginRightController.text) *
-                          (1 - vDividerPosition),
+                      top: double.parse(doc[i].marginTopController.text),
+                      // *
+                      //     (1 - vDividerPosition),
+                      bottom: double.parse(doc[i].marginBottomController.text),
+                      // *
+                      //     (1 - vDividerPosition),
+                      left: double.parse(doc[i].marginLeftController.text),
+                      // *
+                      //     (1 - vDividerPosition),
+                      right: double.parse(doc[i].marginRightController.text),
+                      // *
+                      //     (1 - vDividerPosition),
                     ),
                     child: _buildSheetListWidget(sheetList[i], width),
                   ),
@@ -885,7 +1012,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       itemBuilder: (context, index) {
         final item = sheetList.sheetList[index];
         if (item is TextEditorItem) {
-          final delta = item.getTextEditorDocumentAsDelta();
+          // final delta = item.getTextEditorDocumentAsDelta();
           return IgnorePointer(
             key: ValueKey(item),
             child: QuillEditor(
@@ -1077,7 +1204,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             }
           }
           if (attributes.containsKey('link')) {
-            final link = attributes['link'];
+            // final link = attributes['link'];
             textWidgets.add(
               GestureDetector(
                 onTap: () {
@@ -1152,36 +1279,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             lastWidget = textWidgets[textWidgets.length - 1];
           }
         }
-
-        // Create a new row or add to previous row/column based on conditions
-        // if (startsWithNewLine) {
-        //   textWidgets.add(Text(
-        //     text.substring(
-        //         0, text[text.length - 1] == '\n' ? text.length : null),
-        //     style: textStyle,
-        //   ));
-        //   lastWidget = textWidgets[textWidgets.length - 1];
-        // } else {
-        //   if (lastWidget is Row) {
-        //     (textWidgets[textWidgets.length - 1] as Row).children.add(Text(
-        //         text.substring(
-        //             0, text[text.length - 1] == '\n' ? text.length : null),
-        //         style: textStyle));
-        //     lastWidget = textWidgets[textWidgets.length - 1];
-        //   } else if (lastWidget is Text) {
-        //     var prev = textWidgets.removeAt(textWidgets.length - 1);
-        //     textWidgets.add(Row(
-        //       children: [
-        //         prev,
-        //         Text(
-        //             text.substring(
-        //                 0, text[text.length - 1] == '\n' ? text.length : null),
-        //             style: textStyle)
-        //       ],
-        //     ));
-        //     lastWidget = textWidgets[textWidgets.length - 1];
-        //   }
-        // }
       }
     });
 
@@ -1344,12 +1441,14 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 duration: Duration(milliseconds: 300),
                 child: Column(
                   children: [
+                    //APPBAR
                     Expanded(
                       flex: (appbarHeight * 10000).round(),
                       child: Container(
                         height: sHeight * 0.1,
                       ),
                     ),
+                    //TOP HALF
                     Expanded(
                       flex: (hDividerPosition * 10000).round(),
                       child: Stack(
@@ -4663,8 +4762,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                         setState(() {
                                                           panelIndex =
                                                               PanelIndex(
-                                                                  id: panelIndex
-                                                                      .id,
+                                                                  id: '',
                                                                   panelIndex:
                                                                       -1);
                                                         });
@@ -4844,33 +4942,34 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                           //emulating the pdf preview
                           Positioned(
                             top: sHeight * appbarHeight / 6,
-                            // left: (sWidth * vDividerPosition),
-                            right: 0,
+                            left: (sWidth * vDividerPosition),
+                            // right: 0,
                             // width: 2480 ,
                             // height: sHeight * hDividerPosition+126,
-                            child: Transform.scale(
-                              scale: (1 - vDividerPosition) * 0.48,
-                              // scale: 1,
-                              alignment: Alignment.topRight,
-                              child: Container(
-                                // width: 2480,
-                                // height: (sWidth-64)*sqrt2 ,
-                                height: (sHeight) *
-                                    hDividerPosition /
-                                    ((1 - vDividerPosition) * 0.48),
-                                // duration: Duration(milliseconds: 100),
-                                padding: EdgeInsets.only(
-                                    bottom: 25, top: 25, right: 40),
-                                // color: Colors.black,
-                                decoration: BoxDecoration(boxShadow: [
-                                  BoxShadow(
-                                      blurRadius: 500,
-                                      offset: Offset(5, 5),
-                                      color: defaultPalette.black
-                                          .withOpacity(0.06))
-                                ]),
-                                alignment: Alignment.center,
-                                child: _generateWid(sWidth, sHeight),
+                            child: Zoomable(
+                              maxScale: 10,
+                              child: Transform.scale(
+                                scale: (1 - vDividerPosition) * 0.48,
+                                // scale: 1,
+                                alignment: Alignment.topLeft,
+                                child: Container(
+                                  // width: 2480,
+                                  // height: (sWidth-64)*sqrt2 ,
+                                  height: (sHeight) *
+                                      hDividerPosition /
+                                      ((1 - vDividerPosition) * 0.48),
+                                  padding: EdgeInsets.only(
+                                      bottom: 25, top: 25, right: 40),
+                                  decoration: BoxDecoration(boxShadow: [
+                                    // BoxShadow(
+                                    //     blurRadius: 500,
+                                    //     offset: Offset(5, 5),
+                                    //     color: defaultPalette.black
+                                    //         .withOpacity(0.06))
+                                  ]),
+                                  alignment: Alignment.center,
+                                  child: _generateWid(sWidth, sHeight),
+                                ),
                               ),
                             ),
                           ),
@@ -5025,37 +5124,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                       // size: 40,
                                       color: defaultPalette.black,
                                     )),
-
-                                Container(
-                                  height: 25,
-                                  width: sWidth / 7,
-                                  color: defaultPalette.black,
-                                  // margin: EdgeInsets.only(top: 10, bottom: 20),
-                                  child: PageView(
-                                    allowImplicitScrolling: true,
-                                    physics: BouncingScrollPhysics(),
-                                    scrollBehavior:
-                                        const MaterialScrollBehavior(),
-                                    controller: pageViewIndicatorController,
-                                    onPageChanged: (value) {
-                                      currentPageIndex = value;
-                                    },
-                                    children: [
-                                      for (int i = 0; i < pageCount; i++)
-                                        Center(
-                                          child: Text(
-                                            documentPropertiesList[i]
-                                                .pageNumberController
-                                                .text,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: defaultPalette.primary,
-                                                fontSize: 20),
-                                          ),
-                                        )
-                                    ],
-                                  ),
-                                ),
                               ],
                             ),
                           ),
@@ -5065,9 +5133,51 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                             child: Container(
                               // height: sHeight / 20,
                               width: sWidth,
-                              color: defaultPalette.tertiary,
+                              color: defaultPalette.black.withOpacity(.9),
                               child: Stack(
                                 children: [
+                                  //Graph
+                                  IgnorePointer(
+                                    ignoring: true,
+                                    child: AnimatedContainer(
+                                      duration: Durations.extralong1,
+                                      height: sHeight,
+                                      width: sWidth,
+                                      alignment: Alignment.centerRight,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.0),
+                                      ),
+                                      padding: EdgeInsets.only(
+                                        top: 0,
+                                      ),
+                                      //layGraph
+                                      child: Opacity(
+                                        opacity: 0.35,
+                                        child: LineChart(LineChartData(
+                                            lineBarsData: [LineChartBarData()],
+                                            titlesData:
+                                                FlTitlesData(show: false),
+                                            gridData: FlGridData(
+                                                show: true,
+                                                horizontalInterval: 10,
+                                                verticalInterval: 30),
+                                            borderData:
+                                                FlBorderData(show: false),
+                                            minY: 0,
+                                            maxY: 50,
+                                            maxX: dateTimeNow
+                                                        .millisecondsSinceEpoch
+                                                        .ceilToDouble() /
+                                                    500 +
+                                                250,
+                                            minX: dateTimeNow
+                                                    .millisecondsSinceEpoch
+                                                    .ceilToDouble() /
+                                                500)),
+                                      ),
+                                    ),
+                                  ),
+
                                   Builder(builder: (context) {
                                     List<Widget> widgetList = [];
                                     for (int index = 0;

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:billblaze/components/src/render.dart';
+import 'package:billblaze/components/balloon_slider/render.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

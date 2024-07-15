@@ -5399,3 +5399,232 @@ class _TestState extends ConsumerState<Test> {
 //                                                                             ],
 //                                                                           ),
 //                                                                         ),
+
+
+
+
+  // return Column(
+  //             children: [
+  //               AnimatedContainer(
+  //                   duration: Durations.short4,
+  //                   height: beingDropped?.id == id ? 50 : 0,
+  //                   padding:
+  //                       EdgeInsets.only(top: 4, bottom: 8, left: 20, right: 20),
+  //                   margin: EdgeInsets.all(8),
+  //                   decoration: BoxDecoration(
+  //                       color: defaultPalette.primary,
+  //                       border: Border.all(
+  //                         width: panelIndex.id == id ? 4 : 2,
+  //                         color: panelIndex.id == id
+  //                             ? defaultPalette.tertiary
+  //                             : defaultPalette.black,
+  //                       ),
+  //                       borderRadius: BorderRadius.circular(10)),
+  //                   child: Column(
+  //                     children: [
+  //                       Container(
+  //                         alignment: Alignment.centerLeft,
+  //                         padding: EdgeInsets.only(bottom: 4),
+  //                         child: Text(
+  //                           'id : $id',
+  //                           style: TextStyle(
+  //                             fontSize: 10,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       Container(
+  //                           padding: EdgeInsets.all(8),
+  //                           decoration: BoxDecoration(
+  //                               color: defaultPalette.black.withOpacity(0.1),
+  //                               borderRadius: BorderRadius.circular(10)),
+  //                           child: QuillEditor.basic(
+  //                               configurations: QuillEditorConfigurations(
+  //                                   placeholder:
+  //                                       rawEditor.configurations.placeholder,
+  //                                   controller:
+  //                                       rawEditor.configurations.controller))),
+  //                     ],
+  //                   )),
+  //               LongPressDraggable(
+  //                 childWhenDragging: Container(
+  //                     // duration: Durations.short4,
+  //                     // height: !expand ? null : 40,
+  //                     padding: EdgeInsets.only(
+  //                         top: 4, bottom: 8, left: 20, right: 20),
+  //                     margin: EdgeInsets.all(8),
+  //                     decoration: BoxDecoration(
+  //                         color: defaultPalette.primary,
+  //                         border: Border.all(
+  //                           width: panelIndex.id == id ? 4 : 2,
+  //                           color: panelIndex.id == id
+  //                               ? defaultPalette.tertiary
+  //                               : defaultPalette.black,
+  //                         ),
+  //                         borderRadius: BorderRadius.circular(10)),
+  //                     child: Column(
+  //                       children: [
+  //                         Container(
+  //                           alignment: Alignment.centerLeft,
+  //                           padding: EdgeInsets.only(bottom: 4),
+  //                           child: Text(
+  //                             'id : $id',
+  //                             style: TextStyle(
+  //                               fontSize: 10,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         Container(
+  //                             padding: EdgeInsets.all(8),
+  //                             decoration: BoxDecoration(
+  //                                 color: defaultPalette.black.withOpacity(0.1),
+  //                                 borderRadius: BorderRadius.circular(10)),
+  //                             child: QuillEditor.basic(
+  //                                 configurations: QuillEditorConfigurations(
+  //                                     placeholder:
+  //                                         rawEditor.configurations.placeholder,
+  //                                     controller: rawEditor
+  //                                         .configurations.controller))),
+  //                       ],
+  //                     )),
+  //                 feedback: Container(
+  //                     // duration: Durations.short4,
+  //                     // height: !expand ? null : 40,
+  //                     padding: EdgeInsets.only(
+  //                         top: 4, bottom: 8, left: 20, right: 20),
+  //                     margin: EdgeInsets.all(8),
+  //                     decoration: BoxDecoration(
+  //                         color: defaultPalette.primary,
+  //                         border: Border.all(
+  //                           width: panelIndex.id == id ? 4 : 2,
+  //                           color: panelIndex.id == id
+  //                               ? defaultPalette.tertiary
+  //                               : defaultPalette.black,
+  //                         ),
+  //                         borderRadius: BorderRadius.circular(10)),
+  //                     child: Column(
+  //                       children: [
+  //                         Container(
+  //                           alignment: Alignment.centerLeft,
+  //                           padding: EdgeInsets.only(bottom: 4),
+  //                           child: Text(
+  //                             'id : $id',
+  //                             style: TextStyle(
+  //                                 fontSize: 10,
+  //                                 color: Colors.black,
+  //                                 decoration: TextDecoration.none),
+  //                           ),
+  //                         ),
+  //                         Container(
+  //                             height: 50,
+  //                             width: 300,
+  //                             padding: EdgeInsets.all(8),
+  //                             decoration: BoxDecoration(
+  //                                 color: defaultPalette.black.withOpacity(0.1),
+  //                                 borderRadius: BorderRadius.circular(10)),
+  //                             child: QuillEditor.basic(
+  //                                 configurations: QuillEditorConfigurations(
+  //                                     controller: rawEditor
+  //                                         .configurations.controller))),
+  //                       ],
+  //                     )),
+  //                 child: Stack(
+  //                   children: [
+  //                     Container(
+  //                         // duration: Durations.short4,
+  //                         // height: !expand ? null : 40,
+  //                         padding: EdgeInsets.only(
+  //                             top: 4, bottom: 8, left: 20, right: 20),
+  //                         margin: EdgeInsets.all(8),
+  //                         decoration: BoxDecoration(
+  //                             color: defaultPalette.primary,
+  //                             border: Border.all(
+  //                               width: panelIndex.id == id ? 4 : 2,
+  //                               color: panelIndex.id == id
+  //                                   ? defaultPalette.tertiary
+  //                                   : defaultPalette.black,
+  //                             ),
+  //                             borderRadius: BorderRadius.circular(10)),
+  //                         child: Column(
+  //                           children: [
+  //                             Container(
+  //                               alignment: Alignment.centerLeft,
+  //                               padding: EdgeInsets.only(bottom: 4),
+  //                               child: Text(
+  //                                 'id : $id',
+  //                                 style: TextStyle(
+  //                                   fontSize: 10,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                             Container(
+  //                                 padding: EdgeInsets.all(8),
+  //                                 decoration: BoxDecoration(
+  //                                     color:
+  //                                         defaultPalette.black.withOpacity(0.1),
+  //                                     borderRadius: BorderRadius.circular(10)),
+  //                                 child: rawEditor),
+  //                           ],
+  //                         )),
+  //                     AnimatedPositioned(
+  //                         duration: Durations.medium1,
+  //                         top: 0,
+  //                         left: 10,
+  //                         right: panelIndex.id == id ? 1 : -100,
+  //                         child: ExpandableMenu(
+  //                           width: 30.0,
+  //                           height: 30.0,
+  //                           items: [
+  //                             // Container(),
+  //                             // Container(),
+  //                             // Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                             Container(),
+  //                           ],
+  //                         )),
+  //                     AnimatedPositioned(
+  //                         duration: Durations.medium1,
+  //                         bottom: 0,
+  //                         left: panelIndex.id == id ? 1 : -100,
+  //                         right: 10,
+  //                         child: Transform.flip(
+  //                           flipX: true,
+  //                           child: ExpandableMenu(
+  //                             width: 30.0,
+  //                             height: 30.0,
+  //                             items: [
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                               Container(),
+  //                             ],
+  //                           ),
+  //                         )),
+  //                   ],
+  //                 ),
+  //                 onDragStarted: () {
+  //                   setState(() {
+  //                     beingDragged = _sheetItemIterator(
+  //                         id, spreadSheetList[currentPageIndex]);
+  //                   });
+  //                   print('drag Started');
+  //                   print(beingDragged.toString());
+  //                 },
+  //               ),
+  //             ],
+  //           );
+          

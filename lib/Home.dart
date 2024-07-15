@@ -1,18 +1,14 @@
 import 'dart:async';
 import 'dart:math';
-// import 'package:billblaze/components/appflowy_board.dart';
-// import 'package:billblaze/screens/layout_designer.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:billblaze/components/animated_stack.dart';
 import 'package:billblaze/components/flutter_balloon_slider.dart';
 import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/main.dart';
 import 'package:billblaze/screens/layout_designer.dart';
-// import 'package:billblaze/multi_board_list_example.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_adaptive_layout/layout/adaptive_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:simple_animated_button/simple_animated_button.dart';
@@ -326,664 +322,597 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    double sWidth = MediaQuery.of(context).size.width;
+    double sHeight = MediaQuery.of(context).size.height;
+    Duration sideBarPosDuration = Duration(milliseconds: 300);
+    Duration defaultDuration = Duration(milliseconds: 300);
+    double topPadPosDistance = sHeight / 10;
+    double leftPadPosDistance = sWidth / 8;
+    double DTsectHeight = sHeight / 2;
+    double DTsectWidth = sWidth;
+    double topPadGraphDistance = sHeight / 4.2;
+    double titleFontSize = sHeight / 11;
+    double topPadCardsDistance = sHeight / 5.5;
+    bool appinioLoop = ref.watch(appinioLoopProvider);
     return Scaffold(
-      // resizeToAvoidBottomInset: true,
-      body: AdaptiveLayout(
-        smallBuilder: (context, child) {
-          double sWidth = MediaQuery.of(context).size.width;
-          double sHeight = MediaQuery.of(context).size.height;
-          return Container(
-            height: sHeight,
-            width: sWidth,
-            child: Stack(
-              children: [
-                ElevatedLayerButton(
+        // resizeToAvoidBottomInset: true,
+        body: AnimatedStack(
+      slideAnimationDuration: Duration(milliseconds: 600),
+      fabBackgroundColor: Colors.transparent,
+      backgroundColor: Colors.transparent,
+      fabIconColor: Colors.green,
+      buttonIcon: IconsaxPlusBold.add,
+      columnWidget: Column(),
+      bottomWidget: Row(),
+      foregroundWidget: Container(
+        height: sHeight,
+        width: sWidth,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              IgnorePointer(
+                ignoring: !appinioLoop,
+                child: Container(
+                  width: sWidth,
+                  height: sHeight,
+                  color: Colors.transparent,
+                ),
+              ),
+              _getLayoutAndTemplates(context, ref, topPadPosDistance),
+              //
+              //BILLBLAZE MAIN TITLE
+              AnimatedPositioned(
+                duration: defaultDuration,
+                top: topPadPosDistance -
+                    (appinioLoop ? 0 : topPadPosDistance / 1.5),
+                left: leftPadPosDistance + (appinioLoop ? 0 : sWidth / 50),
+                child: AnimatedTextKit(
+                  key: ValueKey(appinioLoop),
+                  animatedTexts: [
+                    TypewriterAnimatedText("Bill\nBlaze.",
+                        textStyle: GoogleFonts.abrilFatface(
+                            fontSize:
+                                appinioLoop ? titleFontSize : titleFontSize / 3,
+                            color: appinioLoop
+                                ? Colors.black
+                                : Color(0xFF000000).withOpacity(0.8),
+                            height: 0.9),
+                        speed: Duration(milliseconds: 100)),
+                    TypewriterAnimatedText("Bill\nBlaze.",
+                        textStyle: GoogleFonts.zcoolKuaiLe(
+                            fontSize:
+                                appinioLoop ? titleFontSize : titleFontSize / 3,
+                            color: appinioLoop
+                                ? Colors.black
+                                : Color(0xFF000000).withOpacity(0.8),
+                            height: 0.9),
+                        speed: Duration(milliseconds: 100)),
+                    TypewriterAnimatedText("Bill\nBlaze.",
+                        textStyle: GoogleFonts.splash(
+                            fontSize:
+                                appinioLoop ? titleFontSize : titleFontSize / 3,
+                            color: appinioLoop
+                                ? Colors.black
+                                : Color(0xFF000000).withOpacity(0.8),
+                            height: 0.9),
+                        speed: Duration(milliseconds: 100)),
+                    TypewriterAnimatedText("Bill\nBlaze",
+                        textStyle: GoogleFonts.libreBarcode39ExtendedText(
+                            fontSize: appinioLoop
+                                ? titleFontSize / 1.1
+                                : titleFontSize / 3,
+                            letterSpacing: appinioLoop ? -titleFontSize / 4 : 0,
+                            height: 1),
+                        speed: Duration(milliseconds: 100)),
+                    TypewriterAnimatedText("Bill\nBlaze.",
+                        textStyle: GoogleFonts.redactedScript(
+                            fontSize:
+                                appinioLoop ? titleFontSize : titleFontSize / 3,
+                            color: appinioLoop
+                                ? Colors.black
+                                : Color(0xFF000000).withOpacity(0.8),
+                            height: 0.9),
+                        speed: Duration(milliseconds: 100)),
+                    TypewriterAnimatedText("Bill\nBlaze.",
+                        textStyle: GoogleFonts.fascinateInline(
+                            fontSize:
+                                appinioLoop ? titleFontSize : titleFontSize / 3,
+                            color: appinioLoop
+                                ? Colors.black
+                                : Color(0xFF000000).withOpacity(0.8),
+                            height: 0.9),
+                        speed: Duration(milliseconds: 100)),
+                    TypewriterAnimatedText("Bill\nBlaze.",
+                        textStyle: GoogleFonts.nabla(
+                            fontSize:
+                                appinioLoop ? titleFontSize : titleFontSize / 3,
+                            color: appinioLoop
+                                ? Colors.black
+                                : Color(0xFF000000).withOpacity(0.8),
+                            height: 0.9),
+                        speed: Duration(milliseconds: 100)),
+                  ],
+                  // totalRepeatCount: 1,
+                  repeatForever: true,
+                  pause: const Duration(milliseconds: 30000),
+                  displayFullTextOnTap: true,
+                  stopPauseOnTap: true,
+                ),
+              ),
+              //
+              //SIDE BAR BUTTON
+              AnimatedPositioned(
+                duration: sideBarPosDuration,
+                top: (sHeight / 20) - (appinioLoop ? 0 : sHeight / 28),
+                left: (sWidth / 40) - (appinioLoop ? 0 : sWidth / 12),
+                child: ElevatedLayerButton(
                   onClick: () {},
-                  buttonHeight: 60,
-                  buttonWidth: 270,
+                  buttonHeight: 70,
+                  buttonWidth: 70,
+                  borderRadius: BorderRadius.circular(100),
                   animationDuration: const Duration(milliseconds: 200),
                   animationCurve: Curves.ease,
                   topDecoration: BoxDecoration(
-                    color: Colors.amber,
+                    color: Colors.white,
                     border: Border.all(),
                   ),
-                  topLayerChild: Icon(IconsaxPlusLinear.menu),
+                  topLayerChild: Icon(
+                    IconsaxPlusLinear.element_3,
+                    size: 25,
+                  ),
                   baseDecoration: BoxDecoration(
                     color: Colors.green,
                     border: Border.all(),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-        //
-        //
-        //
-        mediumBuilder: (context, child) {
-          double sWidth = MediaQuery.of(context).size.width;
-          double sHeight = MediaQuery.of(context).size.height;
-          Duration sideBarPosDuration = Duration(milliseconds: 300);
-          Duration defaultDuration = Duration(milliseconds: 300);
-          double topPadPosDistance = sHeight / 10;
-          double leftPadPosDistance = sWidth / 8;
-          double DTsectHeight = sHeight / 2;
-          double DTsectWidth = sWidth;
-          double topPadGraphDistance = sHeight / 4.2;
-          double titleFontSize = sHeight / 11;
-          double topPadCardsDistance = sHeight / 5.5;
-          bool appinioLoop = ref.watch(appinioLoopProvider);
-          //
-          //
-          return AnimatedStack(
-            slideAnimationDuration: Duration(milliseconds: 600),
-            fabBackgroundColor: Colors.transparent,
-            backgroundColor: Colors.transparent,
-            fabIconColor: Colors.green,
-            buttonIcon: IconsaxPlusBold.add,
-            columnWidget: Column(),
-            bottomWidget: Row(),
-            foregroundWidget: Container(
-              height: sHeight,
-              width: sWidth,
-              child: SafeArea(
-                child: Stack(
-                  children: [
-                    IgnorePointer(
-                      ignoring: !appinioLoop,
-                      child: Container(
-                        width: sWidth,
-                        height: sHeight,
-                        color: Colors.transparent,
-                      ),
-                    ),
-                    _getLayoutAndTemplates(context, ref, topPadPosDistance),
-                    //
-                    //BILLBLAZE MAIN TITLE
-                    AnimatedPositioned(
-                      duration: defaultDuration,
-                      top: topPadPosDistance -
-                          (appinioLoop ? 0 : topPadPosDistance / 1.5),
-                      left:
-                          leftPadPosDistance + (appinioLoop ? 0 : sWidth / 50),
-                      child: AnimatedTextKit(
-                        key: ValueKey(appinioLoop),
-                        animatedTexts: [
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.abrilFatface(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize
-                                      : titleFontSize / 3,
-                                  color: appinioLoop
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.zcoolKuaiLe(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize
-                                      : titleFontSize / 3,
-                                  color: appinioLoop
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.splash(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize
-                                      : titleFontSize / 3,
-                                  color: appinioLoop
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze",
-                              textStyle: GoogleFonts.libreBarcode39ExtendedText(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize / 1.1
-                                      : titleFontSize / 3,
-                                  letterSpacing:
-                                      appinioLoop ? -titleFontSize / 4 : 0,
-                                  height: 1),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.redactedScript(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize
-                                      : titleFontSize / 3,
-                                  color: appinioLoop
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.fascinateInline(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize
-                                      : titleFontSize / 3,
-                                  color: appinioLoop
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.nabla(
-                                  fontSize: appinioLoop
-                                      ? titleFontSize
-                                      : titleFontSize / 3,
-                                  color: appinioLoop
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                        ],
-                        // totalRepeatCount: 1,
-                        repeatForever: true,
-                        pause: const Duration(milliseconds: 30000),
-                        displayFullTextOnTap: true,
-                        stopPauseOnTap: true,
-                      ),
-                    ),
-                    //
-                    //SIDE BAR BUTTON
-                    AnimatedPositioned(
-                      duration: sideBarPosDuration,
-                      top: (sHeight / 20) - (appinioLoop ? 0 : sHeight / 28),
-                      left: (sWidth / 40) - (appinioLoop ? 0 : sWidth / 12),
-                      child: ElevatedLayerButton(
-                        onClick: () {},
-                        buttonHeight: 70,
-                        buttonWidth: 70,
-                        borderRadius: BorderRadius.circular(100),
-                        animationDuration: const Duration(milliseconds: 200),
-                        animationCurve: Curves.ease,
-                        topDecoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(),
-                        ),
-                        topLayerChild: Icon(
-                          IconsaxPlusLinear.element_3,
-                          size: 25,
-                        ),
-                        baseDecoration: BoxDecoration(
-                          color: Colors.green,
-                          border: Border.all(),
-                        ),
-                      ),
-                    ),
+              ),
 
-                    //
-                    //Graph
-                    AnimatedPositioned(
-                      duration: defaultDuration,
-                      top: topPadPosDistance + topPadGraphDistance,
-                      height: sHeight / 6,
-                      width: sWidth,
-                      child: IgnorePointer(
-                        ignoring: !appinioLoop,
-                        child: FadeOut(
-                          manualTrigger: true,
-                          animate: true,
-                          controller: (p0) {
-                            squiggleFadeAnimationController = p0;
-                          },
-                          child: LineChart(
-                            LineChartData(
-                              lineBarsData: [
-                                LineChartBarData(
-                                  spots: _dataPoints[0],
-                                  isCurved: true,
-                                  curveSmoothness: 0.5,
-                                  barWidth: 2,
-                                  color: Colors.black,
-                                  belowBarData: BarAreaData(show: false),
-                                  dotData: FlDotData(show: false),
-                                ),
-                                LineChartBarData(
-                                  spots: _dataPoints[1],
-                                  isCurved: false,
-                                  curveSmoothness: 0,
-                                  barWidth: 1,
-                                  color: Colors.green,
-                                  belowBarData: BarAreaData(show: false),
-                                  dotData: FlDotData(show: false),
-                                  // isStepLineChart: true,
-                                ),
-                                LineChartBarData(
-                                    spots: _dataPoints[2],
-                                    isCurved: false,
-                                    curveSmoothness: 0,
-                                    barWidth: 1,
-                                    color: Colors.redAccent,
-                                    belowBarData: BarAreaData(show: false),
-                                    dotData: FlDotData(show: false),
-                                    isStepLineChart: true),
-                                LineChartBarData(
-                                  spots: _dataPoints[3],
-                                  isCurved: false,
-                                  curveSmoothness: 0,
-                                  barWidth: 1,
-                                  color: Colors.black,
-                                  belowBarData: BarAreaData(show: false),
-                                  dotData: FlDotData(show: false),
-                                ),
-                                LineChartBarData(
-                                  spots: _dataPoints[4],
-                                  isCurved: false,
-                                  curveSmoothness: 0,
-                                  barWidth: 1,
-                                  color: Colors.black,
-                                  belowBarData: BarAreaData(show: false),
-                                  dotData: FlDotData(show: false),
-                                ),
-                                LineChartBarData(
-                                    spots: _dataPoints[5],
-                                    isCurved: false,
-                                    curveSmoothness: 0,
-                                    barWidth: 1,
-                                    color: Colors.purple,
-                                    belowBarData: BarAreaData(show: false),
-                                    dotData: FlDotData(show: false),
-                                    isStepLineChart: true),
-                                LineChartBarData(
-                                  spots: _dataPoints[6],
-                                  isCurved: false,
-                                  curveSmoothness: 0,
-                                  barWidth: 1,
-                                  color: Colors.indigo,
-                                  belowBarData: BarAreaData(show: false),
-                                  dotData: FlDotData(show: false),
-                                ),
-                              ],
-                              backgroundColor: Colors.black.withOpacity(0.02),
-                              titlesData: FlTitlesData(
-                                show: false,
-                                topTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                  interval: _dataPoints[0].last.x <= 50
-                                      ? 50
-                                      : _dataPoints[0].last.x,
-                                  reservedSize: 30,
-                                  showTitles: true,
-                                  getTitlesWidget: (value, meta) {
-                                    return SideTitleWidget(
-                                      axisSide: meta.axisSide,
-                                      space: 10,
-                                      child: Text(
-                                        value.round().toString(),
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )),
-                                bottomTitles: const AxisTitles(
-                                    sideTitles: SideTitles(
-                                        reservedSize: 20, showTitles: false)),
-                                leftTitles: const AxisTitles(
-                                    sideTitles: SideTitles(
-                                        reservedSize: 10, showTitles: false)),
-                                rightTitles: const AxisTitles(
-                                    sideTitles: SideTitles(
-                                        reservedSize: 10, showTitles: true)),
-                              ),
-                              gridData: FlGridData(
-                                  show: true,
-                                  horizontalInterval: 20,
-                                  verticalInterval: 10),
-                              borderData: FlBorderData(show: false),
-                              lineTouchData: LineTouchData(
-                                //
-                                //
-                                //
-                                //
-                                //
-                                getTouchedSpotIndicator:
-                                    (LineChartBarData barData,
-                                        List<int> spotIndexes) {
-                                  return spotIndexes.map((spotIndex) {
-                                    final spot = barData.spots[spotIndex];
-                                    if (spot.x == 0 || spot.x == 6) {
-                                      return null;
-                                    }
-                                    return TouchedSpotIndicatorData(
-                                      FlLine(
-                                        color: Colors.green,
-                                        strokeWidth: 1,
-                                      ),
-                                      FlDotData(
-                                        getDotPainter:
-                                            (spot, percent, barData, index) {
-                                          if (index.isEven) {
-                                            return FlDotCirclePainter(
-                                              radius: 5,
-                                              color: Colors.black,
-                                              strokeWidth: 0,
-                                              // strokeColor: widget
-                                              //     .indicatorTouchedSpotStrokeColor,
-                                            );
-                                          } else {
-                                            return FlDotSquarePainter(
-                                              size: 5,
-                                              color: Colors.black,
-                                              strokeWidth: 0,
-                                              // strokeColor: widget
-                                              //     .indicatorTouchedSpotStrokeColor,
-                                            );
-                                          }
-                                        },
-                                      ),
-                                    );
-                                  }).toList();
-                                },
-                                touchTooltipData: LineTouchTooltipData(
-                                  // getTooltipColor: (touchedSpot) =>
-                                  //     widget.tooltipBgColor,
-                                  getTooltipItems:
-                                      (List<LineBarSpot> touchedBarSpots) {
-                                    return touchedBarSpots.map((barSpot) {
-                                      final flSpot = barSpot;
-                                      if (flSpot.x == 0 || flSpot.x == 6) {
-                                        return null;
-                                      }
-
-                                      TextAlign textAlign;
-                                      switch (flSpot.x.toInt()) {
-                                        case 1:
-                                          textAlign = TextAlign.left;
-                                          break;
-                                        case 5:
-                                          textAlign = TextAlign.right;
-                                          break;
-                                        default:
-                                          textAlign = TextAlign.center;
-                                      }
-
-                                      return LineTooltipItem(
-                                        'som \n',
-                                        TextStyle(
-                                          // color: widget.tooltipTextColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text: flSpot.y.toString(),
-                                            style: TextStyle(
-                                              // color: widget.tooltipTextColor,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          const TextSpan(
-                                            text: ' k ',
-                                            style: TextStyle(
-                                              fontStyle: FontStyle.italic,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          const TextSpan(
-                                            text: 'calories',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                        ],
-                                        textAlign: textAlign,
-                                      );
-                                    }).toList();
-                                  },
-                                ),
-                              ),
-                              minX: appinioLoop
-                                  ? _dataPoints[0].first.x
-                                  : appinioMinTabChanged,
-                              maxX: appinioLoop
-                                  ? _dataPoints[0].last.x <= 50
-                                      ? 50
-                                      : (_dataPoints[0].last.x +
-                                              ((_dataPoints[0].last.x -
-                                                      _dataPoints[0].first.x) *
-                                                  0.2)) -
-                                          _dataPoints[0].last.y * 0.02
-                                  : appinioMaxTabChanged,
-                              minY: -30,
-                              maxY: 30,
-                            ),
-                            duration: Duration(milliseconds: 150),
-                            curve: Curves.linear,
+              //
+              //Graph
+              AnimatedPositioned(
+                duration: defaultDuration,
+                top: topPadPosDistance + topPadGraphDistance,
+                height: sHeight / 6,
+                width: sWidth,
+                child: IgnorePointer(
+                  ignoring: !appinioLoop,
+                  child: FadeOut(
+                    manualTrigger: true,
+                    animate: true,
+                    controller: (p0) {
+                      squiggleFadeAnimationController = p0;
+                    },
+                    child: LineChart(
+                      LineChartData(
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: _dataPoints[0],
+                            isCurved: true,
+                            curveSmoothness: 0.5,
+                            barWidth: 2,
+                            color: Colors.black,
+                            belowBarData: BarAreaData(show: false),
+                            dotData: FlDotData(show: false),
                           ),
-                        ),
-                      ),
-                    ),
-                    //
-                    //dateTime
-                    AnimatedPositioned(
-                        duration: defaultDuration,
-                        top: appinioLoop
-                            ? topPadPosDistance +
-                                topPadGraphDistance +
-                                sHeight / 5.9
-                            : sHeight,
-                        // left: -50,
-                        height: DTsectHeight,
-                        width: DTsectWidth,
-                        child: AnimatedContainer(
-                          duration: defaultDuration,
-                          height: DTsectHeight,
-                          width: DTsectWidth,
-                          color: Color(0xFFFBF5FF).withOpacity(0.7),
-                        )),
-                    //
-                    //slider
-                    AnimatedPositioned(
-                        duration: defaultDuration,
-                        top: topPadPosDistance +
-                            topPadGraphDistance +
-                            sHeight / 6.3,
-                        left: -50,
-                        height: 20,
-                        width: sWidth + 100,
-                        child: FadeOut(
-                          animate: true,
-                          manualTrigger: true,
-                          controller: (p0) {
-                            sliderFadeAnimationController = p0;
-                          },
-                          child: IgnorePointer(
-                            ignoring: !appinioLoop,
-                            child: BalloonSlider(
-                                value: (_graphLineSpeedTween.value / 100),
-                                ropeLength: sHeight / 6,
-                                showRope: true,
-                                onChangeStart: (val) {
-                                  setState(() {
-                                    _updateGraphLineSpeed(
-                                        (val.clamp(0.1, 0.9) * 100).round());
-                                    // _updateGraphLineSpeed(_graphLineSpeed);
-                                  });
-                                },
-                                onChanged: (val) {
-                                  setState(() {
-                                    _updateGraphLineSpeed(
-                                        (val.clamp(0.1, 0.9) * 100).round());
-                                  });
-                                },
-                                onChangeEnd: (val) {
-                                  setState(() {
-                                    _updateGraphLineSpeed(
-                                        (val.clamp(0.1, 0.9) * 100).round());
-                                    // _updateGraphLineSpeed(_graphLineSpeed);
-                                  });
-                                },
-                                color: Colors.black),
-                          ),
-                        )),
-                    //
-                    //appinio cards
-                    AnimatedPositioned(
-                      duration: defaultDuration,
-                      top: topPadPosDistance +
-                          topPadGraphDistance +
-                          topPadCardsDistance,
-                      right: 6,
-                      height: sHeight / 3,
-                      width: sWidth / 2,
-                      child: AppinioSwiper(
-                        backgroundCardCount: 1,
-                        // initialIndex: ref.read(cCardIndexProvider),
-                        backgroundCardOffset: Offset(6, 6),
-                        duration: Duration(milliseconds: 150),
-                        backgroundCardScale: 1,
-                        loop: appinioLoop,
-                        cardCount: 10,
-                        allowUnSwipe: true,
-                        controller: recentsCardController,
-                        onCardPositionChanged: (position) {
-                          setState(() {
-                            _cardPosition = position.offset.dx.abs() +
-                                position.offset.dy.abs();
-                          });
-                        },
-                        onSwipeEnd: (a, b, direction) {
-                          // print(direction.toString());
-                          setState(() {
-                            ref
-                                .read(cCardIndexProvider.notifier)
-                                .update((s) => s = b);
-                            // _currentCardIndex = b;
-                            _cardPosition = 0;
-                          });
-                        },
-                        cardBuilder: (BuildContext context, int index) {
-                          int currentCardIndex = ref.watch(cCardIndexProvider);
-                          return Stack(
-                            children: [
-                              Positioned.fill(
-                                child: AnimatedContainer(
-                                  duration: defaultDuration,
-                                  margin: EdgeInsets.all(15),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(width: 2),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Text(index.toString()),
-                                ),
-                              ),
-                              Positioned.fill(
-                                child: AnimatedOpacity(
-                                  opacity: currentCardIndex == index
-                                      ? 0
-                                      : index >= (currentCardIndex + 2) % 10
-                                          ? 1
-                                          : (1 -
-                                              (_cardPosition / 200)
-                                                  .clamp(0.0, 1.0)),
-                                  duration: Duration(milliseconds: 300),
-                                  child: AnimatedContainer(
-                                    duration: Duration(milliseconds: 300),
-                                    margin: EdgeInsets.all(15),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: index ==
-                                              (currentCardIndex + 1) % 10
-                                          ? Colors.green
-                                          : index == (currentCardIndex + 2) % 10
-                                              ? Colors.green
-                                              : Colors.green,
-                                      border: Border.all(width: 2),
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Text(index.toString()),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    //
-                    //BottomNavbar
-                    AnimatedPositioned(
-                      duration: defaultDuration,
-                      bottom: 20,
-                      left: 15,
-                      height: sHeight / 7,
-                      width: sWidth * 0.72,
-                      child: Consumer(builder: (context, ref, c) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(0),
-                          child: CurvedNavigationBar(
-                            radius: 35,
-                            width: sWidth * 0.72,
-                            s: 0.3,
-                            bottom: 0.55,
-                            height: sHeight / 12,
-                            animationDuration: Duration(milliseconds: 300),
-                            backgroundColor: Colors.transparent,
+                          LineChartBarData(
+                            spots: _dataPoints[1],
+                            isCurved: false,
+                            curveSmoothness: 0,
+                            barWidth: 1,
                             color: Colors.green,
-                            items: [
-                              Icon(
-                                IconsaxPlusLinear.home_2,
-                                size: sHeight / 28,
-                                color: Colors.black.withOpacity(0.6),
-                              ),
-                              Icon(
-                                IconsaxPlusLinear.document_text_1,
-                                size: sHeight / 28,
-                                color: Colors.black.withOpacity(0.6),
-                              ),
-                              Icon(
-                                IconsaxPlusLinear.direct,
-                                size: sHeight / 28,
-                                color: Colors.black.withOpacity(0.6),
-                              ),
-                              Icon(
-                                IconsaxPlusLinear.graph,
-                                size: sHeight / 28,
-                                color: Colors.black.withOpacity(0.6),
-                              ),
-                            ],
-                            onTap: (index) {
-                              // Handle button tap
-                              ref
-                                  .read(currentTabIndexProvider.notifier)
-                                  .update((state) => state = index);
+                            belowBarData: BarAreaData(show: false),
+                            dotData: FlDotData(show: false),
+                            // isStepLineChart: true,
+                          ),
+                          LineChartBarData(
+                              spots: _dataPoints[2],
+                              isCurved: false,
+                              curveSmoothness: 0,
+                              barWidth: 1,
+                              color: Colors.redAccent,
+                              belowBarData: BarAreaData(show: false),
+                              dotData: FlDotData(show: false),
+                              isStepLineChart: true),
+                          LineChartBarData(
+                            spots: _dataPoints[3],
+                            isCurved: false,
+                            curveSmoothness: 0,
+                            barWidth: 1,
+                            color: Colors.black,
+                            belowBarData: BarAreaData(show: false),
+                            dotData: FlDotData(show: false),
+                          ),
+                          LineChartBarData(
+                            spots: _dataPoints[4],
+                            isCurved: false,
+                            curveSmoothness: 0,
+                            barWidth: 1,
+                            color: Colors.black,
+                            belowBarData: BarAreaData(show: false),
+                            dotData: FlDotData(show: false),
+                          ),
+                          LineChartBarData(
+                              spots: _dataPoints[5],
+                              isCurved: false,
+                              curveSmoothness: 0,
+                              barWidth: 1,
+                              color: Colors.purple,
+                              belowBarData: BarAreaData(show: false),
+                              dotData: FlDotData(show: false),
+                              isStepLineChart: true),
+                          LineChartBarData(
+                            spots: _dataPoints[6],
+                            isCurved: false,
+                            curveSmoothness: 0,
+                            barWidth: 1,
+                            color: Colors.indigo,
+                            belowBarData: BarAreaData(show: false),
+                            dotData: FlDotData(show: false),
+                          ),
+                        ],
+                        backgroundColor: Colors.black.withOpacity(0.02),
+                        titlesData: FlTitlesData(
+                          show: false,
+                          topTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                            interval: _dataPoints[0].last.x <= 50
+                                ? 50
+                                : _dataPoints[0].last.x,
+                            reservedSize: 30,
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              return SideTitleWidget(
+                                axisSide: meta.axisSide,
+                                space: 10,
+                                child: Text(
+                                  value.round().toString(),
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              );
+                            },
+                          )),
+                          bottomTitles: const AxisTitles(
+                              sideTitles: SideTitles(
+                                  reservedSize: 20, showTitles: false)),
+                          leftTitles: const AxisTitles(
+                              sideTitles: SideTitles(
+                                  reservedSize: 10, showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(
+                                  reservedSize: 10, showTitles: true)),
+                        ),
+                        gridData: FlGridData(
+                            show: true,
+                            horizontalInterval: 20,
+                            verticalInterval: 10),
+                        borderData: FlBorderData(show: false),
+                        lineTouchData: LineTouchData(
+                          //
+                          //
+                          //
+                          //
+                          //
+                          getTouchedSpotIndicator: (LineChartBarData barData,
+                              List<int> spotIndexes) {
+                            return spotIndexes.map((spotIndex) {
+                              final spot = barData.spots[spotIndex];
+                              if (spot.x == 0 || spot.x == 6) {
+                                return null;
+                              }
+                              return TouchedSpotIndicatorData(
+                                FlLine(
+                                  color: Colors.green,
+                                  strokeWidth: 1,
+                                ),
+                                FlDotData(
+                                  getDotPainter:
+                                      (spot, percent, barData, index) {
+                                    if (index.isEven) {
+                                      return FlDotCirclePainter(
+                                        radius: 5,
+                                        color: Colors.black,
+                                        strokeWidth: 0,
+                                        // strokeColor: widget
+                                        //     .indicatorTouchedSpotStrokeColor,
+                                      );
+                                    } else {
+                                      return FlDotSquarePainter(
+                                        size: 5,
+                                        color: Colors.black,
+                                        strokeWidth: 0,
+                                        // strokeColor: widget
+                                        //     .indicatorTouchedSpotStrokeColor,
+                                      );
+                                    }
+                                  },
+                                ),
+                              );
+                            }).toList();
+                          },
+                          touchTooltipData: LineTouchTooltipData(
+                            // getTooltipColor: (touchedSpot) =>
+                            //     widget.tooltipBgColor,
+                            getTooltipItems:
+                                (List<LineBarSpot> touchedBarSpots) {
+                              return touchedBarSpots.map((barSpot) {
+                                final flSpot = barSpot;
+                                if (flSpot.x == 0 || flSpot.x == 6) {
+                                  return null;
+                                }
 
-                              // print(ref.read(currentTabIndexProvider));
-                              _homeTabSwitched(index, ref);
+                                TextAlign textAlign;
+                                switch (flSpot.x.toInt()) {
+                                  case 1:
+                                    textAlign = TextAlign.left;
+                                    break;
+                                  case 5:
+                                    textAlign = TextAlign.right;
+                                    break;
+                                  default:
+                                    textAlign = TextAlign.center;
+                                }
+
+                                return LineTooltipItem(
+                                  'som \n',
+                                  TextStyle(
+                                    // color: widget.tooltipTextColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: flSpot.y.toString(),
+                                      style: TextStyle(
+                                        // color: widget.tooltipTextColor,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: ' k ',
+                                      style: TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: 'calories',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                  textAlign: textAlign,
+                                );
+                              }).toList();
                             },
                           ),
-                        );
-                      }),
-                    )
-                  ],
+                        ),
+                        minX: appinioLoop
+                            ? _dataPoints[0].first.x
+                            : appinioMinTabChanged,
+                        maxX: appinioLoop
+                            ? _dataPoints[0].last.x <= 50
+                                ? 50
+                                : (_dataPoints[0].last.x +
+                                        ((_dataPoints[0].last.x -
+                                                _dataPoints[0].first.x) *
+                                            0.2)) -
+                                    _dataPoints[0].last.y * 0.02
+                            : appinioMaxTabChanged,
+                        minY: -30,
+                        maxY: 30,
+                      ),
+                      duration: Duration(milliseconds: 150),
+                      curve: Curves.linear,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-        largeBuilder: (context, child) => Center(
-          child: Material(
-            color: Colors.white,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            // child: ConstrainedBox(
-            //   constraints: BoxConstraints.tight(),
-            //   child: child,
-            // ),
+              //
+              //dateTime
+              AnimatedPositioned(
+                  duration: defaultDuration,
+                  top: appinioLoop
+                      ? topPadPosDistance + topPadGraphDistance + sHeight / 5.9
+                      : sHeight,
+                  // left: -50,
+                  height: DTsectHeight,
+                  width: DTsectWidth,
+                  child: AnimatedContainer(
+                    duration: defaultDuration,
+                    height: DTsectHeight,
+                    width: DTsectWidth,
+                    color: Color(0xFFFBF5FF).withOpacity(0.7),
+                  )),
+              //
+              //slider
+              AnimatedPositioned(
+                  duration: defaultDuration,
+                  top: topPadPosDistance + topPadGraphDistance + sHeight / 6.3,
+                  left: -50,
+                  height: 20,
+                  width: sWidth + 100,
+                  child: FadeOut(
+                    animate: true,
+                    manualTrigger: true,
+                    controller: (p0) {
+                      sliderFadeAnimationController = p0;
+                    },
+                    child: IgnorePointer(
+                      ignoring: !appinioLoop,
+                      child: BalloonSlider(
+                          value: (_graphLineSpeedTween.value / 100),
+                          ropeLength: sHeight / 6,
+                          showRope: true,
+                          onChangeStart: (val) {
+                            setState(() {
+                              _updateGraphLineSpeed(
+                                  (val.clamp(0.1, 0.9) * 100).round());
+                              // _updateGraphLineSpeed(_graphLineSpeed);
+                            });
+                          },
+                          onChanged: (val) {
+                            setState(() {
+                              _updateGraphLineSpeed(
+                                  (val.clamp(0.1, 0.9) * 100).round());
+                            });
+                          },
+                          onChangeEnd: (val) {
+                            setState(() {
+                              _updateGraphLineSpeed(
+                                  (val.clamp(0.1, 0.9) * 100).round());
+                              // _updateGraphLineSpeed(_graphLineSpeed);
+                            });
+                          },
+                          color: Colors.black),
+                    ),
+                  )),
+              //
+              //appinio cards
+              AnimatedPositioned(
+                duration: defaultDuration,
+                top: topPadPosDistance +
+                    topPadGraphDistance +
+                    topPadCardsDistance,
+                right: 6,
+                height: sHeight / 3,
+                width: sWidth / 2,
+                child: AppinioSwiper(
+                  backgroundCardCount: 1,
+                  // initialIndex: ref.read(cCardIndexProvider),
+                  backgroundCardOffset: Offset(6, 6),
+                  duration: Duration(milliseconds: 150),
+                  backgroundCardScale: 1,
+                  loop: appinioLoop,
+                  cardCount: 10,
+                  allowUnSwipe: true,
+                  controller: recentsCardController,
+                  onCardPositionChanged: (position) {
+                    setState(() {
+                      _cardPosition =
+                          position.offset.dx.abs() + position.offset.dy.abs();
+                    });
+                  },
+                  onSwipeEnd: (a, b, direction) {
+                    // print(direction.toString());
+                    setState(() {
+                      ref
+                          .read(cCardIndexProvider.notifier)
+                          .update((s) => s = b);
+                      // _currentCardIndex = b;
+                      _cardPosition = 0;
+                    });
+                  },
+                  cardBuilder: (BuildContext context, int index) {
+                    int currentCardIndex = ref.watch(cCardIndexProvider);
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: AnimatedContainer(
+                            duration: defaultDuration,
+                            margin: EdgeInsets.all(15),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(width: 2),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Text(index.toString()),
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: AnimatedOpacity(
+                            opacity: currentCardIndex == index
+                                ? 0
+                                : index >= (currentCardIndex + 2) % 10
+                                    ? 1
+                                    : (1 -
+                                        (_cardPosition / 200).clamp(0.0, 1.0)),
+                            duration: Duration(milliseconds: 300),
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 300),
+                              margin: EdgeInsets.all(15),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: index == (currentCardIndex + 1) % 10
+                                    ? Colors.green
+                                    : index == (currentCardIndex + 2) % 10
+                                        ? Colors.green
+                                        : Colors.green,
+                                border: Border.all(width: 2),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: Text(index.toString()),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              //
+              //BottomNavbar
+              AnimatedPositioned(
+                duration: defaultDuration,
+                bottom: 20,
+                left: 15,
+                height: sHeight / 7,
+                width: sWidth * 0.72,
+                child: Consumer(builder: (context, ref, c) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(0),
+                    child: CurvedNavigationBar(
+                      radius: 35,
+                      width: sWidth * 0.72,
+                      s: 0.3,
+                      bottom: 0.55,
+                      height: sHeight / 12,
+                      animationDuration: Duration(milliseconds: 300),
+                      backgroundColor: Colors.transparent,
+                      color: Colors.green,
+                      items: [
+                        Icon(
+                          IconsaxPlusLinear.home_2,
+                          size: sHeight / 28,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                        Icon(
+                          IconsaxPlusLinear.document_text_1,
+                          size: sHeight / 28,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                        Icon(
+                          IconsaxPlusLinear.direct,
+                          size: sHeight / 28,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                        Icon(
+                          IconsaxPlusLinear.graph,
+                          size: sHeight / 28,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                      ],
+                      onTap: (index) {
+                        // Handle button tap
+                        ref
+                            .read(currentTabIndexProvider.notifier)
+                            .update((state) => state = index);
+
+                        // print(ref.read(currentTabIndexProvider));
+                        _homeTabSwitched(index, ref);
+                      },
+                    ),
+                  );
+                }),
+              )
+            ],
           ),
         ),
-        child: const Card(),
       ),
-    );
+    ));
   }
 
   Widget _getLayoutAndTemplates(
@@ -1084,7 +1013,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     Material(child: LayoutDesigner3())));
                       },
                       buttonHeight: sHeight / 8,
-                      buttonWidth: 200,
+                      buttonWidth: sWidth / 2.2,
                       borderRadius: BorderRadius.circular(20),
                       animationDuration: const Duration(milliseconds: 200),
                       animationCurve: Curves.ease,
@@ -1114,7 +1043,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     ElevatedLayerButton(
                       onClick: () {},
                       buttonHeight: sHeight / 8,
-                      buttonWidth: 200,
+                      buttonWidth: sWidth / 2.2,
                       borderRadius: BorderRadius.circular(20),
                       animationDuration: const Duration(milliseconds: 200),
                       animationCurve: Curves.ease,

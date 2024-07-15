@@ -11,9 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  location: any
   permission_handler: any
-  anitex: ^3.0.1
   cloud_firestore: 
   firebase_core: ^2.25.4 
   firebase_auth: ^4.17.5 
@@ -29,7 +27,6 @@ dependencies:
   iconsax_plus: ^1.0.0
   #sketchy
   # playable_toolbar_flutter: ^0.0.2
-  flutter_adaptive_layout: ^1.0.2
   #comment for web
   google_sign_in_all_platforms: ^0.0.4
   simple_animated_button: ^0.0.9
