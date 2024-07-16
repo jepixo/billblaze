@@ -5142,7 +5142,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                         return child;
                                       }
                                       return Container();
-                                      ;
                                     },
                                     padding: EdgeInsets.all(0),
                                     onReorder: (int oldIndex, int newIndex) {
@@ -5169,53 +5168,208 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                           key: ValueKey(textEditorItem
                                               .id), // Ensure each item has a unique key
                                           children: [
-                                            Container(
-                                              padding: EdgeInsets.only(
-                                                  top: 4,
-                                                  bottom: 8,
-                                                  left: 20,
-                                                  right: 20),
-                                              margin: EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.primary,
-                                                border: Border.all(
-                                                  width: panelIndex.id ==
-                                                          textEditorItem.id
-                                                      ? 4
-                                                      : 2,
-                                                  color: panelIndex.id ==
-                                                          textEditorItem.id
-                                                      ? defaultPalette.tertiary
-                                                      : defaultPalette.black,
+                                            GestureDetector(
+                                              onTap: () {
+                                                FocusScope.of(context)
+                                                    .unfocus();
+                                                var isTrue = false;
+                                                SheetItem? itemE;
+                                                if (panelIndex.id ==
+                                                    textEditorItem.id) {
+                                                  isTrue = true;
+                                                }
+                                                setState(() {
+                                                  itemE = _sheetItemIterator(
+                                                      textEditorItem.id,
+                                                      spreadSheetList[
+                                                          currentPageIndex]);
+
+                                                  if (itemE != null) {
+                                                    index = _sheetListIterator(
+                                                            itemE!.parentId,
+                                                            spreadSheetList[
+                                                                currentPageIndex])
+                                                        .indexOf(itemE!);
+                                                    panelIndex = PanelIndex(
+                                                        id: itemE!.id,
+                                                        panelIndex: index);
+                                                  } else {
+                                                    panelIndex = PanelIndex(
+                                                        id: textEditorItem.id,
+                                                        panelIndex: index);
+                                                  }
+
+                                                  // index = temp ?? index;
+
+                                                  if (hDividerPosition > 0.48) {
+                                                    hDividerPosition = 0.4;
+                                                  }
+                                                });
+                                                Future.delayed(Duration.zero)
+                                                    .then((_) {
+                                                  textStylePageController
+                                                      .jumpToPage(panelIndex
+                                                          .panelIndex);
+                                                });
+                                                Future.delayed(Durations.short1)
+                                                    .then((h) {
+                                                  if (!isTrue) {
+                                                    textStyleTabControler
+                                                        .animateToPage(0,
+                                                            curve:
+                                                                Curves.bounceIn,
+                                                            duration: Durations
+                                                                .short1);
+                                                    for (var i = 0;
+                                                        i < isTapped.length;
+                                                        i++) {
+                                                      setState(() {
+                                                        isTapped[i] = false;
+                                                      });
+                                                    }
+                                                    setState(() {
+                                                      isTapped[1] = true;
+                                                    });
+                                                  }
+                                                });
+
+                                                print('clicked');
+
+                                                print(panelIndex);
+                                              },
+                                              child: Container(
+                                                padding: EdgeInsets.only(
+                                                    top: 4,
+                                                    bottom: 8,
+                                                    left: 20,
+                                                    right: 20),
+                                                margin: EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.primary,
+                                                  border: Border.all(
+                                                    width: panelIndex.id ==
+                                                            textEditorItem.id
+                                                        ? 4
+                                                        : 2,
+                                                    color: panelIndex.id ==
+                                                            textEditorItem.id
+                                                        ? defaultPalette
+                                                            .tertiary
+                                                        : defaultPalette.black,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                 ),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                              child: Column(
-                                                children: [
-                                                  Container(
-                                                    alignment:
-                                                        Alignment.centerLeft,
-                                                    padding: EdgeInsets.only(
-                                                        bottom: 4),
-                                                    child: Text(
-                                                        'id : ${textEditorItem.id}',
-                                                        style: TextStyle(
-                                                            fontSize: 10)),
-                                                  ),
-                                                  QuillEditor(
-                                                    configurations: textEditorItem
-                                                        .textEditorConfigurations,
-                                                    focusNode: textEditorItem
-                                                        .focusNode,
-                                                    scrollController:
-                                                        textEditorItem
-                                                            .scrollController,
-                                                  ),
-                                                ],
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      padding: EdgeInsets.only(
+                                                          bottom: 4),
+                                                      child: Text(
+                                                          'id : ${textEditorItem.id}',
+                                                          style: TextStyle(
+                                                              fontSize: 10)),
+                                                    ),
+                                                    QuillEditor(
+                                                      configurations: textEditorItem
+                                                          .textEditorConfigurations,
+                                                      focusNode: textEditorItem
+                                                          .focusNode,
+                                                      scrollController:
+                                                          textEditorItem
+                                                              .scrollController,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                            // Expandable menus and other widgets can stay the same
+
+                                            AnimatedPositioned(
+                                              duration: Durations.medium3,
+                                              bottom: 0,
+                                              left: panelIndex.id ==
+                                                      textEditorItem.id
+                                                  ? 0
+                                                  : -50,
+                                              right: 0,
+                                              child: SingleChildScrollView(
+                                                child: Transform.flip(
+                                                  flipX: true,
+                                                  child: panelIndex.id ==
+                                                          textEditorItem.id
+                                                      ? ExpandableMenu(
+                                                          backgroundColor:
+                                                              defaultPalette
+                                                                  .white
+                                                                  .withOpacity(
+                                                                      1),
+                                                          iconColor:
+                                                              defaultPalette
+                                                                  .tertiary,
+                                                          itemContainerColor:
+                                                              defaultPalette
+                                                                  .secondary,
+                                                          width: 40.0,
+                                                          height: 40.0,
+                                                          items: List.generate(
+                                                              12, (intt) {
+                                                            switch (intt) {
+                                                              case 0:
+                                                                return Icon(
+                                                                  TablerIcons
+                                                                      .message_plus,
+                                                                  color: defaultPalette
+                                                                      .black
+                                                                      .withOpacity(
+                                                                          0.8),
+                                                                );
+                                                              case 1:
+                                                                return Icon(
+                                                                  TablerIcons
+                                                                      .arrow_up,
+                                                                  color: defaultPalette
+                                                                      .black
+                                                                      .withOpacity(
+                                                                          0.8),
+                                                                );
+                                                              case 2:
+                                                                return Icon(
+                                                                  TablerIcons
+                                                                      .arrow_down,
+                                                                  color: defaultPalette
+                                                                      .black
+                                                                      .withOpacity(
+                                                                          0.8),
+                                                                );
+                                                              case 3:
+                                                                return Icon(
+                                                                  TablerIcons
+                                                                      .file_export,
+                                                                  color: defaultPalette
+                                                                      .black
+                                                                      .withOpacity(
+                                                                          0.8),
+                                                                );
+                                                              case 4:
+                                                                return Icon(
+                                                                  TablerIcons
+                                                                      .x,
+                                                                  color: defaultPalette
+                                                                      .black
+                                                                      .withOpacity(
+                                                                          0.8),
+                                                                );
+                                                              default:
+                                                                return Container();
+                                                            }
+                                                          }), // simplified item generation
+                                                        )
+                                                      : null,
+                                                ),
+                                              ),
+                                            ), // Expandable menus and other widgets can stay the same
                                           ],
                                         );
                                       }
