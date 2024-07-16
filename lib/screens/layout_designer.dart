@@ -263,89 +263,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             return Stack(
               children: [
                 Container(
-                    // duration: Durations.short4,
-                    // height: !expand ? null : 40,
-                    padding:
-                        EdgeInsets.only(top: 4, bottom: 8, left: 20, right: 20),
-                    margin: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                        color: defaultPalette.primary,
-                        border: Border.all(
-                          width: panelIndex.id == id ? 4 : 2,
-                          color: panelIndex.id == id
-                              ? defaultPalette.tertiary
-                              : defaultPalette.black,
-                        ),
+                        color: defaultPalette.black.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10)),
-                    child: Column(
-                      children: [
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          padding: EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            'id : $id',
-                            style: TextStyle(
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                        Container(
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                                color: defaultPalette.black.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10)),
-                            child: rawEditor),
-                      ],
-                    )),
-                AnimatedPositioned(
-                    duration: Durations.medium1,
-                    top: 0,
-                    left: 10,
-                    right: panelIndex.id == id ? 1 : -100,
-                    child: ExpandableMenu(
-                      width: 30.0,
-                      height: 30.0,
-                      items: [
-                        // Container(),
-                        // Container(),
-                        // Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                        Container(),
-                      ],
-                    )),
-                AnimatedPositioned(
-                    duration: Durations.medium1,
-                    bottom: 0,
-                    left: panelIndex.id == id ? 1 : -100,
-                    right: 10,
-                    child: Transform.flip(
-                      flipX: true,
-                      child: ExpandableMenu(
-                        width: 30.0,
-                        height: 30.0,
-                        items: [
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                          Container(),
-                        ],
-                      ),
-                    )),
+                    child: rawEditor),
               ],
             );
           },
@@ -2627,16 +2549,43 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                 // direction: Axis.vertical,
                                                 children: [
                                                   Container(
-                                                    height: 45,
+                                                    height: 50,
                                                     alignment:
                                                         Alignment.centerLeft,
-                                                    padding: EdgeInsets.all(5),
-                                                    child: Text(
-                                                      'TEXT STYLE',
-                                                      style: GoogleFonts.bungee(
-                                                          fontSize: 18,
-                                                          letterSpacing: 0,
-                                                          height: 0.9),
+                                                    padding: EdgeInsets.only(
+                                                        left: 5, top: 5),
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceEvenly,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        //heading
+                                                        Text(
+                                                          'TEXT STYLE',
+                                                          style: GoogleFonts
+                                                              .bungee(
+                                                                  fontSize: 18,
+                                                                  letterSpacing:
+                                                                      0,
+                                                                  height: 1),
+                                                        ),
+                                                        //id
+                                                        Text(
+                                                          panelIndex.id,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: GoogleFonts
+                                                              .lexend(
+                                                                  fontSize: 8,
+                                                                  letterSpacing:
+                                                                      0,
+                                                                  height: 0.9),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                                   panelIndex.panelIndex == -1
@@ -5178,33 +5127,101 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                     ),
                                   ),
 
-                                  Builder(builder: (context) {
-                                    List<Widget> widgetList = [];
-                                    for (int index = 0;
-                                        index <
-                                            spreadSheetList[currentPageIndex]
-                                                .length;
-                                        index++) {
+                                  ReorderableListView.builder(
+                                    // buildDefaultDragHandles: false,
+                                    footer: null,
+                                    header: null,
+                                    itemExtentBuilder: null,
+                                    // prototypeItem: Container(),
+                                    proxyDecorator: (child, index, animation) {
                                       if (spreadSheetList[currentPageIndex]
                                           [index] is TextEditorItem) {
                                         var textEditorItem =
                                             spreadSheetList[currentPageIndex]
                                                 [index] as TextEditorItem;
-                                        print(
-                                            'editorID in buildWidget: ${spreadSheetList[currentPageIndex][index].id} ');
-                                        widgetList.add(QuillEditor(
-                                            configurations: textEditorItem
-                                                .textEditorConfigurations,
-                                            focusNode: textEditorItem.focusNode,
-                                            scrollController: textEditorItem
-                                                .scrollController));
+                                        return child;
                                       }
-                                    }
-                                    return Flex(
-                                      direction: Axis.vertical,
-                                      children: widgetList,
-                                    );
-                                  }),
+                                      return Container();
+                                      ;
+                                    },
+                                    padding: EdgeInsets.all(0),
+                                    onReorder: (int oldIndex, int newIndex) {
+                                      setState(() {
+                                        if (newIndex > oldIndex) {
+                                          newIndex -= 1;
+                                        }
+                                        final item =
+                                            spreadSheetList[currentPageIndex]
+                                                .removeAt(oldIndex);
+                                        spreadSheetList[currentPageIndex]
+                                            .insert(newIndex, item);
+                                      });
+                                    },
+                                    itemCount: spreadSheetList[currentPageIndex]
+                                        .length,
+                                    itemBuilder: (context, index) {
+                                      if (spreadSheetList[currentPageIndex]
+                                          [index] is TextEditorItem) {
+                                        var textEditorItem =
+                                            spreadSheetList[currentPageIndex]
+                                                [index] as TextEditorItem;
+                                        return Stack(
+                                          key: ValueKey(textEditorItem
+                                              .id), // Ensure each item has a unique key
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.only(
+                                                  top: 4,
+                                                  bottom: 8,
+                                                  left: 20,
+                                                  right: 20),
+                                              margin: EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.primary,
+                                                border: Border.all(
+                                                  width: panelIndex.id ==
+                                                          textEditorItem.id
+                                                      ? 4
+                                                      : 2,
+                                                  color: panelIndex.id ==
+                                                          textEditorItem.id
+                                                      ? defaultPalette.tertiary
+                                                      : defaultPalette.black,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: Column(
+                                                children: [
+                                                  Container(
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    padding: EdgeInsets.only(
+                                                        bottom: 4),
+                                                    child: Text(
+                                                        'id : ${textEditorItem.id}',
+                                                        style: TextStyle(
+                                                            fontSize: 10)),
+                                                  ),
+                                                  QuillEditor(
+                                                    configurations: textEditorItem
+                                                        .textEditorConfigurations,
+                                                    focusNode: textEditorItem
+                                                        .focusNode,
+                                                    scrollController:
+                                                        textEditorItem
+                                                            .scrollController,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            // Expandable menus and other widgets can stay the same
+                                          ],
+                                        );
+                                      }
+                                      return Container();
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
