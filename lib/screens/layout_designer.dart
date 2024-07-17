@@ -44,7 +44,6 @@ import 'package:flutter_quill/flutter_quill.dart';
 //     QuillEditorConfigurations;
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:flutter_to_pdf/flutter_to_pdf.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pdf/pdf.dart';
@@ -180,10 +179,12 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   TextAlign textAlign = TextAlign.left;
   List<bool> isTapped = [false, true, false, false, false];
   List<GlobalKey> globalKeys = [];
-  ExportDelegate exportDelegate = ExportDelegate();
+  // ExportDelegate exportDelegate = ExportDelegate();
   SheetItem? beingDragged = null;
   SheetItem? beingDropped = null;
   List<dynamic> _images = [];
+
+  GlobalKey spreadSheetKey = GlobalKey();
   double get sWidth => MediaQuery.of(context).size.width;
   //
   //
@@ -1261,20 +1262,20 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         duration: duration, curve: curve);
   }
 
-  Future<pw.Document> _generatePdfFromWid() async {
-    pw.Document pdf = pw.Document();
-    List<Future<pw.Page>> pageFutures = [];
-    for (var i = 0; i < pageCount; i++) {
-      var pageFuture = exportDelegate.exportToPdfPage(i.toString());
-      pageFutures.add(pageFuture);
-    }
-    List<pw.Page> pages = await Future.wait(pageFutures);
-    for (var page in pages) {
-      print('adding $page');
-      pdf.addPage(page);
-    }
-    return pdf;
-  }
+  // Future<pw.Document> _generatePdfFromWid() async {
+  //   pw.Document pdf = pw.Document();
+  //   List<Future<pw.Page>> pageFutures = [];
+  //   for (var i = 0; i < pageCount; i++) {
+  //     var pageFuture = exportDelegate.exportToPdfPage(i.toString());
+  //     pageFutures.add(pageFuture);
+  //   }
+  //   List<pw.Page> pages = await Future.wait(pageFutures);
+  //   for (var page in pages) {
+  //     print('adding $page');
+  //     pdf.addPage(page);
+  //   }
+  //   return pdf;
+  // }
 
   Future<void> _capturePng(i) async {
     try {
@@ -5128,6 +5129,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                   ),
 
                                   ReorderableListView.builder(
+                                    key: spreadSheetKey,
                                     // buildDefaultDragHandles: false,
                                     footer: null,
                                     header: null,
@@ -5297,76 +5299,423 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                               child: SingleChildScrollView(
                                                 child: Transform.flip(
                                                   flipX: true,
-                                                  child: panelIndex.id ==
-                                                          textEditorItem.id
-                                                      ? ExpandableMenu(
-                                                          backgroundColor:
-                                                              defaultPalette
-                                                                  .white
-                                                                  .withOpacity(
-                                                                      1),
-                                                          iconColor:
-                                                              defaultPalette
-                                                                  .tertiary,
-                                                          itemContainerColor:
-                                                              defaultPalette
-                                                                  .secondary,
-                                                          width: 40.0,
-                                                          height: 40.0,
-                                                          items: List.generate(
-                                                              12, (intt) {
-                                                            switch (intt) {
-                                                              case 0:
-                                                                return Icon(
-                                                                  TablerIcons
-                                                                      .message_plus,
-                                                                  color: defaultPalette
-                                                                      .black
+                                                  child:
+                                                      panelIndex.id ==
+                                                              textEditorItem.id
+                                                          ? ExpandableMenu(
+                                                              backgroundColor:
+                                                                  defaultPalette
+                                                                      .white
                                                                       .withOpacity(
-                                                                          0.8),
-                                                                );
-                                                              case 1:
-                                                                return Icon(
-                                                                  TablerIcons
-                                                                      .arrow_up,
-                                                                  color: defaultPalette
-                                                                      .black
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                );
-                                                              case 2:
-                                                                return Icon(
-                                                                  TablerIcons
-                                                                      .arrow_down,
-                                                                  color: defaultPalette
-                                                                      .black
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                );
-                                                              case 3:
-                                                                return Icon(
-                                                                  TablerIcons
-                                                                      .file_export,
-                                                                  color: defaultPalette
-                                                                      .black
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                );
-                                                              case 4:
-                                                                return Icon(
-                                                                  TablerIcons
-                                                                      .x,
-                                                                  color: defaultPalette
-                                                                      .black
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                );
-                                                              default:
-                                                                return Container();
-                                                            }
-                                                          }), // simplified item generation
-                                                        )
-                                                      : null,
+                                                                          1),
+                                                              iconColor:
+                                                                  defaultPalette
+                                                                      .tertiary,
+                                                              itemContainerColor:
+                                                                  defaultPalette
+                                                                      .secondary,
+                                                              width: 40.0,
+                                                              height: 40.0,
+                                                              items:
+                                                                  List.generate(
+                                                                      12,
+                                                                      (intt) {
+                                                                switch (intt) {
+                                                                  case 0:
+                                                                    return PopupMenuButton<
+                                                                        String>(
+                                                                      iconSize:
+                                                                          20,
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              0),
+                                                                      icon:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .message_plus,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                      onSelected:
+                                                                          (String
+                                                                              value) {
+                                                                        // Handle the selected option here
+                                                                        switch (
+                                                                            value) {
+                                                                          case 'Above':
+                                                                            setState(() {
+                                                                              var newItem = _addTextField(shouldReturn: true);
+                                                                              spreadSheetList[currentPageIndex].insert(index, newItem);
+                                                                            });
+                                                                            break;
+                                                                          case 'Below':
+                                                                            setState(() {
+                                                                              var newItem = _addTextField(shouldReturn: true);
+                                                                              spreadSheetList[currentPageIndex].insert(index + 1, newItem);
+                                                                            });
+                                                                            // Your logic for "Below"
+                                                                            break;
+                                                                          case 'Left':
+                                                                            // Your logic for "Left"
+                                                                            break;
+                                                                          case 'Right':
+                                                                            // Your logic for "Right"
+                                                                            break;
+                                                                        }
+                                                                      },
+                                                                      itemBuilder:
+                                                                          (BuildContext
+                                                                              context) {
+                                                                        return [
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Above',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_up),
+                                                                                Text('Above')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Below',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_down),
+                                                                                Text('Below')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Left',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_left),
+                                                                                Text('Left')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Right',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_right),
+                                                                                Text('Right')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ];
+                                                                      },
+                                                                    );
+
+                                                                  case 1:
+                                                                    //MOVE TEXT UP
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () {
+                                                                        setState(
+                                                                            () {
+                                                                          if (index !=
+                                                                              0) {
+                                                                            var item =
+                                                                                spreadSheetList[currentPageIndex].removeAt(index);
+                                                                            spreadSheetList[currentPageIndex].insert(index - 1,
+                                                                                item);
+
+                                                                            // Update the index to reflect the new position of the item
+                                                                            index--; // Decrement index to reflect the item's new position
+
+                                                                            panelIndex =
+                                                                                PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1);
+                                                                            print('Updated index of text editor: $index');
+                                                                          }
+                                                                          print(
+                                                                              'Current index of text editor: $index');
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .arrow_up,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 2:
+                                                                    //MOVE TEXT DOWN
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () {
+                                                                        setState(
+                                                                            () {
+                                                                          if (index !=
+                                                                              spreadSheetList[currentPageIndex].length - 1) {
+                                                                            var item =
+                                                                                spreadSheetList[currentPageIndex].removeAt(index);
+                                                                            spreadSheetList[currentPageIndex].insert(index + 1,
+                                                                                item);
+                                                                            index++;
+                                                                            print('index of texteditor DT: $index');
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .arrow_down,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 3:
+                                                                    //EXPORT TEXT
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () async {
+                                                                        // Get the current text editor item
+                                                                        var textEditorItem =
+                                                                            spreadSheetList[currentPageIndex][index]
+                                                                                as TextEditorItem;
+
+                                                                        // Create a GlobalKey for the RepaintBoundary
+                                                                        GlobalKey
+                                                                            repaintBoundaryKey =
+                                                                            GlobalKey();
+
+                                                                        // Navigate to a new page with the PDF preview
+                                                                        await Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                            builder: (context) =>
+                                                                                Scaffold(
+                                                                              appBar: AppBar(
+                                                                                title: Text('PDF Preview'),
+                                                                                actions: [
+                                                                                  IconButton(
+                                                                                    icon: Icon(Icons.image),
+                                                                                    onPressed: () async {
+                                                                                      RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                      ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                      // Get the directory to save the image
+                                                                                      final directory = await getApplicationDocumentsDirectory();
+                                                                                      final imagePath = '${directory.path}/captured_image.png';
+                                                                                      File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                      print('Image saved at: $imagePath');
+                                                                                    },
+                                                                                  ),
+                                                                                  IconButton(
+                                                                                    icon: Icon(Icons.print),
+                                                                                    onPressed: () async {
+                                                                                      RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                      ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                      // Get the directory to save the image
+                                                                                      final directory = await getApplicationDocumentsDirectory();
+                                                                                      final imagePath = '${directory.path}/captured_image.png';
+                                                                                      File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                      // Prepare the PDF document
+                                                                                      final pdf = pw.Document();
+                                                                                      final imageProvider = pw.MemoryImage(pngBytes);
+
+                                                                                      pdf.addPage(
+                                                                                        pw.Page(
+                                                                                          pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
+                                                                                          margin: pw.EdgeInsets.only(
+                                                                                            top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                            bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                            left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                            right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                          ),
+                                                                                          build: (pw.Context context) {
+                                                                                            return pw.Center(
+                                                                                              child: pw.Image(imageProvider),
+                                                                                            ); // Center the image on the page
+                                                                                          },
+                                                                                        ),
+                                                                                      );
+
+                                                                                      // Save the PDF to a file
+                                                                                      final pdfPath = '${directory.path}/document.pdf';
+                                                                                      final file = File(pdfPath);
+                                                                                      await file.writeAsBytes(await pdf.save());
+
+                                                                                      print('PDF saved at: $pdfPath');
+                                                                                    },
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              body: RepaintBoundary(
+                                                                                key: repaintBoundaryKey,
+                                                                                child: Container(
+                                                                                  width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                      ? 793.7
+                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                          ? 812.8
+                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                              ? 559.4
+                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                  ? 396.9
+                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                      ? 816
+                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                          ? 816
+                                                                                                          : 1240, // Default width
+                                                                                  height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                      ? 1122.5
+                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                          ? 1122.5
+                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                              ? 793.7
+                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                  ? 559.4
+                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                      ? 1056
+                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                          ? 1344
+                                                                                                          : 3508, // Default height
+                                                                                  padding: EdgeInsets.only(
+                                                                                    top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                    bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                    left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                    right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                  ),
+                                                                                  margin: EdgeInsets.all(20),
+                                                                                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                                                                                    BoxShadow(blurRadius: 10, color: Colors.black)
+                                                                                  ]),
+                                                                                  child: QuillEditor(
+                                                                                    // Replace with your QuillEditor configurations
+                                                                                    configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller), focusNode: FocusNode(), scrollController: ScrollController(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .file_export,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 4:
+                                                                    //clear text in text field
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () async {
+                                                                        await showAdaptiveDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (context) {
+                                                                            return AlertDialog(
+                                                                              title: Text('Confirm Clear'),
+                                                                              content: Text('This will clear the text from current Text Field. Are you sure?'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        textEditorItem.textEditorController.document = Document();
+                                                                                      });
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('Yes')),
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('No')),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .x,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 5:
+                                                                    //Delete Text Field
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () async {
+                                                                        await showAdaptiveDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (context) {
+                                                                            return AlertDialog(
+                                                                              title: Text('Confirm Delete'),
+                                                                              content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                      });
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('Yes')),
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('No')),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .trash,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  default:
+                                                                    return Container();
+                                                                }
+                                                              }), // simplified item generation
+                                                            )
+                                                          : null,
                                                 ),
                                               ),
                                             ), // Expandable menus and other widgets can stay the same

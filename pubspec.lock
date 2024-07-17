@@ -181,18 +181,10 @@ packages:
     dependency: transitive
     description:
       name: dart_quill_delta
-      sha256: "9374eded555be05e7ec99be4482dda0b72a8a5b291a84244a54f32692117d974"
+      sha256: "2b710e305dae502497161c259e6d1b10c3a789218a20cfaa9d1f9ee950c912bf"
       url: "https://pub.dev"
     source: hosted
-    version: "9.4.6"
-  delta_to_html:
-    dependency: "direct main"
-    description:
-      name: delta_to_html
-      sha256: f366e50e5764a98f6be89da4881b159288ba60c2b8e1a77bd29282879ebc6145
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
+    version: "9.5.22"
   device_info_plus:
     dependency: transitive
     description:
@@ -448,14 +440,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_to_pdf:
-    dependency: "direct main"
-    description:
-      name: flutter_to_pdf
-      sha256: "8dc34340d58559e6a170c5a6755a7a1f37d1ea3026a190ea269f84e55b7c6d34"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.1"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -777,10 +761,10 @@ packages:
     dependency: "direct main"
     description:
       name: pdf
-      sha256: "243f05342fc0bdf140eba5b069398985cdbdd3dbb1d776cf43d5ea29cc570ba6"
+      sha256: "81d5522bddc1ef5c28e8f0ee40b71708761753c163e0c93a40df56fd515ea0f0"
       url: "https://pub.dev"
     source: hosted
-    version: "3.10.8"
+    version: "3.11.0"
   pdf_widget_wrapper:
     dependency: transitive
     description:
