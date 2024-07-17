@@ -1,5 +1,4 @@
-import 'package:billblaze/components/spread_sheet.dart';
-import 'package:billblaze/components/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

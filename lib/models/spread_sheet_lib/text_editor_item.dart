@@ -6,17 +6,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:hive/hive.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 
-import 'package:billblaze/components/spread_sheet.dart';
+part 'text_editor_item.g.dart';
+
 //  ignore: depend_on_referenced_packages
 // import 'package:parchment_delta/parchment_delta.dart';
-
+@HiveType(typeId: 3)
 class TextEditorItem extends SheetItem {
+  @HiveField(2)
   final QuillController textEditorController;
+  @HiveField(3)
   final QuillEditorConfigurations textEditorConfigurations;
+  @HiveField(4)
   final FocusNode focusNode;
+  @HiveField(5)
   final ScrollController scrollController;
+  @HiveField(6)
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
   //
   TextEditorItem._({
@@ -260,17 +268,6 @@ class TextEditorItem extends SheetItem {
       parentId: parentId,
       textEditorConfigurations: configurations,
     );
-  }
-  void _toggleAttribute(Attribute attribute) {
-    final styleController = textEditorController!.getSelectionStyle();
-    final isApplied = styleController.attributes.containsKey(attribute.key);
-    if (isApplied) {
-      textEditorController!
-          .formatSelection(attribute, shouldNotifyListeners: false);
-    } else {
-      textEditorController!
-          .formatSelection(attribute, shouldNotifyListeners: true);
-    }
   }
 
   Delta getTextEditorDocumentAsDelta() {

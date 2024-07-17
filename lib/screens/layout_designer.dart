@@ -24,11 +24,10 @@ import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/printing.dart'
     if (dart.library.html) 'package:printing/printing.dart';
 // import 'package:printing/printing.dart';
-import 'package:billblaze/components/spread_sheet.dart';
-import 'package:billblaze/components/spread_sheet_lib/sheet_list.dart';
-import 'package:billblaze/components/spread_sheet_lib/text_editor_item.dart';
+import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/text_editor_item.dart';
 import 'package:billblaze/models/document_properties_model.dart';
-import 'package:billblaze/screens/deprecate.dart';
 import 'package:billblaze/util/numeric_input_filter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
@@ -53,6 +52,38 @@ import 'dart:math' as math;
 import 'package:uuid/uuid.dart';
 
 import '../components/elevated_button.dart';
+
+class PanelIndex {
+  String id;
+  int panelIndex;
+  PanelIndex({
+    required this.id,
+    required this.panelIndex,
+  });
+
+  PanelIndex copyWith({
+    String? id,
+    int? panelIndex,
+  }) {
+    return PanelIndex(
+      id: id ?? this.id,
+      panelIndex: panelIndex ?? this.panelIndex,
+    );
+  }
+
+  @override
+  String toString() => 'PanelIndex(id: $id, panelIndex: $panelIndex)';
+
+  @override
+  bool operator ==(covariant PanelIndex other) {
+    if (identical(this, other)) return true;
+
+    return other.id == id && other.panelIndex == panelIndex;
+  }
+
+  @override
+  int get hashCode => id.hashCode ^ panelIndex.hashCode;
+}
 
 class SelectedIndex {
   // int pageIndex;
@@ -107,7 +138,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   DateTime dateTimeNow = DateTime.now();
   int pageCount = 0;
   int currentPageIndex = 0;
-  List<DocumentProperties2> documentPropertiesList = [];
+  List<DocumentProperties> documentPropertiesList = [];
   List<SelectedIndex> selectedIndex = [];
   PanelIndex panelIndex = PanelIndex(id: '', panelIndex: -1);
   PageController textStylePageController = PageController();
@@ -1233,7 +1264,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     setState(() {
       print('pageCount in addpage: $pageCount');
       documentPropertiesList.add(
-        DocumentProperties2(
+        DocumentProperties(
           pageNumberController:
               TextEditingController(text: (++pageCount).toString()),
           marginAllController: TextEditingController(text: '10'),

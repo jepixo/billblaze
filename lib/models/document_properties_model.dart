@@ -1,50 +1,35 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
-
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/widgets.dart';
 
-import 'package:billblaze/models/TextFieldControllerModel.dart';
+part 'document_properties_model.g.dart';
 
-class DocumentProperties {
+@HiveType(typeId: 0)
+class DocumentProperties extends HiveObject {
+  @HiveField(0)
   TextEditingController pageNumberController;
+  @HiveField(1)
   TextEditingController marginAllController;
+  @HiveField(2)
   TextEditingController marginLeftController;
+  @HiveField(3)
   TextEditingController marginRightController;
+  @HiveField(4)
   TextEditingController marginBottomController;
+  @HiveField(5)
   TextEditingController marginTopController;
-  TextEditingController orientationController;
-  TextEditingController pageFormatController;
-  List<TextFieldController> textFieldControllers;
-
-  DocumentProperties({
-    required this.pageNumberController,
-    required this.marginAllController,
-    required this.marginLeftController,
-    required this.marginRightController,
-    required this.marginBottomController,
-    required this.marginTopController,
-    required this.orientationController,
-    required this.pageFormatController,
-    required this.textFieldControllers,
-  });
-}
-
-class DocumentProperties2 {
-  TextEditingController pageNumberController;
-  TextEditingController marginAllController;
-  TextEditingController marginLeftController;
-  TextEditingController marginRightController;
-  TextEditingController marginBottomController;
-  TextEditingController marginTopController;
+  @HiveField(6)
   pw.PageOrientation orientationController;
+  @HiveField(7)
   PdfPageFormat pageFormatController;
+  @HiveField(8)
   bool useIndividualMargins;
   // List<TextFieldController> textFieldControllers;
 
-  DocumentProperties2({
+  DocumentProperties({
     required this.pageNumberController,
     required this.marginAllController,
     required this.marginLeftController,
@@ -56,7 +41,7 @@ class DocumentProperties2 {
     this.useIndividualMargins = false,
   });
 
-  DocumentProperties2 copyWith({
+  DocumentProperties copyWith({
     TextEditingController? pageNumberController,
     TextEditingController? marginAllController,
     TextEditingController? marginLeftController,
@@ -67,7 +52,7 @@ class DocumentProperties2 {
     PdfPageFormat? pageFormatController,
     bool? useIndividualMargins,
   }) {
-    return DocumentProperties2(
+    return DocumentProperties(
       pageNumberController: pageNumberController ?? this.pageNumberController,
       marginAllController: marginAllController ?? this.marginAllController,
       marginLeftController: marginLeftController ?? this.marginLeftController,
@@ -85,11 +70,11 @@ class DocumentProperties2 {
 
   @override
   String toString() {
-    return 'DocumentProperties2(pageNumberController: $pageNumberController, marginAllController: $marginAllController, marginLeftController: $marginLeftController, marginRightController: $marginRightController, marginBottomController: $marginBottomController, marginTopController: $marginTopController, orientationController: $orientationController, pageFormatController: $pageFormatController, useIndividualMargins: $useIndividualMargins)';
+    return 'DocumentProperties(pageNumberController: $pageNumberController, marginAllController: $marginAllController, marginLeftController: $marginLeftController, marginRightController: $marginRightController, marginBottomController: $marginBottomController, marginTopController: $marginTopController, orientationController: $orientationController, pageFormatController: $pageFormatController, useIndividualMargins: $useIndividualMargins)';
   }
 
   @override
-  bool operator ==(covariant DocumentProperties2 other) {
+  bool operator ==(covariant DocumentProperties other) {
     if (identical(this, other)) return true;
 
     return other.pageNumberController == pageNumberController &&
