@@ -2,14 +2,17 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
-import 'package:billblaze/components/flutter_balloon_slider.dart';
-import 'package:billblaze/components/zoomable.dart';
+
+import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:expandable_menu/expandable_menu.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
 import 'package:path_provider/path_provider.dart';
-// import 'package:billblaze/components/richtext_controller.dart';
+
+import 'package:billblaze/components/flutter_balloon_slider.dart';
+import 'package:billblaze/components/zoomable.dart';
 import 'package:billblaze/components/tab_container/tab_controller.dart';
 import 'package:billblaze/components/text_toolbar/list_item_model.dart';
 import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart';
@@ -124,7 +127,11 @@ class SelectedIndex {
 //
 //
 class LayoutDesigner3 extends StatefulWidget {
-  const LayoutDesigner3({super.key});
+  final int? id;
+  const LayoutDesigner3({
+    Key? key,
+    this.id = null,
+  }) : super(key: key);
 
   @override
   State<LayoutDesigner3> createState() => _LayoutDesigner3State();
@@ -225,6 +232,21 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   void initState() {
     super.initState();
     // animateToPage(currentPageIndex);
+    var box = Boxes.getLayouts();
+    if (widget.id == null) {
+      LayoutModel lm = LayoutModel(
+          docPropsList: [],
+          spreadSheetList: sheetToBox(spreadSheetList),
+          id: Uuid().v4());
+      box.put(Uuid().v4(), lm);
+      lm.save();
+      var layout = box.get(0);
+      print(layout.toString());
+    } else {
+      LayoutModel? lm = box.getAt(widget.id ?? 0);
+      spreadSheetList = boxToSheet(lm?.spreadSheetList);
+      documentPropertiesList = boxToDocProp(lm?.docPropsList);
+    }
     _addPdfPage();
     // _updatePdfPreview('');
     tabcunt = TabController(length: 2, vsync: this);
@@ -239,9 +261,29 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     super.dispose();
   }
 
-  // initializeDocNSheets() {
+  List<DocumentProperties> boxToDocProp(docproplist) {
+    List<DocumentProperties> listbox = [];
+    for (DocumentPropertiesBox doc in docproplist) {
+      listbox.add(doc.toDocumentProperties());
+    }
+    return listbox;
+  }
 
-  // }
+  List<SheetListBox> sheetToBox(spreadSheetList) {
+    List<SheetListBox> listbox = [];
+    for (SheetList sheetlist in spreadSheetList) {
+      listbox.add(sheetlist.toSheetListBox());
+    }
+    return listbox;
+  }
+
+  List<SheetList> boxToSheet(spreadsheetlist) {
+    List<SheetList> listbox = [];
+    for (SheetListBox e in spreadsheetlist) {
+      listbox.add(e.toSheetList());
+    }
+    return listbox;
+  }
 
   TextEditorItem _addTextField({String id = '', bool shouldReturn = false}) {
     var textController = QuillController(
@@ -1263,21 +1305,24 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   void _addPdfPage() {
     setState(() {
       print('pageCount in addpage: $pageCount');
-      documentPropertiesList.add(
-        DocumentProperties(
-          pageNumberController:
-              TextEditingController(text: (++pageCount).toString()),
-          marginAllController: TextEditingController(text: '10'),
-          marginLeftController: TextEditingController(text: '10'),
-          marginRightController: TextEditingController(text: '10'),
-          marginBottomController: TextEditingController(text: '10'),
-          marginTopController: TextEditingController(text: '10'),
-          orientationController: pw.PageOrientation.portrait,
-          pageFormatController: PdfPageFormat.a4,
-        ),
+      DocumentProperties newdoc = DocumentProperties(
+        pageNumberController:
+            TextEditingController(text: (++pageCount).toString()),
+        marginAllController: TextEditingController(text: '10'),
+        marginLeftController: TextEditingController(text: '10'),
+        marginRightController: TextEditingController(text: '10'),
+        marginBottomController: TextEditingController(text: '10'),
+        marginTopController: TextEditingController(text: '10'),
+        orientationController: pw.PageOrientation.portrait,
+        pageFormatController: PdfPageFormat.a4,
       );
       var id = Uuid().v4();
-      spreadSheetList.add(SheetList(id: id, parentId: parentId, sheetList: []));
+      documentPropertiesList.add(newdoc);
+      SheetList newsheetlist =
+          SheetList(id: id, parentId: parentId, sheetList: []);
+
+      spreadSheetList.add(newsheetlist);
+      // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
       print('pageCount in addpage after: $pageCount');
       selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
       print('id : $id');

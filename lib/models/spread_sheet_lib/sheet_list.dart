@@ -1,15 +1,36 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+
 part 'sheet_list.g.dart';
 
 @HiveType(typeId: 2)
-class SheetList extends SheetItem {
+class SheetListBox extends SheetItem {
   @HiveField(2)
   List<SheetItem> sheetList;
   @HiveField(3)
+  bool direction;
+  SheetListBox({
+    required this.sheetList,
+    required this.direction,
+    required super.id,
+    required super.parentId,
+  });
+  SheetList toSheetList() {
+    return SheetList(
+        sheetList: sheetList,
+        direction: direction == true ? Axis.vertical : Axis.horizontal,
+        id: id,
+        parentId: parentId);
+  }
+}
+
+class SheetList extends SheetItem {
+  List<SheetItem> sheetList;
   Axis direction;
   SheetList({
     required String id,
@@ -21,6 +42,14 @@ class SheetList extends SheetItem {
     for (var item in sheetList) {
       item.parentId = id;
     }
+  }
+
+  SheetListBox toSheetListBox() {
+    return SheetListBox(
+        sheetList: sheetList,
+        direction: direction == Axis.vertical ? true : false,
+        id: id,
+        parentId: parentId);
   }
 
   // Adding an item to the list

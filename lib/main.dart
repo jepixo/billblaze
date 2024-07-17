@@ -1,9 +1,7 @@
-// import 'package:background_fetch/background_fetch.dart';
-// import 'package:billblaze/Home.dart';
 import 'package:billblaze/Home.dart';
+import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
-// import 'package:billblaze/components/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/text_editor_item.dart';
@@ -13,7 +11,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:billblaze/providers/auth_provider.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -24,10 +21,13 @@ Future<void> main() async {
   );
   var directory = await getApplicationDocumentsDirectory();
   Hive.init(directory.path);
-  Hive.registerAdapter(DocumentPropertiesAdapter());
+  Hive.registerAdapter(DocumentPropertiesBoxAdapter());
   Hive.registerAdapter(SheetItemAdapter());
-  Hive.registerAdapter(SheetListAdapter());
+  Hive.registerAdapter(SheetListBoxAdapter());
   Hive.registerAdapter(TextEditorItemAdapter());
+  Hive.registerAdapter(LayoutModelAdapter());
+
+  Hive.openBox<LayoutModel>('layouts');
   runApp(const ProviderScope(child: MainApp()));
 }
 
