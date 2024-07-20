@@ -1,13 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // import 'package:fleather/fleather.dart';
 // import 'dart:math';
-import 'package:billblaze/components/elevated_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
+import 'package:billblaze/components/elevated_button.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 
 part 'text_editor_item.g.dart';
@@ -15,16 +16,21 @@ part 'text_editor_item.g.dart';
 //  ignore: depend_on_referenced_packages
 // import 'package:parchment_delta/parchment_delta.dart';
 @HiveType(typeId: 3)
-class TextEditorItem extends SheetItem {
+class TextEditorItemBox extends SheetItem {
   @HiveField(2)
+  final String textEditorController;
+  TextEditorItemBox({
+    required this.textEditorController,
+    required super.id,
+    required super.parentId,
+  });
+}
+
+class TextEditorItem extends SheetItem {
   final QuillController textEditorController;
-  @HiveField(3)
   final QuillEditorConfigurations textEditorConfigurations;
-  @HiveField(4)
   final FocusNode focusNode;
-  @HiveField(5)
   final ScrollController scrollController;
-  @HiveField(6)
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
   //
   TextEditorItem._({
@@ -35,202 +41,9 @@ class TextEditorItem extends SheetItem {
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
-            controller: textEditorController,
-            multiRowsDisplay: false,
-            buttonOptions: QuillSimpleToolbarButtonOptions(
-                bold: QuillToolbarToggleStyleButtonOptions(
-              childBuilder: (options, extraOptions) {
-                return ElevatedLayerButton(
-                  toggleOnTap: true,
-                  onClick: () {
-                    final currentValue = textEditorController
-                        .getSelectionStyle()
-                        .attributes
-                        .containsKey(Attribute.bold.key);
-                    textEditorController.formatSelection(
-                      currentValue
-                          ? Attribute.clone(Attribute.bold, null)
-                          : Attribute.bold,
-                    );
-                    //
-                  },
-                  buttonHeight: 50,
-                  buttonWidth: 50,
-                  borderRadius: BorderRadius.circular(10),
-                  animationDuration: const Duration(milliseconds: 100),
-                  animationCurve: Curves.ease,
-                  topDecoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(),
-                  ),
-                  topLayerChild: Icon(
-                    IconsaxPlusLinear.text_bold,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  baseDecoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(),
-                  ),
-                );
-              },
-            ), italic: QuillToolbarToggleStyleButtonOptions(
-              childBuilder: (options, extraOptions) {
-                return ElevatedLayerButton(
-                  toggleOnTap: true,
-                  onClick: () {
-                    final currentValue = textEditorController
-                        .getSelectionStyle()
-                        .attributes
-                        .containsKey(Attribute.italic.key);
-                    textEditorController.formatSelection(
-                      currentValue
-                          ? Attribute.clone(Attribute.italic, null)
-                          : Attribute.italic,
-                    );
-                    //
-                  },
-                  buttonHeight: 50,
-                  buttonWidth: 50,
-                  borderRadius: BorderRadius.circular(10),
-                  animationDuration: const Duration(milliseconds: 100),
-                  animationCurve: Curves.ease,
-                  topDecoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(),
-                  ),
-                  topLayerChild: Icon(
-                    IconsaxPlusLinear.text_italic,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  baseDecoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(),
-                  ),
-                );
-              },
-            ), underLine: QuillToolbarToggleStyleButtonOptions(
-              childBuilder: (options, extraOptions) {
-                return ElevatedLayerButton(
-                  toggleOnTap: true,
-                  onClick: () {
-                    final currentValue = textEditorController
-                        .getSelectionStyle()
-                        .attributes
-                        .containsKey(Attribute.underline.key);
-                    textEditorController.formatSelection(
-                      currentValue
-                          ? Attribute.clone(Attribute.underline, null)
-                          : Attribute.underline,
-                    );
-                    //
-                  },
-                  buttonHeight: 50,
-                  buttonWidth: 50,
-                  borderRadius: BorderRadius.circular(10),
-                  animationDuration: const Duration(milliseconds: 100),
-                  animationCurve: Curves.ease,
-                  topDecoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(),
-                  ),
-                  topLayerChild: Icon(
-                    IconsaxPlusLinear.text_underline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  baseDecoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(),
-                  ),
-                );
-              },
-            ), strikeThrough: QuillToolbarToggleStyleButtonOptions(
-              childBuilder: (options, extraOptions) {
-                return ElevatedLayerButton(
-                  toggleOnTap: true,
-                  isTapped: textEditorController
-                          .getSelectionStyle()
-                          .attributes
-                          .containsKey(Attribute.strikeThrough.key)
-                      ? false
-                      : true,
-                  onClick: () {
-                    final currentValue = textEditorController
-                        .getSelectionStyle()
-                        .attributes
-                        .containsKey(Attribute.strikeThrough.key);
-                    textEditorController.formatSelection(
-                      currentValue
-                          ? Attribute.clone(Attribute.strikeThrough, null)
-                          : Attribute.strikeThrough,
-                    );
-                    //
-                  },
-                  buttonHeight: 50,
-                  buttonWidth: 50,
-                  borderRadius: BorderRadius.circular(10),
-                  animationDuration: const Duration(milliseconds: 100),
-                  animationCurve: Curves.ease,
-                  topDecoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(),
-                  ),
-                  topLayerChild: Icon(
-                    CupertinoIcons.strikethrough,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  baseDecoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(),
-                  ),
-                );
-              },
-            ), undoHistory: QuillToolbarHistoryButtonOptions(
-              childBuilder: (options, extraOptions) {
-                return ElevatedLayerButton(
-                  toggleOnTap: false,
-                  // enabled: textEditorController.hasUndo,
-                  onClick: () {
-                    // final currentValue = textEditorController
-                    //     .getSelectionStyle()
-                    //     .attributes
-                    //     .containsKey(Attribute.underline.key);
-                    // textEditorController.formatSelection(
-                    //   currentValue
-                    //       ? Attribute.clone(Attribute.underline, null)
-                    //       : Attribute.underline,
-                    // );
-                    //
-                    if (textEditorController.hasUndo) {
-                      textEditorController.undo();
-                    }
-                  },
-                  buttonHeight: 50,
-                  buttonWidth: 50,
-                  borderRadius: BorderRadius.circular(10),
-                  animationDuration: const Duration(milliseconds: 100),
-                  animationCurve: Curves.ease,
-                  topDecoration: BoxDecoration(
-                    color: Colors.black,
-                    border: Border.all(),
-                  ),
-                  topLayerChild: Icon(
-                    IconsaxPlusLinear.undo,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  baseDecoration: BoxDecoration(
-                    color: Colors.green,
-                    border: Border.all(),
-                  ),
-                );
-              },
-            ))
-            //
-            );
+          controller: textEditorController,
+          multiRowsDisplay: false,
+        );
 
   factory TextEditorItem({
     QuillController? textEditorController,
@@ -253,13 +66,7 @@ class TextEditorItem extends SheetItem {
     final configurations = textEditorConfigurations ??
         QuillEditorConfigurations(
           controller: controller,
-          // onTapOutside: (event, focusNode) {
-          //   focusNode.unfocus();
-          // },
           padding: EdgeInsets.all(8),
-          // embedBuilders: kIsWeb
-          //     ? FlutterQuillEmbeds.editorWebBuilders()
-          //     : FlutterQuillEmbeds.editorBuilders(),
         );
 
     return TextEditorItem._(

@@ -6,9 +6,6 @@ import 'dart:ui' as ui;
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:expandable_menu/expandable_menu.dart';
-import 'package:flutter/animation.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/semantics.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:billblaze/components/flutter_balloon_slider.dart';
@@ -17,7 +14,6 @@ import 'package:billblaze/components/tab_container/tab_controller.dart';
 import 'package:billblaze/components/text_toolbar/list_item_model.dart';
 import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart';
 import 'package:billblaze/util/HexColorInputFormatter.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart'
     show ColorPicker, MaterialPicker;
@@ -36,7 +32,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 // show
 //     QuillEditor,
@@ -209,17 +204,17 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     Color(int.parse('0xff1289A7')),
     Color(int.parse('0xffD980FA'))
   ];
-  TextStyle textStyle = TextStyle(
-    fontSize: 15,
-    color: Colors.white,
-    fontFamily: 'OpenSans',
-  );
-  TextAlign textAlign = TextAlign.left;
+  // TextStyle textStyle = TextStyle(
+  //   fontSize: 15,
+  //   color: Colors.white,
+  //   fontFamily: 'OpenSans',
+  // );
+  // TextAlign textAlign = TextAlign.left;
   List<bool> isTapped = [false, true, false, false, false];
   List<GlobalKey> globalKeys = [];
   // ExportDelegate exportDelegate = ExportDelegate();
-  SheetItem? beingDragged = null;
-  SheetItem? beingDropped = null;
+  // SheetItem? beingDragged = null;
+  // SheetItem? beingDropped = null;
   List<dynamic> _images = [];
 
   GlobalKey spreadSheetKey = GlobalKey();
@@ -238,7 +233,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           docPropsList: [],
           spreadSheetList: sheetToBox(spreadSheetList),
           id: Uuid().v4());
-      box.put(Uuid().v4(), lm);
+      box.put(Boxes.getLayouts().length, lm);
       lm.save();
       var layout = box.get(0);
       print(layout.toString());
@@ -581,71 +576,71 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
 //
 // genPDF
-  pw.Document _generatePdf(sWidth) {
-    final pdf = pw.Document();
+  // pw.Document _generatePdf(sWidth) {
+  //   final pdf = pw.Document();
 
-    for (int i = 0; i < pageCount; i++) {
-      var doc = documentPropertiesList[i];
-      var sheetList = spreadSheetList[i];
-      pdf.addPage(
-        pw.MultiPage(
-          margin: pw.EdgeInsets.only(
-            top: double.parse(doc.marginTopController.text),
-            bottom: double.parse(doc.marginBottomController.text),
-            left: double.parse(doc.marginLeftController.text),
-            right: double.parse(doc.marginRightController.text),
-          ),
-          orientation: doc.orientationController,
-          pageFormat: doc.pageFormatController,
-          build: (pw.Context context) {
-            return [
-              pw.Container(
-                width: double.infinity,
-                alignment: pw.Alignment.topLeft,
-                child: pw.ListView.builder(
-                  itemBuilder: (pw.Context context, int index) {
-                    final item = sheetList.sheetList[index];
-                    if (item is TextEditorItem) {
-                      final delta = item.getTextEditorDocumentAsDelta();
-                      return pw.Container(
-                          width: double.infinity,
-                          child: convertDeltaToPdfWidget(delta));
-                    } else if (item is SheetList) {
-                      return _buildSheetListPdf(item);
-                    }
-                    return pw.Container();
-                  },
-                  itemCount: sheetList.sheetList.length,
-                ),
-              )
-            ];
-          },
-        ),
-      );
-    }
+  //   for (int i = 0; i < pageCount; i++) {
+  //     var doc = documentPropertiesList[i];
+  //     var sheetList = spreadSheetList[i];
+  //     pdf.addPage(
+  //       pw.MultiPage(
+  //         margin: pw.EdgeInsets.only(
+  //           top: double.parse(doc.marginTopController.text),
+  //           bottom: double.parse(doc.marginBottomController.text),
+  //           left: double.parse(doc.marginLeftController.text),
+  //           right: double.parse(doc.marginRightController.text),
+  //         ),
+  //         orientation: doc.orientationController,
+  //         pageFormat: doc.pageFormatController,
+  //         build: (pw.Context context) {
+  //           return [
+  //             pw.Container(
+  //               width: double.infinity,
+  //               alignment: pw.Alignment.topLeft,
+  //               child: pw.ListView.builder(
+  //                 itemBuilder: (pw.Context context, int index) {
+  //                   final item = sheetList.sheetList[index];
+  //                   if (item is TextEditorItem) {
+  //                     final delta = item.getTextEditorDocumentAsDelta();
+  //                     return pw.Container(
+  //                         width: double.infinity,
+  //                         child: convertDeltaToPdfWidget(delta));
+  //                   } else if (item is SheetList) {
+  //                     return _buildSheetListPdf(item);
+  //                   }
+  //                   return pw.Container();
+  //                 },
+  //                 itemCount: sheetList.sheetList.length,
+  //               ),
+  //             )
+  //           ];
+  //         },
+  //       ),
+  //     );
+  //   }
 
-    return pdf;
-  }
+  //   return pdf;
+  // }
 
-  pw.Widget _buildSheetListPdf(SheetList sheetList) {
-    print('________buildSheetListPdf STARTED LD_________');
-    return pw.ListView.builder(
-      itemBuilder: (pw.Context context, int index) {
-        final item = sheetList[index];
-        if (item is TextEditorItem) {
-          print('textitem');
-          final delta = item.getTextEditorDocumentAsDelta();
-          return convertDeltaToPdfWidget(delta);
-        } else if (item is SheetList) {
-          // Recursively handle nested SheetList items if needed
-          print('listitem');
-          return _buildSheetListPdf(item);
-        }
-        return pw.Container();
-      },
-      itemCount: sheetList.sheetList.length,
-    );
-  }
+  // pw.Widget _buildSheetListPdf(SheetList sheetList) {
+  //   print('________buildSheetListPdf STARTED LD_________');
+  //   return pw.ListView.builder(
+  //     itemBuilder: (pw.Context context, int index) {
+  //       final item = sheetList[index];
+  //       if (item is TextEditorItem) {
+  //         print('textitem');
+  //         final delta = item.getTextEditorDocumentAsDelta();
+  //         return convertDeltaToPdfWidget(delta);
+  //       } else if (item is SheetList) {
+  //         // Recursively handle nested SheetList items if needed
+  //         print('listitem');
+  //         return _buildSheetListPdf(item);
+  //       }
+  //       return pw.Container();
+  //     },
+  //     itemCount: sheetList.sheetList.length,
+  //   );
+  // }
 
   pw.Widget convertDeltaToPdfWidget(Delta delta) {
     print('________convertDELTA STARTED LD_________');
@@ -705,18 +700,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
             textStyle =
                 textStyle.copyWith(decoration: pw.TextDecoration.lineThrough);
           }
-          // if (attributes.containsKey('code')) {
-          //   // Use a monospace font for inline cod
-          //   // print('sdbfvihierlgvberiugvbjbnveaiefikfnmewiugbr5bgrjgintgmripg');
-          //   textStyle = textStyle.copyWith(
-          //     font: pw.Font.courier(),
-          //     color: pdfColorFromHex('#FF000000'),
-          //     background: pw.BoxDecoration(
-          //         color: pdfColorFromHex('#FFFFFFFF'),
-          //         border: pw.Border.all(
-          //             color: pdfColorFromHex('#FFFFFFFF'), width: 4)),
-          //   );
-          // }
 
           if (attributes.containsKey('color')) {
             textStyle =
@@ -751,26 +734,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                     fontSize: 16, fontWeight: pw.FontWeight.bold);
             }
           }
-          if (attributes.containsKey('indent')) {
-            // int level = attributes['indent'];
-            // padding = pw.EdgeInsets.only(left: 20.0 * level);
-          }
-          // if (attributes.containsKey('align')) {
-          //   print('entering align');
-          //   switch (attributes['align']) {
-          //     case 'center':
-          //       textAlign = pw.TextAlign.center;
-          //       break;
-          //     case 'right':
-          //       textAlign = pw.TextAlign.right;
-          //       break;
-          //     case 'justify':
-          //       textAlign = pw.TextAlign.justify;
-          //       break;
-          //     default:
-          //       textAlign = pw.TextAlign.left;
-          //   }
-          // }
+          if (attributes.containsKey('indent')) {}
 
           if (attributes.containsKey('direction')) {
             print('direction yes');
@@ -784,17 +748,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           }
 
           if (attributes.containsKey('link')) {
-            // final link = attributes['link'];
-            // textSpans.add(
-            //   pw.TextSpan(
-            //     text: text,
-            //     style: textStyle.copyWith(
-            //       color: PdfColors.blue,
-            //       decoration: pw.TextDecoration.underline,
-            //     ),
-            //     annotation: pw.AnnotationUrl(link),
-            //   ),
-            // );
             continue;
           }
         }
@@ -853,11 +806,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 ]),
                 textAlign: textAlign,
                 textDirection: textDirection,
-                // textScaler: TextScaler.linear(1 - vDividerPosition),
               )));
-          // lastWidget = textWidgets[textWidgets.length - 1];
         } else {
-          // if (textWidgets[textWidgets.length - 1] is pw.Container) {
           print(
               'texalign: $textAlign. ${delta.toList().indexOf(op)}:${text.toString()}');
           (((textWidgets[textWidgets.length - 1] as pw.Container).child
@@ -868,34 +818,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                   text: text.substring(0,
                       text[text.length - 1] == '\n' ? text.length - 1 : null),
                   style: textStyle));
-          // lastWidget = textWidgets[textWidgets.length - 1];
         }
-        // else if (lastWidget is pw.Text) {
-        //   pw.Text prev = textWidgets.removeAt(textWidgets.length - 1) as pw.Text;
-        //   textWidgets.add(pw.RichText(
-        //     // textScaler: TextScaler.linear(1 - vDividerPosition),
-        //     text: pw.TextSpan(
-        //       children: [
-        //         pw.TextSpan(
-        //             text: prev.data?.substring(
-        //                 textWidgets.length <= 0 ? 0 : 1,
-        //                 text[text.length - 1] == '\n'
-        //                     ? text.length - 1
-        //                     : null),
-        //             style: prev.style),
-        //         pw.TextSpan(
-        //             text: text.substring(
-        //                 0,
-        //                 text[text.length - 1] == '\n'
-        //                     ? text.length - 1
-        //                     : null),
-        //             style: textStyle)
-        //       ],
-        //     ),
-        //   ));
-        //   lastWidget = textWidgets[textWidgets.length - 1];
-        // }
-        // }
       }
     }
 
@@ -904,8 +827,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       crossAxisAlignment: pw.CrossAxisAlignment.start, // Adjust as necessary
       children: textWidgets,
     );
-    // );
-    // ]);
   }
 
 // genWidget
@@ -924,7 +845,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
               // //    exportDelegate.add(exportDel);
               // //  });
               // print(i);
-              // print(_globalKey.toString());
+              // print(_globalKey.toString())
               // globalKeys.add(_globalKey);
               return Padding(
                 padding:
@@ -967,9 +888,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                     decoration: BoxDecoration(color: Colors.white, boxShadow: [
                       // BoxShadow(
                       //   blurRadius: 5,
-                      //   offset: Offset(5,5),
-                      //   color: defaultPalette.black.withOpacity(1)
-                      // )
                     ]),
                     padding: EdgeInsets.only(
                       top: double.parse(doc[i].marginTopController.text),
@@ -982,8 +900,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                       // *
                       //     (1 - vDividerPosition),
                       right: double.parse(doc[i].marginRightController.text),
-                      // *
-                      //     (1 - vDividerPosition),
                     ),
                     child: _buildSheetListWidget(sheetList[i], width),
                   ),
@@ -5316,7 +5232,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                 print(panelIndex);
                                               },
                                               child: Container(
-                                                padding: EdgeInsets.only(
+                                                padding: const EdgeInsets.only(
                                                     top: 4,
                                                     bottom: 8,
                                                     left: 20,

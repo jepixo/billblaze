@@ -5,6 +5,7 @@ import 'package:billblaze/components/animated_stack.dart';
 import 'package:billblaze/components/flutter_balloon_slider.dart';
 import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/main.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -1095,7 +1096,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     duration: Duration(milliseconds: 150),
                     backgroundCardScale: 1,
                     loop: true,
-                    cardCount: 1,
+                    cardCount: 2,
                     allowUnSwipe: true,
                     onCardPositionChanged: (position) {
                       setState(() {
@@ -1125,7 +1126,30 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 border: Border.all(width: 2),
                                 borderRadius: BorderRadius.circular(30),
                               ),
-                              child: Text(index.toString()),
+                              child: ListView.builder(
+                                itemCount: Boxes.getLayouts().length,
+                                itemBuilder: (BuildContext context, int i) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(context, MaterialPageRoute(
+                                        builder: (context) {
+                                          return LayoutDesigner3(
+                                            id: i,
+                                          );
+                                        },
+                                      ));
+                                    },
+                                    child: Container(
+                                      height: 50,
+                                      color: Colors.amber,
+                                      width: 30,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                          Boxes.getLayouts().get(i).toString()),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           Positioned.fill(
@@ -1151,7 +1175,32 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   border: Border.all(width: 2),
                                   borderRadius: BorderRadius.circular(30),
                                 ),
-                                child: Text(index.toString()),
+                                child: ListView.builder(
+                                  itemCount: Boxes.getLayouts().length,
+                                  itemBuilder: (BuildContext context, int i) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(context,
+                                            MaterialPageRoute(
+                                          builder: (context) {
+                                            return LayoutDesigner3(
+                                              id: i,
+                                            );
+                                          },
+                                        ));
+                                      },
+                                      child: Container(
+                                        height: 50,
+                                        color: Colors.amber,
+                                        width: 30,
+                                        alignment: Alignment.center,
+                                        child: Text(Boxes.getLayouts()
+                                            .get(i)
+                                            .toString()),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           ),
