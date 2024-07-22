@@ -5,6 +5,7 @@ import 'package:billblaze/components/animated_stack.dart';
 import 'package:billblaze/components/flutter_balloon_slider.dart';
 import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/main.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -1009,8 +1010,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (c) =>
-                                    Material(child: LayoutDesigner3())));
+                                builder: (c) => Material(
+                                        child: PopScope(
+                                      child: LayoutDesigner3(),
+                                      canPop: false,
+                                    ))));
                       },
                       buttonHeight: sHeight / 8,
                       buttonWidth: sWidth / 2.2,
@@ -1089,76 +1093,127 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   duration: Durations.extralong4 * 2,
                   opacity: lay ? 1 : 0,
                   curve: Curves.bounceInOut,
-                  child: AppinioSwiper(
-                    backgroundCardCount: 1,
-                    backgroundCardOffset: Offset(6, 6),
-                    duration: Duration(milliseconds: 150),
-                    backgroundCardScale: 1,
-                    loop: true,
-                    cardCount: 1,
-                    allowUnSwipe: true,
-                    onCardPositionChanged: (position) {
-                      setState(() {
-                        _cardPosition =
-                            position.offset.dx.abs() + position.offset.dy.abs();
-                      });
-                    },
-                    onSwipeEnd: (a, b, direction) {
-                      setState(() {
-                        ref
-                            .read(cCardIndexProvider.notifier)
-                            .update((s) => s = b);
-                        _cardPosition = 0;
-                      });
-                    },
-                    cardBuilder: (BuildContext context, int index) {
-                      int currentCardIndex = ref.watch(cCardIndexProvider);
-                      return Stack(
-                        children: [
-                          Positioned.fill(
-                            child: AnimatedContainer(
-                              duration: Durations.medium2,
-                              margin: EdgeInsets.all(15),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(width: 2),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Text(index.toString()),
-                            ),
-                          ),
-                          Positioned.fill(
-                            child: AnimatedOpacity(
-                              opacity: currentCardIndex == index
-                                  ? 0
-                                  : index >= (currentCardIndex + 2) % 10
-                                      ? 1
-                                      : (1 -
-                                          (_cardPosition / 200)
-                                              .clamp(0.0, 1.0)),
-                              duration: Duration(milliseconds: 300),
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 300),
-                                margin: EdgeInsets.all(15),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: index == (currentCardIndex + 1) % 10
-                                      ? Colors.green
-                                      : index == (currentCardIndex + 2) % 10
-                                          ? Colors.green
-                                          : Colors.green,
-                                  border: Border.all(width: 2),
-                                  borderRadius: BorderRadius.circular(30),
+                  child: ListView.builder(
+                    itemCount: Boxes.getLayouts().length,
+                    itemBuilder: (BuildContext context, int i) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) {
+                              return PopScope(
+                                canPop: false,
+                                child: LayoutDesigner3(
+                                  id: i,
                                 ),
-                                child: Text(index.toString()),
-                              ),
-                            ),
-                          ),
-                        ],
+                              );
+                            },
+                          ));
+                        },
+                        child: Container(
+                          height: 50,
+                          color: Colors.amber,
+                          width: 30,
+                          alignment: Alignment.center,
+                          child: Text(Boxes.getLayouts().get(i).toString()),
+                        ),
                       );
                     },
                   ),
+                  // child: AppinioSwiper(
+                  //   backgroundCardCount: 1,
+                  //   backgroundCardOffset: Offset(6, 6),
+                  //   duration: Duration(milliseconds: 150),
+                  //   backgroundCardScale: 1,
+                  //   loop: true,
+                  //   cardCount: 2,
+                  //   allowUnSwipe: true,
+                  //   onCardPositionChanged: (position) {
+                  //     setState(() {
+                  //       _cardPosition =
+                  //           position.offset.dx.abs() + position.offset.dy.abs();
+                  //     });
+                  //   },
+                  //   onSwipeEnd: (a, b, direction) {
+                  //     setState(() {
+                  //       ref
+                  //           .read(cCardIndexProvider.notifier)
+                  //           .update((s) => s = b);
+                  //       _cardPosition = 0;
+                  //     });
+                  //   },
+                  //   cardBuilder: (BuildContext context, int index) {
+                  //     int currentCardIndex = ref.watch(cCardIndexProvider);
+                  //     return Stack(
+                  //       children: [
+                  //         Positioned.fill(
+                  //           child: AnimatedContainer(
+                  //             duration: Durations.medium2,
+                  //             margin: EdgeInsets.all(15),
+                  //             alignment: Alignment.center,
+                  //             decoration: BoxDecoration(
+                  //               color: Colors.white,
+                  //               border: Border.all(width: 2),
+                  //               borderRadius: BorderRadius.circular(30),
+                  //             ),
+                  //             child:
+                  //           ),
+                  //         ),
+                  //         Positioned.fill(
+                  //           child: AnimatedOpacity(
+                  //             opacity: currentCardIndex == index
+                  //                 ? 0
+                  //                 : index >= (currentCardIndex + 2) % 10
+                  //                     ? 1
+                  //                     : (1 -
+                  //                         (_cardPosition / 200)
+                  //                             .clamp(0.0, 1.0)),
+                  //             duration: Duration(milliseconds: 300),
+                  //             child: AnimatedContainer(
+                  //               duration: Duration(milliseconds: 300),
+                  //               margin: EdgeInsets.all(15),
+                  //               alignment: Alignment.center,
+                  //               decoration: BoxDecoration(
+                  //                 color: index == (currentCardIndex + 1) % 10
+                  //                     ? Colors.green
+                  //                     : index == (currentCardIndex + 2) % 10
+                  //                         ? Colors.green
+                  //                         : Colors.green,
+                  //                 border: Border.all(width: 2),
+                  //                 borderRadius: BorderRadius.circular(30),
+                  //               ),
+                  //               child: ListView.builder(
+                  //                 itemCount: Boxes.getLayouts().length,
+                  //                 itemBuilder: (BuildContext context, int i) {
+                  //                   return GestureDetector(
+                  //                     onTap: () {
+                  //                       Navigator.push(context,
+                  //                           MaterialPageRoute(
+                  //                         builder: (context) {
+                  //                           return LayoutDesigner3(
+                  //                             id: i,
+                  //                           );
+                  //                         },
+                  //                       ));
+                  //                     },
+                  //                     child: Container(
+                  //                       height: 50,
+                  //                       color: Colors.amber,
+                  //                       width: 30,
+                  //                       alignment: Alignment.center,
+                  //                       child: Text(Boxes.getLayouts()
+                  //                           .get(i)
+                  //                           .toString()),
+                  //                     ),
+                  //                   );
+                  //                 },
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     );
+                  //   },
+                  // ),
                 ),
               ),
             ),
