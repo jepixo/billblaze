@@ -24,7 +24,7 @@ Future<void> main() async {
   Hive.registerAdapter(DocumentPropertiesBoxAdapter());
   Hive.registerAdapter(SheetItemAdapter());
   Hive.registerAdapter(SheetListBoxAdapter());
-  Hive.registerAdapter(TextEditorItemAdapter());
+  Hive.registerAdapter(TextEditorItemBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
 
   Hive.openBox<LayoutModel>('layouts');

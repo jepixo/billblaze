@@ -18,7 +18,7 @@ part 'text_editor_item.g.dart';
 @HiveType(typeId: 3)
 class TextEditorItemBox extends SheetItem {
   @HiveField(2)
-  final String textEditorController;
+  final List<Map<String, dynamic>> textEditorController;
   TextEditorItemBox({
     required this.textEditorController,
     required super.id,
@@ -43,7 +43,7 @@ class TextEditorItem extends SheetItem {
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
           controller: textEditorController,
           multiRowsDisplay: false,
-        );
+        ) {}
 
   factory TextEditorItem({
     QuillController? textEditorController,
@@ -89,89 +89,21 @@ class TextEditorItem extends SheetItem {
     return textEditorController.document.toDelta().toJson();
   }
 
-  Widget buildTextEditorToolbar() {
-    return QuillToolbar.simple(configurations: toolBarConfigurations);
+  TextEditorItem copyWith({
+    QuillController? textEditorController,
+    QuillEditorConfigurations? textEditorConfigurations,
+    FocusNode? focusNode,
+    ScrollController? scrollController,
+    QuillSimpleToolbarConfigurations? toolBarConfigurations,
+    String? id,
+    String? parentId,
+  }) {
+    return TextEditorItem._(
+      textEditorController: textEditorController ?? this.textEditorController,
+      textEditorConfigurations:
+          textEditorConfigurations ?? this.textEditorConfigurations,
+      id: id ?? this.id,
+      parentId: parentId ?? this.parentId,
+    );
   }
 }
-
-// class TextEditorWidget extends ConsumerStatefulWidget {
-//   // final Axis direction;
-//   // final int index;
-//   final TextEditorItem textEditorItem;
-//   final bool isPhantom;
-//   // final bool isSheet;
-//   final String id;
-//   const TextEditorWidget({
-//     required this.textEditorItem,
-//     required this.isPhantom,
-//     required this.id,
-//   });
-
-//   @override
-//   ConsumerState<ConsumerStatefulWidget> createState() =>
-//       _TextEditorWidgetState();
-// }
-
-// class _TextEditorWidgetState extends ConsumerState<TextEditorWidget> {
-//   late int index;
-//   late TextEditorItem textEditorItem;
-//   late bool isPhantom;
-//   // late Axis direction;
-
-//   @override
-//   void initState() {
-//     // TODO: implement initState
-//     super.initState();
-//     // index = widget.index;
-//     textEditorItem = widget.textEditorItem;
-//     isPhantom = widget.isPhantom;
-//     // direction = Axis.horizontal;
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     print('________TextFIELD BUILD STARTED_________');
-//     print(
-//         'currentpageINdex in texteditorfield: ${ref.read(currentPageIndexProvider)}');
-//     // final currentPageIndex = ref.watch(currentPageIndexProvider);
-//     // final textEditorItem = ref.watch(sheetItemProviderFamily(widget.id));
-//     // SheetList items = widget.item as SheetList;
-//     // int? draggingIndex =
-//     //     ref.watch(dragDropProvider.select((p) => p.draggingIndex));
-//     // int? potentialDropIndex =
-//     //     ref.watch(dragDropProvider.select((p) => p.potentialDropIndex));
-//     // SheetList? draggingList =
-//     //     ref.watch(dragDropProvider.select((p) => p.draggingItem as SheetList?));
-//     // SheetList? potentialList = ref.watch(
-//     //     dragDropProvider.select((p) => p.potentialDropItem as SheetList?));
-//     // double listWidth = 500 / 2;
-//     // double listHeight = 50;
-//     // Duration dur = ref.watch(dragDropProvider.select((p) => p.dur));
-//     // return PanelWrapper(
-//     //     // child: DragWrap(
-//     //     //     // phantomChild: QuillEditor(
-//     //     //     //     configurations: textEditorItem.textEditorConfigurations,
-//     //     //     //     focusNode: textEditorItem.focusNode,
-//     //     //     //     scrollController: ScrollController()),
-//     //     //     // index: index,
-//     //     //     // item: sheetList,
-//     //     //     // child: QuillEditor(
-//     //     //     //     configurations: textEditorItem.textEditorConfigurations,
-//     //     //     //     focusNode: textEditorItem.focusNode,
-//     //     //     //     scrollController: textEditorItem.scrollController),
-//     //     //     ));
-//     //     child: QuillEditor(
-//     //   configurations: textEditorItem.textEditorConfigurations,
-//     //   focusNode: textEditorItem.focusNode,
-//     //   scrollController: textEditorItem.scrollController,
-//     // ));
-//     if (textEditorItem is TextEditorItem) {
-//       return QuillEditor(
-//         configurations: textEditorItem.textEditorConfigurations,
-//         focusNode: textEditorItem.focusNode,
-//         scrollController: textEditorItem.scrollController,
-//       );
-//     }
-//     return SizedBox();
-//   }
-// }

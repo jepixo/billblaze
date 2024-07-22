@@ -104,10 +104,13 @@ class DocumentPropertiesBox extends HiveObject {
       pageNumberController: pageNumberController ?? this.pageNumberController,
       marginAllController: marginAllController ?? this.marginAllController,
       marginLeftController: marginLeftController ?? this.marginLeftController,
-      marginRightController: marginRightController ?? this.marginRightController,
-      marginBottomController: marginBottomController ?? this.marginBottomController,
+      marginRightController:
+          marginRightController ?? this.marginRightController,
+      marginBottomController:
+          marginBottomController ?? this.marginBottomController,
       marginTopController: marginTopController ?? this.marginTopController,
-      orientationController: orientationController ?? this.orientationController,
+      orientationController:
+          orientationController ?? this.orientationController,
       pageFormatController: pageFormatController ?? this.pageFormatController,
       useIndividualMargins: useIndividualMargins ?? this.useIndividualMargins,
     );
@@ -271,5 +274,33 @@ class DocumentProperties extends HiveObject {
         orientationController.hashCode ^
         pageFormatController.hashCode ^
         useIndividualMargins.hashCode;
+  }
+
+  DocumentPropertiesBox toDocPropBox() {
+    return DocumentPropertiesBox(
+        pageNumberController: pageNumberController.text,
+        marginAllController: marginAllController.text,
+        marginLeftController: marginLeftController.text,
+        marginRightController: marginRightController.text,
+        marginBottomController: marginBottomController.text,
+        marginTopController: marginTopController.text,
+        orientationController:
+            orientationController == pw.PageOrientation.landscape
+                ? false
+                : true,
+        pageFormatController: getPageFormatString(pageFormatController));
+  }
+
+  String getPageFormatString(PdfPageFormat format) {
+    if (format == PdfPageFormat.a4) return 'A4';
+    if (format == PdfPageFormat.a3) return 'A3';
+    if (format == PdfPageFormat.letter) return 'Letter';
+    if (format == PdfPageFormat.legal) return 'Legal';
+    if (format == PdfPageFormat.roll57) return 'Roll 57';
+    if (format == PdfPageFormat.roll80) return 'Roll 80';
+    if (format == PdfPageFormat.a5) return 'A5';
+    if (format == PdfPageFormat.a6) return 'A6';
+    if (format == PdfPageFormat.standard) return 'Standard';
+    return 'Unknown';
   }
 }
