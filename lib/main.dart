@@ -27,7 +27,7 @@ Future<void> main() async {
   Hive.registerAdapter(TextEditorItemBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
 
-  Hive.openBox<LayoutModel>('layouts');
+  await Hive.openBox<LayoutModel>('layouts');
   runApp(const ProviderScope(child: MainApp()));
 }
 

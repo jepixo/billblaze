@@ -20,19 +20,28 @@ class LayoutModelAdapter extends TypeAdapter<LayoutModel> {
       docPropsList: (fields[0] as List).cast<DocumentPropertiesBox>(),
       spreadSheetList: (fields[1] as List).cast<SheetListBox>(),
       id: fields[2] as String,
+      name: fields[3] as String,
+      createdAt: fields[4] as DateTime,
+      modifiedAt: fields[5] as DateTime,
     );
   }
 
   @override
   void write(BinaryWriter writer, LayoutModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.docPropsList)
       ..writeByte(1)
       ..write(obj.spreadSheetList)
       ..writeByte(2)
-      ..write(obj.id);
+      ..write(obj.id)
+      ..writeByte(3)
+      ..write(obj.name)
+      ..writeByte(4)
+      ..write(obj.createdAt)
+      ..writeByte(5)
+      ..write(obj.modifiedAt);
   }
 
   @override

@@ -56,11 +56,9 @@ import '../components/elevated_button.dart';
 
 class PanelIndex {
   String id;
+  String parentId = '';
   int panelIndex;
-  PanelIndex({
-    required this.id,
-    required this.panelIndex,
-  });
+  PanelIndex({required this.id, required this.panelIndex, parentId = ''});
 
   PanelIndex copyWith({
     String? id,
@@ -145,7 +143,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   int currentPageIndex = 0;
   List<SelectedIndex> selectedIndex = [];
   PanelIndex panelIndex = PanelIndex(id: '', panelIndex: -1);
-  PageController textStylePageController = PageController();
   PageController pageViewIndicatorController = PageController();
   // PageController pageTextFieldsController = PageController();
   PageController textStyleTabControler = PageController();
@@ -225,7 +222,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     // animateToPage(currentPageIndex);
     var box = Boxes.getLayouts();
     if (key == -1) {
-      lm = LayoutModel(docPropsList: [], spreadSheetList: [], id: Uuid().v4());
+      lm = LayoutModel(
+          createdAt: DateTime.now(),
+          modifiedAt: DateTime.now(),
+          name: Boxes.getLayoutName(),
+          docPropsList: [],
+          spreadSheetList: [],
+          id: Uuid().v4());
       key = Boxes.getLayouts().length;
       box.put(Boxes.getLayouts().length, lm!);
       lm!.save();
@@ -244,7 +247,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
   @override
   void dispose() {
-    textStylePageController.dispose();
     pageViewIndicatorController.dispose();
     textStyleTabControler.dispose();
     super.dispose();
@@ -467,18 +469,19 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
               _sheetItemIterator(newId, spreadSheetList[currentPageIndex]);
 
           var index = _sheetListIterator(
-                  itemE.parentId, spreadSheetList[currentPageIndex])
+                  itemE!.parentId, spreadSheetList[currentPageIndex])
               .indexOf(itemE);
-          panelIndex = PanelIndex(id: itemE.id, panelIndex: index);
+          panelIndex = PanelIndex(
+              id: itemE.id, panelIndex: index, parentId: itemE.parentId);
 
           if (hDividerPosition > 0.48) {
             hDividerPosition = 0.4;
           }
         });
 
-        Future.delayed(Duration.zero).then((_) {
-          textStylePageController.jumpToPage(panelIndex.panelIndex);
-        });
+        // Future.delayed(Duration.zero).then((_) {
+        //   textStylePageController.jumpToPage(panelIndex.panelIndex);
+        // });
 
         Future.delayed(Durations.short1).then((_) {
           if (!isTrue) {
@@ -540,6 +543,23 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         return sheetList[i] as SheetList;
       }
       if (sheetList[i] is SheetList) {
+        if (_listIterator(id, sheetList[i] as SheetList) != null) {
+          return _listIterator(id, sheetList[i] as SheetList)!;
+        }
+      }
+    }
+    throw Exception('SheetList with id $id not found');
+  }
+
+  SheetList? _listIterator(String id, SheetList sheetList) {
+    if (sheetList.id == id) {
+      return sheetList;
+    }
+    for (var i = 0; i < sheetList.length; i++) {
+      if (sheetList[i].id == id) {
+        return sheetList[i] as SheetList;
+      }
+      if (sheetList[i] is SheetList) {
         try {
           return _sheetListIterator(id, sheetList[i] as SheetList);
         } catch (e) {
@@ -547,7 +567,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         }
       }
     }
-    throw Exception('SheetList with id $id not found');
+    return null;
   }
 
   SheetItem _sheetItemIterator(String id, SheetList sheetList) {
@@ -561,10 +581,29 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       }
       if (sheetList[i] is SheetList) {
         print('listitem id in iterator: ${sheetList[i].id}');
+        if (_itemIterator(id, sheetList[i] as SheetList) != null) {
+          return _itemIterator(id, sheetList[i] as SheetList)!;
+        }
+      }
+    }
+    throw throw Exception('SheetItem with id $id not found');
+  }
+
+  SheetItem? _itemIterator(String id, SheetList sheetList) {
+    print('id for search: $id');
+    for (var i = 0; i < sheetList.length; i++) {
+      print('item id in iterator: ${sheetList[i].id}');
+      print('item in iterator: ${sheetList[i]}');
+      if (sheetList[i] is TextEditorItem && sheetList[i].id == id) {
+        print('textitem id in iterator: ${sheetList[i].id}');
+        return sheetList[i];
+      }
+      if (sheetList[i] is SheetList) {
+        print('listitem id in iterator: ${sheetList[i].id}');
         return _sheetItemIterator(id, sheetList[i] as SheetList);
       }
     }
-    throw Exception('SheetItem with id $id not found');
+    return null;
   }
 
   void _updatehDividerPosition(double newPosition) {
@@ -617,7 +656,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 if (deletePage) {
                   if (pageCount == 1) {
                     spreadSheetList[currentPageIndex].sheetList = [];
-                    panelIndex = PanelIndex(id: panelIndex.id, panelIndex: -1);
+                    panelIndex = PanelIndex(
+                        id: panelIndex.id,
+                        panelIndex: -1,
+                        parentId: panelIndex.parentId);
                     return;
                   }
                   pageCount--;
@@ -625,11 +667,16 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                   spreadSheetList.removeAt(currentPageIndex);
                   currentPageIndex--;
                   panelIndex = PanelIndex(
-                      id: spreadSheetList[currentPageIndex].id, panelIndex: -1);
+                      id: spreadSheetList[currentPageIndex].id,
+                      panelIndex: -1,
+                      parentId: spreadSheetList[currentPageIndex].parentId);
                   return;
                 }
                 spreadSheetList[currentPageIndex].sheetList = [];
-                panelIndex = PanelIndex(id: panelIndex.id, panelIndex: -1);
+                panelIndex = PanelIndex(
+                    id: panelIndex.id,
+                    panelIndex: -1,
+                    parentId: panelIndex.parentId);
               });
               Navigator.of(context).pop();
             },
@@ -683,7 +730,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   void _removeTextField() {
     setState(() {
       spreadSheetList[currentPageIndex].removeAt(panelIndex.panelIndex);
-      panelIndex = PanelIndex(id: '', panelIndex: -1);
+      panelIndex = PanelIndex(id: '', panelIndex: -1, parentId: '');
     });
   }
 
@@ -884,73 +931,57 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       child: Column(
         children: [
           for (int i = 0; i < pageCount; i++)
-            Builder(builder: (context) {
-              // var _globalKey = GlobalKey();
-              // //  setState(() {
-              // //    exportDelegate.add(exportDel);
-              // //  });
-              // print(i);
-              // print(_globalKey.toString())
-              // globalKeys.add(_globalKey);
-              return Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 30.0, horizontal: 10),
-                child: RepaintBoundary(
-                  key: globalKeys[i],
-                  child: Container(
-                    width: doc[i].pageFormatController == PdfPageFormat.a4
-                        ? 1 * 793.7007874
-                        : doc[i].pageFormatController == PdfPageFormat.a3
-                            ? 0.72 * 1122.519685
-                            : doc[i].pageFormatController == PdfPageFormat.a5
-                                ? 1 * 559.37007874
-                                : doc[i].pageFormatController ==
-                                        PdfPageFormat.a6
-                                    ? 1 * 396.8503937
-                                    : doc[i].pageFormatController ==
-                                            PdfPageFormat.letter
-                                        ? 1 * 816
-                                        : doc[i].pageFormatController ==
-                                                PdfPageFormat.legal
-                                            ? 1 * 816
-                                            : 2480 / 2,
-                    height: doc[i].pageFormatController == PdfPageFormat.a4
-                        ? 1 * 1122.519685
-                        : doc[i].pageFormatController == PdfPageFormat.a3
-                            ? 0.72 * 1587.4015748
-                            : doc[i].pageFormatController == PdfPageFormat.a5
-                                ? 1 * 793.7007874
-                                : doc[i].pageFormatController ==
-                                        PdfPageFormat.a6
-                                    ? 1 * 559.37007874
-                                    : doc[i].pageFormatController ==
-                                            PdfPageFormat.letter
-                                        ? 1 * 1056
-                                        : doc[i].pageFormatController ==
-                                                PdfPageFormat.legal
-                                            ? 1 * 1344
-                                            : 3508 / 2,
-                    decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                      // BoxShadow(
-                      //   blurRadius: 5,
-                    ]),
-                    padding: EdgeInsets.only(
-                      top: double.parse(doc[i].marginTopController.text),
-                      // *
-                      //     (1 - vDividerPosition),
-                      bottom: double.parse(doc[i].marginBottomController.text),
-                      // *
-                      //     (1 - vDividerPosition),
-                      left: double.parse(doc[i].marginLeftController.text),
-                      // *
-                      //     (1 - vDividerPosition),
-                      right: double.parse(doc[i].marginRightController.text),
-                    ),
-                    child: _buildSheetListWidget(sheetList[i], width),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 30.0, horizontal: 10),
+              child: RepaintBoundary(
+                key: globalKeys[i],
+                child: Container(
+                  width: doc[i].pageFormatController == PdfPageFormat.a4
+                      ? 1 * 793.7007874
+                      : doc[i].pageFormatController == PdfPageFormat.a3
+                          ? 0.72 * 1122.519685
+                          : doc[i].pageFormatController == PdfPageFormat.a5
+                              ? 1 * 559.37007874
+                              : doc[i].pageFormatController == PdfPageFormat.a6
+                                  ? 1 * 396.8503937
+                                  : doc[i].pageFormatController ==
+                                          PdfPageFormat.letter
+                                      ? 1 * 816
+                                      : doc[i].pageFormatController ==
+                                              PdfPageFormat.legal
+                                          ? 1 * 816
+                                          : 2480 / 2,
+                  height: doc[i].pageFormatController == PdfPageFormat.a4
+                      ? 1 * 1122.519685
+                      : doc[i].pageFormatController == PdfPageFormat.a3
+                          ? 0.72 * 1587.4015748
+                          : doc[i].pageFormatController == PdfPageFormat.a5
+                              ? 1 * 793.7007874
+                              : doc[i].pageFormatController == PdfPageFormat.a6
+                                  ? 1 * 559.37007874
+                                  : doc[i].pageFormatController ==
+                                          PdfPageFormat.letter
+                                      ? 1 * 1056
+                                      : doc[i].pageFormatController ==
+                                              PdfPageFormat.legal
+                                          ? 1 * 1344
+                                          : 3508 / 2,
+                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                    // BoxShadow(
+                    //   blurRadius: 5,
+                  ]),
+                  padding: EdgeInsets.only(
+                    top: double.parse(doc[i].marginTopController.text),
+                    bottom: double.parse(doc[i].marginBottomController.text),
+                    left: double.parse(doc[i].marginLeftController.text),
+                    right: double.parse(doc[i].marginRightController.text),
                   ),
+                  child: _buildSheetListWidget(
+                      sheetList[i], sWidth * (1 - vDividerPosition)),
                 ),
-              );
-            })
+              ),
+            )
         ],
       ),
     );
@@ -960,292 +991,298 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     // );
   }
 
-  Widget _buildSheetListWidget(SheetList sheetList, width) {
-    return ListView.builder(
-      padding: EdgeInsets.all(0),
-      // shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: sheetList.sheetList.length,
-      itemBuilder: (context, index) {
-        final item = sheetList.sheetList[index];
-        if (item is TextEditorItem) {
-          // final delta = item.getTextEditorDocumentAsDelta();
-          return IgnorePointer(
-            key: ValueKey(item),
-            child: QuillEditor(
-              key: ValueKey(item.id),
-              configurations: QuillEditorConfigurations(
-                  scrollable: false,
-                  showCursor: false,
-                  enableInteractiveSelection: false,
-                  enableSelectionToolbar: false,
-                  requestKeyboardFocusOnCheckListChanged: false,
-                  customStyleBuilder: (attribute) {
-                    // Handle letter spacing
-                    if (attribute.key == 'letterSpacing') {
-                      String? letterSpacing = attribute.value as String?;
-                      return TextStyle(
-                          letterSpacing: double.parse(letterSpacing ?? '0'));
-                    }
-                    // Handle word spacing (custom attribute example)
-                    if (attribute.key == 'wordSpacing') {
-                      String? wordSpacing = attribute.value as String?;
-                      return TextStyle(
-                          wordSpacing: double.parse(wordSpacing ?? '0'));
-                    }
-                    // Handle line height (custom attribute example)
-                    if (attribute.key == 'lineHeight') {
-                      String? lineHeight = attribute.value as String?;
-                      return TextStyle(height: double.parse(lineHeight ?? '0'));
-                    }
-
-                    // Return default TextStyle if attribute not handled
-                    return TextStyle();
-                  },
-                  disableClipboard: true,
-                  controller: QuillController(
-                    document: (item).textEditorController.document,
-                    selection: (item).textEditorController.selection,
-                    readOnly: true,
-                    onSelectionChanged: (textSelection) {
-                      setState(() {});
+  Widget _buildSheetListWidget(SheetList sheetList, double width) {
+    return IntrinsicHeight(
+      child: Flex(
+        direction: sheetList.direction,
+        children: List.generate(sheetList.sheetList.length, (index) {
+          final item = sheetList.sheetList[index];
+          if (item is TextEditorItem) {
+            print('in buildSheetListWidget item is: $item');
+            return IgnorePointer(
+              key: ValueKey(item),
+              child: Container(
+                width: sheetList.direction == Axis.horizontal ? width : null,
+                child: QuillEditor(
+                  key: ValueKey(item.id),
+                  configurations: QuillEditorConfigurations(
+                    scrollable: false,
+                    showCursor: false,
+                    enableInteractiveSelection: false,
+                    enableSelectionToolbar: false,
+                    requestKeyboardFocusOnCheckListChanged: false,
+                    customStyleBuilder: (attribute) {
+                      // Handle letter spacing
+                      if (attribute.key == 'letterSpacing') {
+                        String? letterSpacing = attribute.value as String?;
+                        return TextStyle(
+                          letterSpacing: double.parse(letterSpacing ?? '0'),
+                        );
+                      }
+                      // Handle word spacing (custom attribute example)
+                      if (attribute.key == 'wordSpacing') {
+                        String? wordSpacing = attribute.value as String?;
+                        return TextStyle(
+                          wordSpacing: double.parse(wordSpacing ?? '0'),
+                        );
+                      }
+                      // Handle line height (custom attribute example)
+                      if (attribute.key == 'lineHeight') {
+                        String? lineHeight = attribute.value as String?;
+                        return TextStyle(
+                          height: double.parse(lineHeight ?? '0'),
+                        );
+                      }
+                      // Return default TextStyle if attribute not handled
+                      return TextStyle();
                     },
-                    onReplaceText: (index, len, data) {
-                      setState(() {});
-                      return false;
-                    },
-                    onSelectionCompleted: () {
-                      setState(() {});
-                    },
-                    onDelete: (cursorPosition, forward) {
-                      setState(() {});
-                    },
-                  )),
-              focusNode: FocusNode(),
-              scrollController: ScrollController(),
-            ),
-          );
-          // return convertDeltaToFlutterWidget(delta, width);
-        } else if (item is SheetList) {
-          return _buildSheetListWidget(item, width);
-        }
-        return SizedBox();
-      },
-    );
-  }
-
-  Widget convertDeltaToFlutterWidget(Delta delta, width) {
-    print('_____________DELTAA Widget Start______________');
-    List<Widget> textWidgets = [];
-    TextAlign textAlign = TextAlign.left;
-    TextDirection textDirection = TextDirection.ltr;
-    Widget? lastWidget;
-
-    delta.toList().forEach((op) {
-      if (op.value is String) {
-        String text = op.value; // Replace the last newline
-
-        Map<String, dynamic>? attributes = op.attributes;
-        TextStyle textStyle = TextStyle(
-          color: Colors.black,
-          height: 1,
-          fontSize: width / 12,
-        );
-
-        if (attributes != null) {
-          print('Attribute exists');
-          if (attributes.containsKey('bold')) {
-            textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
-          }
-          if (attributes.containsKey('italic')) {
-            textStyle = textStyle.copyWith(fontStyle: FontStyle.italic);
-          }
-          if (attributes.containsKey('underline')) {
-            textStyle =
-                textStyle.copyWith(decoration: TextDecoration.underline);
-            if (attributes.containsKey('strike')) {
-              textStyle = textStyle.copyWith(
-                  decoration: TextDecoration.combine(
-                      [TextDecoration.underline, TextDecoration.lineThrough]));
-            }
-          }
-          if (attributes.containsKey('strike')) {
-            textStyle =
-                textStyle.copyWith(decoration: TextDecoration.lineThrough);
-            if (attributes.containsKey('underline')) {
-              textStyle = textStyle.copyWith(
-                  decoration: TextDecoration.combine(
-                      [TextDecoration.underline, TextDecoration.lineThrough]));
-            }
-          }
-          if (attributes.containsKey('script')) {
-            if (attributes['script'] == ScriptAttributes.sup.value) {
-              textStyle = textStyle.copyWith(
-                  fontSize: width / 20,
-                  height: 1,
-                  textBaseline: TextBaseline.alphabetic);
-            }
-            if (attributes['script'] == ScriptAttributes.sub.value) {
-              textStyle = textStyle.copyWith(
-                  fontSize: width / 20,
-                  height: 1,
-                  textBaseline: TextBaseline.alphabetic);
-            }
-          }
-          if (attributes.containsKey('code')) {
-            textStyle = textStyle.copyWith(
-              fontFamily: 'Courier',
-              color: Colors.black,
-              backgroundColor: Colors.white,
-              decoration: TextDecoration.none,
-            );
-          }
-          if (attributes.containsKey('color')) {
-            textStyle = textStyle.copyWith(
-                color: Color(
-                    int.parse(attributes['color'].substring(1, 7), radix: 16) +
-                        0xFF000000));
-          }
-          if (attributes.containsKey('background')) {
-            textStyle = textStyle.copyWith(
-              backgroundColor: Color(int.parse(
-                      attributes['background'].substring(1, 7),
-                      radix: 16) +
-                  0xFF000000),
-            );
-          }
-          if (attributes.containsKey('size')) {
-            textStyle = textStyle.copyWith(
-                fontSize: double.parse(attributes['size'].toString()));
-          }
-          if (attributes.containsKey('header')) {
-            int level = attributes['header'];
-            switch (level) {
-              case 1:
-                textStyle = textStyle.copyWith(
-                    fontSize: 24, fontWeight: FontWeight.bold);
-                break;
-              case 2:
-                textStyle = textStyle.copyWith(
-                    fontSize: 20, fontWeight: FontWeight.bold);
-                break;
-              case 3:
-                textStyle = textStyle.copyWith(
-                    fontSize: 18, fontWeight: FontWeight.bold);
-                break;
-              default:
-                textStyle = textStyle.copyWith(
-                    fontSize: 16, fontWeight: FontWeight.bold);
-            }
-          }
-          if (attributes.containsKey('align')) {
-            switch (attributes['align']) {
-              case 'center':
-                textAlign = TextAlign.center;
-                break;
-              case 'right':
-                textAlign = TextAlign.right;
-                break;
-              case 'justify':
-                textAlign = TextAlign.justify;
-                break;
-              default:
-                textAlign = TextAlign.left;
-            }
-          }
-          if (attributes.containsKey('direction')) {
-            if (attributes['direction'] == 'rtl') {
-              textDirection = TextDirection.rtl;
-            } else {
-              textDirection = TextDirection.ltr;
-            }
-          }
-          if (attributes.containsKey('link')) {
-            // final link = attributes['link'];
-            textWidgets.add(
-              GestureDetector(
-                onTap: () {
-                  // launch(link); // Implement link launching
-                },
-                child: Text(
-                  text,
-                  style: textStyle.copyWith(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
+                    disableClipboard: true,
+                    controller: QuillController(
+                      document: item.textEditorController.document,
+                      selection: item.textEditorController.selection,
+                      readOnly: true,
+                      onSelectionChanged: (textSelection) {
+                        setState(() {});
+                      },
+                      onReplaceText: (index, len, data) {
+                        setState(() {});
+                        return false;
+                      },
+                      onSelectionCompleted: () {
+                        setState(() {});
+                      },
+                      onDelete: (cursorPosition, forward) {
+                        setState(() {});
+                      },
+                    ),
                   ),
+                  focusNode: FocusNode(),
+                  scrollController: ScrollController(),
                 ),
               ),
             );
-            return;
+          } else if (item is SheetList) {
+            print('in buildSheetListWidget item is: $item');
+            return _buildSheetListWidget(item, width);
           }
-        }
-        // Check if text starts with '\n'
-        bool startsWithNewLine = text.startsWith('\n');
-        //
-        if (delta.toList().indexOf(op) == 0) {
-          startsWithNewLine = true;
-        }
-        print(startsWithNewLine);
-        if (startsWithNewLine) {
-          print(text);
-          textWidgets.add(RichText(
-            text: TextSpan(children: [
-              TextSpan(
-                text: text.substring(
-                    0, text[text.length - 1] == '\n' ? text.length - 1 : null),
-                style: textStyle,
-              )
-            ]),
-            textAlign: textAlign,
-            textDirection: textDirection,
-            // textScaler: TextScaler.linear(1 - vDividerPosition),
-          ));
-          lastWidget = textWidgets[textWidgets.length - 1];
-        } else {
-          if (lastWidget is RichText) {
-            ((textWidgets[textWidgets.length - 1] as RichText).text as TextSpan)
-                .children
-                ?.add(TextSpan(
-                    text: text.substring(0,
-                        text[text.length - 1] == '\n' ? text.length - 1 : null),
-                    style: textStyle));
-            lastWidget = textWidgets[textWidgets.length - 1];
-          } else if (lastWidget is Text) {
-            Text prev = textWidgets.removeAt(textWidgets.length - 1) as Text;
-            textWidgets.add(RichText(
-              // textScaler: TextScaler.linear(1 - vDividerPosition),
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                      text: prev.data?.substring(
-                          textWidgets.length <= 0 ? 0 : 1,
-                          text[text.length - 1] == '\n'
-                              ? text.length - 1
-                              : null),
-                      style: prev.style),
-                  TextSpan(
-                      text: text.substring(
-                          0,
-                          text[text.length - 1] == '\n'
-                              ? text.length - 1
-                              : null),
-                      style: textStyle)
-                ],
-              ),
-            ));
-            lastWidget = textWidgets[textWidgets.length - 1];
-          }
-        }
-      }
-    });
-
-    print('_____________End DELTAA Widget Start______________');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Adjust as necessary
-      children: textWidgets,
+          return SizedBox();
+        }),
+      ),
     );
   }
+
+  // Widget convertDeltaToFlutterWidget(Delta delta, width) {
+  //   print('_____________DELTAA Widget Start______________');
+  //   List<Widget> textWidgets = [];
+  //   TextAlign textAlign = TextAlign.left;
+  //   TextDirection textDirection = TextDirection.ltr;
+  //   Widget? lastWidget;
+//
+  //   delta.toList().forEach((op) {
+  //     if (op.value is String) {
+  //       String text = op.value; // Replace the last newline
+//
+  //       Map<String, dynamic>? attributes = op.attributes;
+  //       TextStyle textStyle = TextStyle(
+  //         color: Colors.black,
+  //         height: 1,
+  //         fontSize: width / 12,
+  //       );
+//
+  //       if (attributes != null) {
+  //         print('Attribute exists');
+  //         if (attributes.containsKey('bold')) {
+  //           textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
+  //         }
+  //         if (attributes.containsKey('italic')) {
+  //           textStyle = textStyle.copyWith(fontStyle: FontStyle.italic);
+  //         }
+  //         if (attributes.containsKey('underline')) {
+  //           textStyle =
+  //               textStyle.copyWith(decoration: TextDecoration.underline);
+  //           if (attributes.containsKey('strike')) {
+  //             textStyle = textStyle.copyWith(
+  //                 decoration: TextDecoration.combine(
+  //                     [TextDecoration.underline, TextDecoration.lineThrough]));
+  //           }
+  //         }
+  //         if (attributes.containsKey('strike')) {
+  //           textStyle =
+  //               textStyle.copyWith(decoration: TextDecoration.lineThrough);
+  //           if (attributes.containsKey('underline')) {
+  //             textStyle = textStyle.copyWith(
+  //                 decoration: TextDecoration.combine(
+  //                     [TextDecoration.underline, TextDecoration.lineThrough]));
+  //           }
+  //         }
+  //         if (attributes.containsKey('script')) {
+  //           if (attributes['script'] == ScriptAttributes.sup.value) {
+  //             textStyle = textStyle.copyWith(
+  //                 fontSize: width / 20,
+  //                 height: 1,
+  //                 textBaseline: TextBaseline.alphabetic);
+  //           }
+  //           if (attributes['script'] == ScriptAttributes.sub.value) {
+  //             textStyle = textStyle.copyWith(
+  //                 fontSize: width / 20,
+  //                 height: 1,
+  //                 textBaseline: TextBaseline.alphabetic);
+  //           }
+  //         }
+  //         if (attributes.containsKey('code')) {
+  //           textStyle = textStyle.copyWith(
+  //             fontFamily: 'Courier',
+  //             color: Colors.black,
+  //             backgroundColor: Colors.white,
+  //             decoration: TextDecoration.none,
+  //           );
+  //         }
+  //         if (attributes.containsKey('color')) {
+  //           textStyle = textStyle.copyWith(
+  //               color: Color(
+  //                   int.parse(attributes['color'].substring(1, 7), radix: 16) +
+  //                       0xFF000000));
+  //         }
+  //         if (attributes.containsKey('background')) {
+  //           textStyle = textStyle.copyWith(
+  //             backgroundColor: Color(int.parse(
+  //                     attributes['background'].substring(1, 7),
+  //                     radix: 16) +
+  //                 0xFF000000),
+  //           );
+  //         }
+  //         if (attributes.containsKey('size')) {
+  //           textStyle = textStyle.copyWith(
+  //               fontSize: double.parse(attributes['size'].toString()));
+  //         }
+  //         if (attributes.containsKey('header')) {
+  //           int level = attributes['header'];
+  //           switch (level) {
+  //             case 1:
+  //               textStyle = textStyle.copyWith(
+  //                   fontSize: 24, fontWeight: FontWeight.bold);
+  //               break;
+  //             case 2:
+  //               textStyle = textStyle.copyWith(
+  //                   fontSize: 20, fontWeight: FontWeight.bold);
+  //               break;
+  //             case 3:
+  //               textStyle = textStyle.copyWith(
+  //                   fontSize: 18, fontWeight: FontWeight.bold);
+  //               break;
+  //             default:
+  //               textStyle = textStyle.copyWith(
+  //                   fontSize: 16, fontWeight: FontWeight.bold);
+  //           }
+  //         }
+  //         if (attributes.containsKey('align')) {
+  //           switch (attributes['align']) {
+  //             case 'center':
+  //               textAlign = TextAlign.center;
+  //               break;
+  //             case 'right':
+  //               textAlign = TextAlign.right;
+  //               break;
+  //             case 'justify':
+  //               textAlign = TextAlign.justify;
+  //               break;
+  //             default:
+  //               textAlign = TextAlign.left;
+  //           }
+  //         }
+  //         if (attributes.containsKey('direction')) {
+  //           if (attributes['direction'] == 'rtl') {
+  //             textDirection = TextDirection.rtl;
+  //           } else {
+  //             textDirection = TextDirection.ltr;
+  //           }
+  //         }
+  //         if (attributes.containsKey('link')) {
+  //           // final link = attributes['link'];
+  //           textWidgets.add(
+  //             GestureDetector(
+  //               onTap: () {
+  //                 // launch(link); // Implement link launching
+  //               },
+  //               child: Text(
+  //                 text,
+  //                 style: textStyle.copyWith(
+  //                   color: Colors.blue,
+  //                   decoration: TextDecoration.underline,
+  //                 ),
+  //               ),
+  //             ),
+  //           );
+  //           return;
+  //         }
+  //       }
+  //       // Check if text starts with '\n'
+  //       bool startsWithNewLine = text.startsWith('\n');
+  //       //
+  //       if (delta.toList().indexOf(op) == 0) {
+  //         startsWithNewLine = true;
+  //       }
+  //       print(startsWithNewLine);
+  //       if (startsWithNewLine) {
+  //         print(text);
+  //         textWidgets.add(RichText(
+  //           text: TextSpan(children: [
+  //             TextSpan(
+  //               text: text.substring(
+  //                   0, text[text.length - 1] == '\n' ? text.length - 1 : null),
+  //               style: textStyle,
+  //             )
+  //           ]),
+  //           textAlign: textAlign,
+  //           textDirection: textDirection,
+  //           // textScaler: TextScaler.linear(1 - vDividerPosition),
+  //         ));
+  //         lastWidget = textWidgets[textWidgets.length - 1];
+  //       } else {
+  //         if (lastWidget is RichText) {
+  //           ((textWidgets[textWidgets.length - 1] as RichText).text as TextSpan)
+  //               .children
+  //               ?.add(TextSpan(
+  //                   text: text.substring(0,
+  //                       text[text.length - 1] == '\n' ? text.length - 1 : null),
+  //                   style: textStyle));
+  //           lastWidget = textWidgets[textWidgets.length - 1];
+  //         } else if (lastWidget is Text) {
+  //           Text prev = textWidgets.removeAt(textWidgets.length - 1) as Text;
+  //           textWidgets.add(RichText(
+  //             // textScaler: TextScaler.linear(1 - vDividerPosition),
+  //             text: TextSpan(
+  //               children: [
+  //                 TextSpan(
+  //                     text: prev.data?.substring(
+  //                         textWidgets.length <= 0 ? 0 : 1,
+  //                         text[text.length - 1] == '\n'
+  //                             ? text.length - 1
+  //                             : null),
+  //                     style: prev.style),
+  //                 TextSpan(
+  //                     text: text.substring(
+  //                         0,
+  //                         text[text.length - 1] == '\n'
+  //                             ? text.length - 1
+  //                             : null),
+  //                     style: textStyle)
+  //               ],
+  //             ),
+  //           ));
+  //           lastWidget = textWidgets[textWidgets.length - 1];
+  //         }
+  //       }
+  //     }
+  //   });
+//
+  //   print('_____________End DELTAA Widget Start______________');
+//
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start, // Adjust as necessary
+  //     children: textWidgets,
+  //   );
+  // }
 
   void _addPdfPage() {
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
@@ -1500,7 +1537,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                   vDividerPosition *
                                                                   0.4,
                                                               child: Text(
-                                                                  'Page Properties',
+                                                                  vDividerPosition <
+                                                                          0.45
+                                                                      ? 'PG \nPRP'
+                                                                      : 'Page Properties',
                                                                   maxLines: 2,
                                                                   overflow:
                                                                       TextOverflow
@@ -2345,7 +2385,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                   )
                                                                 ],
                                                               ),
-
+                                                            //Orientation
                                                             SizedBox(
                                                               height:
                                                                   textFieldHeight +
@@ -2370,14 +2410,16 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                     : 'Landscape',
                                                                 onChanged:
                                                                     (value) {
-                                                                  documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .orientationController = value ==
-                                                                          'Portrait'
-                                                                      ? pw.PageOrientation
-                                                                          .portrait
-                                                                      : pw.PageOrientation
-                                                                          .landscape;
+                                                                  setState(() {
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .orientationController = value ==
+                                                                            'Portrait'
+                                                                        ? pw.PageOrientation
+                                                                            .portrait
+                                                                        : pw.PageOrientation
+                                                                            .landscape;
+                                                                  });
                                                                   // _updatePdfPreview(
                                                                   //     '');
                                                                 },
@@ -2450,6 +2492,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                               ),
                                                             ),
                                                             SizedBox(height: 5),
+                                                            //Page Format
                                                             SizedBox(
                                                               height:
                                                                   textFieldHeight,
@@ -2466,8 +2509,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                   'Letter',
                                                                   'Legal',
                                                                   'Standard',
-                                                                  // 'Roll 57',
-                                                                  // 'Roll 80',
                                                                 ],
                                                                 initialItem: getPageFormatString(
                                                                     documentPropertiesList[
@@ -2475,12 +2516,12 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                         .pageFormatController),
                                                                 onChanged:
                                                                     (value) {
-                                                                  documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .pageFormatController =
-                                                                      getPageFormatFromString(
-                                                                          value ??
-                                                                              '');
+                                                                  setState(() {
+                                                                    documentPropertiesList[currentPageIndex]
+                                                                            .pageFormatController =
+                                                                        getPageFormatFromString(value ??
+                                                                            '');
+                                                                  });
                                                                   // _updatePdfPreview(
                                                                   //     '');
                                                                 },
@@ -4890,37 +4931,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                     child: AnimatedContainer(
                                       duration: Duration(milliseconds: 300),
                                       // color: Colors.green,
-                                      child: Center(
-                                          // child: _generateWid(sWidth, sHeight),
-                                          // child: PdfPreview(
-                                          //   controller: pdfScrollController,
-                                          //   build: (format) =>
-                                          //       _generatePdf(sWidth).save(),
-                                          //   enableScrollToPage: true,
-                                          //   allowSharing: true,
-                                          //   allowPrinting: true,
-                                          //   canChangeOrientation: false,
-                                          //   canChangePageFormat: false,
-                                          //   canDebug: true,
-                                          //   actionBarTheme: PdfActionBarTheme(
-                                          //     height: 55, // Reduced height
-                                          //     actionSpacing: 2,
-                                          //     backgroundColor:
-                                          //         defaultPalette.transparent,
-                                          //     alignment: WrapAlignment.end,
-                                          //     iconColor: defaultPalette.black,
-                                          //     crossAxisAlignment:
-                                          //         WrapCrossAlignment.end,
-                                          //     runAlignment: WrapAlignment.end,
-                                          //     elevation: 50,
-                                          //   ),
-                                          //   previewPageMargin: EdgeInsets.all(5),
-                                          //   scrollViewDecoration: BoxDecoration(
-                                          //       color: defaultPalette.transparent),
-                                          //   useActions: true,
-                                          // ),
-                                          //
-                                          ),
+                                      child: Center(),
                                     ),
                                   ),
                                 ],
@@ -4948,11 +4959,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                     padding: EdgeInsets.only(
                                         bottom: 25, top: 25, right: 40),
                                     decoration: BoxDecoration(boxShadow: [
-                                      // BoxShadow(
-                                      //     blurRadius: 500,
-                                      //     offset: Offset(5, 5),
-                                      //     color: defaultPalette.black
-                                      //         .withOpacity(0.06))
+                                      BoxShadow(
+                                          blurRadius: 500,
+                                          offset: Offset(5, 5),
+                                          color: defaultPalette.black
+                                              .withOpacity(0.06))
                                     ]),
                                     alignment: Alignment.center,
                                     child: _generateWid(sWidth, sHeight),
@@ -5116,7 +5127,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                 color: defaultPalette.black.withOpacity(.9),
                                 child: Stack(
                                   children: [
-                                    //Graph
+                                    // botomGraph
                                     IgnorePointer(
                                       ignoring: true,
                                       child: AnimatedContainer(
@@ -5159,24 +5170,15 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                         ),
                                       ),
                                     ),
-
+                                    //Main SpreadSheet
                                     ReorderableListView.builder(
-                                      // key: spreadSheetKey,
-                                      // buildDefaultDragHandles: false,
                                       footer: null,
                                       header: null,
+                                      // scrollDirection: Axis.horizontal,
                                       itemExtentBuilder: null,
-                                      // prototypeItem: Container(),
                                       proxyDecorator:
                                           (child, index, animation) {
-                                        if (spreadSheetList[currentPageIndex]
-                                            [index] is TextEditorItem) {
-                                          // var textEditorItem =
-                                          //     spreadSheetList[currentPageIndex]
-                                          //         [index] as TextEditorItem;
-                                          return child;
-                                        }
-                                        return Container();
+                                        return child;
                                       },
                                       padding: EdgeInsets.all(0),
                                       onReorder: (int oldIndex, int newIndex) {
@@ -5230,11 +5232,16 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                           .indexOf(itemE!);
                                                       panelIndex = PanelIndex(
                                                           id: itemE!.id,
-                                                          panelIndex: index);
+                                                          panelIndex: index,
+                                                          parentId:
+                                                              itemE?.parentId);
                                                     } else {
                                                       panelIndex = PanelIndex(
                                                           id: textEditorItem.id,
-                                                          panelIndex: index);
+                                                          panelIndex: index,
+                                                          parentId:
+                                                              textEditorItem
+                                                                  .parentId);
                                                     }
 
                                                     // index = temp ?? index;
@@ -5244,12 +5251,12 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                       hDividerPosition = 0.4;
                                                     }
                                                   });
-                                                  Future.delayed(Duration.zero)
-                                                      .then((_) {
-                                                    textStylePageController
-                                                        .jumpToPage(panelIndex
-                                                            .panelIndex);
-                                                  });
+                                                  // Future.delayed(Duration.zero)
+                                                  //     .then((_) {
+                                                  //   textStylePageController
+                                                  //       .jumpToPage(panelIndex
+                                                  //           .panelIndex);
+                                                  // });
                                                   Future.delayed(
                                                           Durations.short1)
                                                       .then((h) {
@@ -5333,7 +5340,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                   ),
                                                 ),
                                               ),
-//contextMenu
+                                              //contextMenu in main spreadsheet
                                               AnimatedPositioned(
                                                 duration: Durations.medium3,
                                                 bottom: 0,
@@ -5386,12 +5393,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           ),
                                                                           onSelected:
                                                                               (String value) {
-                                                                            // Handle the selected option here
+                                                                            // Handle the selected option here in main spreadsheet
                                                                             switch (value) {
                                                                               case 'Above':
                                                                                 setState(() {
                                                                                   var newItem = _addTextField(shouldReturn: true);
                                                                                   spreadSheetList[currentPageIndex].insert(index, newItem);
+                                                                                  index++;
                                                                                 });
                                                                                 break;
                                                                               case 'Below':
@@ -5399,7 +5407,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                   var newItem = _addTextField(shouldReturn: true);
                                                                                   spreadSheetList[currentPageIndex].insert(index + 1, newItem);
                                                                                 });
-                                                                                // Your logic for "Below"
+                                                                                // Your logic for "Below" in main spreadsheet
                                                                                 break;
                                                                               case 'Left':
                                                                                 setState(() {
@@ -5407,19 +5415,20 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                   var item = spreadSheetList[currentPageIndex].removeAt(index);
                                                                                   spreadSheetList[currentPageIndex].insert(
                                                                                       index,
-                                                                                      SheetList(id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                      SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
                                                                                         _addTextField(shouldReturn: true),
                                                                                         item
                                                                                       ]));
                                                                                 });
                                                                                 break;
+                                                                              //in main spreadsheet
                                                                               case 'Right':
                                                                                 setState(() {
                                                                                   var newId = Uuid().v4();
                                                                                   var item = spreadSheetList[currentPageIndex].removeAt(index);
                                                                                   spreadSheetList[currentPageIndex].insert(
                                                                                       index,
-                                                                                      SheetList(id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                      SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
                                                                                         item,
                                                                                         _addTextField(shouldReturn: true),
                                                                                       ]));
@@ -5475,7 +5484,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                         );
 
                                                                       case 1:
-                                                                        //MOVE TEXT UP
+                                                                        //MOVE TEXT UP in main spreadsheet
                                                                         return GestureDetector(
                                                                           onTap:
                                                                               () {
@@ -5487,7 +5496,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 // Update the index to reflect the new position of the item
                                                                                 index--; // Decrement index to reflect the item's new position
 
-                                                                                panelIndex = PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1);
+                                                                                panelIndex = PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1, parentId: panelIndex.parentId);
                                                                                 print('Updated index of text editor: $index');
                                                                               }
                                                                               print('Current index of text editor: $index');
@@ -5501,7 +5510,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           ),
                                                                         );
                                                                       case 2:
-                                                                        //MOVE TEXT DOWN
+                                                                        //MOVE TEXT DOWN in main spreadsheet
                                                                         return GestureDetector(
                                                                           onTap:
                                                                               () {
@@ -5522,7 +5531,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           ),
                                                                         );
                                                                       case 3:
-                                                                        //EXPORT TEXT
+                                                                        //EXPORT TEXT in main spreadsheet
                                                                         return GestureDetector(
                                                                           onTap:
                                                                               () async {
@@ -5660,7 +5669,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           ),
                                                                         );
                                                                       case 4:
-                                                                        //clear text in text field
+                                                                        //clear text in text field in main spreadsheet
                                                                         return GestureDetector(
                                                                           onTap:
                                                                               () async {
@@ -5697,7 +5706,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           ),
                                                                         );
                                                                       case 5:
-                                                                        //Delete Text Field
+                                                                        //Delete Text Field in main spreadsheet
                                                                         return GestureDetector(
                                                                           onTap:
                                                                               () async {
@@ -5712,6 +5721,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                         onPressed: () {
                                                                                           setState(() {
                                                                                             spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                            panelIndex.id = '';
+                                                                                            panelIndex.panelIndex = -1;
                                                                                           });
                                                                                           Navigator.pop(context);
                                                                                         },
@@ -5736,7 +5747,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                       default:
                                                                         return Container();
                                                                     }
-                                                                  }), // simplified item generation
+                                                                  }), // simplified item generation in main spreadsheet
                                                                 )
                                                               : null,
                                                     ),
@@ -5748,9 +5759,483 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                         } else if (spreadSheetList[
                                                 currentPageIndex][index]
                                             is SheetList) {
-                                          return _buildListWidget(
-                                              spreadSheetList[currentPageIndex]
-                                                  [index] as SheetList);
+                                          return Stack(
+                                            key: ValueKey((spreadSheetList[
+                                                        currentPageIndex][index]
+                                                    as SheetList)
+                                                .id),
+                                            children: [
+                                              _buildListWidget(spreadSheetList[
+                                                      currentPageIndex][index]
+                                                  as SheetList),
+                                              AnimatedPositioned(
+                                                duration: Durations.medium3,
+                                                bottom: 0,
+                                                left: panelIndex.parentId ==
+                                                        spreadSheetList[
+                                                                    currentPageIndex]
+                                                                [index]
+                                                            .id
+                                                    ? 0
+                                                    : -50,
+                                                right: 0,
+                                                child: SingleChildScrollView(
+                                                  child: Transform.flip(
+                                                    flipX: true,
+                                                    child: Transform.flip(
+                                                      flipX: true,
+                                                      child: panelIndex
+                                                                  .parentId ==
+                                                              spreadSheetList[
+                                                                          currentPageIndex]
+                                                                      [index]
+                                                                  .id
+                                                          ? ExpandableMenu(
+                                                              backgroundColor:
+                                                                  defaultPalette
+                                                                      .white
+                                                                      .withOpacity(
+                                                                          1),
+                                                              iconColor:
+                                                                  defaultPalette
+                                                                      .tertiary,
+                                                              itemContainerColor:
+                                                                  defaultPalette
+                                                                      .secondary,
+                                                              width: 40.0,
+                                                              height: 40.0,
+                                                              items:
+                                                                  List.generate(
+                                                                      12,
+                                                                      (intt) {
+                                                                switch (intt) {
+                                                                  case 0:
+                                                                    return PopupMenuButton<
+                                                                        String>(
+                                                                      iconSize:
+                                                                          20,
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              0),
+                                                                      icon:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .message_plus,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                      onSelected:
+                                                                          (String
+                                                                              value) {
+                                                                        // Handle the selected option here
+                                                                        switch (
+                                                                            value) {
+                                                                          case 'Above':
+                                                                            setState(() {
+                                                                              var newItem = _addTextField(shouldReturn: true);
+                                                                              (spreadSheetList[currentPageIndex][index] as SheetList).insert(0, newItem);
+                                                                              index++;
+                                                                            });
+                                                                            break;
+                                                                          case 'Below':
+                                                                            setState(() {
+                                                                              var newItem = _addTextField(shouldReturn: true);
+                                                                              (spreadSheetList[currentPageIndex][index] as SheetList).sheetList.add(newItem);
+                                                                            });
+                                                                            // Your logic for "Below"
+                                                                            break;
+                                                                          case 'Left':
+                                                                            setState(() {
+                                                                              var newId = Uuid().v4();
+                                                                              var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                              spreadSheetList[currentPageIndex].insert(
+                                                                                  index,
+                                                                                  SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                    _addTextField(shouldReturn: true),
+                                                                                    item
+                                                                                  ]));
+                                                                            });
+                                                                            break;
+                                                                          case 'Right':
+                                                                            // Your logic for "Right"
+                                                                            setState(() {
+                                                                              var newId = Uuid().v4();
+                                                                              var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                              spreadSheetList[currentPageIndex].insert(
+                                                                                  index,
+                                                                                  SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                    item,
+                                                                                    _addTextField(shouldReturn: true),
+                                                                                  ]));
+                                                                            });
+                                                                            break;
+                                                                        }
+                                                                      },
+                                                                      itemBuilder:
+                                                                          (BuildContext
+                                                                              context) {
+                                                                        return [
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Above',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_up),
+                                                                                Text('Above')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Below',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_down),
+                                                                                Text('Below')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Left',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_left),
+                                                                                Text('Left')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          const PopupMenuItem<
+                                                                              String>(
+                                                                            value:
+                                                                                'Right',
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                              children: [
+                                                                                Icon(TablerIcons.arrow_bar_to_right),
+                                                                                Text('Right')
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ];
+                                                                      },
+                                                                    );
+
+                                                                  case 1:
+                                                                    //MOVE TEXT UP
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () {
+                                                                        setState(
+                                                                            () {
+                                                                          if (index !=
+                                                                              0) {
+                                                                            var item =
+                                                                                spreadSheetList[currentPageIndex].removeAt(index);
+                                                                            spreadSheetList[currentPageIndex].insert(index - 1,
+                                                                                item);
+
+                                                                            // Update the index to reflect the new position of the item
+                                                                            index--; // Decrement index to reflect the item's new position
+
+                                                                            panelIndex = PanelIndex(
+                                                                                id: panelIndex.id,
+                                                                                panelIndex: panelIndex.panelIndex + 1,
+                                                                                parentId: panelIndex.parentId);
+                                                                            print('Updated index of text editor: $index');
+                                                                          }
+                                                                          print(
+                                                                              'Current index of text editor: $index');
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .arrow_up,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 2:
+                                                                    //MOVE TEXT DOWN
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () {
+                                                                        setState(
+                                                                            () {
+                                                                          if (index !=
+                                                                              spreadSheetList[currentPageIndex].length - 1) {
+                                                                            var item =
+                                                                                spreadSheetList[currentPageIndex].removeAt(index);
+                                                                            spreadSheetList[currentPageIndex].insert(index + 1,
+                                                                                item);
+                                                                            index++;
+                                                                            print('index of texteditor DT: $index');
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .arrow_down,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 3:
+                                                                    //EXPORT TEXT
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () async {
+                                                                        // Get the current text editor item
+                                                                        var textEditorItem =
+                                                                            spreadSheetList[currentPageIndex][index]
+                                                                                as TextEditorItem;
+
+                                                                        // Create a GlobalKey for the RepaintBoundary
+                                                                        GlobalKey
+                                                                            repaintBoundaryKey =
+                                                                            GlobalKey();
+
+                                                                        // Navigate to a new page with the PDF preview
+                                                                        await Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                            builder: (context) =>
+                                                                                Scaffold(
+                                                                              appBar: AppBar(
+                                                                                title: Text('PDF Preview'),
+                                                                                actions: [
+                                                                                  IconButton(
+                                                                                    icon: Icon(Icons.image),
+                                                                                    onPressed: () async {
+                                                                                      RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                      ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                      // Get the directory to save the image
+                                                                                      final directory = await getApplicationDocumentsDirectory();
+                                                                                      final imagePath = '${directory.path}/captured_image.png';
+                                                                                      File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                      print('Image saved at: $imagePath');
+                                                                                    },
+                                                                                  ),
+                                                                                  IconButton(
+                                                                                    icon: Icon(Icons.print),
+                                                                                    onPressed: () async {
+                                                                                      RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                      ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                      // Get the directory to save the image
+                                                                                      final directory = await getApplicationDocumentsDirectory();
+                                                                                      final imagePath = '${directory.path}/captured_image.png';
+                                                                                      File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                      // Prepare the PDF document
+                                                                                      final pdf = pw.Document();
+                                                                                      final imageProvider = pw.MemoryImage(pngBytes);
+
+                                                                                      pdf.addPage(
+                                                                                        pw.Page(
+                                                                                          pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
+                                                                                          margin: pw.EdgeInsets.only(
+                                                                                            top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                            bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                            left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                            right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                          ),
+                                                                                          build: (pw.Context context) {
+                                                                                            return pw.Center(
+                                                                                              child: pw.Image(imageProvider),
+                                                                                            ); // Center the image on the page
+                                                                                          },
+                                                                                        ),
+                                                                                      );
+
+                                                                                      // Save the PDF to a file
+                                                                                      final pdfPath = '${directory.path}/document.pdf';
+                                                                                      final file = File(pdfPath);
+                                                                                      await file.writeAsBytes(await pdf.save());
+
+                                                                                      print('PDF saved at: $pdfPath');
+                                                                                    },
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              body: RepaintBoundary(
+                                                                                key: repaintBoundaryKey,
+                                                                                child: Container(
+                                                                                  width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                      ? 793.7
+                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                          ? 812.8
+                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                              ? 559.4
+                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                  ? 396.9
+                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                      ? 816
+                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                          ? 816
+                                                                                                          : 1240, // Default width
+                                                                                  height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                      ? 1122.5
+                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                          ? 1122.5
+                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                              ? 793.7
+                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                  ? 559.4
+                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                      ? 1056
+                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                          ? 1344
+                                                                                                          : 3508, // Default height
+                                                                                  padding: EdgeInsets.only(
+                                                                                    top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                    bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                    left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                    right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                  ),
+                                                                                  margin: EdgeInsets.all(20),
+                                                                                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                                                                                    BoxShadow(blurRadius: 10, color: Colors.black)
+                                                                                  ]),
+                                                                                  child: QuillEditor(
+                                                                                    // Replace with your QuillEditor configurations
+                                                                                    configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller),
+                                                                                    focusNode: FocusNode(),
+                                                                                    scrollController: ScrollController(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .file_export,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 4:
+                                                                    //clear text in text field
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () async {
+                                                                        await showAdaptiveDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (context) {
+                                                                            return AlertDialog(
+                                                                              title: Text('Confirm Clear'),
+                                                                              content: Text('This will clear the text from current Text Field. Are you sure?'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        (spreadSheetList[currentPageIndex][index] as SheetList).sheetList = [];
+                                                                                      });
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('Yes')),
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('No')),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .x,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  case 5:
+                                                                    //Delete Text Field
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () async {
+                                                                        await showAdaptiveDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (context) {
+                                                                            return AlertDialog(
+                                                                              title: Text('Confirm Delete'),
+                                                                              content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      setState(() {
+                                                                                        spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                        panelIndex.id = '';
+                                                                                        panelIndex.panelIndex = -1;
+                                                                                      });
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('Yes')),
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      Navigator.pop(context);
+                                                                                    },
+                                                                                    child: Text('No')),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                      },
+                                                                      child:
+                                                                          Icon(
+                                                                        TablerIcons
+                                                                            .trash,
+                                                                        color: defaultPalette
+                                                                            .black
+                                                                            .withOpacity(0.8),
+                                                                      ),
+                                                                    );
+                                                                  default:
+                                                                    return Container();
+                                                                }
+                                                              }), // simplified item generation
+                                                            )
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ), // Expandable menus and other widgets can stay the same
+                                            ],
+                                          );
                                         }
                                         return Container(
                                           key: ValueKey(Uuid().v4()),
@@ -5915,644 +6400,792 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
   Widget _buildListWidget(SheetList sheetList) {
     // sheetList = sheetList as SheetList;
-    return Container(
-      width: sWidth,
-      height: (120 * sheetList.length).ceilToDouble(),
-      padding: EdgeInsets.all(0),
-      margin: EdgeInsets.all(2),
-      decoration: BoxDecoration(color: defaultPalette.primary),
-      key: ValueKey(sheetList.id),
-      child: ReorderableListView.builder(
-        scrollDirection: sheetList.direction,
-        itemBuilder: (context, index) {
-          print('hello hello sprdsheetBuilding: ${sheetList[index]}');
-          if (sheetList[index] is TextEditorItem) {
-            var textEditorItem = sheetList[index] as TextEditorItem;
-            return Stack(
-              key: ValueKey(
-                  textEditorItem.id), // Ensure each item has a unique key
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    var isTrue = false;
-                    SheetItem? itemE;
-                    if (panelIndex.id == textEditorItem.id) {
-                      isTrue = true;
-                    }
-                    setState(() {
-                      itemE = _sheetItemIterator(textEditorItem.id, sheetList);
-
-                      if (itemE != null) {
-                        index = _sheetListIterator(itemE!.parentId, sheetList)
-                            .indexOf(itemE!);
-                        panelIndex =
-                            PanelIndex(id: itemE!.id, panelIndex: index);
-                      } else {
-                        panelIndex = PanelIndex(
-                            id: textEditorItem.id, panelIndex: index);
+    return GestureDetector(
+      // key: ValueKey(sheetList.id),
+      onTap: () {
+        setState(() {
+          panelIndex.parentId = sheetList.id;
+        });
+      },
+      // buildlistw
+      child: Container(
+        width: sheetList.direction == Axis.vertical ? sWidth : sWidth,
+        height: sheetList.direction == Axis.vertical
+            ? (100 * sheetList.length).ceilToDouble()
+            : 150,
+        padding: EdgeInsets.all(0),
+        margin: EdgeInsets.all(10),
+        // buildlistw
+        decoration: BoxDecoration(
+            color: defaultPalette.primary,
+            borderRadius: BorderRadius.circular(10)),
+        // key: ValueKey(sheetList.id),
+        child: ReorderableListView.builder(
+          // header: Text('  ${sheetList.id}'),
+          scrollDirection: sheetList.direction,
+          // buildlistw
+          proxyDecorator: (child, index, animation) {
+            return Container(child: child);
+          },
+          itemBuilder: (context, index) {
+            print('hello hello sprdListBuilding: ${sheetList[index]}');
+            if (sheetList[index] is TextEditorItem) {
+              var textEditorItem = sheetList[index] as TextEditorItem;
+              return Stack(
+                key: ValueKey(
+                    textEditorItem.id), // Ensure each item has a unique key
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                      var isTrue = false;
+                      SheetItem? itemE;
+                      if (panelIndex.id == textEditorItem.id) {
+                        isTrue = true;
                       }
+                      setState(() {
+                        itemE =
+                            _sheetItemIterator(textEditorItem.id, sheetList);
 
-                      // index = temp ?? index;
+                        if (itemE != null) {
+                          index = _sheetListIterator(itemE!.parentId, sheetList)
+                              .indexOf(itemE!);
+                          panelIndex = PanelIndex(
+                              id: itemE!.id,
+                              panelIndex: index,
+                              parentId: sheetList.id);
+                        } else {
+                          panelIndex = PanelIndex(
+                              id: textEditorItem.id,
+                              panelIndex: index,
+                              parentId: sheetList.id);
+                        }
 
-                      if (hDividerPosition > 0.48) {
-                        hDividerPosition = 0.4;
-                      }
-                    });
-                    Future.delayed(Duration.zero).then((_) {
-                      textStylePageController.jumpToPage(panelIndex.panelIndex);
-                    });
-                    Future.delayed(Durations.short1).then((h) {
-                      if (!isTrue) {
-                        textStyleTabControler.animateToPage(0,
-                            curve: Curves.bounceIn, duration: Durations.short1);
-                        for (var i = 0; i < isTapped.length; i++) {
+                        // index = temp ?? index;
+
+                        if (hDividerPosition > 0.48) {
+                          hDividerPosition = 0.4;
+                        }
+                      });
+                      // Future.delayed(Duration.zero).then((_) {
+                      //   textStylePageController.jumpToPage(panelIndex.panelIndex);
+                      // });
+                      Future.delayed(Durations.short1).then((h) {
+                        if (!isTrue) {
+                          textStyleTabControler.animateToPage(0,
+                              curve: Curves.bounceIn,
+                              duration: Durations.short1);
+                          for (var i = 0; i < isTapped.length; i++) {
+                            setState(() {
+                              isTapped[i] = false;
+                            });
+                          }
                           setState(() {
-                            isTapped[i] = false;
+                            isTapped[1] = true;
                           });
                         }
-                        setState(() {
-                          isTapped[1] = true;
-                        });
-                      }
-                    });
+                      });
 
-                    print('clicked');
+                      print('clicked');
 
-                    print(panelIndex);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.only(
-                        top: 4, bottom: 8, left: 20, right: 20),
-                    margin: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: defaultPalette.primary,
-                      border: Border.all(
-                        width: panelIndex.id == textEditorItem.id ? 4 : 2,
-                        color: panelIndex.id == textEditorItem.id
-                            ? defaultPalette.tertiary
-                            : defaultPalette.black,
+                      print(panelIndex);
+                    },
+                    child: SingleChildScrollView(
+                      child: Container(
+                        width:
+                            sheetList.direction == Axis.vertical ? null : 200,
+                        padding: const EdgeInsets.only(
+                            top: 4, bottom: 8, left: 20, right: 20),
+                        margin: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: defaultPalette.primary,
+                          border: Border.all(
+                            width: panelIndex.id == textEditorItem.id ? 4 : 2,
+                            color: panelIndex.id == textEditorItem.id
+                                ? defaultPalette.tertiary
+                                : defaultPalette.black,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'id : ${textEditorItem.id}',
+                                style: TextStyle(fontSize: 10),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            QuillEditor(
+                              configurations:
+                                  textEditorItem.textEditorConfigurations,
+                              focusNode: textEditorItem.focusNode,
+                              scrollController: textEditorItem.scrollController,
+                            ),
+                          ],
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          padding: EdgeInsets.only(bottom: 4),
-                          child: Text('id : ${textEditorItem.id}',
-                              style: TextStyle(fontSize: 10)),
-                        ),
-                        QuillEditor(
-                          configurations:
-                              textEditorItem.textEditorConfigurations,
-                          focusNode: textEditorItem.focusNode,
-                          scrollController: textEditorItem.scrollController,
-                        ),
-                      ],
                     ),
                   ),
-                ),
-                //contextMenu build function
-                AnimatedPositioned(
-                  duration: Durations.medium3,
-                  bottom: 0,
-                  left: panelIndex.id == textEditorItem.id ? 0 : -50,
-                  right: 0,
-                  child: SingleChildScrollView(
-                    child: Transform.flip(
-                      flipX: true,
+                  //contextMenu inside build function
+                  AnimatedPositioned(
+                    duration: Durations.medium3,
+                    bottom: 0,
+                    left: panelIndex.id == textEditorItem.id ? 0 : -50,
+                    right: 0,
+                    child: SingleChildScrollView(
                       child: Transform.flip(
                         flipX: true,
-                        child: panelIndex.id == textEditorItem.id
-                            ? ExpandableMenu(
-                                backgroundColor:
-                                    defaultPalette.white.withOpacity(1),
-                                iconColor: defaultPalette.tertiary,
-                                itemContainerColor: defaultPalette.secondary,
-                                width: 40.0,
-                                height: 40.0,
-                                items: List.generate(12, (intt) {
-                                  switch (intt) {
-                                    case 0:
-                                      return PopupMenuButton<String>(
-                                        iconSize: 20,
-                                        padding: EdgeInsets.all(0),
-                                        icon: Icon(
-                                          TablerIcons.message_plus,
-                                          color: defaultPalette.black
-                                              .withOpacity(0.8),
-                                        ),
-                                        onSelected: (String value) {
-                                          // Handle the selected option here
-                                          switch (value) {
-                                            case 'Above':
-                                              setState(() {
-                                                var newItem = _addTextField(
-                                                    shouldReturn: true);
-                                                sheetList.insert(
-                                                    index, newItem);
-                                              });
-                                              break;
-                                            case 'Below':
-                                              setState(() {
-                                                var newItem = _addTextField(
-                                                    shouldReturn: true);
-                                                sheetList.insert(
-                                                    index + 1, newItem);
-                                              });
-                                              // Your logic for "Below"
-                                              break;
-                                            case 'Left':
-                                              break;
-                                            case 'Right':
-                                              // Your logic for "Right"
-                                              break;
-                                          }
-                                        },
-                                        itemBuilder: (BuildContext context) {
-                                          return [
-                                            const PopupMenuItem<String>(
-                                              value: 'Above',
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceEvenly,
-                                                children: [
-                                                  Icon(TablerIcons
-                                                      .arrow_bar_to_up),
-                                                  Text('Above')
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem<String>(
-                                              value: 'Below',
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceEvenly,
-                                                children: [
-                                                  Icon(TablerIcons
-                                                      .arrow_bar_to_down),
-                                                  Text('Below')
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem<String>(
-                                              value: 'Left',
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceEvenly,
-                                                children: [
-                                                  Icon(TablerIcons
-                                                      .arrow_bar_to_left),
-                                                  Text('Left')
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem<String>(
-                                              value: 'Right',
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceEvenly,
-                                                children: [
-                                                  Icon(TablerIcons
-                                                      .arrow_bar_to_right),
-                                                  Text('Right')
-                                                ],
-                                              ),
-                                            ),
-                                          ];
-                                        },
-                                      );
-
-                                    case 1:
-                                      //MOVE TEXT UP
-                                      return GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            if (index != 0) {
-                                              var item = spreadSheetList[
-                                                      currentPageIndex]
-                                                  .removeAt(index);
-                                              spreadSheetList[currentPageIndex]
-                                                  .insert(index - 1, item);
-
-                                              // Update the index to reflect the new position of the item
-                                              index--; // Decrement index to reflect the item's new position
-
-                                              panelIndex = PanelIndex(
-                                                  id: panelIndex.id,
-                                                  panelIndex:
-                                                      panelIndex.panelIndex +
-                                                          1);
-                                              print(
-                                                  'Updated index of text editor: $index');
-                                            }
-                                            print(
-                                                'Current index of text editor: $index');
-                                          });
-                                        },
-                                        child: Icon(
-                                          TablerIcons.arrow_up,
-                                          color: defaultPalette.black
-                                              .withOpacity(0.8),
-                                        ),
-                                      );
-                                    case 2:
-                                      //MOVE TEXT DOWN
-                                      return GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            if (index !=
-                                                spreadSheetList[
+                        child: Transform.flip(
+                          flipX: true,
+                          child: panelIndex.id == textEditorItem.id
+                              ? ExpandableMenu(
+                                  backgroundColor:
+                                      defaultPalette.white.withOpacity(1),
+                                  iconColor: defaultPalette.tertiary,
+                                  itemContainerColor: defaultPalette.secondary,
+                                  width: 40.0,
+                                  height: 40.0,
+                                  items: List.generate(12, (intt) {
+                                    switch (intt) {
+                                      case 0:
+                                        return PopupMenuButton<String>(
+                                          iconSize: 20,
+                                          padding: EdgeInsets.all(0),
+                                          icon: Icon(
+                                            TablerIcons.message_plus,
+                                            color: defaultPalette.black
+                                                .withOpacity(0.8),
+                                          ),
+                                          onSelected: (String value) {
+                                            // Handle the selected option here
+                                            switch (value) {
+                                              case 'Above':
+                                                setState(() {
+                                                  if (sheetList.direction ==
+                                                      Axis.vertical) {
+                                                    var newItem = _addTextField(
+                                                        shouldReturn: true);
+                                                    sheetList.insert(
+                                                        index, newItem);
+                                                  } else {
+                                                    setState(() {
+                                                      var newId = Uuid().v4();
+                                                      var item = spreadSheetList[
+                                                              currentPageIndex]
+                                                          .removeAt(index);
+                                                      spreadSheetList[currentPageIndex].insert(
+                                                          index,
+                                                          SheetList(
+                                                              direction: Axis
+                                                                  .horizontal,
+                                                              id: newId,
+                                                              parentId:
+                                                                  spreadSheetList[
+                                                                          currentPageIndex]
+                                                                      .id,
+                                                              sheetList: [
+                                                                _addTextField(
+                                                                    shouldReturn:
+                                                                        true),
+                                                                item
+                                                              ]));
+                                                    });
+                                                  }
+                                                });
+                                                break;
+                                              case 'Below':
+                                                setState(() {
+                                                  var newItem = _addTextField(
+                                                      shouldReturn: true);
+                                                  sheetList.insert(
+                                                      index + 1, newItem);
+                                                });
+                                                // Your logic for "Below"
+                                                break;
+                                              case 'Left':
+                                                setState(() {
+                                                  var newId = Uuid().v4();
+                                                  var item = spreadSheetList[
+                                                          currentPageIndex]
+                                                      .removeAt(index);
+                                                  spreadSheetList[
+                                                          currentPageIndex]
+                                                      .insert(
+                                                          index,
+                                                          SheetList(
+                                                              direction: Axis
+                                                                  .horizontal,
+                                                              id: newId,
+                                                              parentId:
+                                                                  spreadSheetList[
+                                                                          currentPageIndex]
+                                                                      .id,
+                                                              sheetList: [
+                                                                _addTextField(
+                                                                    shouldReturn:
+                                                                        true),
+                                                                item
+                                                              ]));
+                                                });
+                                                break;
+                                              case 'Right':
+                                                // Your logic for "Right" inside listwidgetbuild
+                                                setState(() {
+                                                  if (sheetList.direction ==
+                                                      Axis.vertical) {
+                                                    var newId = Uuid().v4();
+                                                    var item = spreadSheetList[
                                                             currentPageIndex]
-                                                        .length -
-                                                    1) {
-                                              var item = spreadSheetList[
-                                                      currentPageIndex]
-                                                  .removeAt(index);
-                                              spreadSheetList[currentPageIndex]
-                                                  .insert(index + 1, item);
-                                              index++;
-                                              print(
-                                                  'index of texteditor DT: $index');
+                                                        .removeAt(index);
+                                                    spreadSheetList[
+                                                            currentPageIndex]
+                                                        .insert(
+                                                            index,
+                                                            SheetList(
+                                                                direction: Axis
+                                                                    .horizontal,
+                                                                id: newId,
+                                                                parentId:
+                                                                    spreadSheetList[
+                                                                            currentPageIndex]
+                                                                        .id,
+                                                                sheetList: [
+                                                                  _addTextField(
+                                                                      shouldReturn:
+                                                                          true),
+                                                                  item
+                                                                ]));
+                                                  }
+                                                });
+                                                break;
                                             }
-                                          });
-                                        },
-                                        child: Icon(
-                                          TablerIcons.arrow_down,
-                                          color: defaultPalette.black
-                                              .withOpacity(0.8),
-                                        ),
-                                      );
-                                    case 3:
-                                      //EXPORT TEXT
-                                      return GestureDetector(
-                                        onTap: () async {
-                                          // Get the current text editor item
-                                          var textEditorItem =
-                                              spreadSheetList[currentPageIndex]
-                                                  [index] as TextEditorItem;
-
-                                          // Create a GlobalKey for the RepaintBoundary
-                                          GlobalKey repaintBoundaryKey =
-                                              GlobalKey();
-
-                                          // Navigate to a new page with the PDF preview
-                                          await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => Scaffold(
-                                                appBar: AppBar(
-                                                  title: Text('PDF Preview'),
-                                                  actions: [
-                                                    IconButton(
-                                                      icon: Icon(Icons.image),
-                                                      onPressed: () async {
-                                                        RenderRepaintBoundary
-                                                            boundary =
-                                                            repaintBoundaryKey
-                                                                    .currentContext!
-                                                                    .findRenderObject()
-                                                                as RenderRepaintBoundary;
-                                                        ui.Image image =
-                                                            await boundary
-                                                                .toImage(
-                                                                    pixelRatio:
-                                                                        6.0);
-                                                        ByteData? byteData =
-                                                            await image.toByteData(
-                                                                format: ui
-                                                                    .ImageByteFormat
-                                                                    .png);
-                                                        Uint8List pngBytes =
-                                                            byteData!.buffer
-                                                                .asUint8List();
-
-                                                        // Get the directory to save the image
-                                                        final directory =
-                                                            await getApplicationDocumentsDirectory();
-                                                        final imagePath =
-                                                            '${directory.path}/captured_image.png';
-                                                        File(imagePath)
-                                                            .writeAsBytesSync(
-                                                                pngBytes);
-
-                                                        print(
-                                                            'Image saved at: $imagePath');
-                                                      },
-                                                    ),
-                                                    IconButton(
-                                                      icon: Icon(Icons.print),
-                                                      onPressed: () async {
-                                                        RenderRepaintBoundary
-                                                            boundary =
-                                                            repaintBoundaryKey
-                                                                    .currentContext!
-                                                                    .findRenderObject()
-                                                                as RenderRepaintBoundary;
-                                                        ui.Image image =
-                                                            await boundary
-                                                                .toImage(
-                                                                    pixelRatio:
-                                                                        6.0);
-                                                        ByteData? byteData =
-                                                            await image.toByteData(
-                                                                format: ui
-                                                                    .ImageByteFormat
-                                                                    .png);
-                                                        Uint8List pngBytes =
-                                                            byteData!.buffer
-                                                                .asUint8List();
-
-                                                        // Get the directory to save the image
-                                                        final directory =
-                                                            await getApplicationDocumentsDirectory();
-                                                        final imagePath =
-                                                            '${directory.path}/captured_image.png';
-                                                        File(imagePath)
-                                                            .writeAsBytesSync(
-                                                                pngBytes);
-
-                                                        // Prepare the PDF document
-                                                        final pdf =
-                                                            pw.Document();
-                                                        final imageProvider =
-                                                            pw.MemoryImage(
-                                                                pngBytes);
-
-                                                        pdf.addPage(
-                                                          pw.Page(
-                                                            pageFormat: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .pageFormatController,
-                                                            margin:
-                                                                pw.EdgeInsets
-                                                                    .only(
-                                                              top: double.parse(
-                                                                  documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .marginTopController
-                                                                      .text),
-                                                              bottom: double.parse(
-                                                                  documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .marginBottomController
-                                                                      .text),
-                                                              left: double.parse(
-                                                                  documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .marginLeftController
-                                                                      .text),
-                                                              right: double.parse(
-                                                                  documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .marginRightController
-                                                                      .text),
-                                                            ),
-                                                            build: (pw.Context
-                                                                context) {
-                                                              return pw.Center(
-                                                                child: pw.Image(
-                                                                    imageProvider),
-                                                              ); // Center the image on the page
-                                                            },
-                                                          ),
-                                                        );
-
-                                                        // Save the PDF to a file
-                                                        final pdfPath =
-                                                            '${directory.path}/document.pdf';
-                                                        final file =
-                                                            File(pdfPath);
-                                                        await file.writeAsBytes(
-                                                            await pdf.save());
-
-                                                        print(
-                                                            'PDF saved at: $pdfPath');
-                                                      },
-                                                    ),
+                                          },
+                                          itemBuilder: (BuildContext context) {
+                                            return [
+                                              const PopupMenuItem<String>(
+                                                value: 'Above',
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceEvenly,
+                                                  children: [
+                                                    Icon(TablerIcons
+                                                        .arrow_bar_to_up),
+                                                    Text('Above')
                                                   ],
                                                 ),
-                                                body: RepaintBoundary(
-                                                  key: repaintBoundaryKey,
-                                                  child: Container(
-                                                    width: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .pageFormatController ==
-                                                            PdfPageFormat.a4
-                                                        ? 793.7
-                                                        : documentPropertiesList[
-                                                                        currentPageIndex]
-                                                                    .pageFormatController ==
-                                                                PdfPageFormat.a3
-                                                            ? 812.8
-                                                            : documentPropertiesList[
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'Below',
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceEvenly,
+                                                  children: [
+                                                    Icon(TablerIcons
+                                                        .arrow_bar_to_down),
+                                                    Text('Below')
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'Left',
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceEvenly,
+                                                  children: [
+                                                    Icon(TablerIcons
+                                                        .arrow_bar_to_left),
+                                                    Text('Left')
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'Right',
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceEvenly,
+                                                  children: [
+                                                    Icon(TablerIcons
+                                                        .arrow_bar_to_right),
+                                                    Text('Right')
+                                                  ],
+                                                ),
+                                              ),
+                                            ];
+                                          },
+                                        );
+
+                                      case 1:
+                                        //MOVE TEXT UP
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              if (index != 0) {
+                                                var item = spreadSheetList[
+                                                        currentPageIndex]
+                                                    .removeAt(index);
+                                                spreadSheetList[
+                                                        currentPageIndex]
+                                                    .insert(index - 1, item);
+
+                                                // Update the index to reflect the new position of the item
+                                                index--; // Decrement index to reflect the item's new position
+
+                                                panelIndex = PanelIndex(
+                                                    parentId:
+                                                        panelIndex.parentId,
+                                                    id: panelIndex.id,
+                                                    panelIndex:
+                                                        panelIndex.panelIndex +
+                                                            1);
+                                                print(
+                                                    'Updated index of text editor: $index');
+                                              }
+                                              print(
+                                                  'Current index of text editor: $index');
+                                            });
+                                          },
+                                          child: Icon(
+                                            TablerIcons.arrow_up,
+                                            color: defaultPalette.black
+                                                .withOpacity(0.8),
+                                          ),
+                                        );
+                                      case 2:
+                                        //MOVE TEXT DOWN
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              if (index !=
+                                                  spreadSheetList[
+                                                              currentPageIndex]
+                                                          .length -
+                                                      1) {
+                                                var item = spreadSheetList[
+                                                        currentPageIndex]
+                                                    .removeAt(index);
+                                                spreadSheetList[
+                                                        currentPageIndex]
+                                                    .insert(index + 1, item);
+                                                index++;
+                                                print(
+                                                    'index of texteditor DT: $index');
+                                              }
+                                            });
+                                          },
+                                          child: Icon(
+                                            TablerIcons.arrow_down,
+                                            color: defaultPalette.black
+                                                .withOpacity(0.8),
+                                          ),
+                                        );
+                                      case 3:
+                                        //EXPORT TEXT
+                                        return GestureDetector(
+                                          onTap: () async {
+                                            // Get the current text editor item
+                                            var textEditorItem =
+                                                spreadSheetList[
+                                                        currentPageIndex][index]
+                                                    as TextEditorItem;
+
+                                            // Create a GlobalKey for the RepaintBoundary
+                                            GlobalKey repaintBoundaryKey =
+                                                GlobalKey();
+
+                                            // Navigate to a new page with the PDF preview
+                                            await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => Scaffold(
+                                                  appBar: AppBar(
+                                                    title: Text('PDF Preview'),
+                                                    actions: [
+                                                      IconButton(
+                                                        icon: Icon(Icons.image),
+                                                        onPressed: () async {
+                                                          RenderRepaintBoundary
+                                                              boundary =
+                                                              repaintBoundaryKey
+                                                                      .currentContext!
+                                                                      .findRenderObject()
+                                                                  as RenderRepaintBoundary;
+                                                          ui.Image image =
+                                                              await boundary
+                                                                  .toImage(
+                                                                      pixelRatio:
+                                                                          6.0);
+                                                          ByteData? byteData =
+                                                              await image
+                                                                  .toByteData(
+                                                                      format: ui
+                                                                          .ImageByteFormat
+                                                                          .png);
+                                                          Uint8List pngBytes =
+                                                              byteData!.buffer
+                                                                  .asUint8List();
+
+                                                          // Get the directory to save the image
+                                                          final directory =
+                                                              await getApplicationDocumentsDirectory();
+                                                          final imagePath =
+                                                              '${directory.path}/captured_image.png';
+                                                          File(imagePath)
+                                                              .writeAsBytesSync(
+                                                                  pngBytes);
+
+                                                          print(
+                                                              'Image saved at: $imagePath');
+                                                        },
+                                                      ),
+                                                      IconButton(
+                                                        icon: Icon(Icons.print),
+                                                        onPressed: () async {
+                                                          RenderRepaintBoundary
+                                                              boundary =
+                                                              repaintBoundaryKey
+                                                                      .currentContext!
+                                                                      .findRenderObject()
+                                                                  as RenderRepaintBoundary;
+                                                          ui.Image image =
+                                                              await boundary
+                                                                  .toImage(
+                                                                      pixelRatio:
+                                                                          6.0);
+                                                          ByteData? byteData =
+                                                              await image
+                                                                  .toByteData(
+                                                                      format: ui
+                                                                          .ImageByteFormat
+                                                                          .png);
+                                                          Uint8List pngBytes =
+                                                              byteData!.buffer
+                                                                  .asUint8List();
+
+                                                          // Get the directory to save the image
+                                                          final directory =
+                                                              await getApplicationDocumentsDirectory();
+                                                          final imagePath =
+                                                              '${directory.path}/captured_image.png';
+                                                          File(imagePath)
+                                                              .writeAsBytesSync(
+                                                                  pngBytes);
+
+                                                          // Prepare the PDF document
+                                                          final pdf =
+                                                              pw.Document();
+                                                          final imageProvider =
+                                                              pw.MemoryImage(
+                                                                  pngBytes);
+
+                                                          pdf.addPage(
+                                                            pw.Page(
+                                                              pageFormat: documentPropertiesList[
+                                                                      currentPageIndex]
+                                                                  .pageFormatController,
+                                                              margin:
+                                                                  pw.EdgeInsets
+                                                                      .only(
+                                                                top: double.parse(
+                                                                    documentPropertiesList[
                                                                             currentPageIndex]
-                                                                        .pageFormatController ==
-                                                                    PdfPageFormat
-                                                                        .a5
-                                                                ? 559.4
-                                                                : documentPropertiesList[currentPageIndex]
-                                                                            .pageFormatController ==
-                                                                        PdfPageFormat
-                                                                            .a6
-                                                                    ? 396.9
-                                                                    : documentPropertiesList[currentPageIndex].pageFormatController ==
-                                                                            PdfPageFormat
-                                                                                .letter
-                                                                        ? 816
-                                                                        : documentPropertiesList[currentPageIndex].pageFormatController ==
-                                                                                PdfPageFormat.legal
-                                                                            ? 816
-                                                                            : 1240, // Default width
-                                                    height: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .pageFormatController ==
-                                                            PdfPageFormat.a4
-                                                        ? 1122.5
-                                                        : documentPropertiesList[
-                                                                        currentPageIndex]
-                                                                    .pageFormatController ==
-                                                                PdfPageFormat.a3
-                                                            ? 1122.5
-                                                            : documentPropertiesList[
+                                                                        .marginTopController
+                                                                        .text),
+                                                                bottom: double.parse(
+                                                                    documentPropertiesList[
                                                                             currentPageIndex]
-                                                                        .pageFormatController ==
-                                                                    PdfPageFormat
-                                                                        .a5
-                                                                ? 793.7
-                                                                : documentPropertiesList[currentPageIndex]
-                                                                            .pageFormatController ==
-                                                                        PdfPageFormat
-                                                                            .a6
-                                                                    ? 559.4
-                                                                    : documentPropertiesList[currentPageIndex].pageFormatController ==
-                                                                            PdfPageFormat
-                                                                                .letter
-                                                                        ? 1056
-                                                                        : documentPropertiesList[currentPageIndex].pageFormatController ==
-                                                                                PdfPageFormat.legal
-                                                                            ? 1344
-                                                                            : 3508, // Default height
-                                                    padding: EdgeInsets.only(
-                                                      top: double.parse(
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginTopController
-                                                              .text),
-                                                      bottom: double.parse(
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginBottomController
-                                                              .text),
-                                                      left: double.parse(
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginLeftController
-                                                              .text),
-                                                      right: double.parse(
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginRightController
-                                                              .text),
-                                                    ),
-                                                    margin: EdgeInsets.all(20),
-                                                    decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                              blurRadius: 10,
-                                                              color:
-                                                                  Colors.black)
-                                                        ]),
-                                                    child: QuillEditor(
-                                                      // Replace with your QuillEditor configurations
-                                                      configurations:
-                                                          QuillEditorConfigurations(
-                                                              controller:
-                                                                  textEditorItem
-                                                                      .textEditorConfigurations
-                                                                      .controller),
-                                                      focusNode: FocusNode(),
-                                                      scrollController:
-                                                          ScrollController(),
+                                                                        .marginBottomController
+                                                                        .text),
+                                                                left: double.parse(
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .marginLeftController
+                                                                        .text),
+                                                                right: double.parse(
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .marginRightController
+                                                                        .text),
+                                                              ),
+                                                              build: (pw.Context
+                                                                  context) {
+                                                                return pw
+                                                                    .Center(
+                                                                  child: pw.Image(
+                                                                      imageProvider),
+                                                                ); // Center the image on the page
+                                                              },
+                                                            ),
+                                                          );
+
+                                                          // Save the PDF to a file
+                                                          final pdfPath =
+                                                              '${directory.path}/document.pdf';
+                                                          final file =
+                                                              File(pdfPath);
+                                                          await file
+                                                              .writeAsBytes(
+                                                                  await pdf
+                                                                      .save());
+
+                                                          print(
+                                                              'PDF saved at: $pdfPath');
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  body: RepaintBoundary(
+                                                    key: repaintBoundaryKey,
+                                                    child: Container(
+                                                      width: documentPropertiesList[
+                                                                      currentPageIndex]
+                                                                  .pageFormatController ==
+                                                              PdfPageFormat.a4
+                                                          ? 793.7
+                                                          : documentPropertiesList[
+                                                                          currentPageIndex]
+                                                                      .pageFormatController ==
+                                                                  PdfPageFormat
+                                                                      .a3
+                                                              ? 812.8
+                                                              : documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .pageFormatController ==
+                                                                      PdfPageFormat
+                                                                          .a5
+                                                                  ? 559.4
+                                                                  : documentPropertiesList[currentPageIndex]
+                                                                              .pageFormatController ==
+                                                                          PdfPageFormat
+                                                                              .a6
+                                                                      ? 396.9
+                                                                      : documentPropertiesList[currentPageIndex].pageFormatController ==
+                                                                              PdfPageFormat.letter
+                                                                          ? 816
+                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                              ? 816
+                                                                              : 1240, // Default width
+                                                      height: documentPropertiesList[
+                                                                      currentPageIndex]
+                                                                  .pageFormatController ==
+                                                              PdfPageFormat.a4
+                                                          ? 1122.5
+                                                          : documentPropertiesList[
+                                                                          currentPageIndex]
+                                                                      .pageFormatController ==
+                                                                  PdfPageFormat
+                                                                      .a3
+                                                              ? 1122.5
+                                                              : documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .pageFormatController ==
+                                                                      PdfPageFormat
+                                                                          .a5
+                                                                  ? 793.7
+                                                                  : documentPropertiesList[currentPageIndex]
+                                                                              .pageFormatController ==
+                                                                          PdfPageFormat
+                                                                              .a6
+                                                                      ? 559.4
+                                                                      : documentPropertiesList[currentPageIndex].pageFormatController ==
+                                                                              PdfPageFormat.letter
+                                                                          ? 1056
+                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                              ? 1344
+                                                                              : 3508, // Default height
+                                                      padding: EdgeInsets.only(
+                                                        top: double.parse(
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginTopController
+                                                                .text),
+                                                        bottom: double.parse(
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginBottomController
+                                                                .text),
+                                                        left: double.parse(
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginLeftController
+                                                                .text),
+                                                        right: double.parse(
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginRightController
+                                                                .text),
+                                                      ),
+                                                      margin:
+                                                          EdgeInsets.all(20),
+                                                      decoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                                blurRadius: 10,
+                                                                color: Colors
+                                                                    .black)
+                                                          ]),
+                                                      child: QuillEditor(
+                                                        // Replace with your QuillEditor configurations
+                                                        configurations:
+                                                            QuillEditorConfigurations(
+                                                                controller: textEditorItem
+                                                                    .textEditorConfigurations
+                                                                    .controller),
+                                                        focusNode: FocusNode(),
+                                                        scrollController:
+                                                            ScrollController(),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          );
-                                        },
-                                        child: Icon(
-                                          TablerIcons.file_export,
-                                          color: defaultPalette.black
-                                              .withOpacity(0.8),
-                                        ),
-                                      );
-                                    case 4:
-                                      //clear text in text field
-                                      return GestureDetector(
-                                        onTap: () async {
-                                          await showAdaptiveDialog(
-                                            context: context,
-                                            builder: (context) {
-                                              return AlertDialog(
-                                                title: Text('Confirm Clear'),
-                                                content: Text(
-                                                    'This will clear the text from current Text Field. Are you sure?'),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          textEditorItem
-                                                                  .textEditorController
-                                                                  .document =
-                                                              Document();
-                                                        });
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text('Yes')),
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text('No')),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                        child: Icon(
-                                          TablerIcons.x,
-                                          color: defaultPalette.black
-                                              .withOpacity(0.8),
-                                        ),
-                                      );
-                                    case 5:
-                                      //Delete Text Field
-                                      return GestureDetector(
-                                        onTap: () async {
-                                          await showAdaptiveDialog(
-                                            context: context,
-                                            builder: (context) {
-                                              return AlertDialog(
-                                                title: Text('Confirm Delete'),
-                                                content: Text(
-                                                    'This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          spreadSheetList[
-                                                                  currentPageIndex]
-                                                              .removeAt(index);
-                                                        });
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text('Yes')),
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text('No')),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                        child: Icon(
-                                          TablerIcons.trash,
-                                          color: defaultPalette.black
-                                              .withOpacity(0.8),
-                                        ),
-                                      );
-                                    default:
-                                      return Container();
-                                  }
-                                }), // simplified item generation
-                              )
-                            : null,
+                                            );
+                                          },
+                                          child: Icon(
+                                            TablerIcons.file_export,
+                                            color: defaultPalette.black
+                                                .withOpacity(0.8),
+                                          ),
+                                        );
+                                      case 4:
+                                        //clear text in text field
+                                        return GestureDetector(
+                                          onTap: () async {
+                                            await showAdaptiveDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: Text('Confirm Clear'),
+                                                  content: Text(
+                                                      'This will clear the text from current Text Field. Are you sure?'),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            textEditorItem
+                                                                    .textEditorController
+                                                                    .document =
+                                                                Document();
+                                                          });
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        child: Text('Yes')),
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        child: Text('No')),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          child: Icon(
+                                            TablerIcons.x,
+                                            color: defaultPalette.black
+                                                .withOpacity(0.8),
+                                          ),
+                                        );
+                                      case 5:
+                                        //Delete Text Field
+                                        return GestureDetector(
+                                          onTap: () async {
+                                            await showAdaptiveDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: Text('Confirm Delete'),
+                                                  content: Text(
+                                                      'This will DELETE the current Text Field with its contents. Are you sure?'),
+                                                  actions: [
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            spreadSheetList[
+                                                                    currentPageIndex]
+                                                                .removeAt(
+                                                                    index);
+                                                            panelIndex.id = '';
+                                                            panelIndex
+                                                                .panelIndex = -1;
+                                                          });
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        child: Text('Yes')),
+                                                    TextButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        child: Text('No')),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          child: Icon(
+                                            TablerIcons.trash,
+                                            color: defaultPalette.black
+                                                .withOpacity(0.8),
+                                          ),
+                                        );
+                                      default:
+                                        return Container();
+                                    }
+                                  }), // simplified item generation
+                                )
+                              : null,
+                        ),
                       ),
                     ),
-                  ),
-                ), // Expandable menus and other widgets can stay the same
-              ],
+                  ), // Expandable menus and other widgets can stay the same
+                ],
+              );
+              // buildlistw
+            } else if (sheetList[index] is SheetList) {
+              return Stack(key: ValueKey(sheetList[index].id), children: [
+                Positioned(
+                    // width: (sheetList[index] as SheetList).direction ==
+                    //         Axis.vertical
+                    //     ? sWidth
+                    //     : null,
+                    // height: (sheetList[index] as SheetList).direction ==
+                    //         Axis.vertical
+                    //     ? (100 * (sheetList[index] as SheetList).length)
+                    //         .ceilToDouble()
+                    //     : 100,
+                    child: _buildListWidget(sheetList[index] as SheetList))
+              ]);
+            }
+            return Container(
+              key: ValueKey(Uuid().v4()),
+              color: Colors.amberAccent,
+              height: 12,
+              // buildlistw
             );
-          } else if (sheetList[index] is SheetList) {
-            return _buildListWidget(sheetList[index] as SheetList);
-          }
-          return Container(
-            key: ValueKey(Uuid().v4()),
-            color: Colors.amberAccent,
-            height: 12,
-          );
-        },
-        itemCount: sheetList.length,
-        onReorder: (oldIndex, newIndex) {},
+          },
+          itemCount: sheetList.length,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+              final item = sheetList.removeAt(oldIndex);
+              // buildlistw
+              sheetList.insert(newIndex, item);
+            });
+          },
+        ),
       ),
     );
   }

@@ -1,18 +1,20 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:animate_do/animate_do.dart';
+import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/animated_stack.dart';
+import 'package:billblaze/components/elevated_button.dart';
 import 'package:billblaze/components/flutter_balloon_slider.dart';
 import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/main.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/screens/layout_designer.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:simple_animated_button/simple_animated_button.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 
@@ -1078,7 +1080,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 ),
               ),
             ),
-
+            //LayoutList
             AnimatedPositioned(
               duration: Durations.extralong2,
               top: lay
@@ -1093,31 +1095,128 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   duration: Durations.extralong4 * 2,
                   opacity: lay ? 1 : 0,
                   curve: Curves.bounceInOut,
-                  child: ListView.builder(
-                    itemCount: Boxes.getLayouts().length,
-                    itemBuilder: (BuildContext context, int i) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (context) {
-                              return PopScope(
-                                canPop: false,
-                                child: LayoutDesigner3(
-                                  id: i,
-                                ),
-                              );
+                  child: Container(
+                    margin: EdgeInsets.all(15),
+                    padding: EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: defaultPalette.primary),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: ListView.builder(
+                        itemCount: Boxes.getLayouts().length,
+                        itemBuilder: (BuildContext context, int i) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (context) {
+                                  return PopScope(
+                                    canPop: false,
+                                    child: LayoutDesigner3(
+                                      id: i,
+                                    ),
+                                  );
+                                },
+                              ));
                             },
-                          ));
+                            child: Container(
+                              height: 50,
+                              color: defaultPalette.secondary,
+                              width: 30,
+                              alignment: Alignment.centerLeft,
+                              padding: EdgeInsets.only(right: 10, left: 10),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: Text(Boxes.getLayouts().get(i)?.id ??
+                                        'Unavailable!'),
+                                  ),
+                                  //Delete a Layout button
+                                  Expanded(
+                                    flex: 3,
+                                    child: ElevatedLayerButton(
+                                      onClick: () async {
+                                        final layoutsBox = Boxes.getLayouts();
+
+                                        // Get the current key of the item to be deleted
+                                        final int currentIndex = i;
+
+                                        // Delete the item
+                                        await layoutsBox
+                                            .get(currentIndex)
+                                            ?.delete();
+
+                                        // Adjust keys for the remaining items
+                                        for (int index = currentIndex + 1;
+                                            index < layoutsBox.length;
+                                            index++) {
+                                          // Get the layout item
+                                          final layout = layoutsBox.get(index);
+
+                                          if (layout != null) {
+                                            // Remove from the current key
+                                            await layout.delete();
+                                            // Add to the new key
+                                            await layoutsBox.put(
+                                                index - 1, layout);
+                                          }
+                                        }
+
+                                        // If you have a setState function or similar to refresh the UI, call it here
+                                        setState(() {});
+                                      },
+                                      buttonHeight: 40,
+                                      buttonWidth: 60,
+                                      borderRadius: BorderRadius.circular(100),
+                                      animationDuration:
+                                          const Duration(milliseconds: 200),
+                                      animationCurve: Curves.ease,
+                                      topDecoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(),
+                                      ),
+                                      topLayerChild: Icon(
+                                        TablerIcons.trash,
+                                        size: 20,
+                                      ),
+                                      baseDecoration: BoxDecoration(
+                                        color: Colors.green,
+                                        border: Border.all(),
+                                      ),
+                                    ),
+                                  ),
+                                  //Options a Layout button
+                                  Expanded(
+                                    child: ElevatedLayerButton(
+                                      onClick: () {},
+                                      buttonHeight: 40,
+                                      buttonWidth: 30,
+                                      borderRadius: BorderRadius.circular(100),
+                                      animationDuration:
+                                          const Duration(milliseconds: 200),
+                                      animationCurve: Curves.ease,
+                                      topDecoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(),
+                                      ),
+                                      topLayerChild: Icon(
+                                        TablerIcons.dots_vertical,
+                                        size: 15,
+                                      ),
+                                      baseDecoration: BoxDecoration(
+                                        color: Colors.green,
+                                        border: Border.all(),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
                         },
-                        child: Container(
-                          height: 50,
-                          color: Colors.amber,
-                          width: 30,
-                          alignment: Alignment.center,
-                          child: Text(Boxes.getLayouts().get(i).toString()),
-                        ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                   // child: AppinioSwiper(
                   //   backgroundCardCount: 1,

@@ -67,7 +67,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
         setState(() {
           _isTappedDown = true;
         });
-        Future.delayed(Durations.long1).then((y) {
+        Future.delayed(Durations.short4).then((y) {
           setState(() {
             _isTappedDown = false;
           });
