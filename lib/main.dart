@@ -26,8 +26,9 @@ Future<void> main() async {
   Hive.registerAdapter(SheetListBoxAdapter());
   Hive.registerAdapter(TextEditorItemBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
-
+  // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
+  await Hive.box<LayoutModel>('layouts').clear();
   runApp(const ProviderScope(child: MainApp()));
 }
 

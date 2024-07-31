@@ -1,14 +1,11 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
-
+import 'dart:math';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:expandable_menu/expandable_menu.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:billblaze/components/flutter_balloon_slider.dart';
@@ -124,9 +121,11 @@ class SelectedIndex {
 //
 class LayoutDesigner3 extends StatefulWidget {
   final int? id;
+  final int? index;
   const LayoutDesigner3({
     Key? key,
     this.id = null,
+    this.index = -1,
   }) : super(key: key);
 
   @override
@@ -211,6 +210,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
   int key = 0;
+  int keyIndex = 0;
   //
   //
   //
@@ -219,9 +219,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   void initState() {
     super.initState();
     key = widget.id ?? -1;
+    keyIndex = widget.index ?? -1;
     // animateToPage(currentPageIndex);
     var box = Boxes.getLayouts();
     if (key == -1) {
+      print('create new layout');
       lm = LayoutModel(
           createdAt: DateTime.now(),
           modifiedAt: DateTime.now(),
@@ -229,15 +231,34 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           docPropsList: [],
           spreadSheetList: [],
           id: Uuid().v4());
-      key = Boxes.getLayouts().length;
-      box.put(Boxes.getLayouts().length, lm!);
+
+      key = Random().nextInt(100000);
+      keyIndex = box.length;
+      box.put(key, lm!);
+      print(key);
       lm!.save();
-      _addPdfPage();
+      Future.delayed(Duration.zero).then(
+        (value) {
+          _addPdfPage();
+        },
+      ).then(
+        (value) {
+          print(Boxes.getLayouts().get(key)?.docPropsList);
+        },
+      );
     } else {
       // _addPdfPage();
-      lm = box.getAt(key);
+      print('reaches else in init');
+      print(key);
+      lm = box.get(key);
+      print(box.get(key));
+      print(lm?.docPropsList);
       spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
+      print(documentPropertiesList.isEmpty);
+      if (documentPropertiesList.isEmpty) {
+        _addPdfPage();
+      }
     }
 
     // _updatePdfPreview('');
@@ -514,13 +535,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         ));
 
         var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
-        lm[key].spreadSheetList[currentPageIndex].sheetList.add(
+        lm[keyIndex].spreadSheetList[currentPageIndex].sheetList.add(
             TextEditorItemBox(
                 textEditorController:
                     textController.document.toDelta().toJson(),
                 id: newId,
                 parentId: spreadSheetList[currentPageIndex].id));
-        lm[key].save();
+        lm[keyIndex].save();
       });
     }
 
@@ -1071,219 +1092,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     );
   }
 
-  // Widget convertDeltaToFlutterWidget(Delta delta, width) {
-  //   print('_____________DELTAA Widget Start______________');
-  //   List<Widget> textWidgets = [];
-  //   TextAlign textAlign = TextAlign.left;
-  //   TextDirection textDirection = TextDirection.ltr;
-  //   Widget? lastWidget;
-//
-  //   delta.toList().forEach((op) {
-  //     if (op.value is String) {
-  //       String text = op.value; // Replace the last newline
-//
-  //       Map<String, dynamic>? attributes = op.attributes;
-  //       TextStyle textStyle = TextStyle(
-  //         color: Colors.black,
-  //         height: 1,
-  //         fontSize: width / 12,
-  //       );
-//
-  //       if (attributes != null) {
-  //         print('Attribute exists');
-  //         if (attributes.containsKey('bold')) {
-  //           textStyle = textStyle.copyWith(fontWeight: FontWeight.bold);
-  //         }
-  //         if (attributes.containsKey('italic')) {
-  //           textStyle = textStyle.copyWith(fontStyle: FontStyle.italic);
-  //         }
-  //         if (attributes.containsKey('underline')) {
-  //           textStyle =
-  //               textStyle.copyWith(decoration: TextDecoration.underline);
-  //           if (attributes.containsKey('strike')) {
-  //             textStyle = textStyle.copyWith(
-  //                 decoration: TextDecoration.combine(
-  //                     [TextDecoration.underline, TextDecoration.lineThrough]));
-  //           }
-  //         }
-  //         if (attributes.containsKey('strike')) {
-  //           textStyle =
-  //               textStyle.copyWith(decoration: TextDecoration.lineThrough);
-  //           if (attributes.containsKey('underline')) {
-  //             textStyle = textStyle.copyWith(
-  //                 decoration: TextDecoration.combine(
-  //                     [TextDecoration.underline, TextDecoration.lineThrough]));
-  //           }
-  //         }
-  //         if (attributes.containsKey('script')) {
-  //           if (attributes['script'] == ScriptAttributes.sup.value) {
-  //             textStyle = textStyle.copyWith(
-  //                 fontSize: width / 20,
-  //                 height: 1,
-  //                 textBaseline: TextBaseline.alphabetic);
-  //           }
-  //           if (attributes['script'] == ScriptAttributes.sub.value) {
-  //             textStyle = textStyle.copyWith(
-  //                 fontSize: width / 20,
-  //                 height: 1,
-  //                 textBaseline: TextBaseline.alphabetic);
-  //           }
-  //         }
-  //         if (attributes.containsKey('code')) {
-  //           textStyle = textStyle.copyWith(
-  //             fontFamily: 'Courier',
-  //             color: Colors.black,
-  //             backgroundColor: Colors.white,
-  //             decoration: TextDecoration.none,
-  //           );
-  //         }
-  //         if (attributes.containsKey('color')) {
-  //           textStyle = textStyle.copyWith(
-  //               color: Color(
-  //                   int.parse(attributes['color'].substring(1, 7), radix: 16) +
-  //                       0xFF000000));
-  //         }
-  //         if (attributes.containsKey('background')) {
-  //           textStyle = textStyle.copyWith(
-  //             backgroundColor: Color(int.parse(
-  //                     attributes['background'].substring(1, 7),
-  //                     radix: 16) +
-  //                 0xFF000000),
-  //           );
-  //         }
-  //         if (attributes.containsKey('size')) {
-  //           textStyle = textStyle.copyWith(
-  //               fontSize: double.parse(attributes['size'].toString()));
-  //         }
-  //         if (attributes.containsKey('header')) {
-  //           int level = attributes['header'];
-  //           switch (level) {
-  //             case 1:
-  //               textStyle = textStyle.copyWith(
-  //                   fontSize: 24, fontWeight: FontWeight.bold);
-  //               break;
-  //             case 2:
-  //               textStyle = textStyle.copyWith(
-  //                   fontSize: 20, fontWeight: FontWeight.bold);
-  //               break;
-  //             case 3:
-  //               textStyle = textStyle.copyWith(
-  //                   fontSize: 18, fontWeight: FontWeight.bold);
-  //               break;
-  //             default:
-  //               textStyle = textStyle.copyWith(
-  //                   fontSize: 16, fontWeight: FontWeight.bold);
-  //           }
-  //         }
-  //         if (attributes.containsKey('align')) {
-  //           switch (attributes['align']) {
-  //             case 'center':
-  //               textAlign = TextAlign.center;
-  //               break;
-  //             case 'right':
-  //               textAlign = TextAlign.right;
-  //               break;
-  //             case 'justify':
-  //               textAlign = TextAlign.justify;
-  //               break;
-  //             default:
-  //               textAlign = TextAlign.left;
-  //           }
-  //         }
-  //         if (attributes.containsKey('direction')) {
-  //           if (attributes['direction'] == 'rtl') {
-  //             textDirection = TextDirection.rtl;
-  //           } else {
-  //             textDirection = TextDirection.ltr;
-  //           }
-  //         }
-  //         if (attributes.containsKey('link')) {
-  //           // final link = attributes['link'];
-  //           textWidgets.add(
-  //             GestureDetector(
-  //               onTap: () {
-  //                 // launch(link); // Implement link launching
-  //               },
-  //               child: Text(
-  //                 text,
-  //                 style: textStyle.copyWith(
-  //                   color: Colors.blue,
-  //                   decoration: TextDecoration.underline,
-  //                 ),
-  //               ),
-  //             ),
-  //           );
-  //           return;
-  //         }
-  //       }
-  //       // Check if text starts with '\n'
-  //       bool startsWithNewLine = text.startsWith('\n');
-  //       //
-  //       if (delta.toList().indexOf(op) == 0) {
-  //         startsWithNewLine = true;
-  //       }
-  //       print(startsWithNewLine);
-  //       if (startsWithNewLine) {
-  //         print(text);
-  //         textWidgets.add(RichText(
-  //           text: TextSpan(children: [
-  //             TextSpan(
-  //               text: text.substring(
-  //                   0, text[text.length - 1] == '\n' ? text.length - 1 : null),
-  //               style: textStyle,
-  //             )
-  //           ]),
-  //           textAlign: textAlign,
-  //           textDirection: textDirection,
-  //           // textScaler: TextScaler.linear(1 - vDividerPosition),
-  //         ));
-  //         lastWidget = textWidgets[textWidgets.length - 1];
-  //       } else {
-  //         if (lastWidget is RichText) {
-  //           ((textWidgets[textWidgets.length - 1] as RichText).text as TextSpan)
-  //               .children
-  //               ?.add(TextSpan(
-  //                   text: text.substring(0,
-  //                       text[text.length - 1] == '\n' ? text.length - 1 : null),
-  //                   style: textStyle));
-  //           lastWidget = textWidgets[textWidgets.length - 1];
-  //         } else if (lastWidget is Text) {
-  //           Text prev = textWidgets.removeAt(textWidgets.length - 1) as Text;
-  //           textWidgets.add(RichText(
-  //             // textScaler: TextScaler.linear(1 - vDividerPosition),
-  //             text: TextSpan(
-  //               children: [
-  //                 TextSpan(
-  //                     text: prev.data?.substring(
-  //                         textWidgets.length <= 0 ? 0 : 1,
-  //                         text[text.length - 1] == '\n'
-  //                             ? text.length - 1
-  //                             : null),
-  //                     style: prev.style),
-  //                 TextSpan(
-  //                     text: text.substring(
-  //                         0,
-  //                         text[text.length - 1] == '\n'
-  //                             ? text.length - 1
-  //                             : null),
-  //                     style: textStyle)
-  //               ],
-  //             ),
-  //           ));
-  //           lastWidget = textWidgets[textWidgets.length - 1];
-  //         }
-  //       }
-  //     }
-  //   });
-//
-  //   print('_____________End DELTAA Widget Start______________');
-//
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start, // Adjust as necessary
-  //     children: textWidgets,
-  //   );
-  // }
-
   void _addPdfPage() {
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
     var id = Uuid().v4();
@@ -1303,17 +1111,18 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     setState(() {
       documentPropertiesList.add(newdoc);
     });
-    lm[key].docPropsList.add(newdoc.toDocPropBox());
-    lm[key].save();
-
+    print('in addpage newdoc: $newdoc');
+    lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
+    lm[keyIndex].save();
+    print('inaddpage after addinbox docprop: ${lm[keyIndex].docPropsList}');
     SheetList newsheetlist =
         SheetList(id: id, parentId: parentId, sheetList: []);
 
     setState(() {
       spreadSheetList.add(newsheetlist);
     });
-    lm[key].spreadSheetList.add(sheetListtoBox(newsheetlist));
-    lm[key]
+    lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm[keyIndex]
         .save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
     setState(() {
       print('pageCount in addpage after: $pageCount');
@@ -1343,7 +1152,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
           print("Boundary is null");
           return;
         }
-        ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+        ui.Image image = await boundary.toImage(pixelRatio: 7.0);
         ByteData? byteData =
             await image.toByteData(format: ui.ImageByteFormat.png);
         if (byteData == null) {
@@ -1394,9 +1203,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
   void updateBox() {
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
-    lm[key].docPropsList = docPropToBox(documentPropertiesList);
-    lm[key].spreadSheetList = spreadSheetToBox(spreadSheetList);
-    lm[key].save();
+    lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
+    lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm[keyIndex].save();
   }
 
   @override
@@ -6318,7 +6127,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                 AnimatedPositioned(
                   duration: sideBarPosDuration,
                   top: (sHeight / 20) - (sHeight / 18),
-                  left: (sWidth / 40) - (sWidth / 12),
+                  left: -20,
                   child: ElevatedLayerButton(
                     // isTapped: false,
                     // toggleOnTap: true,
@@ -6327,11 +6136,11 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                           .values
                           .toList()
                           .cast<LayoutModel>();
-                      lm[key].docPropsList =
+                      lm[keyIndex].docPropsList =
                           docPropToBox(documentPropertiesList);
-                      lm[key].spreadSheetList =
+                      lm[keyIndex].spreadSheetList =
                           spreadSheetToBox(spreadSheetList);
-                      lm[key].save();
+                      lm[keyIndex].save();
                       Navigator.pop(context);
                     },
                     buttonHeight: 60,

@@ -1113,7 +1113,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   return PopScope(
                                     canPop: false,
                                     child: LayoutDesigner3(
-                                      id: i,
+                                      id: Boxes.getLayouts().keyAt(i),
+                                      index:i,
                                     ),
                                   );
                                 },
@@ -1129,8 +1130,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 children: [
                                   Expanded(
                                     flex: 5,
-                                    child: Text(Boxes.getLayouts().get(i)?.id ??
-                                        'Unavailable!'),
+                                    child: Text(Boxes.getLayouts()
+                                        .values
+                                        .toList()[i]
+                                        .name),
                                   ),
                                   //Delete a Layout button
                                   Expanded(
@@ -1144,24 +1147,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                                         // Delete the item
                                         await layoutsBox
-                                            .get(currentIndex)
+                                            .get(layoutsBox.keyAt(i))
                                             ?.delete();
-
                                         // Adjust keys for the remaining items
-                                        for (int index = currentIndex + 1;
-                                            index < layoutsBox.length;
-                                            index++) {
-                                          // Get the layout item
-                                          final layout = layoutsBox.get(index);
+                                        // for (int index = currentIndex;
+                                        //     index < layoutsBox.length;
+                                        //     index++) {
+                                        //   // Get the layout item
+                                        //   final layout = layoutsBox.get(index);
 
-                                          if (layout != null) {
-                                            // Remove from the current key
-                                            await layout.delete();
-                                            // Add to the new key
-                                            await layoutsBox.put(
-                                                index - 1, layout);
-                                          }
-                                        }
+                                        //   if (layout != null) {
+                                        //     // Remove from the current key
+                                        //     await layout.delete();
+                                        //     // Add to the new key
+                                        //     await layoutsBox.put(
+                                        //         index - 1, layout);
+                                        //   }
+                                        // }
 
                                         // If you have a setState function or similar to refresh the UI, call it here
                                         setState(() {});

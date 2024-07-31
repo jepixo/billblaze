@@ -8,12 +8,13 @@ class Boxes {
   static Box<LayoutModel> getLayouts() => Hive.box<LayoutModel>('layouts');
 
   static String getLayoutName() {
-    int highestNumber = 0;
+    int highestNumber =
+        -1; // Initialize to -1 to handle cases where no numbers are found.
     final regex = RegExp(r'^Untitled-(\d+)$');
     final layouts = Boxes.getLayouts();
 
-    for (var i = 0; i < layouts.length; i++) {
-      final name = layouts.get(i)?.name ?? '';
+    for (var layout in layouts.values.toList()) {
+      final name = layout.name ?? '';
       final match = regex.firstMatch(name);
 
       if (match != null) {
@@ -22,6 +23,7 @@ class Boxes {
       }
     }
 
+    // Ensure that the next name is incremented correctly.
     return 'Untitled-${highestNumber + 1}';
   }
 }
