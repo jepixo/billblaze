@@ -315,6 +315,10 @@ class CurvedNavigationBar extends StatefulWidget {
   final double s;
   final double bottom;
 
+  final double bgHeight;
+
+  final double disp;
+
   CurvedNavigationBar({
     Key? key,
     required this.items,
@@ -332,6 +336,8 @@ class CurvedNavigationBar extends StatefulWidget {
     this.s = 0.2,
     this.bottom = 0.45,
     double? width,
+    required this.bgHeight,
+    this.disp = 50,
   })  : letIndexChange = letIndexChange ?? ((_) => true),
         assert(items.isNotEmpty),
         assert(0 <= index && index < items.length),
@@ -402,7 +408,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
   Widget build(BuildContext context) {
     final textDirection = Directionality.of(context);
     final width = widget.width;
-    final sHeight = MediaQuery.of(context).size.height;
+    final sHeight = widget.bgHeight;
     return SizedBox(
       height: widget.height,
       child: LayoutBuilder(
@@ -423,7 +429,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                   // Selected button
                   Positioned(
                     bottom: kIsWeb || Platform.isWindows
-                        ? -widget.height / 1.5
+                        ? -widget.disp
                         : -widget.height / 2,
                     left: Directionality.of(context) == TextDirection.rtl
                         ? null
