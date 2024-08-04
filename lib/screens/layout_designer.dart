@@ -6,10 +6,12 @@ import 'dart:math';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:expandable_menu/expandable_menu.dart';
+import 'package:flutter/animation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:billblaze/components/flutter_balloon_slider.dart';
-import 'package:billblaze/components/zoomable.dart';
+import 'package:billblaze/components/zoomable.dart' as zz;
 import 'package:billblaze/components/tab_container/tab_controller.dart';
 import 'package:billblaze/components/text_toolbar/list_item_model.dart';
 import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart';
@@ -137,9 +139,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   double hDividerPosition = 0.5;
   double vDividerPosition = 0.55;
   double appbarHeight = 0.065;
-  double wH1DividerPosition = 0.2;
-  double wHtoolbarPosition = 0.02;
-  double wH2DividerPosition = 0.7;
+  double wH1DividerPosition = 0.25;
+  double wH2DividerPosition = 0.25;
   DateTime dateTimeNow = DateTime.now();
   int pageCount = 0;
   int currentPageIndex = 0;
@@ -161,7 +162,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   FocusNode letterSpaceFocus = FocusNode();
   FocusNode wordSpaceFocus = FocusNode();
   FocusNode lineSpaceFocus = FocusNode();
-
+  zz.TransformationController transformationcontroller =
+      zz.TransformationController();
   late TabController tabcunt;
   List<String> fonts = [
     'Billabong',
@@ -213,6 +215,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   double get sHeight => MediaQuery.of(context).size.height;
   int key = 0;
   int keyIndex = 0;
+  SystemMouseCursor _cursor = SystemMouseCursors.basic;
   //
   //
   //
@@ -1014,6 +1017,68 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     // );
   }
 
+  Widget _generateWidWin(sWidth, sHeight) {
+    var width = (sWidth * (wH1DividerPosition - 0.04));
+    var doc = documentPropertiesList;
+    var sheetList = spreadSheetList;
+    return SingleChildScrollView(
+      controller: pdfScrollController,
+      child: Column(
+        children: [
+          for (int i = 0; i < pageCount; i++)
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 30.0, horizontal: 10),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    currentPageIndex = i;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: currentPageIndex == i
+                        ? Border.all(
+                            color: defaultPalette.tertiary,
+                            strokeAlign: BorderSide.strokeAlignOutside,
+                            width: 6)
+                        : null,
+                  ),
+                  child: RepaintBoundary(
+                    key: globalKeys[i],
+                    child: Container(
+                      width: _getPageWidth(doc[i].pageFormatController),
+                      height: _getPageHeight(doc[i].pageFormatController),
+                      decoration: BoxDecoration(
+                          //
+                          color: Colors.white,
+                          boxShadow: [
+                            // BoxShadow(
+                            //   blurRadius: 5,
+                          ]),
+                      padding: EdgeInsets.only(
+                        top: double.parse(doc[i].marginTopController.text),
+                        bottom:
+                            double.parse(doc[i].marginBottomController.text),
+                        left: double.parse(doc[i].marginLeftController.text),
+                        right: double.parse(doc[i].marginRightController.text),
+                      ),
+                      child: _buildSheetListWidget(
+                          sheetList[i], sWidth * (wH1DividerPosition)),
+                    ),
+                  ),
+                ),
+              ),
+            )
+        ],
+      ),
+    );
+    //   itemCount: pageCount,
+    //   itemBuilder: (context, i) {
+    //   },
+    // );
+  }
+
   Widget _buildSheetListWidget(SheetList sheetList, double width) {
     return IntrinsicHeight(
       child: Flex(
@@ -1092,6 +1157,44 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
         }),
       ),
     );
+  }
+
+  double _getPageWidth(PdfPageFormat format) {
+    switch (format) {
+      case PdfPageFormat.a4:
+        return 1 * 793.7007874;
+      case PdfPageFormat.a3:
+        return 0.72 * 1122.519685;
+      case PdfPageFormat.a5:
+        return 1 * 559.37007874;
+      case PdfPageFormat.a6:
+        return 1 * 396.8503937;
+      case PdfPageFormat.letter:
+        return 1 * 816;
+      case PdfPageFormat.legal:
+        return 1 * 816;
+      default:
+        return 2480 / 2;
+    }
+  }
+
+  double _getPageHeight(PdfPageFormat format) {
+    switch (format) {
+      case PdfPageFormat.a4:
+        return 1 * 1122.519685;
+      case PdfPageFormat.a3:
+        return 0.72 * 1587.4015748;
+      case PdfPageFormat.a5:
+        return 1 * 793.7007874;
+      case PdfPageFormat.a6:
+        return 1 * 559.37007874;
+      case PdfPageFormat.letter:
+        return 1 * 1056;
+      case PdfPageFormat.legal:
+        return 1 * 1344;
+      default:
+        return 3508 / 2;
+    }
   }
 
   void _addPdfPage() {
@@ -1236,32 +1339,161 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                   ),
                   AnimatedPositioned(
                     duration: Duration(milliseconds: 300),
+                    width: sWidth,
+                    height: sHeight,
                     child: Stack(
                       children: [
-                        //TOP HALF //Desktop WEB
+                        //center preview, spreadsheet and propTab //Desktop WEB
                         Positioned(
                           top: 50,
                           width: sWidth,
                           height: sHeight,
                           child: Row(
                             children: [
+                              ///////Side TOOL BAR
+                              Container(
+                                height: sHeight * 0.9,
+                                width: sWidth * 0.04,
+                                color: defaultPalette.white,
+                                ///////Side TOOL BAR
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    ///Resize handle
+                                    GestureDetector(
+                                        onPanUpdate: (details) {
+                                          double newPosition =
+                                              (hDividerPosition +
+                                                      details.delta.dy /
+                                                          context.size!.height)
+                                                  .clamp(0.2, 0.85);
+                                          _updatehDividerPosition(newPosition);
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(5),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              color: defaultPalette.black
+                                                  .withOpacity(0.9)),
+                                          child: Icon(
+                                            TablerIcons.grip_horizontal,
+                                            color: defaultPalette.white,
+                                            size: 20,
+                                          ),
+                                        )),
+
+                                    ///clearLayout Button
+                                    IconButton(
+                                        onPressed: () {
+                                          FocusScope.of(context).unfocus();
+                                          if (panelIndex.panelIndex != -1) {
+                                            final TextEditorItem
+                                                textEditorItem =
+                                                _sheetItemIterator(
+                                                        panelIndex.id,
+                                                        spreadSheetList[
+                                                            currentPageIndex])
+                                                    as TextEditorItem;
+                                            textEditorItem.focusNode.unfocus();
+                                          }
+                                          _confirmDeleteLayout(
+                                              deletePage: false);
+                                        },
+                                        icon: Transform.rotate(
+                                          angle: math.pi / 4,
+                                          child: Icon(
+                                            IconsaxPlusLinear.add,
+
+                                            // size: 40,
+                                            color: defaultPalette.black,
+                                          ),
+                                        )),
+                                    //ADD TEXT
+                                    IconButton(
+                                        onPressed: () {
+                                          print(
+                                              '________addText pressed LD_________');
+                                          // print(
+                                          //     'panelId from addtextfield: ${panelIndex.id}');
+                                          _addTextField();
+                                        },
+                                        icon: Icon(
+                                          CupertinoIcons.plus_bubble,
+                                          // size: 40,
+                                          color: defaultPalette.black,
+                                        )),
+                                    //Add Image
+                                    IconButton(
+                                        onPressed: () async {
+                                          // pw.Page pdf = await exportDelegate
+                                          //     .exportToPdfPage('2');
+                                          // setState(() {
+                                          //   genpdf.addPage(pdf);
+                                          // });
+                                          _capturePng(0);
+                                        },
+                                        icon: Icon(
+                                          IconsaxPlusLinear.gallery_add,
+                                          // size: 40,
+                                          color: defaultPalette.black,
+                                        )),
+                                    //Add table
+                                    IconButton(
+                                        onPressed: () {},
+                                        icon: Icon(
+                                          CupertinoIcons.table,
+                                          // size: 40,
+                                          color: defaultPalette.black,
+                                        )),
+                                    //Duplpicate
+                                    IconButton(
+                                        onPressed: () => _duplicateTextField(),
+                                        icon: Icon(
+                                          CupertinoIcons.plus_square_on_square,
+                                          // size: 40,
+                                          color: defaultPalette.black,
+                                        )),
+                                    IconButton(
+                                        onPressed: () => _removeTextField(),
+                                        icon: Icon(
+                                          Icons.delete,
+                                          // size: 40,
+                                          color: defaultPalette.black,
+                                        )),
+                                  ],
+                                ),
+                              ),
                               //emulating the pdf preview //Desktop WEB
                               Expanded(
                                 // top: sHeight * appbarHeight / 6,
                                 // left: 0,
-                                flex: 2500,
-                                child: Zoomable(
-                                  maxScale: 10,
+                                flex: (wH1DividerPosition * 10000).round(),
+                                child: zz.Zoom(
+                                  backgroundColor:
+                                      defaultPalette.white.withOpacity(0.05),
+                                  transformationController:
+                                      transformationcontroller,
+                                  initTotalZoomOut: true,
+                                  centerOnScale: true,
+                                  onPositionUpdate: (p0) {
+                                    setState(() {});
+                                  },
+                                  onScaleUpdate: (p0, p1) {
+                                    setState(() {});
+                                  },
                                   child: Transform.scale(
-                                    scale: 1,
-                                    // scale: 1,
+                                    scale: wH1DividerPosition * 2.25,
+                                    // scale: 0.1,
                                     alignment: Alignment.topLeft,
                                     child: Container(
-                                      width: 2480,
-                                      // height: (sWidth-64)*sqrt2 ,
-                                      height: 2480 * sqrt2,
+                                      // width: sWidth *
+                                      //     (wH1DividerPosition - 0.96),
+                                      // // height: (sWidth-64)*sqrt2 ,
+                                      // height: sHeight * 0.9,
+
                                       padding: EdgeInsets.only(
-                                          bottom: 25, top: 25, right: 40),
+                                          bottom: 25, top: 25, left: 40),
                                       decoration: BoxDecoration(boxShadow: [
                                         BoxShadow(
                                             blurRadius: 500,
@@ -1270,7 +1502,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                 .withOpacity(0.06))
                                       ]),
                                       alignment: Alignment.center,
-                                      child: _generateWid(sWidth, sHeight),
+                                      child: _generateWidWin(
+                                          sWidth, sHeight * 0.9),
                                     ),
                                   ),
                                 ),
@@ -1278,2219 +1511,2147 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
 
                               //////////Spread SHEET Layout //Desktop WEB
                               Expanded(
-                                flex: (((1 - appbarHeight) - hDividerPosition) *
+                                flex: ((1 -
+                                            wH1DividerPosition -
+                                            wH2DividerPosition) *
                                         10000)
                                     .round(),
-                                child: Column(
-                                  children: [
-                                    ////////TOP TOOL BAR //Desktop WEB
-                                    Container(
-                                      height: sHeight / 20,
-                                      width: sWidth,
-                                      color: defaultPalette.white,
-                                      ///////TOP TOOL BAR
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceAround,
+                                child: MouseRegion(
+                                  cursor: _cursor,
+                                  onHover: (PointerHoverEvent event) {
+                                    Offset position = event.localPosition;
+                                    Size? widgetSize = context.size;
+                                    setState(() {
+                                      // Change the cursor based on position
+                                      if (widgetSize == null)
+                                        _cursor = SystemMouseCursors.basic;
+
+                                      // Define the edge proximity threshold
+                                      const edgeThreshold = 10.0;
+
+                                      // Check if the cursor is near the edges and set the cursor style accordingly
+                                      if (position.dx < edgeThreshold ||
+                                          position.dx >
+                                              (widgetSize?.width ?? 0) -
+                                                  edgeThreshold) {
+                                        _cursor =
+                                            SystemMouseCursors.resizeColumn;
+                                      } else if (position.dy < edgeThreshold ||
+                                          position.dy >
+                                              (widgetSize?.height ?? 0) -
+                                                  edgeThreshold) {
+                                        _cursor = SystemMouseCursors.resizeRow;
+                                      } else {
+                                        _cursor = SystemMouseCursors.basic;
+                                      }
+                                    });
+                                  },
+                                  child: GestureDetector(
+                                    onPanUpdate: (details) {
+                                      if (_cursor ==
+                                          SystemMouseCursors.resizeColumn) {
+                                        double newPosition =
+                                            (wH1DividerPosition +
+                                                    details.delta.dx /
+                                                        context.size!.width)
+                                                .clamp(
+                                                    0.05,
+                                                    (1 -
+                                                        wH2DividerPosition -
+                                                        0.1));
+                                        setState(() {
+                                          wH1DividerPosition = newPosition;
+                                        });
+                                      }
+                                    },
+                                    child: Container(
+                                      color:
+                                          defaultPalette.black.withOpacity(.9),
+                                      child: Stack(
                                         children: [
-                                          ///Resize handle
-                                          GestureDetector(
-                                              onPanUpdate: (details) {
-                                                double newPosition =
-                                                    (hDividerPosition +
-                                                            details.delta.dy /
-                                                                context.size!
-                                                                    .height)
-                                                        .clamp(0.2, 0.85);
-                                                _updatehDividerPosition(
-                                                    newPosition);
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(5),
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    color: defaultPalette.black
-                                                        .withOpacity(0.9)),
-                                                child: Icon(
-                                                  TablerIcons.grip_horizontal,
-                                                  color: defaultPalette.white,
-                                                  size: 20,
-                                                ),
-                                              )),
-
-                                          ///clearLayout Button
-                                          IconButton(
-                                              onPressed: () {
-                                                FocusScope.of(context)
-                                                    .unfocus();
-                                                if (panelIndex.panelIndex !=
-                                                    -1) {
-                                                  final TextEditorItem
-                                                      textEditorItem =
-                                                      _sheetItemIterator(
-                                                              panelIndex.id,
-                                                              spreadSheetList[
-                                                                  currentPageIndex])
-                                                          as TextEditorItem;
-                                                  textEditorItem.focusNode
-                                                      .unfocus();
-                                                }
-                                                _confirmDeleteLayout(
-                                                    deletePage: false);
-                                              },
-                                              icon: Transform.rotate(
-                                                angle: math.pi / 4,
-                                                child: Icon(
-                                                  IconsaxPlusLinear.add,
-
-                                                  // size: 40,
-                                                  color: defaultPalette.black,
-                                                ),
-                                              )),
-                                          //ADD TEXT
-                                          IconButton(
-                                              onPressed: () {
-                                                print(
-                                                    '________addText pressed LD_________');
-                                                // print(
-                                                //     'panelId from addtextfield: ${panelIndex.id}');
-                                                _addTextField();
-                                              },
-                                              icon: Icon(
-                                                CupertinoIcons.plus_bubble,
-                                                // size: 40,
-                                                color: defaultPalette.black,
-                                              )),
-                                          //Add Image
-                                          IconButton(
-                                              onPressed: () async {
-                                                // pw.Page pdf = await exportDelegate
-                                                //     .exportToPdfPage('2');
-                                                // setState(() {
-                                                //   genpdf.addPage(pdf);
-                                                // });
-                                                _capturePng(0);
-                                              },
-                                              icon: Icon(
-                                                IconsaxPlusLinear.gallery_add,
-                                                // size: 40,
-                                                color: defaultPalette.black,
-                                              )),
-                                          //Add table
-                                          IconButton(
-                                              onPressed: () {},
-                                              icon: Icon(
-                                                CupertinoIcons.table,
-                                                // size: 40,
-                                                color: defaultPalette.black,
-                                              )),
-                                          //Duplpicate
-                                          IconButton(
-                                              onPressed: () =>
-                                                  _duplicateTextField(),
-                                              icon: Icon(
-                                                CupertinoIcons
-                                                    .plus_square_on_square,
-                                                // size: 40,
-                                                color: defaultPalette.black,
-                                              )),
-                                          IconButton(
-                                              onPressed: () =>
-                                                  _removeTextField(),
-                                              icon: Icon(
-                                                Icons.delete,
-                                                // size: 40,
-                                                color: defaultPalette.black,
-                                              )),
-                                        ],
-                                      ),
-                                    ),
-                                    ////// SPREADSHEET //Desktop WEB
-                                    Expanded(
-                                      flex: (8 * 10000),
-                                      child: Container(
-                                        // height: sHeight / 20,
-                                        width: sWidth,
-                                        color: defaultPalette.black
-                                            .withOpacity(.9),
-                                        child: Stack(
-                                          children: [
-                                            // botomGraph //Desktop WEB
-                                            IgnorePointer(
-                                              ignoring: true,
-                                              child: AnimatedContainer(
-                                                duration: Durations.extralong1,
-                                                height: sHeight,
-                                                width: sWidth,
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.0),
-                                                ),
-                                                padding: EdgeInsets.only(
-                                                  top: 0,
-                                                ),
-                                                //layGraph
-                                                child: Opacity(
-                                                  opacity: 0.35,
-                                                  child: LineChart(LineChartData(
-                                                      lineBarsData: [
-                                                        LineChartBarData()
-                                                      ],
-                                                      titlesData: FlTitlesData(
-                                                          show: false),
-                                                      gridData: FlGridData(
-                                                          show: true,
-                                                          horizontalInterval:
-                                                              10,
-                                                          verticalInterval: 30),
-                                                      borderData: FlBorderData(
-                                                          show: false),
-                                                      minY: 0,
-                                                      maxY: 50,
-                                                      maxX: dateTimeNow
-                                                                  .millisecondsSinceEpoch
-                                                                  .ceilToDouble() /
-                                                              500 +
-                                                          250,
-                                                      minX: dateTimeNow
-                                                              .millisecondsSinceEpoch
-                                                              .ceilToDouble() /
-                                                          500)),
-                                                ),
+                                          // botomGraph //Desktop WEB
+                                          IgnorePointer(
+                                            ignoring: true,
+                                            child: AnimatedContainer(
+                                              duration: Durations.extralong1,
+                                              height: sHeight,
+                                              width: sWidth,
+                                              alignment: Alignment.centerRight,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white
+                                                    .withOpacity(0.0),
+                                              ),
+                                              padding: EdgeInsets.only(
+                                                top: 0,
+                                              ),
+                                              //layGraph
+                                              child: Opacity(
+                                                opacity: 0.35,
+                                                child: LineChart(LineChartData(
+                                                    lineBarsData: [
+                                                      LineChartBarData()
+                                                    ],
+                                                    titlesData: FlTitlesData(
+                                                        show: false),
+                                                    gridData: FlGridData(
+                                                        show: true,
+                                                        horizontalInterval: 10,
+                                                        verticalInterval: 30),
+                                                    borderData: FlBorderData(
+                                                        show: false),
+                                                    minY: 0,
+                                                    maxY: 50,
+                                                    maxX: dateTimeNow
+                                                                .millisecondsSinceEpoch
+                                                                .ceilToDouble() /
+                                                            500 +
+                                                        250,
+                                                    minX: dateTimeNow
+                                                            .millisecondsSinceEpoch
+                                                            .ceilToDouble() /
+                                                        500)),
                                               ),
                                             ),
-                                            //Main SpreadSheet //Desktop WEB
-                                            ReorderableListView.builder(
-                                              footer: null,
-                                              header: null,
-                                              // scrollDirection: Axis.horizontal,
-                                              itemExtentBuilder: null,
-                                              proxyDecorator:
-                                                  (child, index, animation) {
-                                                return child;
-                                              },
-                                              padding: EdgeInsets.all(0),
-                                              onReorder:
-                                                  (int oldIndex, int newIndex) {
-                                                setState(() {
-                                                  if (newIndex > oldIndex) {
-                                                    newIndex -= 1;
-                                                  }
-                                                  final item = spreadSheetList[
-                                                          currentPageIndex]
-                                                      .removeAt(oldIndex);
-                                                  spreadSheetList[
-                                                          currentPageIndex]
-                                                      .insert(newIndex, item);
-                                                });
-                                              },
-                                              itemCount: spreadSheetList[
-                                                      currentPageIndex]
-                                                  .length,
-                                              itemBuilder: (context, index) {
-                                                print(
-                                                    'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
-                                                if (spreadSheetList[
-                                                        currentPageIndex][index]
-                                                    is TextEditorItem) {
-                                                  var textEditorItem =
-                                                      spreadSheetList[
-                                                                  currentPageIndex]
-                                                              [index]
-                                                          as TextEditorItem;
-                                                  return Stack(
-                                                    key: ValueKey(textEditorItem
-                                                        .id), // Ensure each item has a unique key
-                                                    children: [
-                                                      GestureDetector(
-                                                        onTap: () {
-                                                          FocusScope.of(context)
-                                                              .unfocus();
-                                                          var isTrue = false;
-                                                          SheetItem? itemE;
-                                                          if (panelIndex.id ==
-                                                              textEditorItem
-                                                                  .id) {
-                                                            isTrue = true;
-                                                          }
-                                                          setState(() {
-                                                            itemE = _sheetItemIterator(
-                                                                textEditorItem
+                                          ),
+                                          //Main SpreadSheet //Desktop WEB
+                                          ReorderableListView.builder(
+                                            footer: null,
+                                            header: null,
+                                            // scrollDirection: Axis.horizontal,
+                                            itemExtentBuilder: null,
+                                            proxyDecorator:
+                                                (child, index, animation) {
+                                              return child;
+                                            },
+                                            padding: EdgeInsets.all(0),
+                                            onReorder:
+                                                (int oldIndex, int newIndex) {
+                                              setState(() {
+                                                if (newIndex > oldIndex) {
+                                                  newIndex -= 1;
+                                                }
+                                                final item = spreadSheetList[
+                                                        currentPageIndex]
+                                                    .removeAt(oldIndex);
+                                                spreadSheetList[
+                                                        currentPageIndex]
+                                                    .insert(newIndex, item);
+                                              });
+                                            },
+                                            itemCount: spreadSheetList[
+                                                    currentPageIndex]
+                                                .length,
+                                            itemBuilder: (context, index) {
+                                              print(
+                                                  'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
+                                              if (spreadSheetList[
+                                                      currentPageIndex][index]
+                                                  is TextEditorItem) {
+                                                var textEditorItem =
+                                                    spreadSheetList[
+                                                                currentPageIndex]
+                                                            [index]
+                                                        as TextEditorItem;
+                                                return Stack(
+                                                  key: ValueKey(textEditorItem
+                                                      .id), // Ensure each item has a unique key
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        FocusScope.of(context)
+                                                            .unfocus();
+                                                        var isTrue = false;
+                                                        SheetItem? itemE;
+                                                        if (panelIndex.id ==
+                                                            textEditorItem.id) {
+                                                          isTrue = true;
+                                                        }
+                                                        setState(() {
+                                                          itemE = _sheetItemIterator(
+                                                              textEditorItem.id,
+                                                              spreadSheetList[
+                                                                  currentPageIndex]);
+
+                                                          if (itemE != null) {
+                                                            index = _sheetListIterator(
+                                                                    itemE!
+                                                                        .parentId,
+                                                                    spreadSheetList[
+                                                                        currentPageIndex])
+                                                                .indexOf(
+                                                                    itemE!);
+                                                            panelIndex = PanelIndex(
+                                                                id: itemE!.id,
+                                                                panelIndex:
+                                                                    index,
+                                                                parentId: itemE
+                                                                    ?.parentId);
+                                                          } else {
+                                                            panelIndex = PanelIndex(
+                                                                id: textEditorItem
                                                                     .id,
-                                                                spreadSheetList[
-                                                                    currentPageIndex]);
+                                                                panelIndex:
+                                                                    index,
+                                                                parentId:
+                                                                    textEditorItem
+                                                                        .parentId);
+                                                          }
 
-                                                            if (itemE != null) {
-                                                              index = _sheetListIterator(
-                                                                      itemE!
-                                                                          .parentId,
-                                                                      spreadSheetList[
-                                                                          currentPageIndex])
-                                                                  .indexOf(
-                                                                      itemE!);
-                                                              panelIndex = PanelIndex(
-                                                                  id: itemE!.id,
-                                                                  panelIndex:
-                                                                      index,
-                                                                  parentId: itemE
-                                                                      ?.parentId);
-                                                            } else {
-                                                              panelIndex = PanelIndex(
-                                                                  id: textEditorItem
-                                                                      .id,
-                                                                  panelIndex:
-                                                                      index,
-                                                                  parentId:
-                                                                      textEditorItem
-                                                                          .parentId);
-                                                            }
+                                                          // index = temp ?? index;
 
-                                                            // index = temp ?? index;
-
-                                                            if (hDividerPosition >
-                                                                0.48) {
-                                                              hDividerPosition =
-                                                                  0.4;
-                                                            }
-                                                          });
-                                                          // Future.delayed(Duration.zero)
-                                                          //     .then((_) {
-                                                          //   textStylePageController
-                                                          //       .jumpToPage(panelIndex
-                                                          //           .panelIndex);
-                                                          // });
-                                                          Future.delayed(
-                                                                  Durations
-                                                                      .short1)
-                                                              .then((h) {
-                                                            if (!isTrue) {
-                                                              textStyleTabControler.animateToPage(
-                                                                  0,
-                                                                  curve: Curves
-                                                                      .bounceIn,
-                                                                  duration:
-                                                                      Durations
-                                                                          .short1);
-                                                              for (var i = 0;
-                                                                  i <
-                                                                      isTapped
-                                                                          .length;
-                                                                  i++) {
-                                                                setState(() {
-                                                                  isTapped[i] =
-                                                                      false;
-                                                                });
-                                                              }
+                                                          if (hDividerPosition >
+                                                              0.48) {
+                                                            hDividerPosition =
+                                                                0.4;
+                                                          }
+                                                        });
+                                                        // Future.delayed(Duration.zero)
+                                                        //     .then((_) {
+                                                        //   textStylePageController
+                                                        //       .jumpToPage(panelIndex
+                                                        //           .panelIndex);
+                                                        // });
+                                                        Future.delayed(Durations
+                                                                .short1)
+                                                            .then((h) {
+                                                          if (!isTrue) {
+                                                            textStyleTabControler
+                                                                .animateToPage(
+                                                                    0,
+                                                                    curve: Curves
+                                                                        .bounceIn,
+                                                                    duration:
+                                                                        Durations
+                                                                            .short1);
+                                                            for (var i = 0;
+                                                                i <
+                                                                    isTapped
+                                                                        .length;
+                                                                i++) {
                                                               setState(() {
-                                                                isTapped[1] =
-                                                                    true;
+                                                                isTapped[i] =
+                                                                    false;
                                                               });
                                                             }
-                                                          });
+                                                            setState(() {
+                                                              isTapped[1] =
+                                                                  true;
+                                                            });
+                                                          }
+                                                        });
 
-                                                          print('clicked');
+                                                        print('clicked');
 
-                                                          print(panelIndex);
-                                                        },
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 4,
-                                                                  bottom: 8,
-                                                                  left: 20,
-                                                                  right: 20),
-                                                          margin:
-                                                              EdgeInsets.all(8),
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                defaultPalette
-                                                                    .primary,
-                                                            border: Border.all(
-                                                              width: panelIndex
-                                                                          .id ==
-                                                                      textEditorItem
-                                                                          .id
-                                                                  ? 4
-                                                                  : 2,
-                                                              color: panelIndex
-                                                                          .id ==
-                                                                      textEditorItem
-                                                                          .id
-                                                                  ? defaultPalette
-                                                                      .tertiary
-                                                                  : defaultPalette
-                                                                      .black,
-                                                            ),
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10),
+                                                        print(panelIndex);
+                                                      },
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                top: 4,
+                                                                bottom: 8,
+                                                                left: 20,
+                                                                right: 20),
+                                                        margin:
+                                                            EdgeInsets.all(8),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: defaultPalette
+                                                              .primary,
+                                                          border: Border.all(
+                                                            width: panelIndex
+                                                                        .id ==
+                                                                    textEditorItem
+                                                                        .id
+                                                                ? 4
+                                                                : 2,
+                                                            color: panelIndex
+                                                                        .id ==
+                                                                    textEditorItem
+                                                                        .id
+                                                                ? defaultPalette
+                                                                    .tertiary
+                                                                : defaultPalette
+                                                                    .black,
                                                           ),
-                                                          child: Column(
-                                                            children: [
-                                                              Container(
-                                                                alignment: Alignment
-                                                                    .centerLeft,
-                                                                padding: EdgeInsets
-                                                                    .only(
-                                                                        bottom:
-                                                                            4),
-                                                                child: Text(
-                                                                    'id : ${textEditorItem.id}',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            10)),
-                                                              ),
-                                                              QuillEditor(
-                                                                configurations:
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                        child: Column(
+                                                          children: [
+                                                            Container(
+                                                              alignment: Alignment
+                                                                  .centerLeft,
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      bottom:
+                                                                          4),
+                                                              child: Text(
+                                                                  'id : ${textEditorItem.id}',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          10)),
+                                                            ),
+                                                            QuillEditor(
+                                                              configurations:
+                                                                  textEditorItem
+                                                                      .textEditorConfigurations,
+                                                              focusNode:
+                                                                  textEditorItem
+                                                                      .focusNode,
+                                                              scrollController:
+                                                                  textEditorItem
+                                                                      .scrollController,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    //contextMenu in main spreadsheet
+                                                    AnimatedPositioned(
+                                                      duration:
+                                                          Durations.medium3,
+                                                      bottom: 0,
+                                                      left: panelIndex.id ==
+                                                              textEditorItem.id
+                                                          ? 0
+                                                          : -50,
+                                                      right: 0,
+                                                      child:
+                                                          SingleChildScrollView(
+                                                        child: Transform.flip(
+                                                          flipX: true,
+                                                          child: Transform.flip(
+                                                            flipX: true,
+                                                            child: panelIndex
+                                                                        .id ==
                                                                     textEditorItem
-                                                                        .textEditorConfigurations,
-                                                                focusNode:
-                                                                    textEditorItem
-                                                                        .focusNode,
-                                                                scrollController:
-                                                                    textEditorItem
-                                                                        .scrollController,
-                                                              ),
-                                                            ],
+                                                                        .id
+                                                                ? ExpandableMenu(
+                                                                    backgroundColor:
+                                                                        defaultPalette
+                                                                            .white
+                                                                            .withOpacity(1),
+                                                                    iconColor:
+                                                                        defaultPalette
+                                                                            .tertiary,
+                                                                    itemContainerColor:
+                                                                        defaultPalette
+                                                                            .secondary,
+                                                                    width: 40.0,
+                                                                    height:
+                                                                        40.0,
+                                                                    items: List
+                                                                        .generate(
+                                                                            12,
+                                                                            (intt) {
+                                                                      switch (
+                                                                          intt) {
+                                                                        case 0:
+                                                                          return PopupMenuButton<
+                                                                              String>(
+                                                                            iconSize:
+                                                                                20,
+                                                                            padding:
+                                                                                EdgeInsets.all(0),
+                                                                            icon:
+                                                                                Icon(
+                                                                              TablerIcons.message_plus,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                            onSelected:
+                                                                                (String value) {
+                                                                              // Handle the selected option here in main spreadsheet
+                                                                              switch (value) {
+                                                                                case 'Above':
+                                                                                  setState(() {
+                                                                                    var newItem = _addTextField(shouldReturn: true);
+                                                                                    spreadSheetList[currentPageIndex].insert(index, newItem);
+                                                                                    index++;
+                                                                                  });
+                                                                                  break;
+                                                                                case 'Below':
+                                                                                  setState(() {
+                                                                                    var newItem = _addTextField(shouldReturn: true);
+                                                                                    spreadSheetList[currentPageIndex].insert(index + 1, newItem);
+                                                                                  });
+                                                                                  // Your logic for "Below" in main spreadsheet
+                                                                                  break;
+                                                                                case 'Left':
+                                                                                  setState(() {
+                                                                                    var newId = Uuid().v4();
+                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                    spreadSheetList[currentPageIndex].insert(
+                                                                                        index,
+                                                                                        SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                          _addTextField(shouldReturn: true),
+                                                                                          item
+                                                                                        ]));
+                                                                                  });
+                                                                                  break;
+                                                                                //in main spreadsheet
+                                                                                case 'Right':
+                                                                                  setState(() {
+                                                                                    var newId = Uuid().v4();
+                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                    spreadSheetList[currentPageIndex].insert(
+                                                                                        index,
+                                                                                        SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                          item,
+                                                                                          _addTextField(shouldReturn: true),
+                                                                                        ]));
+                                                                                  });
+                                                                                  break;
+                                                                              }
+                                                                            },
+                                                                            itemBuilder:
+                                                                                (BuildContext context) {
+                                                                              return [
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Above',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_up),
+                                                                                      Text('Above')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Below',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_down),
+                                                                                      Text('Below')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Left',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_left),
+                                                                                      Text('Left')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Right',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_right),
+                                                                                      Text('Right')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ];
+                                                                            },
+                                                                          );
+
+                                                                        case 1:
+                                                                          //MOVE TEXT UP in main spreadsheet
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () {
+                                                                              setState(() {
+                                                                                if (index != 0) {
+                                                                                  var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                  spreadSheetList[currentPageIndex].insert(index - 1, item);
+
+                                                                                  // Update the index to reflect the new position of the item
+                                                                                  index--; // Decrement index to reflect the item's new position
+
+                                                                                  panelIndex = PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1, parentId: panelIndex.parentId);
+                                                                                  print('Updated index of text editor: $index');
+                                                                                }
+                                                                                print('Current index of text editor: $index');
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.arrow_up,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 2:
+                                                                          //MOVE TEXT DOWN in main spreadsheet
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () {
+                                                                              setState(() {
+                                                                                if (index != spreadSheetList[currentPageIndex].length - 1) {
+                                                                                  var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                  spreadSheetList[currentPageIndex].insert(index + 1, item);
+                                                                                  index++;
+                                                                                  print('index of texteditor DT: $index');
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.arrow_down,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 3:
+                                                                          //EXPORT TEXT in main spreadsheet
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () async {
+                                                                              // Get the current text editor item
+                                                                              var textEditorItem = spreadSheetList[currentPageIndex][index] as TextEditorItem;
+
+                                                                              // Create a GlobalKey for the RepaintBoundary
+                                                                              GlobalKey repaintBoundaryKey = GlobalKey();
+
+                                                                              // Navigate to a new page with the PDF preview
+                                                                              await Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => Scaffold(
+                                                                                    appBar: AppBar(
+                                                                                      title: Text('PDF Preview'),
+                                                                                      actions: [
+                                                                                        IconButton(
+                                                                                          icon: Icon(Icons.image),
+                                                                                          onPressed: () async {
+                                                                                            RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                            ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                            ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                            Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                            // Get the directory to save the image
+                                                                                            final directory = await getApplicationDocumentsDirectory();
+                                                                                            final imagePath = '${directory.path}/captured_image.png';
+                                                                                            File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                            print('Image saved at: $imagePath');
+                                                                                          },
+                                                                                        ),
+                                                                                        IconButton(
+                                                                                          icon: Icon(Icons.print),
+                                                                                          onPressed: () async {
+                                                                                            RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                            ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                            ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                            Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                            // Get the directory to save the image
+                                                                                            final directory = await getApplicationDocumentsDirectory();
+                                                                                            final imagePath = '${directory.path}/captured_image.png';
+                                                                                            File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                            // Prepare the PDF document
+                                                                                            final pdf = pw.Document();
+                                                                                            final imageProvider = pw.MemoryImage(pngBytes);
+
+                                                                                            pdf.addPage(
+                                                                                              pw.Page(
+                                                                                                pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
+                                                                                                margin: pw.EdgeInsets.only(
+                                                                                                  top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                                  bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                                  left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                                  right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                                ),
+                                                                                                build: (pw.Context context) {
+                                                                                                  return pw.Center(
+                                                                                                    child: pw.Image(imageProvider),
+                                                                                                  ); // Center the image on the page
+                                                                                                },
+                                                                                              ),
+                                                                                            );
+
+                                                                                            // Save the PDF to a file
+                                                                                            final pdfPath = '${directory.path}/document.pdf';
+                                                                                            final file = File(pdfPath);
+                                                                                            await file.writeAsBytes(await pdf.save());
+
+                                                                                            print('PDF saved at: $pdfPath');
+                                                                                          },
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    body: RepaintBoundary(
+                                                                                      key: repaintBoundaryKey,
+                                                                                      child: Container(
+                                                                                        width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                            ? 793.7
+                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                                ? 812.8
+                                                                                                : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                                    ? 559.4
+                                                                                                    : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                        ? 396.9
+                                                                                                        : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                            ? 816
+                                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                                ? 816
+                                                                                                                : 1240, // Default width
+                                                                                        height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                            ? 1122.5
+                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                                ? 1122.5
+                                                                                                : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                                    ? 793.7
+                                                                                                    : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                        ? 559.4
+                                                                                                        : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                            ? 1056
+                                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                                ? 1344
+                                                                                                                : 3508, // Default height
+                                                                                        padding: EdgeInsets.only(
+                                                                                          top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                          bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                          left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                          right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                        ),
+                                                                                        margin: EdgeInsets.all(20),
+                                                                                        decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                                                                                          BoxShadow(blurRadius: 10, color: Colors.black)
+                                                                                        ]),
+                                                                                        child: QuillEditor(
+                                                                                          // Replace with your QuillEditor configurations
+                                                                                          configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller), focusNode: FocusNode(), scrollController: ScrollController(),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.file_export,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 4:
+                                                                          //clear text in text field in main spreadsheet
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () async {
+                                                                              await showAdaptiveDialog(
+                                                                                context: context,
+                                                                                builder: (context) {
+                                                                                  return AlertDialog(
+                                                                                    title: Text('Confirm Clear'),
+                                                                                    content: Text('This will clear the text from current Text Field. Are you sure?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            setState(() {
+                                                                                              textEditorItem.textEditorController.document = Document();
+                                                                                            });
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('Yes')),
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('No')),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.x,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 5:
+                                                                          //Delete Text Field in main spreadsheet
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () async {
+                                                                              await showAdaptiveDialog(
+                                                                                context: context,
+                                                                                builder: (context) {
+                                                                                  return AlertDialog(
+                                                                                    title: Text('Confirm Delete'),
+                                                                                    content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            setState(() {
+                                                                                              spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                              panelIndex.id = '';
+                                                                                              panelIndex.panelIndex = -1;
+                                                                                            });
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('Yes')),
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('No')),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.trash,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        default:
+                                                                          return Container();
+                                                                      }
+                                                                    }), // simplified item generation in main spreadsheet
+                                                                  )
+                                                                : null,
                                                           ),
                                                         ),
                                                       ),
-                                                      //contextMenu in main spreadsheet
-                                                      AnimatedPositioned(
-                                                        duration:
-                                                            Durations.medium3,
-                                                        bottom: 0,
-                                                        left: panelIndex.id ==
-                                                                textEditorItem
-                                                                    .id
-                                                            ? 0
-                                                            : -50,
-                                                        right: 0,
-                                                        child:
-                                                            SingleChildScrollView(
-                                                          child: Transform.flip(
-                                                            flipX: true,
-                                                            child:
-                                                                Transform.flip(
-                                                              flipX: true,
-                                                              child: panelIndex
-                                                                          .id ==
-                                                                      textEditorItem
-                                                                          .id
-                                                                  ? ExpandableMenu(
-                                                                      backgroundColor: defaultPalette
-                                                                          .white
-                                                                          .withOpacity(
-                                                                              1),
-                                                                      iconColor:
-                                                                          defaultPalette
-                                                                              .tertiary,
-                                                                      itemContainerColor:
-                                                                          defaultPalette
-                                                                              .secondary,
-                                                                      width:
-                                                                          40.0,
-                                                                      height:
-                                                                          40.0,
-                                                                      items: List
-                                                                          .generate(
-                                                                              12,
-                                                                              (intt) {
-                                                                        switch (
-                                                                            intt) {
-                                                                          case 0:
-                                                                            return PopupMenuButton<String>(
-                                                                              iconSize: 20,
-                                                                              padding: EdgeInsets.all(0),
-                                                                              icon: Icon(
-                                                                                TablerIcons.message_plus,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                              onSelected: (String value) {
-                                                                                // Handle the selected option here in main spreadsheet
-                                                                                switch (value) {
-                                                                                  case 'Above':
-                                                                                    setState(() {
-                                                                                      var newItem = _addTextField(shouldReturn: true);
-                                                                                      spreadSheetList[currentPageIndex].insert(index, newItem);
-                                                                                      index++;
-                                                                                    });
-                                                                                    break;
-                                                                                  case 'Below':
-                                                                                    setState(() {
-                                                                                      var newItem = _addTextField(shouldReturn: true);
-                                                                                      spreadSheetList[currentPageIndex].insert(index + 1, newItem);
-                                                                                    });
-                                                                                    // Your logic for "Below" in main spreadsheet
-                                                                                    break;
-                                                                                  case 'Left':
-                                                                                    setState(() {
-                                                                                      var newId = Uuid().v4();
-                                                                                      var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                      spreadSheetList[currentPageIndex].insert(
-                                                                                          index,
-                                                                                          SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                            _addTextField(shouldReturn: true),
-                                                                                            item
-                                                                                          ]));
-                                                                                    });
-                                                                                    break;
-                                                                                  //in main spreadsheet
-                                                                                  case 'Right':
-                                                                                    setState(() {
-                                                                                      var newId = Uuid().v4();
-                                                                                      var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                      spreadSheetList[currentPageIndex].insert(
-                                                                                          index,
-                                                                                          SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                            item,
-                                                                                            _addTextField(shouldReturn: true),
-                                                                                          ]));
-                                                                                    });
-                                                                                    break;
-                                                                                }
-                                                                              },
-                                                                              itemBuilder: (BuildContext context) {
-                                                                                return [
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Above',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_up),
-                                                                                        Text('Above')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Below',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_down),
-                                                                                        Text('Below')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Left',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_left),
-                                                                                        Text('Left')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Right',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_right),
-                                                                                        Text('Right')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                ];
-                                                                              },
-                                                                            );
-
-                                                                          case 1:
-                                                                            //MOVE TEXT UP in main spreadsheet
-                                                                            return GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  if (index != 0) {
-                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                    spreadSheetList[currentPageIndex].insert(index - 1, item);
-
-                                                                                    // Update the index to reflect the new position of the item
-                                                                                    index--; // Decrement index to reflect the item's new position
-
-                                                                                    panelIndex = PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1, parentId: panelIndex.parentId);
-                                                                                    print('Updated index of text editor: $index');
-                                                                                  }
-                                                                                  print('Current index of text editor: $index');
-                                                                                });
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.arrow_up,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 2:
-                                                                            //MOVE TEXT DOWN in main spreadsheet
-                                                                            return GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  if (index != spreadSheetList[currentPageIndex].length - 1) {
-                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                    spreadSheetList[currentPageIndex].insert(index + 1, item);
-                                                                                    index++;
-                                                                                    print('index of texteditor DT: $index');
-                                                                                  }
-                                                                                });
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.arrow_down,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 3:
-                                                                            //EXPORT TEXT in main spreadsheet
-                                                                            return GestureDetector(
-                                                                              onTap: () async {
-                                                                                // Get the current text editor item
-                                                                                var textEditorItem = spreadSheetList[currentPageIndex][index] as TextEditorItem;
-
-                                                                                // Create a GlobalKey for the RepaintBoundary
-                                                                                GlobalKey repaintBoundaryKey = GlobalKey();
-
-                                                                                // Navigate to a new page with the PDF preview
-                                                                                await Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                    builder: (context) => Scaffold(
-                                                                                      appBar: AppBar(
-                                                                                        title: Text('PDF Preview'),
-                                                                                        actions: [
-                                                                                          IconButton(
-                                                                                            icon: Icon(Icons.image),
-                                                                                            onPressed: () async {
-                                                                                              RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                                                                                              ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                                                                                              ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                                                                                              Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                                                                                              // Get the directory to save the image
-                                                                                              final directory = await getApplicationDocumentsDirectory();
-                                                                                              final imagePath = '${directory.path}/captured_image.png';
-                                                                                              File(imagePath).writeAsBytesSync(pngBytes);
-
-                                                                                              print('Image saved at: $imagePath');
-                                                                                            },
-                                                                                          ),
-                                                                                          IconButton(
-                                                                                            icon: Icon(Icons.print),
-                                                                                            onPressed: () async {
-                                                                                              RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                                                                                              ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                                                                                              ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                                                                                              Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                                                                                              // Get the directory to save the image
-                                                                                              final directory = await getApplicationDocumentsDirectory();
-                                                                                              final imagePath = '${directory.path}/captured_image.png';
-                                                                                              File(imagePath).writeAsBytesSync(pngBytes);
-
-                                                                                              // Prepare the PDF document
-                                                                                              final pdf = pw.Document();
-                                                                                              final imageProvider = pw.MemoryImage(pngBytes);
-
-                                                                                              pdf.addPage(
-                                                                                                pw.Page(
-                                                                                                  pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
-                                                                                                  margin: pw.EdgeInsets.only(
-                                                                                                    top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
-                                                                                                    bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
-                                                                                                    left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
-                                                                                                    right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
-                                                                                                  ),
-                                                                                                  build: (pw.Context context) {
-                                                                                                    return pw.Center(
-                                                                                                      child: pw.Image(imageProvider),
-                                                                                                    ); // Center the image on the page
-                                                                                                  },
-                                                                                                ),
-                                                                                              );
-
-                                                                                              // Save the PDF to a file
-                                                                                              final pdfPath = '${directory.path}/document.pdf';
-                                                                                              final file = File(pdfPath);
-                                                                                              await file.writeAsBytes(await pdf.save());
-
-                                                                                              print('PDF saved at: $pdfPath');
-                                                                                            },
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-                                                                                      body: RepaintBoundary(
-                                                                                        key: repaintBoundaryKey,
-                                                                                        child: Container(
-                                                                                          width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
-                                                                                              ? 793.7
-                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
-                                                                                                  ? 812.8
-                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
-                                                                                                      ? 559.4
-                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
-                                                                                                          ? 396.9
-                                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
-                                                                                                              ? 816
-                                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                                                                  ? 816
-                                                                                                                  : 1240, // Default width
-                                                                                          height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
-                                                                                              ? 1122.5
-                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
-                                                                                                  ? 1122.5
-                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
-                                                                                                      ? 793.7
-                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
-                                                                                                          ? 559.4
-                                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
-                                                                                                              ? 1056
-                                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                                                                  ? 1344
-                                                                                                                  : 3508, // Default height
-                                                                                          padding: EdgeInsets.only(
-                                                                                            top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
-                                                                                            bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
-                                                                                            left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
-                                                                                            right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
-                                                                                          ),
-                                                                                          margin: EdgeInsets.all(20),
-                                                                                          decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                                                                                            BoxShadow(blurRadius: 10, color: Colors.black)
-                                                                                          ]),
-                                                                                          child: QuillEditor(
-                                                                                            // Replace with your QuillEditor configurations
-                                                                                            configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller), focusNode: FocusNode(), scrollController: ScrollController(),
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.file_export,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 4:
-                                                                            //clear text in text field in main spreadsheet
-                                                                            return GestureDetector(
-                                                                              onTap: () async {
-                                                                                await showAdaptiveDialog(
-                                                                                  context: context,
-                                                                                  builder: (context) {
-                                                                                    return AlertDialog(
-                                                                                      title: Text('Confirm Clear'),
-                                                                                      content: Text('This will clear the text from current Text Field. Are you sure?'),
-                                                                                      actions: [
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              setState(() {
-                                                                                                textEditorItem.textEditorController.document = Document();
-                                                                                              });
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('Yes')),
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('No')),
-                                                                                      ],
-                                                                                    );
-                                                                                  },
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.x,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 5:
-                                                                            //Delete Text Field in main spreadsheet
-                                                                            return GestureDetector(
-                                                                              onTap: () async {
-                                                                                await showAdaptiveDialog(
-                                                                                  context: context,
-                                                                                  builder: (context) {
-                                                                                    return AlertDialog(
-                                                                                      title: Text('Confirm Delete'),
-                                                                                      content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                                                      actions: [
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              setState(() {
-                                                                                                spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                                panelIndex.id = '';
-                                                                                                panelIndex.panelIndex = -1;
-                                                                                              });
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('Yes')),
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('No')),
-                                                                                      ],
-                                                                                    );
-                                                                                  },
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.trash,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          default:
-                                                                            return Container();
-                                                                        }
-                                                                      }), // simplified item generation in main spreadsheet
-                                                                    )
-                                                                  : null,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ), // Expandable menus and other widgets can stay the same
-                                                    ],
-                                                  );
-                                                } else if (spreadSheetList[
-                                                        currentPageIndex][index]
-                                                    is SheetList) {
-                                                  return Stack(
-                                                    key: ValueKey((spreadSheetList[
+                                                    ), // Expandable menus and other widgets can stay the same
+                                                  ],
+                                                );
+                                              } else if (spreadSheetList[
+                                                      currentPageIndex][index]
+                                                  is SheetList) {
+                                                return Stack(
+                                                  key: ValueKey((spreadSheetList[
+                                                              currentPageIndex]
+                                                          [index] as SheetList)
+                                                      .id),
+                                                  children: [
+                                                    _buildListWidget(
+                                                        spreadSheetList[
                                                                 currentPageIndex]
                                                             [
-                                                            index] as SheetList)
-                                                        .id),
-                                                    children: [
-                                                      _buildListWidget(
-                                                          spreadSheetList[
-                                                                  currentPageIndex]
-                                                              [
-                                                              index] as SheetList),
-                                                      AnimatedPositioned(
-                                                        duration:
-                                                            Durations.medium3,
-                                                        bottom: 0,
-                                                        left: panelIndex
-                                                                    .parentId ==
-                                                                spreadSheetList[
-                                                                            currentPageIndex]
-                                                                        [index]
-                                                                    .id
-                                                            ? 0
-                                                            : -50,
-                                                        right: 0,
-                                                        child:
-                                                            SingleChildScrollView(
+                                                            index] as SheetList),
+                                                    AnimatedPositioned(
+                                                      duration:
+                                                          Durations.medium3,
+                                                      bottom: 0,
+                                                      left: panelIndex
+                                                                  .parentId ==
+                                                              spreadSheetList[
+                                                                          currentPageIndex]
+                                                                      [index]
+                                                                  .id
+                                                          ? 0
+                                                          : -50,
+                                                      right: 0,
+                                                      child:
+                                                          SingleChildScrollView(
+                                                        child: Transform.flip(
+                                                          flipX: true,
                                                           child: Transform.flip(
                                                             flipX: true,
-                                                            child:
-                                                                Transform.flip(
-                                                              flipX: true,
-                                                              child: panelIndex
-                                                                          .parentId ==
-                                                                      spreadSheetList[currentPageIndex]
-                                                                              [
-                                                                              index]
-                                                                          .id
-                                                                  ? ExpandableMenu(
-                                                                      backgroundColor: defaultPalette
-                                                                          .white
-                                                                          .withOpacity(
-                                                                              1),
-                                                                      iconColor:
-                                                                          defaultPalette
-                                                                              .tertiary,
-                                                                      itemContainerColor:
-                                                                          defaultPalette
-                                                                              .secondary,
-                                                                      width:
-                                                                          40.0,
-                                                                      height:
-                                                                          40.0,
-                                                                      items: List
-                                                                          .generate(
-                                                                              12,
-                                                                              (intt) {
-                                                                        switch (
-                                                                            intt) {
-                                                                          case 0:
-                                                                            return PopupMenuButton<String>(
-                                                                              iconSize: 20,
-                                                                              padding: EdgeInsets.all(0),
-                                                                              icon: Icon(
-                                                                                TablerIcons.message_plus,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                              onSelected: (String value) {
-                                                                                // Handle the selected option here
-                                                                                switch (value) {
-                                                                                  case 'Above':
-                                                                                    setState(() {
-                                                                                      var newItem = _addTextField(shouldReturn: true);
-                                                                                      (spreadSheetList[currentPageIndex][index] as SheetList).insert(0, newItem);
-                                                                                      index++;
-                                                                                    });
-                                                                                    break;
-                                                                                  case 'Below':
-                                                                                    setState(() {
-                                                                                      var newItem = _addTextField(shouldReturn: true);
-                                                                                      (spreadSheetList[currentPageIndex][index] as SheetList).sheetList.add(newItem);
-                                                                                    });
-                                                                                    // Your logic for "Below"
-                                                                                    break;
-                                                                                  case 'Left':
-                                                                                    setState(() {
-                                                                                      var newId = Uuid().v4();
-                                                                                      var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                      spreadSheetList[currentPageIndex].insert(
-                                                                                          index,
-                                                                                          SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                            _addTextField(shouldReturn: true),
-                                                                                            item
-                                                                                          ]));
-                                                                                    });
-                                                                                    break;
-                                                                                  case 'Right':
-                                                                                    // Your logic for "Right"
-                                                                                    setState(() {
-                                                                                      var newId = Uuid().v4();
-                                                                                      var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                      spreadSheetList[currentPageIndex].insert(
-                                                                                          index,
-                                                                                          SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                            item,
-                                                                                            _addTextField(shouldReturn: true),
-                                                                                          ]));
-                                                                                    });
-                                                                                    break;
-                                                                                }
-                                                                              },
-                                                                              itemBuilder: (BuildContext context) {
-                                                                                return [
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Above',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_up),
-                                                                                        Text('Above')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Below',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_down),
-                                                                                        Text('Below')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Left',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_left),
-                                                                                        Text('Left')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                  const PopupMenuItem<String>(
-                                                                                    value: 'Right',
-                                                                                    child: Row(
-                                                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                      children: [
-                                                                                        Icon(TablerIcons.arrow_bar_to_right),
-                                                                                        Text('Right')
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                ];
-                                                                              },
-                                                                            );
-
-                                                                          case 1:
-                                                                            //MOVE TEXT UP
-                                                                            return GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  if (index != 0) {
-                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                    spreadSheetList[currentPageIndex].insert(index - 1, item);
-
-                                                                                    // Update the index to reflect the new position of the item
-                                                                                    index--; // Decrement index to reflect the item's new position
-
-                                                                                    panelIndex = PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1, parentId: panelIndex.parentId);
-                                                                                    print('Updated index of text editor: $index');
-                                                                                  }
-                                                                                  print('Current index of text editor: $index');
-                                                                                });
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.arrow_up,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 2:
-                                                                            //MOVE TEXT DOWN
-                                                                            return GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  if (index != spreadSheetList[currentPageIndex].length - 1) {
-                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                    spreadSheetList[currentPageIndex].insert(index + 1, item);
+                                                            child: panelIndex
+                                                                        .parentId ==
+                                                                    spreadSheetList[currentPageIndex]
+                                                                            [
+                                                                            index]
+                                                                        .id
+                                                                ? ExpandableMenu(
+                                                                    backgroundColor:
+                                                                        defaultPalette
+                                                                            .white
+                                                                            .withOpacity(1),
+                                                                    iconColor:
+                                                                        defaultPalette
+                                                                            .tertiary,
+                                                                    itemContainerColor:
+                                                                        defaultPalette
+                                                                            .secondary,
+                                                                    width: 40.0,
+                                                                    height:
+                                                                        40.0,
+                                                                    items: List
+                                                                        .generate(
+                                                                            12,
+                                                                            (intt) {
+                                                                      switch (
+                                                                          intt) {
+                                                                        case 0:
+                                                                          return PopupMenuButton<
+                                                                              String>(
+                                                                            iconSize:
+                                                                                20,
+                                                                            padding:
+                                                                                EdgeInsets.all(0),
+                                                                            icon:
+                                                                                Icon(
+                                                                              TablerIcons.message_plus,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                            onSelected:
+                                                                                (String value) {
+                                                                              // Handle the selected option here
+                                                                              switch (value) {
+                                                                                case 'Above':
+                                                                                  setState(() {
+                                                                                    var newItem = _addTextField(shouldReturn: true);
+                                                                                    (spreadSheetList[currentPageIndex][index] as SheetList).insert(0, newItem);
                                                                                     index++;
-                                                                                    print('index of texteditor DT: $index');
-                                                                                  }
-                                                                                });
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.arrow_down,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 3:
-                                                                            //EXPORT TEXT
-                                                                            return GestureDetector(
-                                                                              onTap: () async {
-                                                                                // Get the current text editor item
-                                                                                var textEditorItem = spreadSheetList[currentPageIndex][index] as TextEditorItem;
+                                                                                  });
+                                                                                  break;
+                                                                                case 'Below':
+                                                                                  setState(() {
+                                                                                    var newItem = _addTextField(shouldReturn: true);
+                                                                                    (spreadSheetList[currentPageIndex][index] as SheetList).sheetList.add(newItem);
+                                                                                  });
+                                                                                  // Your logic for "Below"
+                                                                                  break;
+                                                                                case 'Left':
+                                                                                  setState(() {
+                                                                                    var newId = Uuid().v4();
+                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                    spreadSheetList[currentPageIndex].insert(
+                                                                                        index,
+                                                                                        SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                          _addTextField(shouldReturn: true),
+                                                                                          item
+                                                                                        ]));
+                                                                                  });
+                                                                                  break;
+                                                                                case 'Right':
+                                                                                  // Your logic for "Right"
+                                                                                  setState(() {
+                                                                                    var newId = Uuid().v4();
+                                                                                    var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                    spreadSheetList[currentPageIndex].insert(
+                                                                                        index,
+                                                                                        SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                                          item,
+                                                                                          _addTextField(shouldReturn: true),
+                                                                                        ]));
+                                                                                  });
+                                                                                  break;
+                                                                              }
+                                                                            },
+                                                                            itemBuilder:
+                                                                                (BuildContext context) {
+                                                                              return [
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Above',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_up),
+                                                                                      Text('Above')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Below',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_down),
+                                                                                      Text('Below')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Left',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_left),
+                                                                                      Text('Left')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                const PopupMenuItem<String>(
+                                                                                  value: 'Right',
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Icon(TablerIcons.arrow_bar_to_right),
+                                                                                      Text('Right')
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ];
+                                                                            },
+                                                                          );
 
-                                                                                // Create a GlobalKey for the RepaintBoundary
-                                                                                GlobalKey repaintBoundaryKey = GlobalKey();
+                                                                        case 1:
+                                                                          //MOVE TEXT UP
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () {
+                                                                              setState(() {
+                                                                                if (index != 0) {
+                                                                                  var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                  spreadSheetList[currentPageIndex].insert(index - 1, item);
 
-                                                                                // Navigate to a new page with the PDF preview
-                                                                                await Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                    builder: (context) => Scaffold(
-                                                                                      appBar: AppBar(
-                                                                                        title: Text('PDF Preview'),
-                                                                                        actions: [
-                                                                                          IconButton(
-                                                                                            icon: Icon(Icons.image),
-                                                                                            onPressed: () async {
-                                                                                              RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                                                                                              ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                                                                                              ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                                                                                              Uint8List pngBytes = byteData!.buffer.asUint8List();
+                                                                                  // Update the index to reflect the new position of the item
+                                                                                  index--; // Decrement index to reflect the item's new position
 
-                                                                                              // Get the directory to save the image
-                                                                                              final directory = await getApplicationDocumentsDirectory();
-                                                                                              final imagePath = '${directory.path}/captured_image.png';
-                                                                                              File(imagePath).writeAsBytesSync(pngBytes);
+                                                                                  panelIndex = PanelIndex(id: panelIndex.id, panelIndex: panelIndex.panelIndex + 1, parentId: panelIndex.parentId);
+                                                                                  print('Updated index of text editor: $index');
+                                                                                }
+                                                                                print('Current index of text editor: $index');
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.arrow_up,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 2:
+                                                                          //MOVE TEXT DOWN
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () {
+                                                                              setState(() {
+                                                                                if (index != spreadSheetList[currentPageIndex].length - 1) {
+                                                                                  var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                  spreadSheetList[currentPageIndex].insert(index + 1, item);
+                                                                                  index++;
+                                                                                  print('index of texteditor DT: $index');
+                                                                                }
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.arrow_down,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 3:
+                                                                          //EXPORT TEXT
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () async {
+                                                                              // Get the current text editor item
+                                                                              var textEditorItem = spreadSheetList[currentPageIndex][index] as TextEditorItem;
 
-                                                                                              print('Image saved at: $imagePath');
-                                                                                            },
-                                                                                          ),
-                                                                                          IconButton(
-                                                                                            icon: Icon(Icons.print),
-                                                                                            onPressed: () async {
-                                                                                              RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                                                                                              ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                                                                                              ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                                                                                              Uint8List pngBytes = byteData!.buffer.asUint8List();
+                                                                              // Create a GlobalKey for the RepaintBoundary
+                                                                              GlobalKey repaintBoundaryKey = GlobalKey();
 
-                                                                                              // Get the directory to save the image
-                                                                                              final directory = await getApplicationDocumentsDirectory();
-                                                                                              final imagePath = '${directory.path}/captured_image.png';
-                                                                                              File(imagePath).writeAsBytesSync(pngBytes);
+                                                                              // Navigate to a new page with the PDF preview
+                                                                              await Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => Scaffold(
+                                                                                    appBar: AppBar(
+                                                                                      title: Text('PDF Preview'),
+                                                                                      actions: [
+                                                                                        IconButton(
+                                                                                          icon: Icon(Icons.image),
+                                                                                          onPressed: () async {
+                                                                                            RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                            ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                            ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                            Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-                                                                                              // Prepare the PDF document
-                                                                                              final pdf = pw.Document();
-                                                                                              final imageProvider = pw.MemoryImage(pngBytes);
+                                                                                            // Get the directory to save the image
+                                                                                            final directory = await getApplicationDocumentsDirectory();
+                                                                                            final imagePath = '${directory.path}/captured_image.png';
+                                                                                            File(imagePath).writeAsBytesSync(pngBytes);
 
-                                                                                              pdf.addPage(
-                                                                                                pw.Page(
-                                                                                                  pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
-                                                                                                  margin: pw.EdgeInsets.only(
-                                                                                                    top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
-                                                                                                    bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
-                                                                                                    left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
-                                                                                                    right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
-                                                                                                  ),
-                                                                                                  build: (pw.Context context) {
-                                                                                                    return pw.Center(
-                                                                                                      child: pw.Image(imageProvider),
-                                                                                                    ); // Center the image on the page
-                                                                                                  },
+                                                                                            print('Image saved at: $imagePath');
+                                                                                          },
+                                                                                        ),
+                                                                                        IconButton(
+                                                                                          icon: Icon(Icons.print),
+                                                                                          onPressed: () async {
+                                                                                            RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                                                                                            ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                                                                                            ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                                                                                            Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                                                                                            // Get the directory to save the image
+                                                                                            final directory = await getApplicationDocumentsDirectory();
+                                                                                            final imagePath = '${directory.path}/captured_image.png';
+                                                                                            File(imagePath).writeAsBytesSync(pngBytes);
+
+                                                                                            // Prepare the PDF document
+                                                                                            final pdf = pw.Document();
+                                                                                            final imageProvider = pw.MemoryImage(pngBytes);
+
+                                                                                            pdf.addPage(
+                                                                                              pw.Page(
+                                                                                                pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
+                                                                                                margin: pw.EdgeInsets.only(
+                                                                                                  top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                                  bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                                  left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                                  right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
                                                                                                 ),
-                                                                                              );
+                                                                                                build: (pw.Context context) {
+                                                                                                  return pw.Center(
+                                                                                                    child: pw.Image(imageProvider),
+                                                                                                  ); // Center the image on the page
+                                                                                                },
+                                                                                              ),
+                                                                                            );
 
-                                                                                              // Save the PDF to a file
-                                                                                              final pdfPath = '${directory.path}/document.pdf';
-                                                                                              final file = File(pdfPath);
-                                                                                              await file.writeAsBytes(await pdf.save());
+                                                                                            // Save the PDF to a file
+                                                                                            final pdfPath = '${directory.path}/document.pdf';
+                                                                                            final file = File(pdfPath);
+                                                                                            await file.writeAsBytes(await pdf.save());
 
-                                                                                              print('PDF saved at: $pdfPath');
-                                                                                            },
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-                                                                                      body: RepaintBoundary(
-                                                                                        key: repaintBoundaryKey,
-                                                                                        child: Container(
-                                                                                          width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
-                                                                                              ? 793.7
-                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
-                                                                                                  ? 812.8
-                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
-                                                                                                      ? 559.4
-                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
-                                                                                                          ? 396.9
-                                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
-                                                                                                              ? 816
-                                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                                                                  ? 816
-                                                                                                                  : 1240, // Default width
-                                                                                          height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
-                                                                                              ? 1122.5
-                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
-                                                                                                  ? 1122.5
-                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
-                                                                                                      ? 793.7
-                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
-                                                                                                          ? 559.4
-                                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
-                                                                                                              ? 1056
-                                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                                                                  ? 1344
-                                                                                                                  : 3508, // Default height
-                                                                                          padding: EdgeInsets.only(
-                                                                                            top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
-                                                                                            bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
-                                                                                            left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
-                                                                                            right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
-                                                                                          ),
-                                                                                          margin: EdgeInsets.all(20),
-                                                                                          decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                                                                                            BoxShadow(blurRadius: 10, color: Colors.black)
-                                                                                          ]),
-                                                                                          child: QuillEditor(
-                                                                                            // Replace with your QuillEditor configurations
-                                                                                            configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller),
-                                                                                            focusNode: FocusNode(),
-                                                                                            scrollController: ScrollController(),
-                                                                                          ),
+                                                                                            print('PDF saved at: $pdfPath');
+                                                                                          },
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    body: RepaintBoundary(
+                                                                                      key: repaintBoundaryKey,
+                                                                                      child: Container(
+                                                                                        width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                            ? 793.7
+                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                                ? 812.8
+                                                                                                : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                                    ? 559.4
+                                                                                                    : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                        ? 396.9
+                                                                                                        : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                            ? 816
+                                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                                ? 816
+                                                                                                                : 1240, // Default width
+                                                                                        height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                                                                                            ? 1122.5
+                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                                                                                                ? 1122.5
+                                                                                                : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                                                    ? 793.7
+                                                                                                    : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                                        ? 559.4
+                                                                                                        : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                                            ? 1056
+                                                                                                            : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                                                ? 1344
+                                                                                                                : 3508, // Default height
+                                                                                        padding: EdgeInsets.only(
+                                                                                          top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                                          bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                                          left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                                          right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                                        ),
+                                                                                        margin: EdgeInsets.all(20),
+                                                                                        decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                                                                                          BoxShadow(blurRadius: 10, color: Colors.black)
+                                                                                        ]),
+                                                                                        child: QuillEditor(
+                                                                                          // Replace with your QuillEditor configurations
+                                                                                          configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller),
+                                                                                          focusNode: FocusNode(),
+                                                                                          scrollController: ScrollController(),
                                                                                         ),
                                                                                       ),
                                                                                     ),
                                                                                   ),
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.file_export,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 4:
-                                                                            //clear text in text field
-                                                                            return GestureDetector(
-                                                                              onTap: () async {
-                                                                                await showAdaptiveDialog(
-                                                                                  context: context,
-                                                                                  builder: (context) {
-                                                                                    return AlertDialog(
-                                                                                      title: Text('Confirm Clear'),
-                                                                                      content: Text('This will clear the text from current Text Field. Are you sure?'),
-                                                                                      actions: [
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              setState(() {
-                                                                                                (spreadSheetList[currentPageIndex][index] as SheetList).sheetList = [];
-                                                                                              });
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('Yes')),
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('No')),
-                                                                                      ],
-                                                                                    );
-                                                                                  },
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.x,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          case 5:
-                                                                            //Delete Text Field
-                                                                            return GestureDetector(
-                                                                              onTap: () async {
-                                                                                await showAdaptiveDialog(
-                                                                                  context: context,
-                                                                                  builder: (context) {
-                                                                                    return AlertDialog(
-                                                                                      title: Text('Confirm Delete'),
-                                                                                      content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                                                      actions: [
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              setState(() {
-                                                                                                spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                                panelIndex.id = '';
-                                                                                                panelIndex.panelIndex = -1;
-                                                                                              });
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('Yes')),
-                                                                                        TextButton(
-                                                                                            onPressed: () {
-                                                                                              Navigator.pop(context);
-                                                                                            },
-                                                                                            child: Text('No')),
-                                                                                      ],
-                                                                                    );
-                                                                                  },
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                TablerIcons.trash,
-                                                                                color: defaultPalette.black.withOpacity(0.8),
-                                                                              ),
-                                                                            );
-                                                                          default:
-                                                                            return Container();
-                                                                        }
-                                                                      }), // simplified item generation
-                                                                    )
-                                                                  : null,
-                                                            ),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.file_export,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 4:
+                                                                          //clear text in text field
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () async {
+                                                                              await showAdaptiveDialog(
+                                                                                context: context,
+                                                                                builder: (context) {
+                                                                                  return AlertDialog(
+                                                                                    title: Text('Confirm Clear'),
+                                                                                    content: Text('This will clear the text from current Text Field. Are you sure?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            setState(() {
+                                                                                              (spreadSheetList[currentPageIndex][index] as SheetList).sheetList = [];
+                                                                                            });
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('Yes')),
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('No')),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.x,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        case 5:
+                                                                          //Delete Text Field
+                                                                          return GestureDetector(
+                                                                            onTap:
+                                                                                () async {
+                                                                              await showAdaptiveDialog(
+                                                                                context: context,
+                                                                                builder: (context) {
+                                                                                  return AlertDialog(
+                                                                                    title: Text('Confirm Delete'),
+                                                                                    content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
+                                                                                    actions: [
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            setState(() {
+                                                                                              spreadSheetList[currentPageIndex].removeAt(index);
+                                                                                              panelIndex.id = '';
+                                                                                              panelIndex.panelIndex = -1;
+                                                                                            });
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('Yes')),
+                                                                                      TextButton(
+                                                                                          onPressed: () {
+                                                                                            Navigator.pop(context);
+                                                                                          },
+                                                                                          child: Text('No')),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Icon(
+                                                                              TablerIcons.trash,
+                                                                              color: defaultPalette.black.withOpacity(0.8),
+                                                                            ),
+                                                                          );
+                                                                        default:
+                                                                          return Container();
+                                                                      }
+                                                                    }), // simplified item generation
+                                                                  )
+                                                                : null,
                                                           ),
                                                         ),
-                                                      ), // Expandable menus and other widgets can stay the same
-                                                    ],
-                                                  );
-                                                }
-                                                return Container(
-                                                  key: ValueKey(Uuid().v4()),
-                                                  color: Colors.amberAccent,
-                                                  height: 12,
+                                                      ),
+                                                    ), // Expandable menus and other widgets can stay the same
+                                                  ],
                                                 );
-                                              },
-                                            ),
-                                          ],
-                                        ),
+                                              }
+                                              return Container(
+                                                key: ValueKey(Uuid().v4()),
+                                                color: Colors.amberAccent,
+                                                height: 12,
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                               //prppos
                               Expanded(
-                                flex: (hDividerPosition * 10000).round(),
-                                child: Stack(
-                                  children: [
-                                    //Graph //Desktop WEB
-                                    IgnorePointer(
-                                      ignoring: true,
-                                      child: AnimatedContainer(
-                                        duration: Durations.extralong1,
-                                        height: sHeight,
-                                        width: sWidth,
-                                        alignment: Alignment.centerRight,
-                                        color: Colors.black.withOpacity(0.06),
-                                        padding: EdgeInsets.only(
-                                          top: 0,
-                                        ),
-                                        //layGraph //Desktop WEB
-                                        child: LineChart(LineChartData(
-                                            lineBarsData: [LineChartBarData()],
-                                            titlesData:
-                                                FlTitlesData(show: false),
-                                            gridData: FlGridData(
-                                                show: true,
-                                                horizontalInterval: 10,
-                                                verticalInterval: 30),
-                                            borderData:
-                                                FlBorderData(show: false),
-                                            minY: 0,
-                                            maxY: 50,
-                                            maxX: dateTimeNow
+                                flex: ((wH2DividerPosition) * 10000).round(),
+                                child: MouseRegion(
+                                  cursor: _cursor,
+                                  onHover: (PointerHoverEvent event) {
+                                    Offset position = event.localPosition;
+                                    Size? widgetSize = context.size;
+                                    setState(() {
+                                      // Change the cursor based on position
+                                      if (widgetSize == null)
+                                        _cursor = SystemMouseCursors.basic;
+
+                                      // Define the edge proximity threshold
+                                      const edgeThreshold = 10.0;
+
+                                      // Check if the cursor is near the edges and set the cursor style accordingly
+                                      if (position.dx < edgeThreshold ||
+                                          position.dx >
+                                              (widgetSize?.width ?? 0) -
+                                                  edgeThreshold) {
+                                        _cursor =
+                                            SystemMouseCursors.resizeColumn;
+                                      } else if (position.dy < edgeThreshold ||
+                                          position.dy >
+                                              (widgetSize?.height ?? 0) -
+                                                  edgeThreshold) {
+                                        _cursor = SystemMouseCursors.resizeRow;
+                                      } else {
+                                        _cursor = SystemMouseCursors.basic;
+                                      }
+                                    });
+                                  },
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      transformationcontroller
+                                          .toScene(Offset(200, 300));
+                                    },
+                                    onPanUpdate: (details) {
+                                      if (_cursor ==
+                                          SystemMouseCursors.resizeColumn) {
+                                        double newPosition = ((0.9 -
+                                                    wH2DividerPosition -
+                                                    wH1DividerPosition) +
+                                                details.delta.dx /
+                                                    context.size!.width)
+                                            .clamp(0.1, 0.6);
+                                        setState(() {
+                                          wH2DividerPosition = (newPosition -
+                                                  .9 +
+                                                  wH1DividerPosition)
+                                              .abs()
+                                              .clamp(0.2, 0.9);
+                                        });
+                                      }
+                                    },
+                                    child: Stack(
+                                      children: [
+                                        //Graph grey//Desktop WEB
+                                        IgnorePointer(
+                                          ignoring: true,
+                                          child: Container(
+                                            // duration: Durations.extralong1,
+                                            height: sHeight,
+                                            width:
+                                                (wH2DividerPosition) * sWidth,
+                                            alignment: Alignment.centerRight,
+                                            color:
+                                                Colors.black.withOpacity(0.06),
+                                            padding: EdgeInsets.only(
+                                              top: 0,
+                                            ),
+                                            //layGraph //Desktop WEB
+                                            child: LineChart(LineChartData(
+                                                lineBarsData: [
+                                                  LineChartBarData()
+                                                ],
+                                                titlesData:
+                                                    FlTitlesData(show: false),
+                                                gridData: FlGridData(
+                                                    show: true,
+                                                    horizontalInterval: 10,
+                                                    verticalInterval: 30),
+                                                borderData:
+                                                    FlBorderData(show: false),
+                                                minY: 0,
+                                                maxY: 50,
+                                                maxX: dateTimeNow
+                                                            .millisecondsSinceEpoch
+                                                            .ceilToDouble() /
+                                                        500 +
+                                                    250,
+                                                minX: dateTimeNow
                                                         .millisecondsSinceEpoch
                                                         .ceilToDouble() /
-                                                    500 +
-                                                250,
-                                            minX: dateTimeNow
-                                                    .millisecondsSinceEpoch
-                                                    .ceilToDouble() /
-                                                500)),
-                                      ),
-                                    ),
+                                                    500)),
+                                          ),
+                                        ),
 
-                                    AnimatedPositioned(
-                                      duration: Duration(milliseconds: 300),
-                                      // left: panelIndex.panelIndex == -1 //Desktop WEB
-                                      //     ? (sWidth * vDividerPosition)
-                                      //     : 0,
-                                      child: Row(
-                                        children: [
-                                          /////////////////////LEFT //Desktop WEB
-                                          Expanded(
-                                              flex: (vDividerPosition * 10000)
-                                                  .toInt(),
-                                              child: SafeArea(
-                                                child: Stack(
-                                                  children: [
-                                                    Container(
-                                                      height: sHeight *
-                                                          hDividerPosition,
-                                                      color: Colors.transparent,
-                                                    ),
-
-                                                    ///LEFT TITLE PAGE PROPS //Desktop WEB
-                                                    Positioned(
-                                                      // duration: Durations.medium4,
-                                                      top: 0,
-                                                      left: panelIndex
-                                                                  .panelIndex !=
-                                                              -1
-                                                          ? -sWidth *
-                                                              vDividerPosition
-                                                          : 0,
-                                                      height: (sHeight) *
-                                                          (hDividerPosition),
-                                                      width: sWidth *
-                                                          vDividerPosition,
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 10),
-                                                        child:
-
-                                                            ///LEFT TITLE PAGE PROPS //Desktop WEB
-                                                            Material(
-                                                          color: defaultPalette
+                                        Positioned(
+                                          // duration: Duration(milliseconds: 300),
+                                          // left: panelIndex.panelIndex == -1 //Desktop WEB
+                                          //     ? (sWidth * vDividerPosition)
+                                          //     : 0,
+                                          child: Column(
+                                            children: [
+                                              /////////////////////Right //Desktop WEB
+                                              Expanded(
+                                                  flex: 2,
+                                                  child: SafeArea(
+                                                    child: Stack(
+                                                      children: [
+                                                        Container(
+                                                          height: sHeight * 0.9,
+                                                          color: Colors
                                                               .transparent,
-                                                          child:
-                                                              SingleChildScrollView(
-                                                            physics:
-                                                                BouncingScrollPhysics(),
-                                                            child: Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Stack(
+                                                        ),
+
+                                                        ///Right TITLE PAGE PROPS //Desktop WEB
+                                                        Positioned(
+                                                          // duration: Durations.medium4,
+                                                          top: 0,
+                                                          left: 0,
+                                                          height:
+                                                              (sHeight) * 0.9,
+                                                          width:
+                                                              (wH2DividerPosition *
+                                                                      0.96) *
+                                                                  sWidth,
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        10),
+                                                            child:
+
+                                                                ///LEFT TITLE PAGE PROPS //Desktop WEB
+                                                                Material(
+                                                              color: defaultPalette
+                                                                  .transparent,
+                                                              child:
+                                                                  SingleChildScrollView(
+                                                                physics:
+                                                                    BouncingScrollPhysics(),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
                                                                   children: [
-                                                                    Container(
-                                                                      height:
-                                                                          55,
-                                                                      width: sWidth *
-                                                                          vDividerPosition,
-                                                                    ),
-                                                                    //LeftScreen tilte
-                                                                    Container(
-                                                                      height:
-                                                                          55,
-                                                                      margin: EdgeInsets.only(
-                                                                          left:
-                                                                              10,
-                                                                          top:
-                                                                              8,
-                                                                          bottom:
-                                                                              5),
-                                                                      width: sWidth *
-                                                                          vDividerPosition *
-                                                                          0.4,
-                                                                      child: Text(
-                                                                          vDividerPosition < 0.45
-                                                                              ? 'PG \nPRP'
-                                                                              : 'Page Properties',
-                                                                          maxLines:
-                                                                              2,
-                                                                          overflow: TextOverflow
-                                                                              .fade,
-                                                                          style: TextStyle(
-                                                                              color: defaultPalette.black,
-                                                                              fontSize: 16,
-                                                                              fontWeight: FontWeight.bold)),
-                                                                    ),
-                                                                    //nextprev buittons
-                                                                    Positioned(
-                                                                      right: 30,
-                                                                      top: 12,
-                                                                      child:
-                                                                          Container(
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                defaultPalette.tertiary,
-                                                                            borderRadius: BorderRadius.circular(8)),
-                                                                        margin: EdgeInsets.only(
-                                                                            top:
-                                                                                5),
-                                                                        height:
-                                                                            30,
-                                                                        width:
-                                                                            50,
-                                                                        child:
-                                                                            Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceAround,
-                                                                          children: [
-                                                                            GestureDetector(
-                                                                              child: Icon(
-                                                                                Icons.keyboard_arrow_left_sharp,
-                                                                                color: defaultPalette.black,
-                                                                              ),
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  print('________PREV PAGE STARTED LD_________');
-                                                                                  if (currentPageIndex == 0) {
-                                                                                    pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
-                                                                                    return;
-                                                                                  }
-                                                                                  currentPageIndex--;
-
-                                                                                  pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
-                                                                                });
-                                                                                print('________END PREV PAGE LD_________');
-                                                                              },
-                                                                            ),
-                                                                            GestureDetector(
-                                                                              child: Icon(
-                                                                                Icons.keyboard_arrow_right_sharp,
-                                                                                color: defaultPalette.black,
-                                                                              ),
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  print('________NEXT PAGE STARTED LD_________');
-                                                                                  if (pageCount == (currentPageIndex + 1)) {
-                                                                                    _addPdfPage();
-
-                                                                                    currentPageIndex++;
-                                                                                    pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) + 6), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
-
-                                                                                    print('________END NEXT PAGE LD_________');
-                                                                                    return;
-                                                                                  }
-
-                                                                                  currentPageIndex++;
-
-                                                                                  pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) + 6), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
-                                                                                  // ref.read(panelIndexProvider.notifier).state = PanelIndex(
-                                                                                  //     id: ref
-                                                                                  //         .read(sheetListProviderFamily(ref.read(spreadSheetProvider.select((p) => p[ref.read(currentPageIndexProvider)]
-                                                                                  //             .id))))
-                                                                                  //         .id,
-                                                                                  //     panelIndex:
-                                                                                  //         0);
-                                                                                  print('________END NEXT PAGE LD_________');
-                                                                                });
-                                                                              },
-                                                                            )
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                //pageNumber textfiwld
-                                                                SizedBox(
-                                                                  height:
-                                                                      textFieldHeight,
-                                                                  width: sWidth *
-                                                                      vDividerPosition,
-
-                                                                  ///Stack For Delete
-                                                                  child: Stack(
-                                                                    children: [
-                                                                      ///PAGE COUNT TEXT
-                                                                      TextFormField(
-                                                                        cursorColor:
-                                                                            defaultPalette.tertiary,
-                                                                        controller:
-                                                                            documentPropertiesList[currentPageIndex].pageNumberController,
-                                                                        inputFormatters: [
-                                                                          FilteringTextInputFormatter.allow(
-                                                                              RegExp(r'^\d*\.?\d*$'))
-                                                                        ],
-                                                                        textAlignVertical:
-                                                                            TextAlignVertical.top,
-                                                                        textAlign:
-                                                                            TextAlign.center,
-                                                                        decoration:
-                                                                            InputDecoration(
-                                                                          suffixIcon: //Delete page
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {},
-                                                                            child:
-                                                                                Icon(
-                                                                              Icons.delete_outline_rounded,
-                                                                              color: defaultPalette.transparent,
-                                                                            ),
-                                                                          ),
-                                                                          labelText:
-                                                                              'Page Number',
-                                                                          labelStyle:
-                                                                              TextStyle(
-                                                                            color:
-                                                                                defaultPalette.black,
-                                                                            fontSize:
-                                                                                15,
-                                                                          ),
-                                                                          floatingLabelAlignment:
-                                                                              FloatingLabelAlignment.start,
-                                                                          filled:
-                                                                              true,
-                                                                          fillColor:
-                                                                              defaultPalette.primary,
-                                                                          border:
-                                                                              OutlineInputBorder(
-                                                                            // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                          ),
-                                                                          enabledBorder:
-                                                                              OutlineInputBorder(
-                                                                            borderSide:
-                                                                                BorderSide(width: 2, color: defaultPalette.black),
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(12.0), // Same as border
-                                                                          ),
-                                                                          disabledBorder:
-                                                                              OutlineInputBorder(
-                                                                            borderSide:
-                                                                                BorderSide(width: 2, color: defaultPalette.black),
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(12.0), // Same as border
-                                                                          ),
-                                                                          focusedBorder:
-                                                                              OutlineInputBorder(
-                                                                            borderSide:
-                                                                                BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(10.0), // Same as border
-                                                                          ),
-                                                                        ),
-                                                                        keyboardType:
-                                                                            TextInputType.number,
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                defaultPalette.black,
-                                                                            fontSize: 15),
-                                                                        enabled:
-                                                                            false,
-                                                                        // onChanged:
-                                                                        //     (value) {
-                                                                        //   _updatePdfPreview;
-                                                                        //   _addPdfPage();
-                                                                        // }
-                                                                      ),
-                                                                      //DELETE ICON
-                                                                      Positioned(
-                                                                        right:
-                                                                            15 /
-                                                                                2,
-                                                                        top: (textFieldHeight /
-                                                                                2) -
-                                                                            25 /
-                                                                                2,
-                                                                        child:
-                                                                            GestureDetector(
-                                                                          onTap:
-                                                                              () {
-                                                                            _confirmDeleteLayout(deletePage: true);
-                                                                            pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16),
-                                                                                duration: Duration(milliseconds: 100),
-                                                                                curve: Curves.easeIn);
-                                                                          },
-                                                                          child:
-                                                                              Icon(
-                                                                            Icons.delete_outline_rounded,
-                                                                            color:
-                                                                                defaultPalette.black,
-                                                                            size:
-                                                                                25,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-
-                                                                //LEFT SIDE MARGIN , ORIENTATION, FORMAT
-                                                                Column(
-                                                                  children: [
-                                                                    SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
+                                                                    Stack(
                                                                       children: [
-                                                                        Expanded(
+                                                                        Container(
+                                                                          height:
+                                                                              55,
+                                                                          // width: (1 -
+                                                                          //         wH1DividerPosition -
+                                                                          //         wH2DividerPosition -
+                                                                          //         0.03) *
+                                                                          //     sWidth,
+                                                                        ),
+                                                                        //LeftScreen tilte
+                                                                        Container(
+                                                                          height:
+                                                                              55,
+                                                                          margin: EdgeInsets.only(
+                                                                              left: 10,
+                                                                              top: 8,
+                                                                              bottom: 5),
+                                                                          width:
+                                                                              ((wH2DividerPosition) * sWidth),
+                                                                          child: Text(
+                                                                              vDividerPosition < 0.45 ? 'PG \nPRP' : 'Page Properties',
+                                                                              maxLines: 2,
+                                                                              overflow: TextOverflow.fade,
+                                                                              style: TextStyle(color: defaultPalette.black, fontSize: 16, fontWeight: FontWeight.bold)),
+                                                                        ),
+                                                                        //nextprev buittons
+                                                                        Positioned(
+                                                                          right:
+                                                                              30,
+                                                                          top:
+                                                                              12,
                                                                           child:
-                                                                              SizedBox(
+                                                                              Container(
+                                                                            decoration:
+                                                                                BoxDecoration(color: defaultPalette.tertiary, borderRadius: BorderRadius.circular(8)),
+                                                                            margin:
+                                                                                EdgeInsets.only(top: 5),
                                                                             height:
-                                                                                textFieldHeight,
-                                                                            child: // TO STACK THE INCREMENT BUTTONS
-                                                                                Stack(
+                                                                                30,
+                                                                            width:
+                                                                                50,
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                                                                               children: [
-                                                                                //MARGIN ALL TEXT
-                                                                                TextFormField(
-                                                                                  onTapOutside: (event) {
-                                                                                    marginAllFocus.unfocus();
+                                                                                GestureDetector(
+                                                                                  child: Icon(
+                                                                                    Icons.keyboard_arrow_left_sharp,
+                                                                                    color: defaultPalette.black,
+                                                                                  ),
+                                                                                  onTap: () {
+                                                                                    setState(() {
+                                                                                      print('________PREV PAGE STARTED LD_________');
+                                                                                      if (currentPageIndex == 0) {
+                                                                                        pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+                                                                                        return;
+                                                                                      }
+                                                                                      currentPageIndex--;
+
+                                                                                      pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+                                                                                    });
+                                                                                    print('________END PREV PAGE LD_________');
                                                                                   },
-                                                                                  obscureText: documentPropertiesList[currentPageIndex].useIndividualMargins,
-                                                                                  focusNode: marginAllFocus,
-                                                                                  controller: documentPropertiesList[currentPageIndex].marginAllController,
-                                                                                  inputFormatters: [
-                                                                                    NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 2.001)
-                                                                                  ],
-                                                                                  textAlignVertical: TextAlignVertical.top,
-                                                                                  textAlign: TextAlign.center,
-                                                                                  decoration: InputDecoration(
-                                                                                    // alignLabelWithHint:
-                                                                                    //     true,
-                                                                                    contentPadding: EdgeInsets.all(0),
-                                                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                    labelText: 'Margin',
-                                                                                    labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                                                    filled: true,
-                                                                                    fillColor: !documentPropertiesList[currentPageIndex].useIndividualMargins ? defaultPalette.primary : defaultPalette.primary.withOpacity(0.5),
-                                                                                    border: OutlineInputBorder(
-                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                    ),
-                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                    ),
-                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                    ),
+                                                                                ),
+                                                                                GestureDetector(
+                                                                                  child: Icon(
+                                                                                    Icons.keyboard_arrow_right_sharp,
+                                                                                    color: defaultPalette.black,
                                                                                   ),
-                                                                                  keyboardType: TextInputType.number,
-                                                                                  style: TextStyle(
-                                                                                      // fontStyle: FontStyle.italic,
-                                                                                      color: defaultPalette.black),
-                                                                                  onChanged: (value) {
-                                                                                    // setState(() {
+                                                                                  onTap: () {
+                                                                                    setState(() {
+                                                                                      print('________NEXT PAGE STARTED LD_________');
+                                                                                      if (pageCount == (currentPageIndex + 1)) {
+                                                                                        _addPdfPage();
 
-                                                                                    documentPropertiesList[currentPageIndex].marginTopController.text = value;
-                                                                                    documentPropertiesList[currentPageIndex].marginBottomController.text = value;
-                                                                                    documentPropertiesList[currentPageIndex].marginLeftController.text = value;
-                                                                                    documentPropertiesList[currentPageIndex].marginRightController.text = value;
-                                                                                    // _updatePdfPreview(
-                                                                                    //     '');
-                                                                                    // });
+                                                                                        currentPageIndex++;
+                                                                                        pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) + 6), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+
+                                                                                        print('________END NEXT PAGE LD_________');
+                                                                                        return;
+                                                                                      }
+
+                                                                                      currentPageIndex++;
+
+                                                                                      pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) + 6), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+                                                                                      // ref.read(panelIndexProvider.notifier).state = PanelIndex(
+                                                                                      //     id: ref
+                                                                                      //         .read(sheetListProviderFamily(ref.read(spreadSheetProvider.select((p) => p[ref.read(currentPageIndexProvider)]
+                                                                                      //             .id))))
+                                                                                      //         .id,
+                                                                                      //     panelIndex:
+                                                                                      //         0);
+                                                                                      print('________END NEXT PAGE LD_________');
+                                                                                    });
                                                                                   },
-                                                                                  enabled: !documentPropertiesList[currentPageIndex].useIndividualMargins,
-                                                                                ),
-
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  left: (textFieldHeight / 2) - 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        var value = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginAllController.text = (double.parse(value) - 1).abs().toString();
-                                                                                        documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                      });
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: Icon(
-                                                                                      IconsaxPlusLinear.arrow_left_1,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  right: (textFieldHeight / 2) - 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginAllController.text = (double.parse(documentPropertiesList[currentPageIndex].marginAllController.text) + 1).toString();
-                                                                                        documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                        documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                      });
-
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: Icon(
-                                                                                      IconsaxPlusLinear.arrow_right_3,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
+                                                                                )
                                                                               ],
                                                                             ),
                                                                           ),
                                                                         ),
-                                                                        ////INDIVIDUAL MARGINS BUTTON
-                                                                        IconButton(
-                                                                            onPressed:
-                                                                                () {
+                                                                      ],
+                                                                    ),
+                                                                    //pageNumber textfiwld
+                                                                    SizedBox(
+                                                                      height:
+                                                                          textFieldHeight,
+                                                                      // width: (1 -
+                                                                      //         wH1DividerPosition -
+                                                                      //         wH2DividerPosition -
+                                                                      //         0.03) *
+                                                                      //     sWidth,
+
+                                                                      ///Stack For Delete
+                                                                      child:
+                                                                          Stack(
+                                                                        children: [
+                                                                          ///PAGE COUNT TEXT
+                                                                          TextFormField(
+                                                                            cursorColor:
+                                                                                defaultPalette.tertiary,
+                                                                            controller:
+                                                                                documentPropertiesList[currentPageIndex].pageNumberController,
+                                                                            inputFormatters: [
+                                                                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))
+                                                                            ],
+                                                                            textAlignVertical:
+                                                                                TextAlignVertical.top,
+                                                                            textAlign:
+                                                                                TextAlign.center,
+                                                                            decoration:
+                                                                                InputDecoration(
+                                                                              suffixIcon: //Delete page
+                                                                                  GestureDetector(
+                                                                                onTap: () {},
+                                                                                child: Icon(
+                                                                                  Icons.delete_outline_rounded,
+                                                                                  color: defaultPalette.transparent,
+                                                                                ),
+                                                                              ),
+                                                                              labelText: 'Page Number',
+                                                                              labelStyle: TextStyle(
+                                                                                color: defaultPalette.black,
+                                                                                fontSize: 15,
+                                                                              ),
+                                                                              floatingLabelAlignment: FloatingLabelAlignment.start,
+                                                                              filled: true,
+                                                                              fillColor: defaultPalette.primary,
+                                                                              border: OutlineInputBorder(
+                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                              ),
+                                                                              enabledBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                              ),
+                                                                              disabledBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                              ),
+                                                                              focusedBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                              ),
+                                                                            ),
+                                                                            keyboardType:
+                                                                                TextInputType.number,
+                                                                            style:
+                                                                                TextStyle(color: defaultPalette.black, fontSize: 15),
+                                                                            enabled:
+                                                                                false,
+                                                                            // onChanged:
+                                                                            //     (value) {
+                                                                            //   _updatePdfPreview;
+                                                                            //   _addPdfPage();
+                                                                            // }
+                                                                          ),
+                                                                          //DELETE ICON
+                                                                          Positioned(
+                                                                            right:
+                                                                                15 / 2,
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 25 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                _confirmDeleteLayout(deletePage: true);
+                                                                                pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16), duration: Duration(milliseconds: 100), curve: Curves.easeIn);
+                                                                              },
+                                                                              child: Icon(
+                                                                                Icons.delete_outline_rounded,
+                                                                                color: defaultPalette.black,
+                                                                                size: 25,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+
+                                                                    //LEFT SIDE MARGIN , ORIENTATION, FORMAT
+                                                                    Column(
+                                                                      children: [
+                                                                        SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            Expanded(
+                                                                              child: SizedBox(
+                                                                                height: textFieldHeight,
+                                                                                child: // TO STACK THE INCREMENT BUTTONS
+                                                                                    Stack(
+                                                                                  children: [
+                                                                                    //MARGIN ALL TEXT
+                                                                                    TextFormField(
+                                                                                      onTapOutside: (event) {
+                                                                                        marginAllFocus.unfocus();
+                                                                                      },
+                                                                                      obscureText: documentPropertiesList[currentPageIndex].useIndividualMargins,
+                                                                                      focusNode: marginAllFocus,
+                                                                                      controller: documentPropertiesList[currentPageIndex].marginAllController,
+                                                                                      inputFormatters: [
+                                                                                        NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 2.001)
+                                                                                      ],
+                                                                                      textAlignVertical: TextAlignVertical.top,
+                                                                                      textAlign: TextAlign.center,
+                                                                                      decoration: InputDecoration(
+                                                                                        // alignLabelWithHint:
+                                                                                        //     true,
+                                                                                        contentPadding: EdgeInsets.all(0),
+                                                                                        floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                                        labelText: 'Margin',
+                                                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                                                        filled: true,
+                                                                                        fillColor: !documentPropertiesList[currentPageIndex].useIndividualMargins ? defaultPalette.primary : defaultPalette.primary.withOpacity(0.5),
+                                                                                        border: OutlineInputBorder(
+                                                                                          // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                          borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                                        ),
+                                                                                        enabledBorder: OutlineInputBorder(
+                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                          borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                                        ),
+                                                                                        focusedBorder: OutlineInputBorder(
+                                                                                          borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                          borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                                        ),
+                                                                                      ),
+                                                                                      keyboardType: TextInputType.number,
+                                                                                      style: TextStyle(
+                                                                                          // fontStyle: FontStyle.italic,
+                                                                                          color: defaultPalette.black),
+                                                                                      onChanged: (value) {
+                                                                                        // setState(() {
+
+                                                                                        documentPropertiesList[currentPageIndex].marginTopController.text = value;
+                                                                                        documentPropertiesList[currentPageIndex].marginBottomController.text = value;
+                                                                                        documentPropertiesList[currentPageIndex].marginLeftController.text = value;
+                                                                                        documentPropertiesList[currentPageIndex].marginRightController.text = value;
+                                                                                        // _updatePdfPreview(
+                                                                                        //     '');
+                                                                                        // });
+                                                                                      },
+                                                                                      enabled: !documentPropertiesList[currentPageIndex].useIndividualMargins,
+                                                                                    ),
+
+                                                                                    Positioned(
+                                                                                      top: (textFieldHeight / 2) - 15 / 2,
+                                                                                      left: (textFieldHeight / 2) - 15 / 2,
+                                                                                      child: GestureDetector(
+                                                                                        onTap: () {
+                                                                                          setState(() {
+                                                                                            var value = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginAllController.text = (double.parse(value) - 1).abs().toString();
+                                                                                            documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                          });
+                                                                                          // _updatePdfPreview('');
+                                                                                        },
+                                                                                        child: Icon(
+                                                                                          IconsaxPlusLinear.arrow_left_1,
+                                                                                          size: 15,
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                    Positioned(
+                                                                                      top: (textFieldHeight / 2) - 15 / 2,
+                                                                                      right: (textFieldHeight / 2) - 15 / 2,
+                                                                                      child: GestureDetector(
+                                                                                        onTap: () {
+                                                                                          setState(() {
+                                                                                            documentPropertiesList[currentPageIndex].marginAllController.text = (double.parse(documentPropertiesList[currentPageIndex].marginAllController.text) + 1).toString();
+                                                                                            documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                            documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                          });
+
+                                                                                          // _updatePdfPreview('');
+                                                                                        },
+                                                                                        child: Icon(
+                                                                                          IconsaxPlusLinear.arrow_right_3,
+                                                                                          size: 15,
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            ////INDIVIDUAL MARGINS BUTTON
+                                                                            IconButton(
+                                                                                onPressed: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].useIndividualMargins = !documentPropertiesList[currentPageIndex].useIndividualMargins;
+                                                                                    if (documentPropertiesList[currentPageIndex].useIndividualMargins == false) {
+                                                                                      documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                      documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                      documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                      documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
+                                                                                    }
+                                                                                  });
+                                                                                },
+                                                                                icon: documentPropertiesList[currentPageIndex].useIndividualMargins
+                                                                                    ? Icon(
+                                                                                        IconsaxPlusBold.maximize_1,
+                                                                                        size: 30,
+                                                                                      )
+                                                                                    : Icon(
+                                                                                        IconsaxPlusLinear.maximize_2,
+                                                                                        size: 30,
+                                                                                      ))
+                                                                            // Text(
+                                                                            //     'Use Individual Margins'),
+                                                                          ],
+                                                                        ),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        if (documentPropertiesList[currentPageIndex]
+                                                                            .useIndividualMargins)
+                                                                          Column(
+                                                                            children: [
+                                                                              Row(
+                                                                                children: [
+                                                                                  //TOP MARGIN
+                                                                                  Expanded(
+                                                                                    child:
+                                                                                        //TOP MARGIN TEXT
+                                                                                        SizedBox(
+                                                                                      height: textFieldHeight,
+                                                                                      child: Stack(
+                                                                                        children: [
+                                                                                          TextFormField(
+                                                                                            onTapOutside: (event) {
+                                                                                              marginTopFocus.unfocus();
+                                                                                            },
+                                                                                            focusNode: marginTopFocus,
+                                                                                            controller: documentPropertiesList[currentPageIndex].marginTopController,
+                                                                                            inputFormatters: [
+                                                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                                              NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
+                                                                                            ],
+                                                                                            style: TextStyle(color: defaultPalette.black),
+                                                                                            cursorColor: defaultPalette.secondary,
+                                                                                            textAlign: TextAlign.center,
+                                                                                            textAlignVertical: TextAlignVertical.top,
+                                                                                            decoration: InputDecoration(
+                                                                                              contentPadding: EdgeInsets.all(0),
+                                                                                              labelText: 'Top',
+                                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                                              prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                                              suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                                              filled: true,
+                                                                                              fillColor: defaultPalette.primary,
+                                                                                              border: OutlineInputBorder(
+                                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                                              ),
+                                                                                              enabledBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                                              ),
+                                                                                              focusedBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                                              ),
+                                                                                            ),
+                                                                                            keyboardType: TextInputType.number,
+                                                                                            // onChanged: (value) => _updatePdfPreview(''),
+                                                                                          ),
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            left: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toString();
+                                                                                                });
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            right: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toString();
+                                                                                                });
+
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                  SizedBox(
+                                                                                    width: 10,
+                                                                                  ),
+                                                                                  //BOTTOM MARGIN TEXT
+                                                                                  Expanded(
+                                                                                    child: SizedBox(
+                                                                                      height: textFieldHeight,
+                                                                                      child:
+                                                                                          //STACK FOR INCREDECRE
+                                                                                          Stack(
+                                                                                        children: [
+                                                                                          //BOTTOM TEXT FIELD
+                                                                                          TextFormField(
+                                                                                            onTapOutside: (event) {
+                                                                                              marginBottomFocus.unfocus();
+                                                                                            },
+                                                                                            focusNode: marginBottomFocus,
+                                                                                            controller: documentPropertiesList[currentPageIndex].marginBottomController,
+                                                                                            inputFormatters: [
+                                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))
+                                                                                            ],
+                                                                                            style: TextStyle(color: defaultPalette.black),
+                                                                                            cursorColor: defaultPalette.secondary,
+                                                                                            textAlign: TextAlign.center,
+                                                                                            textAlignVertical: TextAlignVertical.top,
+
+                                                                                            ///INPUT DECORATION
+                                                                                            decoration: InputDecoration(
+                                                                                              contentPadding: EdgeInsets.all(0),
+                                                                                              labelText: 'Bottom',
+                                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                                              filled: true,
+                                                                                              fillColor: defaultPalette.primary,
+                                                                                              border: OutlineInputBorder(
+                                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                                              ),
+                                                                                              enabledBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                                              ),
+                                                                                              focusedBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                                              ),
+                                                                                            ),
+                                                                                            keyboardType: TextInputType.number,
+                                                                                            // onChanged: (value) => _updatePdfPreview(''),
+                                                                                          ),
+                                                                                          //BOTTOM DECREMENT
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            left: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toString();
+                                                                                                });
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                          //BOTTOM INCREMENT
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            right: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toString();
+                                                                                                });
+
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              SizedBox(
+                                                                                height: 15,
+                                                                              ),
+                                                                              Row(
+                                                                                children: [
+                                                                                  //Left MARGIN WIDGET
+                                                                                  Expanded(
+                                                                                    child: SizedBox(
+                                                                                      height: textFieldHeight,
+                                                                                      child: Stack(
+                                                                                        children: [
+                                                                                          TextFormField(
+                                                                                            onTapOutside: (event) {
+                                                                                              marginLeftFocus.unfocus();
+                                                                                            },
+                                                                                            focusNode: marginLeftFocus,
+                                                                                            controller: documentPropertiesList[currentPageIndex].marginLeftController,
+                                                                                            inputFormatters: [
+                                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))
+                                                                                            ],
+                                                                                            style: TextStyle(color: defaultPalette.black),
+                                                                                            cursorColor: defaultPalette.black,
+                                                                                            textAlign: TextAlign.center,
+                                                                                            textAlignVertical: TextAlignVertical.top,
+                                                                                            decoration: InputDecoration(
+                                                                                              contentPadding: EdgeInsets.all(0),
+                                                                                              labelText: 'Left',
+                                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                                              floatingLabelBehavior: FloatingLabelBehavior.always,
+                                                                                              filled: true,
+                                                                                              fillColor: defaultPalette.primary,
+                                                                                              border: OutlineInputBorder(
+                                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                                              ),
+                                                                                              enabledBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                                              ),
+                                                                                              focusedBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                                              ),
+                                                                                            ),
+                                                                                            keyboardType: TextInputType.number,
+                                                                                            onChanged: (value) => {
+                                                                                              // _updatePdfPreview('')
+                                                                                            },
+                                                                                          ),
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            left: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toString();
+                                                                                                });
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            right: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toString();
+                                                                                                });
+
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                  SizedBox(
+                                                                                    width: 10,
+                                                                                  ),
+                                                                                  //RIGHT MARGIN TEXT
+                                                                                  Expanded(
+                                                                                    child: SizedBox(
+                                                                                      height: textFieldHeight,
+                                                                                      child: Stack(
+                                                                                        children: [
+                                                                                          TextFormField(
+                                                                                            onTapOutside: (event) {
+                                                                                              marginRightFocus.unfocus();
+                                                                                            },
+                                                                                            focusNode: marginRightFocus,
+                                                                                            controller: documentPropertiesList[currentPageIndex].marginRightController,
+                                                                                            style: TextStyle(color: defaultPalette.black),
+                                                                                            cursorColor: defaultPalette.secondary,
+                                                                                            inputFormatters: [
+                                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))
+                                                                                            ],
+                                                                                            textAlign: TextAlign.center,
+                                                                                            textAlignVertical: TextAlignVertical.top,
+                                                                                            decoration: InputDecoration(
+                                                                                              contentPadding: EdgeInsets.all(0),
+                                                                                              labelText: 'Right',
+                                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                                              filled: true,
+                                                                                              fillColor: defaultPalette.primary,
+                                                                                              border: OutlineInputBorder(
+                                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                                              ),
+                                                                                              enabledBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                                              ),
+                                                                                              focusedBorder: OutlineInputBorder(
+                                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                                              ),
+                                                                                            ),
+                                                                                            keyboardType: TextInputType.number,
+                                                                                            // onChanged: (value) => _updatePdfPreview,
+                                                                                          ),
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            left: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toString();
+                                                                                                });
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                          Positioned(
+                                                                                            top: (textFieldHeight / 2) - 15 / 2,
+                                                                                            right: 15 / 2,
+                                                                                            child: GestureDetector(
+                                                                                              onTap: () {
+                                                                                                setState(() {
+                                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toString();
+                                                                                                });
+
+                                                                                                // _updatePdfPreview('');
+                                                                                              },
+                                                                                              child: Icon(
+                                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                                size: 15,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              SizedBox(
+                                                                                height: 10,
+                                                                              )
+                                                                            ],
+                                                                          ),
+                                                                        //Orientation
+                                                                        SizedBox(
+                                                                          height:
+                                                                              textFieldHeight + 10,
+                                                                          child:
+                                                                              CustomDropdown(
+                                                                            hintText:
+                                                                                'Orientation',
+                                                                            items: [
+                                                                              'Portrait',
+                                                                              'Landscape'
+                                                                            ],
+                                                                            closedHeaderPadding:
+                                                                                EdgeInsets.all(10),
+                                                                            initialItem: documentPropertiesList[currentPageIndex].orientationController == pw.PageOrientation.portrait
+                                                                                ? 'Portrait'
+                                                                                : 'Landscape',
+                                                                            onChanged:
+                                                                                (value) {
                                                                               setState(() {
-                                                                                documentPropertiesList[currentPageIndex].useIndividualMargins = !documentPropertiesList[currentPageIndex].useIndividualMargins;
-                                                                                if (documentPropertiesList[currentPageIndex].useIndividualMargins == false) {
-                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                }
+                                                                                documentPropertiesList[currentPageIndex].orientationController = value == 'Portrait' ? pw.PageOrientation.portrait : pw.PageOrientation.landscape;
                                                                               });
+                                                                              // _updatePdfPreview(
+                                                                              //     '');
                                                                             },
-                                                                            icon: documentPropertiesList[currentPageIndex].useIndividualMargins
-                                                                                ? Icon(
-                                                                                    IconsaxPlusBold.maximize_1,
-                                                                                    size: 30,
-                                                                                  )
-                                                                                : Icon(
-                                                                                    IconsaxPlusLinear.maximize_2,
-                                                                                    size: 30,
-                                                                                  ))
-                                                                        // Text(
-                                                                        //     'Use Individual Margins'),
+                                                                            listItemBuilder: (context,
+                                                                                item,
+                                                                                isSelected,
+                                                                                onItemSelect) {
+                                                                              return Row(
+                                                                                children: [
+                                                                                  Icon(
+                                                                                    item == 'Portrait' ? Icons.crop_portrait : Icons.crop_3_2_sharp,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  SizedBox(
+                                                                                    width: 10,
+                                                                                  ),
+                                                                                  Text(item)
+                                                                                ],
+                                                                              );
+                                                                            },
+                                                                            decoration:
+                                                                                CustomDropdownDecoration(
+                                                                              prefixIcon: Icon(
+                                                                                documentPropertiesList[currentPageIndex].orientationController == pw.PageOrientation.portrait ? Icons.crop_portrait_outlined : Icons.crop_3_2_sharp,
+                                                                                size: 20,
+                                                                              ),
+                                                                              closedBorderRadius: BorderRadius.circular(12),
+                                                                              closedBorder: Border.all(color: defaultPalette.black, width: 2),
+                                                                              expandedBorder: Border.all(color: defaultPalette.tertiary, width: 3),
+                                                                              closedFillColor: defaultPalette.primary,
+                                                                              hintStyle: TextStyle(
+                                                                                color: defaultPalette.black,
+                                                                              ),
+                                                                              headerStyle: TextStyle(
+                                                                                color: defaultPalette.black,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                            height:
+                                                                                5),
+                                                                        //Page Format
+                                                                        SizedBox(
+                                                                          height:
+                                                                              textFieldHeight,
+                                                                          child:
+                                                                              CustomDropdown.search(
+                                                                            hintText:
+                                                                                'Page Format',
+                                                                            items: [
+                                                                              'A4',
+                                                                              'A3',
+                                                                              'A5',
+                                                                              'A6',
+                                                                              'Letter',
+                                                                              'Legal',
+                                                                              'Standard',
+                                                                            ],
+                                                                            initialItem:
+                                                                                getPageFormatString(documentPropertiesList[currentPageIndex].pageFormatController),
+                                                                            onChanged:
+                                                                                (value) {
+                                                                              setState(() {
+                                                                                documentPropertiesList[currentPageIndex].pageFormatController = getPageFormatFromString(value ?? '');
+                                                                              });
+                                                                              // _updatePdfPreview(
+                                                                              //     '');
+                                                                            },
+                                                                            closedHeaderPadding:
+                                                                                EdgeInsets.all(10),
+                                                                            decoration:
+                                                                                CustomDropdownDecoration(
+                                                                              closedBorderRadius: BorderRadius.circular(12),
+                                                                              closedBorder: Border.all(color: defaultPalette.black, width: 2),
+                                                                              expandedBorder: Border.all(color: defaultPalette.tertiary, width: 3),
+                                                                              closedFillColor: defaultPalette.primary,
+                                                                              hintStyle: TextStyle(color: defaultPalette.black),
+                                                                              headerStyle: TextStyle(color: defaultPalette.black),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        // Divider(),
                                                                       ],
                                                                     ),
                                                                     SizedBox(
                                                                       height:
-                                                                          10,
-                                                                    ),
-                                                                    if (documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .useIndividualMargins)
-                                                                      Column(
-                                                                        children: [
-                                                                          Row(
-                                                                            children: [
-                                                                              //TOP MARGIN
-                                                                              Expanded(
-                                                                                child:
-                                                                                    //TOP MARGIN TEXT
-                                                                                    SizedBox(
-                                                                                  height: textFieldHeight,
-                                                                                  child: Stack(
-                                                                                    children: [
-                                                                                      TextFormField(
-                                                                                        onTapOutside: (event) {
-                                                                                          marginTopFocus.unfocus();
-                                                                                        },
-                                                                                        focusNode: marginTopFocus,
-                                                                                        controller: documentPropertiesList[currentPageIndex].marginTopController,
-                                                                                        inputFormatters: [
-                                                                                          // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                                                          NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
-                                                                                        ],
-                                                                                        style: TextStyle(color: defaultPalette.black),
-                                                                                        cursorColor: defaultPalette.secondary,
-                                                                                        textAlign: TextAlign.center,
-                                                                                        textAlignVertical: TextAlignVertical.top,
-                                                                                        decoration: InputDecoration(
-                                                                                          contentPadding: EdgeInsets.all(0),
-                                                                                          labelText: 'Top',
-                                                                                          labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                          floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                          prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                          suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                          filled: true,
-                                                                                          fillColor: defaultPalette.primary,
-                                                                                          border: OutlineInputBorder(
-                                                                                            // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                          ),
-                                                                                          enabledBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                          ),
-                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                          ),
-                                                                                        ),
-                                                                                        keyboardType: TextInputType.number,
-                                                                                        // onChanged: (value) => _updatePdfPreview(''),
-                                                                                      ),
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        left: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toString();
-                                                                                            });
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_left_1,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        right: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toString();
-                                                                                            });
-
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_right_3,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              //BOTTOM MARGIN TEXT
-                                                                              Expanded(
-                                                                                child: SizedBox(
-                                                                                  height: textFieldHeight,
-                                                                                  child:
-                                                                                      //STACK FOR INCREDECRE
-                                                                                      Stack(
-                                                                                    children: [
-                                                                                      //BOTTOM TEXT FIELD
-                                                                                      TextFormField(
-                                                                                        onTapOutside: (event) {
-                                                                                          marginBottomFocus.unfocus();
-                                                                                        },
-                                                                                        focusNode: marginBottomFocus,
-                                                                                        controller: documentPropertiesList[currentPageIndex].marginBottomController,
-                                                                                        inputFormatters: [
-                                                                                          NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))
-                                                                                        ],
-                                                                                        style: TextStyle(color: defaultPalette.black),
-                                                                                        cursorColor: defaultPalette.secondary,
-                                                                                        textAlign: TextAlign.center,
-                                                                                        textAlignVertical: TextAlignVertical.top,
-
-                                                                                        ///INPUT DECORATION
-                                                                                        decoration: InputDecoration(
-                                                                                          contentPadding: EdgeInsets.all(0),
-                                                                                          labelText: 'Bottom',
-                                                                                          labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                          floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                          filled: true,
-                                                                                          fillColor: defaultPalette.primary,
-                                                                                          border: OutlineInputBorder(
-                                                                                            // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                          ),
-                                                                                          enabledBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                          ),
-                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                          ),
-                                                                                        ),
-                                                                                        keyboardType: TextInputType.number,
-                                                                                        // onChanged: (value) => _updatePdfPreview(''),
-                                                                                      ),
-                                                                                      //BOTTOM DECREMENT
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        left: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toString();
-                                                                                            });
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_left_1,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      //BOTTOM INCREMENT
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        right: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toString();
-                                                                                            });
-
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_right_3,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                15,
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              //Left MARGIN WIDGET
-                                                                              Expanded(
-                                                                                child: SizedBox(
-                                                                                  height: textFieldHeight,
-                                                                                  child: Stack(
-                                                                                    children: [
-                                                                                      TextFormField(
-                                                                                        onTapOutside: (event) {
-                                                                                          marginLeftFocus.unfocus();
-                                                                                        },
-                                                                                        focusNode: marginLeftFocus,
-                                                                                        controller: documentPropertiesList[currentPageIndex].marginLeftController,
-                                                                                        inputFormatters: [
-                                                                                          NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))
-                                                                                        ],
-                                                                                        style: TextStyle(color: defaultPalette.black),
-                                                                                        cursorColor: defaultPalette.black,
-                                                                                        textAlign: TextAlign.center,
-                                                                                        textAlignVertical: TextAlignVertical.top,
-                                                                                        decoration: InputDecoration(
-                                                                                          contentPadding: EdgeInsets.all(0),
-                                                                                          labelText: 'Left',
-                                                                                          labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                          floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                          floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                                                          filled: true,
-                                                                                          fillColor: defaultPalette.primary,
-                                                                                          border: OutlineInputBorder(
-                                                                                            // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                          ),
-                                                                                          enabledBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                          ),
-                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                          ),
-                                                                                        ),
-                                                                                        keyboardType: TextInputType.number,
-                                                                                        onChanged: (value) => {
-                                                                                          // _updatePdfPreview('')
-                                                                                        },
-                                                                                      ),
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        left: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toString();
-                                                                                            });
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_left_1,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        right: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toString();
-                                                                                            });
-
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_right_3,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              //RIGHT MARGIN TEXT
-                                                                              Expanded(
-                                                                                child: SizedBox(
-                                                                                  height: textFieldHeight,
-                                                                                  child: Stack(
-                                                                                    children: [
-                                                                                      TextFormField(
-                                                                                        onTapOutside: (event) {
-                                                                                          marginRightFocus.unfocus();
-                                                                                        },
-                                                                                        focusNode: marginRightFocus,
-                                                                                        controller: documentPropertiesList[currentPageIndex].marginRightController,
-                                                                                        style: TextStyle(color: defaultPalette.black),
-                                                                                        cursorColor: defaultPalette.secondary,
-                                                                                        inputFormatters: [
-                                                                                          NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))
-                                                                                        ],
-                                                                                        textAlign: TextAlign.center,
-                                                                                        textAlignVertical: TextAlignVertical.top,
-                                                                                        decoration: InputDecoration(
-                                                                                          contentPadding: EdgeInsets.all(0),
-                                                                                          labelText: 'Right',
-                                                                                          labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                          floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                          filled: true,
-                                                                                          fillColor: defaultPalette.primary,
-                                                                                          border: OutlineInputBorder(
-                                                                                            // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                          ),
-                                                                                          enabledBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                            borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                          ),
-                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                            borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                            borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                          ),
-                                                                                        ),
-                                                                                        keyboardType: TextInputType.number,
-                                                                                        // onChanged: (value) => _updatePdfPreview,
-                                                                                      ),
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        left: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toString();
-                                                                                            });
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_left_1,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      Positioned(
-                                                                                        top: (textFieldHeight / 2) - 15 / 2,
-                                                                                        right: 15 / 2,
-                                                                                        child: GestureDetector(
-                                                                                          onTap: () {
-                                                                                            setState(() {
-                                                                                              documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toString();
-                                                                                            });
-
-                                                                                            // _updatePdfPreview('');
-                                                                                          },
-                                                                                          child: Icon(
-                                                                                            IconsaxPlusLinear.arrow_right_3,
-                                                                                            size: 15,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                10,
-                                                                          )
-                                                                        ],
-                                                                      ),
-                                                                    //Orientation
-                                                                    SizedBox(
-                                                                      height:
-                                                                          textFieldHeight +
-                                                                              10,
-                                                                      child:
-                                                                          CustomDropdown(
-                                                                        hintText:
-                                                                            'Orientation',
-                                                                        items: [
-                                                                          'Portrait',
-                                                                          'Landscape'
-                                                                        ],
-                                                                        closedHeaderPadding:
-                                                                            EdgeInsets.all(10),
-                                                                        initialItem: documentPropertiesList[currentPageIndex].orientationController ==
-                                                                                pw.PageOrientation.portrait
-                                                                            ? 'Portrait'
-                                                                            : 'Landscape',
-                                                                        onChanged:
-                                                                            (value) {
-                                                                          setState(
-                                                                              () {
-                                                                            documentPropertiesList[currentPageIndex].orientationController = value == 'Portrait'
-                                                                                ? pw.PageOrientation.portrait
-                                                                                : pw.PageOrientation.landscape;
-                                                                          });
-                                                                          // _updatePdfPreview(
-                                                                          //     '');
-                                                                        },
-                                                                        listItemBuilder: (context,
-                                                                            item,
-                                                                            isSelected,
-                                                                            onItemSelect) {
-                                                                          return Row(
-                                                                            children: [
-                                                                              Icon(
-                                                                                item == 'Portrait' ? Icons.crop_portrait : Icons.crop_3_2_sharp,
-                                                                                size: 20,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              Text(item)
-                                                                            ],
-                                                                          );
-                                                                        },
-                                                                        decoration:
-                                                                            CustomDropdownDecoration(
-                                                                          prefixIcon:
-                                                                              Icon(
-                                                                            documentPropertiesList[currentPageIndex].orientationController == pw.PageOrientation.portrait
-                                                                                ? Icons.crop_portrait_outlined
-                                                                                : Icons.crop_3_2_sharp,
-                                                                            size:
-                                                                                20,
-                                                                          ),
-                                                                          closedBorderRadius:
-                                                                              BorderRadius.circular(12),
-                                                                          closedBorder: Border.all(
-                                                                              color: defaultPalette.black,
-                                                                              width: 2),
-                                                                          expandedBorder: Border.all(
-                                                                              color: defaultPalette.tertiary,
-                                                                              width: 3),
-                                                                          closedFillColor:
-                                                                              defaultPalette.primary,
-                                                                          hintStyle:
-                                                                              TextStyle(
-                                                                            color:
-                                                                                defaultPalette.black,
-                                                                          ),
-                                                                          headerStyle:
-                                                                              TextStyle(
-                                                                            color:
-                                                                                defaultPalette.black,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    SizedBox(
-                                                                        height:
-                                                                            5),
-                                                                    //Page Format
-                                                                    SizedBox(
-                                                                      height:
-                                                                          textFieldHeight,
-                                                                      child: CustomDropdown
-                                                                          .search(
-                                                                        hintText:
-                                                                            'Page Format',
-                                                                        items: [
-                                                                          'A4',
-                                                                          'A3',
-                                                                          'A5',
-                                                                          'A6',
-                                                                          'Letter',
-                                                                          'Legal',
-                                                                          'Standard',
-                                                                        ],
-                                                                        initialItem:
-                                                                            getPageFormatString(documentPropertiesList[currentPageIndex].pageFormatController),
-                                                                        onChanged:
-                                                                            (value) {
-                                                                          setState(
-                                                                              () {
-                                                                            documentPropertiesList[currentPageIndex].pageFormatController =
-                                                                                getPageFormatFromString(value ?? '');
-                                                                          });
-                                                                          // _updatePdfPreview(
-                                                                          //     '');
-                                                                        },
-                                                                        closedHeaderPadding:
-                                                                            EdgeInsets.all(10),
-                                                                        decoration:
-                                                                            CustomDropdownDecoration(
-                                                                          closedBorderRadius:
-                                                                              BorderRadius.circular(12),
-                                                                          closedBorder: Border.all(
-                                                                              color: defaultPalette.black,
-                                                                              width: 2),
-                                                                          expandedBorder: Border.all(
-                                                                              color: defaultPalette.tertiary,
-                                                                              width: 3),
-                                                                          closedFillColor:
-                                                                              defaultPalette.primary,
-                                                                          hintStyle:
-                                                                              TextStyle(color: defaultPalette.black),
-                                                                          headerStyle:
-                                                                              TextStyle(color: defaultPalette.black),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    // Divider(),
+                                                                          30,
+                                                                    )
                                                                   ],
                                                                 ),
-                                                                SizedBox(
-                                                                  height: 30,
-                                                                )
-                                                              ],
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
+                                                      ],
                                                     ),
-                                                    //Text Styling //Desktop WEB
-                                                    Positioned(
-                                                      // duration: Durations.medium3,
+                                                  )),
+                                              //Text Styling //Desktop WEB
+                                              SizedBox(
+                                                height: sHeight * 0.55,
+                                                width: (sWidth *
+                                                    wH2DividerPosition),
+                                                child: Stack(
+                                                  children: [
+                                                    AnimatedPositioned(
+                                                      duration:
+                                                          Durations.medium3,
                                                       left: panelIndex
                                                                   .panelIndex ==
                                                               -1
-                                                          ? sWidth *
-                                                              vDividerPosition
+                                                          ? 0
                                                           : 44,
                                                       child: Container(
-                                                        height: sHeight *
-                                                            (hDividerPosition),
+                                                        height: sHeight * 0.55,
                                                         width: (sWidth *
-                                                                vDividerPosition) -
+                                                                wH2DividerPosition) -
                                                             44,
                                                         child: Column(
                                                           // direction: Axis.vertical,
@@ -3545,7 +3706,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                     -1
                                                                 ? Container(
                                                                     color: Colors
-                                                                        .amber,
+                                                                        .transparent,
                                                                     height: 10,
                                                                     width: 5,
                                                                   )
@@ -3675,7 +3836,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           }
 
                                                                           var width =
-                                                                              (sWidth * vDividerPosition) - 44;
+                                                                              (sWidth * wH2DividerPosition * 0.90) - 44;
 
                                                                           TextEditingController
                                                                               hexController =
@@ -3747,6 +3908,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 textStyleTabControler,
                                                                             scrollDirection:
                                                                                 Axis.vertical,
+                                                                            physics:
+                                                                                NeverScrollableScrollPhysics(),
                                                                             onPageChanged:
                                                                                 (value) {
                                                                               print(value);
@@ -3757,7 +3920,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 children: [
                                                                                   Positioned(
                                                                                     top: 0,
-                                                                                    height: sHeight * (hDividerPosition - appbarHeight),
+                                                                                    height: sHeight * 0.4,
                                                                                     width: width - 10,
                                                                                     child: GridView.builder(
                                                                                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: fCrossAxisCount, childAspectRatio: 2),
@@ -3795,14 +3958,6 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                       },
                                                                                     ),
                                                                                   ),
-                                                                                  // const Text(
-                                                                                  //   'Font Family',
-                                                                                  //   style: TextStyle(
-                                                                                  //     fontSize: 15,
-                                                                                  //   ),
-                                                                                  //   textAlign: TextAlign.left,
-                                                                                  //   textDirection: TextDirection.ltr,
-                                                                                  // ),
                                                                                 ],
                                                                               ),
                                                                               //FORMATTING ALL THAT PAGE  //Desktop WEB
@@ -4388,7 +4543,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                     Container(
                                                                                   padding: EdgeInsets.only(left: 5),
                                                                                   width: width,
-                                                                                  height: 70 * 5,
+                                                                                  height: 70 * 6,
                                                                                   child: Column(
                                                                                     children: [
                                                                                       //Font Size TEXT FIELD PARENT
@@ -5189,10 +5344,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 child: Container(
                                                                                   width: width,
                                                                                   height: sHeight * (hDividerPosition - appbarHeight * 1.2),
-                                                                                  // decoration: BoxDecoration(border: Border.all(width: 2), borderRadius: BorderRadius.circular(12)),
-                                                                                  // padding: EdgeInsets.only(bottom: 10),
-                                                                                  // color:
-                                                                                  // Colors.amberAccent,
+
                                                                                   child: TabContainer(
                                                                                       controller: tabcunt,
                                                                                       tabEdge: TabEdge.top,
@@ -5587,8 +5739,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                         0.05),
                                                             toolbarHorizontalPadding:
                                                                 0,
-                                                            toolbarHeight: sHeight *
-                                                                hDividerPosition,
+                                                            toolbarHeight:
+                                                                sHeight * 0.9,
                                                             itemsOffset: 0,
                                                             toolbarItems: [
                                                               ListItemModel(
@@ -5787,43 +5939,16 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                     TablerIcons
                                                                         .paint,
                                                               ),
-                                                            ]))
+                                                            ])),
                                                   ],
                                                 ),
-                                              )),
-                                        ],
-                                      ),
-                                    ),
-                                    ///////////VERTICAL GRIP //Desktop WEB
-                                    Positioned(
-                                      left: vDividerPosition * sWidth - 37,
-                                      top: 17,
-                                      child: AnimatedContainer(
-                                        duration: Duration(milliseconds: 50),
-                                        width: 32,
-                                        height: 30,
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.tertiary,
-                                            borderRadius:
-                                                BorderRadius.circular(8)),
-                                        child: GestureDetector(
-                                          onPanUpdate: (details) {
-                                            double newPosition =
-                                                (vDividerPosition +
-                                                        details.delta.dx /
-                                                            context.size!.width)
-                                                    .clamp(0.4, 0.85);
-                                            _updatevDividerPosition(
-                                                newPosition);
-                                          },
-                                          child: Icon(
-                                            TablerIcons.grip_vertical,
-                                            color: defaultPalette.black,
+                                              )
+                                            ],
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -9454,30 +9579,27 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                 // right: 0,
                                 // width: 2480 ,
                                 // height: sHeight * hDividerPosition+126,
-                                child: Zoomable(
-                                  maxScale: 10,
-                                  child: Transform.scale(
-                                    scale: (1 - vDividerPosition) * 0.48,
-                                    // scale: 1,
-                                    alignment: Alignment.topLeft,
-                                    child: Container(
-                                      // width: 2480,
-                                      // height: (sWidth-64)*sqrt2 ,
-                                      height: (sHeight) *
-                                          hDividerPosition /
-                                          ((1 - vDividerPosition) * 0.48),
-                                      padding: EdgeInsets.only(
-                                          bottom: 25, top: 25, right: 40),
-                                      decoration: BoxDecoration(boxShadow: [
-                                        BoxShadow(
-                                            blurRadius: 500,
-                                            offset: Offset(5, 5),
-                                            color: defaultPalette.black
-                                                .withOpacity(0.06))
-                                      ]),
-                                      alignment: Alignment.center,
-                                      child: _generateWid(sWidth, sHeight),
-                                    ),
+                                child: Transform.scale(
+                                  scale: (1 - vDividerPosition) * 0.48,
+                                  // scale: 1,
+                                  alignment: Alignment.topLeft,
+                                  child: Container(
+                                    // width: 2480,
+                                    // height: (sWidth-64)*sqrt2 ,
+                                    height: (sHeight) *
+                                        hDividerPosition /
+                                        ((1 - vDividerPosition) * 0.48),
+                                    padding: EdgeInsets.only(
+                                        bottom: 25, top: 25, right: 40),
+                                    decoration: BoxDecoration(boxShadow: [
+                                      BoxShadow(
+                                          blurRadius: 500,
+                                          offset: Offset(5, 5),
+                                          color: defaultPalette.black
+                                              .withOpacity(0.06))
+                                    ]),
+                                    alignment: Alignment.center,
+                                    child: _generateWid(sWidth, sHeight),
                                   ),
                                 ),
                               ),
