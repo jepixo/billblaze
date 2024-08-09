@@ -409,6 +409,8 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
     final textDirection = Directionality.of(context);
     final width = widget.width;
     final sHeight = widget.bgHeight;
+    double sWidth = MediaQuery.of(context).size.width;
+    double sheight = MediaQuery.of(context).size.height;
     return SizedBox(
       height: widget.height,
       child: LayoutBuilder(
@@ -430,7 +432,9 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                   Positioned(
                     bottom: kIsWeb || Platform.isWindows
                         ? -widget.disp
-                        : -widget.height / 2,
+                        : sWidth > sheight
+                            ? -widget.disp
+                            : -widget.height / 2,
                     left: Directionality.of(context) == TextDirection.rtl
                         ? null
                         : _pos * width - 4,

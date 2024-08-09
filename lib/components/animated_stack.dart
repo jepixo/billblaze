@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:simple_animated_button/simple_animated_button.dart';
@@ -101,8 +103,8 @@ class _AnimatedStackState extends State<AnimatedStack> {
               onClick: () => setState(() {
                 opened = !opened;
               }),
-              buttonHeight: _height / 12,
-              buttonWidth: _height / 12,
+              buttonHeight: Platform.isAndroid ? _height / 12 : _height / 10,
+              buttonWidth: Platform.isAndroid ? _height / 12 : _height / 10,
               borderRadius: BorderRadius.circular(100),
               animationDuration: const Duration(milliseconds: 200),
               animationCurve: Curves.ease,
@@ -115,7 +117,7 @@ class _AnimatedStackState extends State<AnimatedStack> {
                 duration: widget.buttonAnimationDuration,
                 child: Icon(
                   IconsaxPlusLinear.add,
-                  size: 26,
+                  size: _height/20,
                   color: Colors.black.withOpacity(0.7),
                 ),
               ),

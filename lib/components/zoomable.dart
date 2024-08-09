@@ -1635,6 +1635,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' show Quad, Vector3, Matrix4;
 
 typedef ZoomWidgetBuilder = Widget Function(
@@ -1831,6 +1832,8 @@ class _ZoomState extends State<Zoom>
   bool firstDraw = true;
 
   static const double _kDrag = 0.0000135;
+
+  bool _isAltPressed = false;
 
   Rect get _boundaryRect {
     assert(_childKey.currentContext != null);
@@ -2253,28 +2256,17 @@ class _ZoomState extends State<Zoom>
 
   void _receivedPointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      if (event.scrollDelta.dy == 0.0) {
-        return;
+      if (_isAltPressed) {
+        // Alt key is pressed, perform zoom
+        double scaleChange = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
+        _transformationController!.value = _matrixScale(
+          _transformationController!.value,
+          scaleChange,
+        );
+      } else {
+        // Alt key is not pressed, pass the scroll event to child
+        // This can be handled by doing nothing, letting the scroll propagate
       }
-
-      final double scaleChange = math.exp(-event.scrollDelta.dy / 200);
-
-      final Offset focalPointScene = _transformationController!.toScene(
-        event.localPosition,
-      );
-
-      _transformationController!.value = _matrixScale(
-        _transformationController!.value,
-        scaleChange,
-      );
-
-      final Offset focalPointSceneScaled = _transformationController!.toScene(
-        event.localPosition,
-      );
-      _transformationController!.value = _matrixTranslate(
-        _transformationController!.value,
-        focalPointSceneScaled - focalPointScene,
-      );
     }
   }
 
@@ -2381,6 +2373,20 @@ class _ZoomState extends State<Zoom>
     _scaleController = AnimationController(
       vsync: this,
     );
+    RawKeyboard.instance.addListener(_handleKeyEvent);
+  }
+
+  void _handleKeyEvent(RawKeyEvent event) {
+    setState(() {
+      if (event.isKeyPressed(LogicalKeyboardKey.altLeft) ||
+          event.isKeyPressed(LogicalKeyboardKey.altRight)) {
+        _isAltPressed = true;
+      } else if (event is RawKeyUpEvent &&
+          (event.logicalKey == LogicalKeyboardKey.altLeft ||
+              event.logicalKey == LogicalKeyboardKey.altRight)) {
+        _isAltPressed = false;
+      }
+    });
   }
 
   @override
@@ -2615,7 +2621,7 @@ class _ZoomState extends State<Zoom>
                 _doubleTapFocalPoint = event.localPosition;
               },
               child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
+                behavior: HitTestBehavior.translucent,
                 onScaleEnd: _onScaleEnd,
                 onScaleStart: _onScaleStart,
                 onScaleUpdate: _onScaleUpdate,
@@ -2631,8 +2637,7 @@ class _ZoomState extends State<Zoom>
                                 return scrollData.length == 0
                                     ? Container()
                                     : Positioned(
-                                        top: parentSize.height -
-                                            widget.scrollWeight,
+                                        bottom: widget.scrollWeight,
                                         left: scrollData.position,
                                         child: Container(
                                           decoration: BoxDecoration(
@@ -2646,7 +2651,7 @@ class _ZoomState extends State<Zoom>
                                                 topRight: Radius.circular(
                                                     widget.radiusScrollBars),
                                               )),
-                                          height: widget.scrollWeight,
+                                          height: 20,
                                           width: scrollData.length,
                                         ),
                                       );

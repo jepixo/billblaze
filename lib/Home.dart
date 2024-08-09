@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'package:animate_do/animate_do.dart';
 import 'package:billblaze/colors.dart';
@@ -9,6 +10,7 @@ import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/main.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/screens/layout_designer.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -85,8 +87,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       });
     // sliderController.forward();
     _startDataUpdate();
-    squiggleFadeAnimationController = AnimationController(vsync: this);
-    sliderFadeAnimationController = AnimationController(vsync: this);
+    squiggleFadeAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
+    sliderFadeAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     titleFontFadeController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     if (ref.read(layProvider)) {
@@ -100,9 +104,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   @override
   void dispose() {
     _timer?.cancel();
-    squiggleFadeAnimationController.dispose();
-    sliderFadeAnimationController.dispose();
-    sliderController.dispose();
+    // squiggleFadeAnimationController.dispose();
+    // sliderFadeAnimationController.dispose();
+    // sliderController.dispose();
     super.dispose();
   }
 
@@ -819,7 +823,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 //appinio cards
                 AnimatedPositioned(
                   duration: defaultDuration,
-                  top: topPadPosDistance
+                  top:Platform.isWindows? topPadPosDistance + 10:5
                   // +
                   //     topPadGraphDistance +
                   //     topPadCardsDistance
@@ -907,8 +911,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 Positioned(
                   // duration: defaultDuration,
                   top: 0,
-                  left: sWidth / 12.5,
-                  height: sWidth / 12.5,
+                  left: sWidth / 10.5,
+                  height: sWidth / 10.5,
                   width: sHeight,
                   child: Consumer(builder: (context, ref, c) {
                     return Transform.rotate(
@@ -917,14 +921,18 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(0),
                         child: CurvedNavigationBar(
-                          disp: 40 / (sWidth / 1100),
+                          disp: Platform.isWindows
+                              ? 60 / (sWidth / 800)
+                              : 40 / (sWidth / 1100),
                           bgHeight: sWidth / 1.8,
                           index: appinioLoop ? 0 : 1,
                           radius: 0,
                           width: sHeight,
                           s: 0.18,
                           bottom: 0.7,
-                          height: 80 * (sWidth / 1500),
+                          height: Platform.isWindows
+                              ? 40 * ((sWidth+ sHeight )/1200)
+                              : 50,
                           animationDuration: Duration(milliseconds: 300),
                           backgroundColor: Colors.transparent,
                           color: Colors.green,
@@ -976,6 +984,123 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     );
                   }),
                 )
+
+                // Windows top bar
+                ,
+                if (Platform.isWindows)
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onPanStart: (details) {
+                      appWindow.startDragging();
+                    },
+                    onDoubleTap: () {
+                      appWindow.maximizeOrRestore();
+                    },
+                    child: Container(
+                      color: Colors.transparent,
+                      height: 40,
+                      child: Row(
+                        children: [
+                          Text(
+                            '',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Spacer(),
+                          //minimize button
+                          ElevatedLayerButton(
+                            // isTapped: false,
+                            // toggleOnTap: true,
+                            onClick: () {
+                              Future.delayed(Durations.medium1).then((y) {
+                                appWindow.minimize();
+                              });
+                            },
+                            buttonHeight: 30,
+                            buttonWidth: 30,
+                            borderRadius: BorderRadius.circular(5),
+                            animationDuration:
+                                const Duration(milliseconds: 100),
+                            animationCurve: Curves.ease,
+                            topDecoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Icon(
+                              TablerIcons.rectangle,
+                              size: 15,
+                              // color: Colors.blue,
+                            ),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.green,
+                              border: Border.all(),
+                            ),
+                          ),
+                          //maximize button
+                          ElevatedLayerButton(
+                            // isTapped: false,
+                            // toggleOnTap: true,
+                            onClick: () {
+                              Future.delayed(Durations.medium1).then((y) {
+                                appWindow.maximizeOrRestore();
+                              });
+                            },
+                            buttonHeight: 30,
+                            buttonWidth: 30,
+                            borderRadius: BorderRadius.circular(5),
+                            animationDuration:
+                                const Duration(milliseconds: 100),
+                            animationCurve: Curves.ease,
+                            topDecoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Icon(
+                              TablerIcons.triangle,
+                              size: 14,
+                              // color: Colors.amber,
+                            ),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.green,
+                              border: Border.all(),
+                            ),
+                          ),
+                          //close button
+                          ElevatedLayerButton(
+                            // isTapped: false,
+                            // toggleOnTap: true,
+                            onClick: () {
+                              Future.delayed(Durations.medium1).then((y) {
+                                appWindow.close();
+                              });
+                            },
+                            buttonHeight: 30,
+                            buttonWidth: 30,
+                            borderRadius: BorderRadius.circular(5),
+                            animationDuration:
+                                const Duration(milliseconds: 100),
+                            animationCurve: Curves.ease,
+                            topDecoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Icon(
+                              TablerIcons.circle,
+                              size: 15,
+                              // color: Colors.red,
+                            ),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.green,
+                              border: Border.all(),
+                            ),
+                          ),
+                          //space
+                          SizedBox(
+                            width: 10,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -2159,7 +2284,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             //LayoutList
             AnimatedPositioned(
               duration: Durations.extralong2,
-              top: lay ? topPadPosDistance : sHeight,
+              top: lay
+                  ? Platform.isWindows
+                      ? topPadPosDistance + 10
+                      : 5
+                  : sHeight,
               right: 2,
               height: sHeight / 1.1,
               width: sWidth / 2.05,

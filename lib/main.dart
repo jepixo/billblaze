@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:billblaze/Home.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
@@ -13,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +31,18 @@ Future<void> main() async {
   Hive.registerAdapter(LayoutModelAdapter());
   // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
-  await Hive.box<LayoutModel>('layouts').clear();
+  // await Hive.box<LayoutModel>('layouts').clear();
   runApp(const ProviderScope(child: MainApp()));
+  if (Platform.isWindows) {
+  doWhenWindowReady(() {
+    final win = appWindow;
+    win.minSize = Size(700, 400);
+    
+    win.size = Size(800, 600);
+    win.alignment = Alignment.center;
+    win.show();
+  });
+}
 }
 
 class MainApp extends StatefulWidget {
