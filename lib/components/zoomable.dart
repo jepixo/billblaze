@@ -2256,7 +2256,9 @@ class _ZoomState extends State<Zoom>
 
   void _receivedPointerSignal(PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      if (_isAltPressed) {
+      if (true
+        // _isAltPressed
+        ) {
         // Alt key is pressed, perform zoom
         double scaleChange = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
         _transformationController!.value = _matrixScale(

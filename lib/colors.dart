@@ -19,10 +19,12 @@ class ColorPalette {
   Color white;
   Color black;
   Color transparent;
+  List<Color> extras;
   ColorPalette(
       {required this.primary,
       required this.secondary,
       required this.tertiary,
+      this.extras=const[],
       this.quaternary,
       this.white = Colors.white,
       this.black = Colors.black,
@@ -124,5 +126,8 @@ ColorPalette darkPalette = ColorPalette(
 
 ColorPalette againPalette = ColorPalette(
     primary: Colors.white,
-    secondary: Colors.black.withOpacity(0.02),
-    tertiary: Colors.green);
+    secondary: Color(0xFFfcfcfc),
+    tertiary: Colors.green,
+    quaternary: Color(0xFF1C110A),
+    extras: [Color(0xff293132), Color(0xffF9DC5C), Color(0xffC4D7F2), Color(0xffFDE8E9) ]
+    );

@@ -32,6 +32,10 @@ final layProvider = StateProvider<bool>((ref) {
   return false;
 });
 
+final pgPropsEnableProvider = StateProvider<bool>((ref) {
+  return true;
+});
+
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
@@ -62,11 +66,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   // int _currentCardIndex = 0;
 
   double _cardPosition = 0;
-  AppinioSwiperController recentsCardController = AppinioSwiperController();
+  late AppinioSwiperController recentsCardController;
   late AnimationController squiggleFadeAnimationController;
   late AnimationController sliderFadeAnimationController;
   late AnimationController sliderController;
   late AnimationController titleFontFadeController;
+  Orientation? _lastOrientation;
   // bool appinioLoop = true;
   Key titleMainKey = GlobalKey();
 
@@ -74,6 +79,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // _initializeDataPoints();
+    recentsCardController = AppinioSwiperController();
     sliderController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 80),
@@ -104,9 +110,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   @override
   void dispose() {
     _timer?.cancel();
-    // squiggleFadeAnimationController.dispose();
-    // sliderFadeAnimationController.dispose();
-    // sliderController.dispose();
+    squiggleFadeAnimationController.dispose();
+    sliderFadeAnimationController.dispose();
+    sliderController.dispose();
+    // recentsCardController.dispose();
     super.dispose();
   }
 
@@ -114,13 +121,26 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   // void didUpdateWidget(covariant Home oldWidget) {
   //   // TODO: implement didUpdateWidget
   //   super.didUpdateWidget(oldWidget);
-  //   _homeTabSwitched(1, ref);
+  //   if (ref.read(layProvider)) {
+  //     _homeTabSwitched(1, ref);
+  //   }
   // }
 
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
     super.didChangeDependencies();
+    final currentOrientation = MediaQuery.of(context).orientation;
+    if (_lastOrientation != currentOrientation) {
+      _lastOrientation = currentOrientation;
+      // Your specific code to run when orientation
+      if (ref.read(layProvider)) {
+        _homeTabSwitched(1, ref);
+        Future.delayed(Durations.short3).then((u) {
+           _homeTabSwitched(1, ref);
+        });
+      }
+    }
     if (ref.read(layProvider)) {
       _homeTabSwitched(1, ref);
     }
@@ -823,7 +843,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 //appinio cards
                 AnimatedPositioned(
                   duration: defaultDuration,
-                  top:Platform.isWindows? topPadPosDistance + 10:5
+                  top: Platform.isWindows ? topPadPosDistance + 10 : 5
                   // +
                   //     topPadGraphDistance +
                   //     topPadCardsDistance
@@ -931,7 +951,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           s: 0.18,
                           bottom: 0.7,
                           height: Platform.isWindows
-                              ? 40 * ((sWidth+ sHeight )/1200)
+                              ? 40 * ((sWidth + sHeight) / 1200)
                               : 50,
                           animationDuration: Duration(milliseconds: 300),
                           backgroundColor: Colors.transparent,

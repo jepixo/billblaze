@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:math';
+import 'package:billblaze/Home.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -10,6 +11,8 @@ import 'package:expandable_menu/expandable_menu.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_quill/extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:billblaze/components/flutter_balloon_slider.dart';
@@ -123,7 +126,7 @@ class SelectedIndex {
 //
 //
 //
-class LayoutDesigner3 extends StatefulWidget {
+class LayoutDesigner3 extends ConsumerStatefulWidget {
   final int? id;
   final int? index;
   const LayoutDesigner3({
@@ -133,10 +136,10 @@ class LayoutDesigner3 extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<LayoutDesigner3> createState() => _LayoutDesigner3State();
+  ConsumerState<LayoutDesigner3> createState() => _LayoutDesigner3State();
 }
 
-class _LayoutDesigner3State extends State<LayoutDesigner3>
+class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     with SingleTickerProviderStateMixin {
   double hDividerPosition = 0.5;
   double vDividerPosition = 0.55;
@@ -220,6 +223,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
   int keyIndex = 0;
   SystemMouseCursor _cursor = SystemMouseCursors.basic;
   Timer? _timer;
+  TextEditingController layoutName = TextEditingController();
+  late String initialLayoutName;
+  bool nameExists = false;
+  final FocusNode layoutNamefocusNode = FocusNode();
   //
   //
   //
@@ -238,10 +245,12 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     var box = Boxes.getLayouts();
     if (key == -1) {
       print('create new layout');
+      layoutName.text = Boxes.getLayoutName();
+      initialLayoutName = layoutName.text;
       lm = LayoutModel(
           createdAt: DateTime.now(),
           modifiedAt: DateTime.now(),
-          name: Boxes.getLayoutName(),
+          name: layoutName.text,
           docPropsList: [],
           spreadSheetList: [],
           id: Uuid().v4());
@@ -269,6 +278,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
       print(lm?.docPropsList);
       spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
+      layoutName.text = lm!.name;
+      initialLayoutName = layoutName.text;
       print(documentPropertiesList.isEmpty);
       if (documentPropertiesList.isEmpty) {
         _addPdfPage();
@@ -278,6 +289,19 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     // _updatePdfPreview('');
     tabcunt = TabController(length: 2, vsync: this);
     globalKeys = List.generate(1000, (_) => GlobalKey());
+  }
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    setState(() {
+      var x = 80 / sHeight;
+      wVDividerPosition = wVDividerPosition.clamp(x, 1);
+      if (!ref.read(pgPropsEnableProvider)) {
+        wVDividerPosition = 20 / sHeight;
+      }
+    });
   }
 
   @override
@@ -1333,6 +1357,26 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
     lm[keyIndex].save();
   }
 
+  void _checkLayoutName() {
+    var layouts =
+        Boxes.getLayouts().values.map((layout) => layout.name).toList();
+    setState(() {
+      nameExists = layouts.contains(layoutName.text);
+    });
+  }
+
+  void _onFieldFocusChange(bool hasFocus) {
+    if (!hasFocus && nameExists) {
+      layoutName.text = initialLayoutName;
+      setState(() {
+        nameExists = false;
+      });
+    } else {
+      Boxes.getLayouts().values.toList()[keyIndex].name = layoutName.text;
+      Boxes.getLayouts().values.toList()[keyIndex].save();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     print('________BUILD LAYOUT STARTED LD_________');
@@ -1562,29 +1606,35 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                             onHover: (PointerHoverEvent event) {
                               Offset position = event.localPosition;
                               Size? widgetSize = context.size;
-                              setState(() {
-                                // Change the cursor based on position
-                                if (widgetSize == null)
+
+                              // Change the cursor based on position
+                              if (widgetSize == null) {
+                                setState(() {
                                   _cursor = SystemMouseCursors.basic;
+                                });
+                              }
 
-                                // Define the edge proximity threshold
-                                const edgeThreshold = 10.0;
+                              // Define the edge proximity threshold
+                              const edgeThreshold = 10.0;
 
-                                // Check if the cursor is near the edges and set the cursor style accordingly
-                                if (position.dx < edgeThreshold ||
-                                    position.dx >
-                                        (widgetSize?.width ?? 0) -
-                                            edgeThreshold) {
+                              // Check if the cursor is near the edges and set the cursor style accordingly
+                              if (position.dx < edgeThreshold ||
+                                  position.dx >
+                                      (widgetSize?.width ?? 0) -
+                                          edgeThreshold) {
+                                setState(() {
                                   _cursor = SystemMouseCursors.resizeColumn;
-                                } else if (position.dy < edgeThreshold ||
-                                    position.dy >
-                                        (widgetSize?.height ?? 0) -
-                                            edgeThreshold) {
-                                  // _cursor = SystemMouseCursors.resizeRow;
-                                } else {
-                                  _cursor = SystemMouseCursors.basic;
-                                }
-                              });
+                                });
+                              } else if (position.dy < edgeThreshold ||
+                                  position.dy >
+                                      (widgetSize?.height ?? 0) -
+                                          edgeThreshold) {
+                                // _cursor = SystemMouseCursors.resizeRow;
+                              } else {
+                                setState(() {
+                                  // _cursor = SystemMouseCursors.basic;
+                                });
+                              }
                             },
                             child: GestureDetector(
                               onPanUpdate: (details) {
@@ -2743,1413 +2793,1452 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                         Positioned(
                           width: sWidth * (wH2DividerPosition),
                           top: Platform.isAndroid ? 35 : 0,
-                          // height: sHeight * (Platform.isAndroid ? 0.85 : 0.93),
-                          height: Platform.isAndroid
-                              ? sHeight * 0.85
-                              : sHeight ,
+                          height: Platform.isAndroid ? sHeight * 0.85 : sHeight,
                           left: sWidth * (1 - wH2DividerPosition),
-                          // height: sHeight * 0.9,
-                          // flex: ((wH2DividerPosition) * 10000).round(),
-                          child: MouseRegion(
-                            cursor: _cursor,
-                            onHover: (PointerHoverEvent event) {
-                              Offset position = event.localPosition;
-                              Size? widgetSize = context.size;
+                          child: GestureDetector(
+                            onTap: () {
+                              transformationcontroller
+                                  .toScene(Offset(200, 300));
+                            },
+                            onPanUpdate: (details) {
+                              if (_cursor == SystemMouseCursors.resizeColumn) {
+                                double newPosition = ((0.9 -
+                                            wH2DividerPosition -
+                                            wH1DividerPosition) +
+                                        details.delta.dx / context.size!.width)
+                                    .clamp(0.1, 0.6);
+                                setState(() {
+                                  wH2DividerPosition =
+                                      (newPosition - .9 + wH1DividerPosition)
+                                          .abs()
+                                          .clamp(0.2, 0.9);
+                                  _cursor = SystemMouseCursors.basic;
+                                });
+                              }
+                            },
+                            onPanEnd: (details) {
                               setState(() {
-                                // Change the cursor based on position
-                                if (widgetSize == null)
-                                  _cursor = SystemMouseCursors.basic;
-
-                                // Define the edge proximity threshold
-                                const edgeThreshold = 10.0;
-
-                                // Check if the cursor is near the edges and set the cursor style accordingly
-                                if (position.dx < edgeThreshold ||
-                                    position.dx >
-                                        (widgetSize?.width ?? 0) -
-                                            edgeThreshold) {
-                                  _cursor = SystemMouseCursors.resizeColumn;
-                                } else if (position.dy < edgeThreshold ||
-                                    position.dy >
-                                        (widgetSize?.height ?? 0) -
-                                            edgeThreshold) {
-                                  _cursor = SystemMouseCursors.resizeRow;
-                                } else {
-                                  _cursor = SystemMouseCursors.basic;
-                                }
+                                _cursor = SystemMouseCursors.basic;
                               });
                             },
-                            child: GestureDetector(
-                              onTap: () {
-                                transformationcontroller
-                                    .toScene(Offset(200, 300));
-                              },
-                              onPanUpdate: (details) {
-                                if (_cursor ==
-                                    SystemMouseCursors.resizeColumn) {
-                                  double newPosition = ((0.9 -
-                                              wH2DividerPosition -
-                                              wH1DividerPosition) +
-                                          details.delta.dx /
-                                              context.size!.width)
-                                      .clamp(0.1, 0.6);
-                                  setState(() {
-                                    wH2DividerPosition =
-                                        (newPosition - .9 + wH1DividerPosition)
-                                            .abs()
-                                            .clamp(0.2, 0.9);
-                                  });
-                                }
-                              },
-                              child:
-                                  //prppos container for rounded borders
-                                  Container(
-                                margin: EdgeInsets.only(right: 6, left: 6),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(0),
-                                  color: Colors.black.withOpacity(0.00),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(0),
-                                  child:
-                                      //prppos Stack
-                                      Stack(
+                            child:
+                                //prppos container for rounded borders
+                                Container(
+                              margin: EdgeInsets.only(right: 6, left: 6),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(0),
+                                color: Colors.black.withOpacity(0.00),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(0),
+                                child:
+                                    //prppos Stack
+                                    Consumer(builder: (context, ref, c) {
+                                  return Stack(
                                     children: [
+                                     //Properties botomTool Bar parent
+                                      if (ref.watch(pgPropsEnableProvider))
+                                        Positioned(
+                                            top: sHeight * wVDividerPosition -
+                                                (Platform.isAndroid ? 40 : 30),
+                                            height:
+                                                (Platform.isAndroid ? 35 : 30),
+                                            width: sWidth * wH2DividerPosition -
+                                                12,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.extras[1],
+                                                borderRadius: BorderRadius.only(
+                                                    bottomLeft: Radius.circular(
+                                                        Platform.isAndroid
+                                                            ? 26
+                                                            : 30),
+                                                    bottomRight:
+                                                        Radius.circular(26)),
+                                              ),
+                                            )),
+ 
+                                      // porperties Tab Parent
                                       Positioned(
-                                        height: (sHeight * wVDividerPosition),
+                                        top: 0,
+                                        height: Platform.isAndroid
+                                            ? ref.watch(pgPropsEnableProvider)
+                                                ? (sHeight * wVDividerPosition) -20
+                                                : 25
+                                            : (sHeight * wVDividerPosition) -
+                                                20,
                                         width: sWidth * wH2DividerPosition - 10,
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10),
+                                          padding: EdgeInsets.only(
+                                              top: Platform.isAndroid ? 20 : 40,
+                                              left: 5,
+                                              right: 5,
+                                              bottom:0),
                                           decoration: BoxDecoration(
                                               borderRadius: BorderRadius.only(
-                                                  bottomLeft:
-                                                      Radius.circular(30),
-                                                  bottomRight:
-                                                      Radius.circular(30)),
-                                              color: Colors.amber),
+                                                  bottomLeft: Radius.circular(
+                                                    Platform.isAndroid
+                                                        ? ref.watch(
+                                                                pgPropsEnableProvider)
+                                                            ? 25
+                                                            : 0
+                                                        : 5,
+                                                  ),
+                                                  bottomRight: Radius.circular(
+                                                    Platform.isAndroid
+                                                        ? ref.watch(
+                                                                pgPropsEnableProvider)
+                                                            ? 30
+                                                            : 0
+                                                        : 5,
+                                                  )),
+                                              color: defaultPalette.extras[1],
+                                              border: Border.all(
+                                                  width: 5,
+                                                  color: defaultPalette
+                                                      .extras[1])),
                                           child:
 
-                                              ///LEFT TITLE PAGE PROPS //Desktop WEB
-                                              Material(
-                                            color: defaultPalette.transparent,
-                                            child: SingleChildScrollView(
-                                              physics: BouncingScrollPhysics(),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Stack(
-                                                    children: [
-                                                      Container(
-                                                        height: 55,
-                                                      ),
-                                                      //LeftScreen tilte
-                                                      Container(
-                                                        height: 55,
-                                                        margin: EdgeInsets.only(
-                                                            left: 10,
-                                                            top: 8,
-                                                            bottom: 5),
-                                                        width:
-                                                            ((wH2DividerPosition) *
-                                                                sWidth),
-                                                        child: Text(
-                                                            vDividerPosition <
-                                                                    0.45
-                                                                ? 'PG \nPRP'
-                                                                : 'Page Properties',
-                                                            maxLines: 2,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .fade,
-                                                            style: TextStyle(
+                                              ///RIGHT TITLE PAGE PROPS //Desktop WEB
+                                              ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            child: Container(
+                                              padding: EdgeInsets.only(
+                                                  top: Platform.isAndroid
+                                                      ? 0
+                                                      : 0,
+                                                  left: 5,
+                                                  right: 5,
+                                                  bottom:0),
+                                              color: defaultPalette.primary,
+                                              child: SingleChildScrollView(
+                                                physics: CustomScrollPhysics(
+                                                    scrollFactor: 0.05),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    SizedBox(height: 20,),
+                                                    //pageNumber //delete //potrtait landscape aNCESTOR
+                                                    SizedBox(
+                                                      height: Platform.isAndroid
+                                                          ? textFieldHeight / 2
+                                                          : textFieldHeight / 2,
+                                                      width: sWidth *
+                                                              wH2DividerPosition -
+                                                          10,
+
+                                                      ///Stack For title, field, delete, portrait, landscape
+                                                      child: Stack(
+                                                        children: [
+                                                          Positioned(
+                                                              height: Platform
+                                                                      .isAndroid
+                                                                  ? textFieldHeight /
+                                                                      2
+                                                                  : textFieldHeight /
+                                                                      2,
+                                                              width: (sWidth *
+                                                                          wH2DividerPosition -
+                                                                      10) *
+                                                                  0.2,
+                                                              child: Text(
+                                                                'Page',
+                                                                style: GoogleFonts
+                                                                    .bungee(),
+                                                              )),
+
+                                                          ///PAGE COUNT TEXT Field
+                                                          Positioned(
+                                                            height: Platform
+                                                                    .isAndroid
+                                                                ? textFieldHeight /
+                                                                    2
+                                                                : textFieldHeight /
+                                                                    2,
+                                                            left: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.2,
+                                                            width: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.3,
+                                                            child:
+                                                                TextFormField(
+                                                              cursorColor:
+                                                                  defaultPalette
+                                                                      .tertiary,
+                                                              controller: documentPropertiesList[
+                                                                      currentPageIndex]
+                                                                  .pageNumberController,
+                                                              inputFormatters: [
+                                                                FilteringTextInputFormatter
+                                                                    .allow(RegExp(
+                                                                        r'^\d*\.?\d*$'))
+                                                              ],
+                                                              textAlignVertical:
+                                                                  TextAlignVertical
+                                                                      .top,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              decoration:
+                                                                  InputDecoration(
+                                                                contentPadding:
+                                                                    EdgeInsets
+                                                                        .all(0),
+                                                                filled: true,
+                                                                fillColor:
+                                                                    defaultPalette
+                                                                        .primary,
+                                                                border:
+                                                                    OutlineInputBorder(
+                                                                  // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              5), // Replace with your desired radius
+                                                                ),
+                                                                enabledBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          width:
+                                                                              2,
+                                                                          color:
+                                                                              defaultPalette.black),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              5), // Same as border
+                                                                ),
+                                                                disabledBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide: BorderSide(
+                                                                      width:
+                                                                          1.2,
+                                                                      color: defaultPalette
+                                                                          .black),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              6), // Same as border
+                                                                ),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          width:
+                                                                              3,
+                                                                          color:
+                                                                              defaultPalette.tertiary),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              5), // Same as border
+                                                                ),
+                                                              ),
+                                                              keyboardType:
+                                                                  TextInputType
+                                                                      .number,
+                                                              style: GoogleFonts
+                                                                  .bungee(
+                                                                      color: defaultPalette
+                                                                          .black,
+                                                                      fontSize:
+                                                                          12),
+                                                              enabled: false,
+                                                            ),
+                                                          ),
+                                                          //DELETE ICON
+                                                          Positioned(
+                                                            left: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.5,
+                                                            width: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.1,
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                _confirmDeleteLayout(
+                                                                    deletePage:
+                                                                        true);
+                                                                pdfScrollController.animateTo(
+                                                                    currentPageIndex *
+                                                                        ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
+                                                                            16),
+                                                                    duration: Duration(
+                                                                        milliseconds:
+                                                                            100),
+                                                                    curve: Curves
+                                                                        .easeIn);
+                                                              },
+                                                              child: Icon(
+                                                                TablerIcons
+                                                                    .trash,
                                                                 color:
                                                                     defaultPalette
                                                                         .black,
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold)),
-                                                      ),
-                                                      //nextprev buittons
-                                                      Positioned(
-                                                        right: 30,
-                                                        top: 12,
-                                                        child: Container(
-                                                          decoration: BoxDecoration(
-                                                              color:
-                                                                  defaultPalette
-                                                                      .tertiary,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8)),
-                                                          margin:
-                                                              EdgeInsets.only(
-                                                                  top: 5),
-                                                          height: 30,
-                                                          width: 50,
-                                                          child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceAround,
-                                                            children: [
-                                                              GestureDetector(
-                                                                child: Icon(
-                                                                  Icons
-                                                                      .keyboard_arrow_left_sharp,
-                                                                  color:
-                                                                      defaultPalette
-                                                                          .black,
-                                                                ),
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    print(
-                                                                        '________PREV PAGE STARTED LD_________');
-                                                                    if (currentPageIndex ==
-                                                                        0) {
-                                                                      pdfScrollController.animateTo(
-                                                                          currentPageIndex *
-                                                                              ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
-                                                                                  16),
-                                                                          duration: Duration(
-                                                                              milliseconds:
-                                                                                  100),
-                                                                          curve:
-                                                                              Curves.easeIn);
-                                                                      return;
-                                                                    }
-                                                                    currentPageIndex--;
-
-                                                                    pdfScrollController.animateTo(
-                                                                        currentPageIndex *
-                                                                            ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
-                                                                                16),
-                                                                        duration: Duration(
-                                                                            milliseconds:
-                                                                                100),
-                                                                        curve: Curves
-                                                                            .easeIn);
-                                                                  });
-                                                                  print(
-                                                                      '________END PREV PAGE LD_________');
-                                                                },
+                                                                size: 20,
                                                               ),
-                                                              GestureDetector(
+                                                            ),
+                                                          ),
+                                                          //portrait button
+                                                          Positioned(
+                                                            left: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.63,
+                                                            width: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.1,
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .orientationController =
+                                                                      pw.PageOrientation
+                                                                          .portrait;
+                                                                });
+                                                              },
+                                                              child:
+                                                                  AnimatedContainer(
+                                                                duration:
+                                                                    Durations
+                                                                        .medium4,
+                                                                decoration: BoxDecoration(
+                                                                    color: !(documentPropertiesList[currentPageIndex].orientationController ==
+                                                                            pw.PageOrientation
+                                                                                .portrait)
+                                                                        ? Colors
+                                                                            .white
+                                                                        : defaultPalette.extras[
+                                                                            1],
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            5)),
                                                                 child: Icon(
-                                                                  Icons
-                                                                      .keyboard_arrow_right_sharp,
+                                                                  TablerIcons
+                                                                      .crop_portrait,
                                                                   color:
                                                                       defaultPalette
                                                                           .black,
+                                                                  size: 20,
                                                                 ),
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    print(
-                                                                        '________NEXT PAGE STARTED LD_________');
-                                                                    if (pageCount ==
-                                                                        (currentPageIndex +
-                                                                            1)) {
-                                                                      _addPdfPage();
+                                                              ),
+                                                            ),
+                                                          ),
 
-                                                                      currentPageIndex++;
-                                                                      pdfScrollController.animateTo(
-                                                                          currentPageIndex *
-                                                                              ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) +
-                                                                                  6),
-                                                                          duration: Duration(
-                                                                              milliseconds:
-                                                                                  100),
-                                                                          curve:
-                                                                              Curves.easeIn);
+                                                          //landscape button filled
+                                                          Positioned(
+                                                            left: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.73,
+                                                            width: (sWidth *
+                                                                        wH2DividerPosition -
+                                                                    10) *
+                                                                0.1,
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .orientationController =
+                                                                      pw.PageOrientation
+                                                                          .landscape;
+                                                                });
+                                                              },
+                                                              child:
+                                                                  AnimatedContainer(
+                                                                duration:
+                                                                    Durations
+                                                                        .medium4,
+                                                                decoration: BoxDecoration(
+                                                                    color: !(documentPropertiesList[currentPageIndex].orientationController ==
+                                                                            pw.PageOrientation
+                                                                                .landscape)
+                                                                        ? Colors
+                                                                            .white
+                                                                        : defaultPalette.extras[
+                                                                            1],
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            5)),
+                                                                child: Icon(
+                                                                  TablerIcons
+                                                                      .crop_landscape,
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .black,
+                                                                  size: 20,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+//Space
+                                                    SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    // MARGIN Main, ORIENTATION, FORMAT
+                                                    Column(
+                                                      children: [
+                                                        //Margin TiTle
+                                                        SizedBox(
+                                                          height:
+                                                              textFieldHeight /
+                                                                  2,
+                                                          child: Row(
+                                                            children: [
+                                                              Text(
+                                                                'Margin',
+                                                                style: GoogleFonts
+                                                                    .bungee(),
+                                                              ),
 
-                                                                      print(
-                                                                          '________END NEXT PAGE LD_________');
-                                                                      return;
-                                                                    }
+                                                              SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              //Margin ONE Field
+                                                              Expanded(
+                                                                child:
+                                                                    TextFormField(
+                                                                  onTapOutside:
+                                                                      (event) {
+                                                                    marginAllFocus
+                                                                        .unfocus();
+                                                                  },
+                                                                  obscureText:
+                                                                      documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .useIndividualMargins,
+                                                                  focusNode:
+                                                                      marginAllFocus,
+                                                                  controller: documentPropertiesList[
+                                                                          currentPageIndex]
+                                                                      .marginAllController,
+                                                                  inputFormatters: [
+                                                                    NumericInputFormatter(
+                                                                        maxValue:
+                                                                            documentPropertiesList[currentPageIndex].pageFormatController.width /
+                                                                                2.001)
+                                                                  ],
+                                                                  textAlignVertical:
+                                                                      TextAlignVertical
+                                                                          .top,
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  decoration:
+                                                                      InputDecoration(
+                                                                    contentPadding:
+                                                                        EdgeInsets
+                                                                            .all(0),
+                                                                    floatingLabelAlignment:
+                                                                        FloatingLabelAlignment
+                                                                            .center,
+                                                                    labelStyle:
+                                                                        GoogleFonts.lexend(
+                                                                            color:
+                                                                                defaultPalette.black),
+                                                                    filled:
+                                                                        true,
+                                                                    fillColor: !documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .useIndividualMargins
+                                                                        ? defaultPalette
+                                                                            .primary
+                                                                        : defaultPalette
+                                                                            .primary
+                                                                            .withOpacity(0.5),
+                                                                    border:
+                                                                        OutlineInputBorder(
+                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              5.0), // Replace with your desired radius
+                                                                    ),
+                                                                    enabledBorder:
+                                                                        OutlineInputBorder(
+                                                                      borderSide: BorderSide(
+                                                                          width:
+                                                                              1.2,
+                                                                          color:
+                                                                              defaultPalette.black),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              5.0), // Same as border
+                                                                    ),
+                                                                    focusedBorder:
+                                                                        OutlineInputBorder(
+                                                                      borderSide: BorderSide(
+                                                                          width:
+                                                                              1.5,
+                                                                          color:
+                                                                              defaultPalette.tertiary),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              5.0), // Same as border
+                                                                    ),
+                                                                  ),
+                                                                  keyboardType:
+                                                                      TextInputType
+                                                                          .number,
+                                                                  style: GoogleFonts
+                                                                      .bungee(
+                                                                          // fontStyle: FontStyle.italic,
+                                                                          fontSize:
+                                                                              12,
+                                                                          color:
+                                                                              defaultPalette.black),
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    // setState(() {
 
-                                                                    currentPageIndex++;
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .marginTopController
+                                                                        .text = value;
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .marginBottomController
+                                                                        .text = value;
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .marginLeftController
+                                                                        .text = value;
+                                                                    documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .marginRightController
+                                                                        .text = value;
+                                                                    // _updatePdfPreview(
+                                                                    //     '');
+                                                                    // });
+                                                                  },
+                                                                  enabled: !documentPropertiesList[
+                                                                          currentPageIndex]
+                                                                      .useIndividualMargins,
+                                                                ),
+                                                              ),
 
-                                                                    pdfScrollController.animateTo(
-                                                                        currentPageIndex *
-                                                                            ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) +
-                                                                                6),
-                                                                        duration: Duration(
-                                                                            milliseconds:
-                                                                                100),
-                                                                        curve: Curves
-                                                                            .easeIn);
-                                                                    // ref.read(panelIndexProvider.notifier).state = PanelIndex(
-                                                                    //     id: ref
-                                                                    //         .read(sheetListProviderFamily(ref.read(spreadSheetProvider.select((p) => p[ref.read(currentPageIndexProvider)]
-                                                                    //             .id))))
-                                                                    //         .id,
-                                                                    //     panelIndex:
-                                                                    //         0);
-                                                                    print(
-                                                                        '________END NEXT PAGE LD_________');
-                                                                  });
-                                                                },
-                                                              )
+                                                              SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              //Increase Decrease
+                                                              Column(
+                                                                children: [
+                                                                  //Margin increment button
+                                                                  GestureDetector(
+                                                                    onTap: () {
+                                                                      setState(
+                                                                          () {
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text = (double.parse(documentPropertiesList[currentPageIndex].marginAllController.text) +
+                                                                                1)
+                                                                            .toString();
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginTopController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginBottomController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginLeftController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginRightController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                      });
+
+                                                                      // _updatePdfPreview('');
+                                                                    },
+                                                                    child: Icon(
+                                                                      IconsaxPlusLinear
+                                                                          .arrow_up_1,
+                                                                      size: 10,
+                                                                    ),
+                                                                  ),
+                                                                  //Margin decrement button
+                                                                  GestureDetector(
+                                                                    onTap: () {
+                                                                      setState(
+                                                                          () {
+                                                                        var value = documentPropertiesList[currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text = (double.parse(value) -
+                                                                                1)
+                                                                            .abs()
+                                                                            .toString();
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginTopController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginBottomController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginLeftController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginRightController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                      });
+                                                                      // _updatePdfPreview('');
+                                                                    },
+                                                                    child: Icon(
+                                                                      IconsaxPlusLinear
+                                                                          .arrow_down,
+                                                                      size: 10,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              ////INDIVIDUAL MARGINS BUTTON
+                                                              IconButton(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .all(
+                                                                              0),
+                                                                  onPressed:
+                                                                      () {
+                                                                    setState(
+                                                                        () {
+                                                                      documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .useIndividualMargins = !documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .useIndividualMargins;
+                                                                      if (documentPropertiesList[currentPageIndex]
+                                                                              .useIndividualMargins ==
+                                                                          false) {
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginTopController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginBottomController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginLeftController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                        documentPropertiesList[currentPageIndex]
+                                                                            .marginRightController
+                                                                            .text = documentPropertiesList[
+                                                                                currentPageIndex]
+                                                                            .marginAllController
+                                                                            .text;
+                                                                      }
+                                                                    });
+                                                                  },
+                                                                  icon: documentPropertiesList[
+                                                                              currentPageIndex]
+                                                                          .useIndividualMargins
+                                                                      ? Icon(
+                                                                          IconsaxPlusBold
+                                                                              .maximize_1,
+                                                                          size:
+                                                                              20,
+                                                                        )
+                                                                      : Icon(
+                                                                          IconsaxPlusLinear
+                                                                              .maximize_2,
+                                                                          size:
+                                                                              20,
+                                                                        ))
+                                                              // Text(
+                                                              //     'Use Individual Margins'),
                                                             ],
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  //pageNumber textfiwld
-                                                  SizedBox(
-                                                    height: textFieldHeight,
 
-                                                    ///Stack For Delete
-                                                    child: Stack(
-                                                      children: [
-                                                        ///PAGE COUNT TEXT
-                                                        TextFormField(
-                                                          cursorColor:
-                                                              defaultPalette
-                                                                  .tertiary,
-                                                          controller: documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .pageNumberController,
-                                                          inputFormatters: [
-                                                            FilteringTextInputFormatter
-                                                                .allow(RegExp(
-                                                                    r'^\d*\.?\d*$'))
-                                                          ],
-                                                          textAlignVertical:
-                                                              TextAlignVertical
-                                                                  .top,
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          decoration:
-                                                              InputDecoration(
-                                                            suffixIcon: //Delete page
-                                                                GestureDetector(
-                                                              onTap: () {},
-                                                              child: Icon(
-                                                                Icons
-                                                                    .delete_outline_rounded,
-                                                                color: defaultPalette
-                                                                    .transparent,
+                                                        if (Platform
+                                                                .isAndroid &&
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .useIndividualMargins)
+                                                          Column(
+                                                            children: [
+                                                              SizedBox(
+                                                                height: 10,
                                                               ),
-                                                            ),
-                                                            labelText:
-                                                                'Page Number',
-                                                            labelStyle:
-                                                                TextStyle(
-                                                              color:
-                                                                  defaultPalette
-                                                                      .black,
-                                                              fontSize: 15,
-                                                            ),
-                                                            floatingLabelAlignment:
-                                                                FloatingLabelAlignment
-                                                                    .start,
-                                                            filled: true,
-                                                            fillColor:
-                                                                defaultPalette
-                                                                    .primary,
-                                                            border:
-                                                                OutlineInputBorder(
-                                                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10.0), // Replace with your desired radius
-                                                            ),
-                                                            enabledBorder:
-                                                                OutlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  width: 2,
-                                                                  color:
-                                                                      defaultPalette
-                                                                          .black),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          12.0), // Same as border
-                                                            ),
-                                                            disabledBorder:
-                                                                OutlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  width: 2,
-                                                                  color:
-                                                                      defaultPalette
-                                                                          .black),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          12.0), // Same as border
-                                                            ),
-                                                            focusedBorder:
-                                                                OutlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  width: 3,
-                                                                  color: defaultPalette
-                                                                      .tertiary),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10.0), // Same as border
-                                                            ),
-                                                          ),
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          style: TextStyle(
-                                                              color:
-                                                                  defaultPalette
-                                                                      .black,
-                                                              fontSize: 15),
-                                                          enabled: false,
-                                                          // onChanged:
-                                                          //     (value) {
-                                                          //   _updatePdfPreview;
-                                                          //   _addPdfPage();
-                                                          // }
-                                                        ),
-                                                        //DELETE ICON
-                                                        Positioned(
-                                                          right: 15 / 2,
-                                                          top:
-                                                              (textFieldHeight /
-                                                                      2) -
-                                                                  25 / 2,
-                                                          child:
-                                                              GestureDetector(
-                                                            onTap: () {
-                                                              _confirmDeleteLayout(
-                                                                  deletePage:
-                                                                      true);
-                                                              pdfScrollController.animateTo(
-                                                                  currentPageIndex *
-                                                                      ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
-                                                                          16),
-                                                                  duration: Duration(
-                                                                      milliseconds:
-                                                                          100),
-                                                                  curve: Curves
-                                                                      .easeIn);
-                                                            },
-                                                            child: Icon(
-                                                              Icons
-                                                                  .delete_outline_rounded,
-                                                              color:
-                                                                  defaultPalette
-                                                                      .black,
-                                                              size: 25,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-
-                                                  //LEFT SIDE MARGIN , ORIENTATION, FORMAT
-                                                  Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          Expanded(
-                                                            child: SizedBox(
-                                                              height:
-                                                                  textFieldHeight,
-                                                              child: // TO STACK THE INCREMENT BUTTONS
-                                                                  Stack(
+                                                              Row(
                                                                 children: [
-                                                                  //MARGIN ALL TEXT
-                                                                  TextFormField(
-                                                                    onTapOutside:
-                                                                        (event) {
-                                                                      marginAllFocus
-                                                                          .unfocus();
-                                                                    },
-                                                                    obscureText:
-                                                                        documentPropertiesList[currentPageIndex]
-                                                                            .useIndividualMargins,
-                                                                    focusNode:
-                                                                        marginAllFocus,
-                                                                    controller:
-                                                                        documentPropertiesList[currentPageIndex]
-                                                                            .marginAllController,
-                                                                    inputFormatters: [
-                                                                      NumericInputFormatter(
-                                                                          maxValue:
-                                                                              documentPropertiesList[currentPageIndex].pageFormatController.width / 2.001)
-                                                                    ],
-                                                                    textAlignVertical:
-                                                                        TextAlignVertical
-                                                                            .top,
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .center,
-                                                                    decoration:
-                                                                        InputDecoration(
-                                                                      // alignLabelWithHint:
-                                                                      //     true,
-                                                                      contentPadding:
-                                                                          EdgeInsets.all(
-                                                                              0),
-                                                                      floatingLabelAlignment:
-                                                                          FloatingLabelAlignment
-                                                                              .center,
-                                                                      labelText:
-                                                                          'Margin',
-                                                                      labelStyle:
-                                                                          GoogleFonts.lexend(
-                                                                              color: defaultPalette.black),
-                                                                      filled:
-                                                                          true,
-                                                                      fillColor: !documentPropertiesList[currentPageIndex].useIndividualMargins
-                                                                          ? defaultPalette
-                                                                              .primary
-                                                                          : defaultPalette
-                                                                              .primary
-                                                                              .withOpacity(0.5),
-                                                                      border:
-                                                                          OutlineInputBorder(
-                                                                        // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                      ),
-                                                                      enabledBorder:
-                                                                          OutlineInputBorder(
-                                                                        borderSide: BorderSide(
-                                                                            width:
-                                                                                2,
-                                                                            color:
-                                                                                defaultPalette.black),
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(12.0), // Same as border
-                                                                      ),
-                                                                      focusedBorder:
-                                                                          OutlineInputBorder(
-                                                                        borderSide: BorderSide(
-                                                                            width:
-                                                                                3,
-                                                                            color:
-                                                                                defaultPalette.tertiary),
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10.0), // Same as border
-                                                                      ),
-                                                                    ),
-                                                                    keyboardType:
-                                                                        TextInputType
-                                                                            .number,
-                                                                    style: TextStyle(
-                                                                        // fontStyle: FontStyle.italic,
-                                                                        color: defaultPalette.black),
-                                                                    onChanged:
-                                                                        (value) {
-                                                                      // setState(() {
-
-                                                                      documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginTopController
-                                                                          .text = value;
-                                                                      documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginBottomController
-                                                                          .text = value;
-                                                                      documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginLeftController
-                                                                          .text = value;
-                                                                      documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginRightController
-                                                                          .text = value;
-                                                                      // _updatePdfPreview(
-                                                                      //     '');
-                                                                      // });
-                                                                    },
-                                                                    enabled: !documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .useIndividualMargins,
-                                                                  ),
-
-                                                                  Positioned(
-                                                                    top: (textFieldHeight /
-                                                                            2) -
-                                                                        15 / 2,
-                                                                    left: (textFieldHeight /
-                                                                            2) -
-                                                                        15 / 2,
+                                                                  //TOP MARGIN
+                                                                  Expanded(
                                                                     child:
-                                                                        GestureDetector(
-                                                                      onTap:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          var value = documentPropertiesList[currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text = (double.parse(value) -
-                                                                                  1)
-                                                                              .abs()
-                                                                              .toString();
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginTopController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginBottomController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginLeftController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginRightController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                        });
-                                                                        // _updatePdfPreview('');
-                                                                      },
+                                                                        //TOP MARGIN TEXT
+                                                                        SizedBox(
+                                                                      height:
+                                                                          textFieldHeight,
                                                                       child:
-                                                                          Icon(
-                                                                        IconsaxPlusLinear
-                                                                            .arrow_left_1,
-                                                                        size:
-                                                                            15,
+                                                                          Stack(
+                                                                        children: [
+                                                                          TextFormField(
+                                                                            onTapOutside:
+                                                                                (event) {
+                                                                              marginTopFocus.unfocus();
+                                                                            },
+                                                                            focusNode:
+                                                                                marginTopFocus,
+                                                                            controller:
+                                                                                documentPropertiesList[currentPageIndex].marginTopController,
+                                                                            inputFormatters: [
+                                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                              NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
+                                                                            ],
+                                                                            style:
+                                                                                TextStyle(color: defaultPalette.black),
+                                                                            cursorColor:
+                                                                                defaultPalette.secondary,
+                                                                            textAlign:
+                                                                                TextAlign.center,
+                                                                            textAlignVertical:
+                                                                                TextAlignVertical.top,
+                                                                            decoration:
+                                                                                InputDecoration(
+                                                                              contentPadding: EdgeInsets.all(0),
+                                                                              labelText: 'Top',
+                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                              prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                              suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                              filled: true,
+                                                                              fillColor: defaultPalette.primary,
+                                                                              border: OutlineInputBorder(
+                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                              ),
+                                                                              enabledBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                              ),
+                                                                              focusedBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                              ),
+                                                                            ),
+                                                                            keyboardType:
+                                                                                TextInputType.number,
+                                                                            // onChanged: (value) => _updatePdfPreview(''),
+                                                                          ),
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            left:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toString();
+                                                                                });
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            right:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toString();
+                                                                                });
+
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                  Positioned(
-                                                                    top: (textFieldHeight /
-                                                                            2) -
-                                                                        15 / 2,
-                                                                    right: (textFieldHeight /
-                                                                            2) -
-                                                                        15 / 2,
+                                                                  SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  //BOTTOM MARGIN TEXT
+                                                                  Expanded(
                                                                     child:
-                                                                        GestureDetector(
-                                                                      onTap:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text = (double.parse(documentPropertiesList[currentPageIndex].marginAllController.text) +
-                                                                                  1)
-                                                                              .toString();
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginTopController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginBottomController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginLeftController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                          documentPropertiesList[currentPageIndex]
-                                                                              .marginRightController
-                                                                              .text = documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .marginAllController
-                                                                              .text;
-                                                                        });
-
-                                                                        // _updatePdfPreview('');
-                                                                      },
+                                                                        SizedBox(
+                                                                      height:
+                                                                          textFieldHeight,
                                                                       child:
-                                                                          Icon(
-                                                                        IconsaxPlusLinear
-                                                                            .arrow_right_3,
-                                                                        size:
-                                                                            15,
+                                                                          //STACK FOR INCREDECRE
+                                                                          Stack(
+                                                                        children: [
+                                                                          //BOTTOM TEXT FIELD
+                                                                          TextFormField(
+                                                                            onTapOutside:
+                                                                                (event) {
+                                                                              marginBottomFocus.unfocus();
+                                                                            },
+                                                                            focusNode:
+                                                                                marginBottomFocus,
+                                                                            controller:
+                                                                                documentPropertiesList[currentPageIndex].marginBottomController,
+                                                                            inputFormatters: [
+                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))
+                                                                            ],
+                                                                            style:
+                                                                                TextStyle(color: defaultPalette.black),
+                                                                            cursorColor:
+                                                                                defaultPalette.secondary,
+                                                                            textAlign:
+                                                                                TextAlign.center,
+                                                                            textAlignVertical:
+                                                                                TextAlignVertical.top,
+
+                                                                            ///INPUT DECORATION
+                                                                            decoration:
+                                                                                InputDecoration(
+                                                                              contentPadding: EdgeInsets.all(0),
+                                                                              labelText: 'Bottom',
+                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                              filled: true,
+                                                                              fillColor: defaultPalette.primary,
+                                                                              border: OutlineInputBorder(
+                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                              ),
+                                                                              enabledBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                              ),
+                                                                              focusedBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                              ),
+                                                                            ),
+                                                                            keyboardType:
+                                                                                TextInputType.number,
+                                                                            // onChanged: (value) => _updatePdfPreview(''),
+                                                                          ),
+                                                                          //BOTTOM DECREMENT
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            left:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toString();
+                                                                                });
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          //BOTTOM INCREMENT
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            right:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toString();
+                                                                                });
+
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
                                                                       ),
                                                                     ),
                                                                   ),
                                                                 ],
                                                               ),
-                                                            ),
+                                                              SizedBox(
+                                                                height: 15,
+                                                              ),
+                                                              Row(
+                                                                children: [
+                                                                  //Left MARGIN WIDGET
+                                                                  Expanded(
+                                                                    child:
+                                                                        SizedBox(
+                                                                      height:
+                                                                          textFieldHeight,
+                                                                      child:
+                                                                          Stack(
+                                                                        children: [
+                                                                          TextFormField(
+                                                                            onTapOutside:
+                                                                                (event) {
+                                                                              marginLeftFocus.unfocus();
+                                                                            },
+                                                                            focusNode:
+                                                                                marginLeftFocus,
+                                                                            controller:
+                                                                                documentPropertiesList[currentPageIndex].marginLeftController,
+                                                                            inputFormatters: [
+                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))
+                                                                            ],
+                                                                            style:
+                                                                                TextStyle(color: defaultPalette.black),
+                                                                            cursorColor:
+                                                                                defaultPalette.black,
+                                                                            textAlign:
+                                                                                TextAlign.center,
+                                                                            textAlignVertical:
+                                                                                TextAlignVertical.top,
+                                                                            decoration:
+                                                                                InputDecoration(
+                                                                              contentPadding: EdgeInsets.all(0),
+                                                                              labelText: 'Left',
+                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                              floatingLabelBehavior: FloatingLabelBehavior.always,
+                                                                              filled: true,
+                                                                              fillColor: defaultPalette.primary,
+                                                                              border: OutlineInputBorder(
+                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                              ),
+                                                                              enabledBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                              ),
+                                                                              focusedBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                              ),
+                                                                            ),
+                                                                            keyboardType:
+                                                                                TextInputType.number,
+                                                                            onChanged: (value) =>
+                                                                                {
+                                                                              // _updatePdfPreview('')
+                                                                            },
+                                                                          ),
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            left:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toString();
+                                                                                });
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            right:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toString();
+                                                                                });
+
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  //RIGHT MARGIN TEXT
+                                                                  Expanded(
+                                                                    child:
+                                                                        SizedBox(
+                                                                      height:
+                                                                          textFieldHeight,
+                                                                      child:
+                                                                          Stack(
+                                                                        children: [
+                                                                          TextFormField(
+                                                                            onTapOutside:
+                                                                                (event) {
+                                                                              marginRightFocus.unfocus();
+                                                                            },
+                                                                            focusNode:
+                                                                                marginRightFocus,
+                                                                            controller:
+                                                                                documentPropertiesList[currentPageIndex].marginRightController,
+                                                                            style:
+                                                                                TextStyle(color: defaultPalette.black),
+                                                                            cursorColor:
+                                                                                defaultPalette.secondary,
+                                                                            inputFormatters: [
+                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))
+                                                                            ],
+                                                                            textAlign:
+                                                                                TextAlign.center,
+                                                                            textAlignVertical:
+                                                                                TextAlignVertical.top,
+                                                                            decoration:
+                                                                                InputDecoration(
+                                                                              contentPadding: EdgeInsets.all(0),
+                                                                              labelText: 'Right',
+                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
+                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                                              filled: true,
+                                                                              fillColor: defaultPalette.primary,
+                                                                              border: OutlineInputBorder(
+                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                              ),
+                                                                              enabledBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
+                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                              ),
+                                                                              focusedBorder: OutlineInputBorder(
+                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                              ),
+                                                                            ),
+                                                                            keyboardType:
+                                                                                TextInputType.number,
+                                                                            // onChanged: (value) => _updatePdfPreview,
+                                                                          ),
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            left:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toString();
+                                                                                });
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_left_1,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          Positioned(
+                                                                            top:
+                                                                                (textFieldHeight / 2) - 15 / 2,
+                                                                            right:
+                                                                                15 / 2,
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                setState(() {
+                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toString();
+                                                                                });
+
+                                                                                // _updatePdfPreview('');
+                                                                              },
+                                                                              child: Icon(
+                                                                                IconsaxPlusLinear.arrow_right_3,
+                                                                                size: 15,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              SizedBox(
+                                                                height: 10,
+                                                              )
+                                                            ],
                                                           ),
-                                                          ////INDIVIDUAL MARGINS BUTTON
-                                                          IconButton(
-                                                              onPressed: () {
-                                                                setState(() {
-                                                                  documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .useIndividualMargins = !documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .useIndividualMargins;
-                                                                  if (documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .useIndividualMargins ==
-                                                                      false) {
-                                                                    documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginTopController
-                                                                        .text = documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginAllController
-                                                                        .text;
-                                                                    documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginBottomController
-                                                                        .text = documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginAllController
-                                                                        .text;
-                                                                    documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginLeftController
-                                                                        .text = documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginAllController
-                                                                        .text;
-                                                                    documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginRightController
-                                                                        .text = documentPropertiesList[
-                                                                            currentPageIndex]
-                                                                        .marginAllController
-                                                                        .text;
-                                                                  }
-                                                                });
-                                                              },
-                                                              icon: documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .useIndividualMargins
-                                                                  ? Icon(
-                                                                      IconsaxPlusBold
-                                                                          .maximize_1,
-                                                                      size: 30,
-                                                                    )
-                                                                  : Icon(
-                                                                      IconsaxPlusLinear
-                                                                          .maximize_2,
-                                                                      size: 30,
-                                                                    ))
-                                                          // Text(
-                                                          //     'Use Individual Margins'),
+                                                        // Divider(),
+                                                      ],
+                                                    ),
+                                                    //Orientation
+                                                    SizedBox(
+                                                      height:
+                                                          textFieldHeight / 1.5,
+                                                      child: CustomDropdown(
+                                                        hintText: 'Orientation',
+                                                        items: [
+                                                          'Portrait',
+                                                          'Landscape'
                                                         ],
-                                                      ),
-                                                      SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      if (documentPropertiesList[
-                                                              currentPageIndex]
-                                                          .useIndividualMargins)
-                                                        Column(
-                                                          children: [
-                                                            Row(
-                                                              children: [
-                                                                //TOP MARGIN
-                                                                Expanded(
-                                                                  child:
-                                                                      //TOP MARGIN TEXT
-                                                                      SizedBox(
-                                                                    height:
-                                                                        textFieldHeight,
-                                                                    child:
-                                                                        Stack(
-                                                                      children: [
-                                                                        TextFormField(
-                                                                          onTapOutside:
-                                                                              (event) {
-                                                                            marginTopFocus.unfocus();
-                                                                          },
-                                                                          focusNode:
-                                                                              marginTopFocus,
-                                                                          controller:
-                                                                              documentPropertiesList[currentPageIndex].marginTopController,
-                                                                          inputFormatters: [
-                                                                            // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                                            NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
-                                                                          ],
-                                                                          style:
-                                                                              TextStyle(color: defaultPalette.black),
-                                                                          cursorColor:
-                                                                              defaultPalette.secondary,
-                                                                          textAlign:
-                                                                              TextAlign.center,
-                                                                          textAlignVertical:
-                                                                              TextAlignVertical.top,
-                                                                          decoration:
-                                                                              InputDecoration(
-                                                                            contentPadding:
-                                                                                EdgeInsets.all(0),
-                                                                            labelText:
-                                                                                'Top',
-                                                                            labelStyle:
-                                                                                TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                            floatingLabelAlignment:
-                                                                                FloatingLabelAlignment.center,
-                                                                            prefixIconConstraints:
-                                                                                BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                            suffixIconConstraints:
-                                                                                BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                            filled:
-                                                                                true,
-                                                                            fillColor:
-                                                                                defaultPalette.primary,
-                                                                            border:
-                                                                                OutlineInputBorder(
-                                                                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                            ),
-                                                                            enabledBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                            ),
-                                                                            focusedBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                            ),
-                                                                          ),
-                                                                          keyboardType:
-                                                                              TextInputType.number,
-                                                                          // onChanged: (value) => _updatePdfPreview(''),
-                                                                        ),
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          left: 15 /
-                                                                              2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toString();
-                                                                              });
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_left_1,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          right:
-                                                                              15 / 2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toString();
-                                                                              });
-
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_right_3,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                //BOTTOM MARGIN TEXT
-                                                                Expanded(
-                                                                  child:
-                                                                      SizedBox(
-                                                                    height:
-                                                                        textFieldHeight,
-                                                                    child:
-                                                                        //STACK FOR INCREDECRE
-                                                                        Stack(
-                                                                      children: [
-                                                                        //BOTTOM TEXT FIELD
-                                                                        TextFormField(
-                                                                          onTapOutside:
-                                                                              (event) {
-                                                                            marginBottomFocus.unfocus();
-                                                                          },
-                                                                          focusNode:
-                                                                              marginBottomFocus,
-                                                                          controller:
-                                                                              documentPropertiesList[currentPageIndex].marginBottomController,
-                                                                          inputFormatters: [
-                                                                            NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))
-                                                                          ],
-                                                                          style:
-                                                                              TextStyle(color: defaultPalette.black),
-                                                                          cursorColor:
-                                                                              defaultPalette.secondary,
-                                                                          textAlign:
-                                                                              TextAlign.center,
-                                                                          textAlignVertical:
-                                                                              TextAlignVertical.top,
-
-                                                                          ///INPUT DECORATION
-                                                                          decoration:
-                                                                              InputDecoration(
-                                                                            contentPadding:
-                                                                                EdgeInsets.all(0),
-                                                                            labelText:
-                                                                                'Bottom',
-                                                                            labelStyle:
-                                                                                TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                            floatingLabelAlignment:
-                                                                                FloatingLabelAlignment.center,
-                                                                            filled:
-                                                                                true,
-                                                                            fillColor:
-                                                                                defaultPalette.primary,
-                                                                            border:
-                                                                                OutlineInputBorder(
-                                                                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                            ),
-                                                                            enabledBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                            ),
-                                                                            focusedBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                            ),
-                                                                          ),
-                                                                          keyboardType:
-                                                                              TextInputType.number,
-                                                                          // onChanged: (value) => _updatePdfPreview(''),
-                                                                        ),
-                                                                        //BOTTOM DECREMENT
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          left: 15 /
-                                                                              2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toString();
-                                                                              });
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_left_1,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        //BOTTOM INCREMENT
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          right:
-                                                                              15 / 2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toString();
-                                                                              });
-
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_right_3,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(
-                                                              height: 15,
-                                                            ),
-                                                            Row(
-                                                              children: [
-                                                                //Left MARGIN WIDGET
-                                                                Expanded(
-                                                                  child:
-                                                                      SizedBox(
-                                                                    height:
-                                                                        textFieldHeight,
-                                                                    child:
-                                                                        Stack(
-                                                                      children: [
-                                                                        TextFormField(
-                                                                          onTapOutside:
-                                                                              (event) {
-                                                                            marginLeftFocus.unfocus();
-                                                                          },
-                                                                          focusNode:
-                                                                              marginLeftFocus,
-                                                                          controller:
-                                                                              documentPropertiesList[currentPageIndex].marginLeftController,
-                                                                          inputFormatters: [
-                                                                            NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))
-                                                                          ],
-                                                                          style:
-                                                                              TextStyle(color: defaultPalette.black),
-                                                                          cursorColor:
-                                                                              defaultPalette.black,
-                                                                          textAlign:
-                                                                              TextAlign.center,
-                                                                          textAlignVertical:
-                                                                              TextAlignVertical.top,
-                                                                          decoration:
-                                                                              InputDecoration(
-                                                                            contentPadding:
-                                                                                EdgeInsets.all(0),
-                                                                            labelText:
-                                                                                'Left',
-                                                                            labelStyle:
-                                                                                TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                            floatingLabelAlignment:
-                                                                                FloatingLabelAlignment.center,
-                                                                            floatingLabelBehavior:
-                                                                                FloatingLabelBehavior.always,
-                                                                            filled:
-                                                                                true,
-                                                                            fillColor:
-                                                                                defaultPalette.primary,
-                                                                            border:
-                                                                                OutlineInputBorder(
-                                                                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                            ),
-                                                                            enabledBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                            ),
-                                                                            focusedBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                            ),
-                                                                          ),
-                                                                          keyboardType:
-                                                                              TextInputType.number,
-                                                                          onChanged:
-                                                                              (value) => {
-                                                                            // _updatePdfPreview('')
-                                                                          },
-                                                                        ),
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          left: 15 /
-                                                                              2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toString();
-                                                                              });
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_left_1,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          right:
-                                                                              15 / 2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toString();
-                                                                              });
-
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_right_3,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                //RIGHT MARGIN TEXT
-                                                                Expanded(
-                                                                  child:
-                                                                      SizedBox(
-                                                                    height:
-                                                                        textFieldHeight,
-                                                                    child:
-                                                                        Stack(
-                                                                      children: [
-                                                                        TextFormField(
-                                                                          onTapOutside:
-                                                                              (event) {
-                                                                            marginRightFocus.unfocus();
-                                                                          },
-                                                                          focusNode:
-                                                                              marginRightFocus,
-                                                                          controller:
-                                                                              documentPropertiesList[currentPageIndex].marginRightController,
-                                                                          style:
-                                                                              TextStyle(color: defaultPalette.black),
-                                                                          cursorColor:
-                                                                              defaultPalette.secondary,
-                                                                          inputFormatters: [
-                                                                            NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))
-                                                                          ],
-                                                                          textAlign:
-                                                                              TextAlign.center,
-                                                                          textAlignVertical:
-                                                                              TextAlignVertical.top,
-                                                                          decoration:
-                                                                              InputDecoration(
-                                                                            contentPadding:
-                                                                                EdgeInsets.all(0),
-                                                                            labelText:
-                                                                                'Right',
-                                                                            labelStyle:
-                                                                                TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                            floatingLabelAlignment:
-                                                                                FloatingLabelAlignment.center,
-                                                                            filled:
-                                                                                true,
-                                                                            fillColor:
-                                                                                defaultPalette.primary,
-                                                                            border:
-                                                                                OutlineInputBorder(
-                                                                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                            ),
-                                                                            enabledBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                              borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                            ),
-                                                                            focusedBorder:
-                                                                                OutlineInputBorder(
-                                                                              borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                              borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                            ),
-                                                                          ),
-                                                                          keyboardType:
-                                                                              TextInputType.number,
-                                                                          // onChanged: (value) => _updatePdfPreview,
-                                                                        ),
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          left: 15 /
-                                                                              2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toString();
-                                                                              });
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_left_1,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        Positioned(
-                                                                          top: (textFieldHeight / 2) -
-                                                                              15 / 2,
-                                                                          right:
-                                                                              15 / 2,
-                                                                          child:
-                                                                              GestureDetector(
-                                                                            onTap:
-                                                                                () {
-                                                                              setState(() {
-                                                                                documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toString();
-                                                                              });
-
-                                                                              // _updatePdfPreview('');
-                                                                            },
-                                                                            child:
-                                                                                Icon(
-                                                                              IconsaxPlusLinear.arrow_right_3,
-                                                                              size: 15,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(
-                                                              height: 10,
-                                                            )
-                                                          ],
-                                                        ),
-                                                      //Orientation
-                                                      SizedBox(
-                                                        height:
-                                                            textFieldHeight +
-                                                                10,
-                                                        child: CustomDropdown(
-                                                          hintText:
-                                                              'Orientation',
-                                                          items: [
-                                                            'Portrait',
-                                                            'Landscape'
-                                                          ],
-                                                          closedHeaderPadding:
-                                                              EdgeInsets.all(
-                                                                  10),
-                                                          initialItem: documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .orientationController ==
-                                                                  pw.PageOrientation
-                                                                      .portrait
-                                                              ? 'Portrait'
-                                                              : 'Landscape',
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              documentPropertiesList[
-                                                                      currentPageIndex]
-                                                                  .orientationController = value ==
-                                                                      'Portrait'
-                                                                  ? pw.PageOrientation
-                                                                      .portrait
-                                                                  : pw.PageOrientation
-                                                                      .landscape;
-                                                            });
-                                                            // _updatePdfPreview(
-                                                            //     '');
-                                                          },
-                                                          listItemBuilder:
-                                                              (context,
-                                                                  item,
-                                                                  isSelected,
-                                                                  onItemSelect) {
-                                                            return Row(
-                                                              children: [
-                                                                Icon(
-                                                                  item == 'Portrait'
-                                                                      ? Icons
-                                                                          .crop_portrait
-                                                                      : Icons
-                                                                          .crop_3_2_sharp,
-                                                                  size: 20,
-                                                                ),
-                                                                SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                Text(item)
-                                                              ],
-                                                            );
-                                                          },
-                                                          decoration:
-                                                              CustomDropdownDecoration(
-                                                            prefixIcon: Icon(
-                                                              documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .orientationController ==
-                                                                      pw.PageOrientation
-                                                                          .portrait
-                                                                  ? Icons
-                                                                      .crop_portrait_outlined
-                                                                  : Icons
-                                                                      .crop_3_2_sharp,
-                                                              size: 20,
-                                                            ),
-                                                            closedBorderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        12),
-                                                            closedBorder: Border.all(
-                                                                color:
-                                                                    defaultPalette
-                                                                        .black,
-                                                                width: 2),
-                                                            expandedBorder: Border.all(
-                                                                color:
-                                                                    defaultPalette
-                                                                        .tertiary,
-                                                                width: 3),
-                                                            closedFillColor:
-                                                                defaultPalette
-                                                                    .primary,
-                                                            hintStyle:
-                                                                TextStyle(
+                                                        closedHeaderPadding:
+                                                            EdgeInsets.all(0),
+                                                        initialItem: documentPropertiesList[
+                                                                        currentPageIndex]
+                                                                    .orientationController ==
+                                                                pw.PageOrientation
+                                                                    .portrait
+                                                            ? 'Portrait'
+                                                            : 'Landscape',
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .orientationController = value ==
+                                                                    'Portrait'
+                                                                ? pw.PageOrientation
+                                                                    .portrait
+                                                                : pw.PageOrientation
+                                                                    .landscape;
+                                                          });
+                                                          // _updatePdfPreview(
+                                                          //     '');
+                                                        },
+                                                        listItemBuilder:
+                                                            (context,
+                                                                item,
+                                                                isSelected,
+                                                                onItemSelect) {
+                                                          return Row(
+                                                            children: [
+                                                              Icon(
+                                                                item == 'Portrait'
+                                                                    ? Icons
+                                                                        .crop_portrait
+                                                                    : Icons
+                                                                        .crop_3_2_sharp,
+                                                                size: 20,
+                                                              ),
+                                                              SizedBox(
+                                                                width: 10,
+                                                              ),
+                                                              Text(item)
+                                                            ],
+                                                          );
+                                                        },
+                                                        decoration:
+                                                            CustomDropdownDecoration(
+                                                          prefixIcon: Icon(
+                                                            documentPropertiesList[
+                                                                            currentPageIndex]
+                                                                        .orientationController ==
+                                                                    pw.PageOrientation
+                                                                        .portrait
+                                                                ? Icons
+                                                                    .crop_portrait_outlined
+                                                                : Icons
+                                                                    .crop_3_2_sharp,
+                                                            size: 20,
+                                                          ),expandedBorderRadius: BorderRadius.circular(5),
+                                                          closedBorderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
+                                                          closedBorder: Border.all(
                                                               color:
                                                                   defaultPalette
                                                                       .black,
-                                                            ),
-                                                            headerStyle:
-                                                                TextStyle(
+                                                              width: 2),
+                                                          expandedBorder: Border.all(
+                                                              color:
+                                                                  defaultPalette
+                                                                      .tertiary,
+                                                              width: 3),
+                                                          closedFillColor:
+                                                              defaultPalette
+                                                                  .primary,
+                                                          hintStyle: TextStyle(
+                                                            color:
+                                                                defaultPalette
+                                                                    .black,
+                                                          ),
+                                                          headerStyle:
+                                                              TextStyle(
+                                                            color:
+                                                                defaultPalette
+                                                                    .black,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 10),
+                                                    //Page Format
+                                                    SizedBox(
+                                                      height: textFieldHeight/1.5,
+                                                      child:
+                                                          CustomDropdown.search(
+                                                        hintText: 'Page Format',
+                                                        items: [
+                                                          'A4',
+                                                          'A3',
+                                                          'A5',
+                                                          'A6',
+                                                          'Letter',
+                                                          'Legal',
+                                                          'Standard',
+                                                        ],
+                                                        initialItem: getPageFormatString(
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .pageFormatController),
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            documentPropertiesList[
+                                                                        currentPageIndex]
+                                                                    .pageFormatController =
+                                                                getPageFormatFromString(
+                                                                    value ??
+                                                                        '');
+                                                          });
+                                                          // _updatePdfPreview(
+                                                          //     '');
+                                                        },
+                                                        
+                                                        closedHeaderPadding:
+                                                            EdgeInsets.only(left:5),
+                                                        decoration:
+                                                            CustomDropdownDecoration(
+                                                              expandedBorderRadius: BorderRadius.circular(5),
+                                                          closedBorderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
+                                                          closedBorder: Border.all(
                                                               color:
                                                                   defaultPalette
                                                                       .black,
-                                                            ),
-                                                          ),
+                                                              width: 2),
+                                                          expandedBorder: Border.all(
+                                                              color:
+                                                                  defaultPalette
+                                                                      .tertiary,
+                                                              width: 3),
+                                                          closedFillColor:
+                                                              defaultPalette
+                                                                  .primary,
+                                                          hintStyle: TextStyle(
+                                                              color:
+                                                                  defaultPalette
+                                                                      .black),
+                                                          headerStyle: TextStyle(
+                                                              color:
+                                                                  defaultPalette
+                                                                      .black),
                                                         ),
                                                       ),
-                                                      SizedBox(height: 5),
-                                                      //Page Format
-                                                      SizedBox(
-                                                        height: textFieldHeight,
-                                                        child: CustomDropdown
-                                                            .search(
-                                                          hintText:
-                                                              'Page Format',
-                                                          items: [
-                                                            'A4',
-                                                            'A3',
-                                                            'A5',
-                                                            'A6',
-                                                            'Letter',
-                                                            'Legal',
-                                                            'Standard',
-                                                          ],
-                                                          initialItem: getPageFormatString(
-                                                              documentPropertiesList[
-                                                                      currentPageIndex]
-                                                                  .pageFormatController),
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .pageFormatController =
-                                                                  getPageFormatFromString(
-                                                                      value ??
-                                                                          '');
-                                                            });
-                                                            // _updatePdfPreview(
-                                                            //     '');
-                                                          },
-                                                          closedHeaderPadding:
-                                                              EdgeInsets.all(
-                                                                  10),
-                                                          decoration:
-                                                              CustomDropdownDecoration(
-                                                            closedBorderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        12),
-                                                            closedBorder: Border.all(
-                                                                color:
-                                                                    defaultPalette
-                                                                        .black,
-                                                                width: 2),
-                                                            expandedBorder: Border.all(
-                                                                color:
-                                                                    defaultPalette
-                                                                        .tertiary,
-                                                                width: 3),
-                                                            closedFillColor:
-                                                                defaultPalette
-                                                                    .primary,
-                                                            hintStyle: TextStyle(
-                                                                color:
-                                                                    defaultPalette
-                                                                        .black),
-                                                            headerStyle: TextStyle(
-                                                                color:
-                                                                    defaultPalette
-                                                                        .black),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Divider(),
-                                                    ],
-                                                  ),
-                                                  SizedBox(
-                                                    height: 30,
-                                                  )
-                                                ],
+                                                    ),
+
+                                                    SizedBox(
+                                                      height: 30,
+                                                    )
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
                                       ),
+                                      //Properties Title Parent
+                                      Positioned(
+                                        //Tap for reopening tab
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            ref
+                                                .read(pgPropsEnableProvider
+                                                    .notifier)
+                                                .update((cb) {
+                                              return true;
+                                            });
+                                            setState(() {
+                                              wVDividerPosition = 0.4;
+                                            });
+                                          },
+                                          child: Stack(
+                                            children: [
+                                              Container(
+                                                height: Platform.isAndroid
+                                                    ? 20
+                                                    : 45,
+                                                color: defaultPalette.extras[1],
+                                              ),
+                                              //LeftScreen tilte
+                                              Positioned(
+                                                left:
+                                                    Platform.isAndroid ? 5 : 12,
+                                                child: Container(
+                                                  height: 55,
+                                                  margin: EdgeInsets.only(
+                                                      left: 10,
+                                                      top: Platform.isAndroid
+                                                          ? 5
+                                                          : 8,
+                                                      bottom: 5),
+                                                  width: ((wH2DividerPosition) *
+                                                      sWidth),
+                                                  child: Text(
+                                                      Platform.isAndroid
+                                                          ? 'Page Properties'
+                                                          : 'Page \nProps',
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.fade,
+                                                      style: GoogleFonts.bungee(
+                                                        color: defaultPalette
+                                                            .black,
+                                                        fontSize:
+                                                            Platform.isAndroid
+                                                                ? 10
+                                                                : 12,
+                                                      )),
+                                                ),
+                                              ),
+                                              //LeftSide Icon
+                                              Positioned(
+                                                  top: 5,
+                                                  left: Platform.isAndroid
+                                                      ? -10
+                                                      : -20,
+                                                  child: Icon(
+                                                      TablerIcons.list_details,
+                                                      size: Platform.isAndroid
+                                                          ? 20
+                                                          : 40)),
+                                              //RightSide Close Icon Properties Tab Web
+                                              if (Platform.isAndroid &&
+                                                  ref.watch(
+                                                      pgPropsEnableProvider))
+                                                Positioned(
+                                                    top: 4,
+                                                    right: 2,
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        ref
+                                                            .read(
+                                                                pgPropsEnableProvider
+                                                                    .notifier)
+                                                            .update((cb) {
+                                                          return false;
+                                                        });
+                                                        setState(() {
+                                                          wVDividerPosition =
+                                                              20 / sHeight;
+                                                        });
+                                                      },
+                                                      child: Icon(TablerIcons.x,
+                                                          size: 15),
+                                                    )),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      
                                       //Text Styling //Desktop WEB
                                       Positioned(
                                           //Text Styling //Desktop WEB
-                                          top: sHeight *wVDividerPosition,
-                                          height: (sHeight *(1- wVDividerPosition)),
+                                          top: sHeight * wVDividerPosition,
+                                          height: (sHeight *
+                                              (1 - wVDividerPosition)),
                                           width:
                                               sWidth * wH2DividerPosition - 10,
                                           child: Container(
-                                            padding: EdgeInsets.only(top:8),
+                                            padding: EdgeInsets.only(top: 8),
                                             height: sHeight * 0.55,
-                                            
                                             width:
                                                 (sWidth * wH2DividerPosition),
                                             child: ClipRRect(
-                                              borderRadius: BorderRadius.only(topLeft: Radius.circular(30),topRight: Radius.circular(30)),
+                                              borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(30),
+                                                  topRight:
+                                                      Radius.circular(30)),
                                               child: Stack(
                                                 children: [
                                                   AnimatedPositioned(
                                                     duration: Durations.medium3,
-                                                    left: panelIndex.panelIndex ==
-                                                            -1
-                                                        ? 10
-                                                        : 44,
+                                                    left:
+                                                        panelIndex.panelIndex ==
+                                                                -1
+                                                            ? 10
+                                                            : 44,
                                                     child: Container(
                                                       height: sHeight * 0.55,
                                                       width: (sWidth *
                                                           wH2DividerPosition),
                                                       decoration: BoxDecoration(
                                                           color: Colors.black
-                                                              .withOpacity(0.2)),
+                                                              .withOpacity(
+                                                                  0.2)),
                                                       child: Column(
                                                         // direction: Axis.vertical,
                                                         children: [
@@ -4178,14 +4267,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                 //heading //Desktop WEB
                                                                 Text(
                                                                   'TEXT STYLE',
-                                                                  style: GoogleFonts
-                                                                      .bungee(
-                                                                          fontSize:
-                                                                              18,
-                                                                          letterSpacing:
-                                                                              0,
-                                                                          height:
-                                                                              1),
+                                                                  style: GoogleFonts.bungee(
+                                                                      fontSize:
+                                                                          18,
+                                                                      letterSpacing:
+                                                                          0,
+                                                                      height:
+                                                                          1),
                                                                 ),
                                                                 //id //Desktop WEB
                                                                 Text(
@@ -4194,14 +4282,13 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                   overflow:
                                                                       TextOverflow
                                                                           .ellipsis,
-                                                                  style: GoogleFonts
-                                                                      .lexend(
-                                                                          fontSize:
-                                                                              8,
-                                                                          letterSpacing:
-                                                                              0,
-                                                                          height:
-                                                                              0.9),
+                                                                  style: GoogleFonts.lexend(
+                                                                      fontSize:
+                                                                          8,
+                                                                      letterSpacing:
+                                                                          0,
+                                                                      height:
+                                                                          0.9),
                                                                 ),
                                                               ],
                                                             ),
@@ -4219,8 +4306,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                       Container(
                                                                     padding:
                                                                         EdgeInsets
-                                                                            .all(
-                                                                                5),
+                                                                            .all(5),
                                                                     child:
                                                                         Builder(
                                                                       builder:
@@ -4232,20 +4318,17 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                               spreadSheetList[currentPageIndex]) as TextEditorItem;
                                                                         } on Exception catch (e) {
                                                                           item = TextEditorItem(
-                                                                              id:
-                                                                                  '',
-                                                                              parentId:
-                                                                                  '');
+                                                                              id: '',
+                                                                              parentId: '');
                                                                         }
-                                              
+
                                                                         bool _getIsToggled(
                                                                             Map<String, Attribute>
                                                                                 attrs,
                                                                             Attribute
                                                                                 attribute) {
                                                                           if (attribute.key == Attribute.list.key ||
-                                                                              attribute.key ==
-                                                                                  Attribute.header.key ||
+                                                                              attribute.key == Attribute.header.key ||
                                                                               attribute.key == Attribute.script.key ||
                                                                               attribute.key == Attribute.align.key) {
                                                                             final currentAttribute =
@@ -4255,8 +4338,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                               print('returning false');
                                                                               return false;
                                                                             }
-                                                                            print(
-                                                                                'returning ${currentAttribute.value == attribute.value}');
+                                                                            print('returning ${currentAttribute.value == attribute.value}');
                                                                             return currentAttribute.value ==
                                                                                 attribute.value;
                                                                           }
@@ -4265,7 +4347,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           return attrs
                                                                               .containsKey(attribute.key);
                                                                         }
-                                              
+
                                                                         Widget
                                                                             buildElevatedLayerButton({
                                                                           required double
@@ -4276,8 +4358,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                               animationDuration,
                                                                           required Curve
                                                                               animationCurve,
-                                                                          required void
-                                                                                  Function()
+                                                                          required void Function()
                                                                               onClick,
                                                                           required BoxDecoration
                                                                               baseDecoration,
@@ -4295,21 +4376,17 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                           var down =
                                                                               isTapped;
                                                                           void _handleTapDown(
-                                                                              TapDownDetails
-                                                                                  details) {
+                                                                              TapDownDetails details) {
                                                                             onClick();
-                                              
-                                                                            setState(
-                                                                                () {
-                                                                              down =
-                                                                                  true;
+
+                                                                            setState(() {
+                                                                              down = true;
                                                                               print(down);
                                                                             });
                                                                           }
-                                              
+
                                                                           void _handleTapUp(
-                                                                              TapUpDetails
-                                                                                  details) {
+                                                                              TapUpDetails details) {
                                                                             if (!toggleOnTap &&
                                                                                 down) {
                                                                               setState(() {
@@ -4317,10 +4394,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                               });
                                                                             }
                                                                           }
-                                              
+
                                                                           void
                                                                               _handleTapCancel() {}
-                                              
+
                                                                           return GestureDetector(
                                                                             onTap:
                                                                                 () {},
@@ -4332,12 +4409,9 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 _handleTapCancel,
                                                                             child:
                                                                                 SizedBox(
-                                                                              height:
-                                                                                  buttonHeight,
-                                                                              width:
-                                                                                  buttonWidth,
-                                                                              child:
-                                                                                  Stack(
+                                                                              height: buttonHeight,
+                                                                              width: buttonWidth,
+                                                                              child: Stack(
                                                                                 alignment: Alignment.bottomRight,
                                                                                 children: [
                                                                                   Positioned(
@@ -4371,42 +4445,36 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             ),
                                                                           );
                                                                         }
-                                              
+
                                                                         var width =
                                                                             (sWidth * wH2DividerPosition * 0.92) -
                                                                                 44;
-                                              
+
                                                                         TextEditingController
                                                                             hexController =
                                                                             TextEditingController()
-                                                                              ..text =
-                                                                                  '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
+                                                                              ..text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
                                                                         TextEditingController
                                                                             bghexController =
                                                                             TextEditingController()
-                                                                              ..text =
-                                                                                  '${(item.textEditorController.getSelectionStyle().attributes['background']?.value ?? '#00000000')}';
+                                                                              ..text = '${(item.textEditorController.getSelectionStyle().attributes['background']?.value ?? '#00000000')}';
                                                                         TextEditingController
                                                                             fontSizeController =
                                                                             TextEditingController()
-                                                                              ..text =
-                                                                                  '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
+                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
                                                                         if (fontSizeController
                                                                             .text
-                                                                            .endsWith(
-                                                                                '.0')) {
+                                                                            .endsWith('.0')) {
                                                                           fontSizeController.text =
                                                                               '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0').ceil()}';
                                                                         }
                                                                         TextEditingController
                                                                             letterSpaceController =
                                                                             TextEditingController()
-                                                                              ..text =
-                                                                                  '${double.parse(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value ?? '0')}';
+                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value ?? '0')}';
                                                                         if (letterSpaceController
                                                                             .text
-                                                                            .endsWith(
-                                                                                '.0')) {
+                                                                            .endsWith('.0')) {
                                                                           letterSpaceController.text = letterSpaceController.text.replaceAll(
                                                                               '.0',
                                                                               '');
@@ -4414,12 +4482,10 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                         TextEditingController
                                                                             wordSpaceController =
                                                                             TextEditingController()
-                                                                              ..text =
-                                                                                  '${double.parse(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value ?? '0')}';
+                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value ?? '0')}';
                                                                         if (wordSpaceController
                                                                             .text
-                                                                            .endsWith(
-                                                                                '.0')) {
+                                                                            .endsWith('.0')) {
                                                                           wordSpaceController.text = wordSpaceController.text.replaceAll(
                                                                               '.0',
                                                                               '');
@@ -4427,20 +4493,18 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                         TextEditingController
                                                                             lineSpaceController =
                                                                             TextEditingController()
-                                                                              ..text =
-                                                                                  '${double.parse(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value ?? '0')}';
+                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value ?? '0')}';
                                                                         if (lineSpaceController
                                                                             .text
-                                                                            .endsWith(
-                                                                                '.0')) {
+                                                                            .endsWith('.0')) {
                                                                           lineSpaceController.text = lineSpaceController.text.replaceAll(
                                                                               '.0',
                                                                               '');
                                                                         }
-                                                                        int crossAxisCount =
-                                                                            width < (width / vDividerPosition) / 1.75
-                                                                                ? 2
-                                                                                : 4;
+                                                                        int crossAxisCount = width <
+                                                                                (width / vDividerPosition) / 1.75
+                                                                            ? 2
+                                                                            : 4;
                                                                         var iconWidth = width /
                                                                             crossAxisCount /
                                                                             1.05;
@@ -4472,8 +4536,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                               NeverScrollableScrollPhysics(),
                                                                           onPageChanged:
                                                                               (value) {
-                                                                            print(
-                                                                                value);
+                                                                            print(value);
                                                                           },
                                                                           children: [
                                                                             if (item.id !=
@@ -4877,7 +4940,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                   ),
                                                                                                   borderRadius: BorderRadius.circular(10),
                                                                                                 );
-                                              
+
                                                                                               default:
                                                                                                 return Container();
                                                                                             }
@@ -5088,7 +5151,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                   ),
                                                                                                   borderRadius: BorderRadius.circular(10),
                                                                                                 );
-                                              
+
                                                                                               default:
                                                                                                 return Container();
                                                                                             }
@@ -5180,7 +5243,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                       textAlignVertical: TextAlignVertical.top,
                                                                                                       decoration: InputDecoration(
                                                                                                         contentPadding: EdgeInsets.all(0),
-                                              
+
                                                                                                         // filled: true,
                                                                                                         // fillColor: defaultPalette.primary,
                                                                                                         enabledBorder: OutlineInputBorder(
@@ -5194,7 +5257,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                       ),
                                                                                                       keyboardType: TextInputType.number,
                                                                                                     ),
-                                              
+
                                                                                                     //Balloon Slider
                                                                                                     Positioned(
                                                                                                       bottom: 0,
@@ -5382,7 +5445,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                       textAlignVertical: TextAlignVertical.top,
                                                                                                       decoration: InputDecoration(
                                                                                                         contentPadding: EdgeInsets.all(0),
-                                              
+
                                                                                                         // filled: true,
                                                                                                         // fillColor: defaultPalette.primary,
                                                                                                         enabledBorder: OutlineInputBorder(
@@ -5433,7 +5496,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                         onClick: () {
                                                                                                           setState(() {
                                                                                                             var val = int.parse(letterSpaceController.text) + 1;
-                                              
+
                                                                                                             item.textEditorController.formatSelection(
                                                                                                               LetterSpacingAttribute((val).toString()),
                                                                                                             );
@@ -5498,7 +5561,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                           ),
                                                                                         ),
                                                                                       ),
-                                              
+
                                                                                       SizedBox(
                                                                                         height: 20,
                                                                                       ),
@@ -5582,7 +5645,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                       textAlignVertical: TextAlignVertical.top,
                                                                                                       decoration: InputDecoration(
                                                                                                         contentPadding: EdgeInsets.all(0),
-                                              
+
                                                                                                         // filled: true,
                                                                                                         // fillColor: defaultPalette.primary,
                                                                                                         enabledBorder: OutlineInputBorder(
@@ -5633,7 +5696,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                         onClick: () {
                                                                                                           setState(() {
                                                                                                             var val = int.parse(wordSpaceController.text) + 1;
-                                              
+
                                                                                                             item.textEditorController.formatSelection(
                                                                                                               WordSpacingAttribute((val).toString()),
                                                                                                             );
@@ -5782,7 +5845,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                       textAlignVertical: TextAlignVertical.top,
                                                                                                       decoration: InputDecoration(
                                                                                                         contentPadding: EdgeInsets.all(0),
-                                              
+
                                                                                                         // filled: true,
                                                                                                         // fillColor: defaultPalette.primary,
                                                                                                         enabledBorder: OutlineInputBorder(
@@ -5833,7 +5896,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                         onClick: () {
                                                                                                           setState(() {
                                                                                                             var val = int.parse(lineSpaceController.text) + 1;
-                                              
+
                                                                                                             item.textEditorController.formatSelection(
                                                                                                               LineHeightAttribute((val).toString()),
                                                                                                             );
@@ -5908,7 +5971,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                 child: Container(
                                                                                   width: 30,
                                                                                   height: sHeight * 0.4,
-                                              
+
                                                                                   child: TabContainer(
                                                                                       controller: tabcunt,
                                                                                       tabEdge: TabEdge.top,
@@ -5956,9 +6019,7 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                                                       TextFormField(
                                                                                                         onTapOutside: (event) {},
                                                                                                         controller: hexController,
-                                                                                                        inputFormatters: [
-                                                                                                          HexColorInputFormatter()
-                                                                                                        ],
+                                                                                                        inputFormatters: [HexColorInputFormatter()],
                                                                                                         onFieldSubmitted: (value) {
                                                                                                           item.textEditorController.formatSelection(
                                                                                                             ColorAttribute('#${value}'),
@@ -6315,25 +6376,24 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                 var item;
                                                                 try {
                                                                   item = _sheetItemIterator(
-                                                                          panelIndex
-                                                                              .id,
-                                                                          spreadSheetList[
-                                                                              currentPageIndex])
-                                                                      as TextEditorItem;
+                                                                      panelIndex
+                                                                          .id,
+                                                                      spreadSheetList[
+                                                                          currentPageIndex]) as TextEditorItem;
                                                                 } on Exception catch (e) {
                                                                   // TODO
-                                                                  item =
-                                                                      TextEditorItem(
-                                                                          id: '',
-                                                                          parentId:
-                                                                              '');
+                                                                  item = TextEditorItem(
+                                                                      id: '',
+                                                                      parentId:
+                                                                          '');
                                                                 }
                                                                 item.focusNode
                                                                     .unfocus();
                                                                 setState(() {
                                                                   panelIndex =
                                                                       PanelIndex(
-                                                                          id: '',
+                                                                          id:
+                                                                              '',
                                                                           panelIndex:
                                                                               -1);
                                                                 });
@@ -6343,7 +6403,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             .length;
                                                                     i++) {
                                                                   setState(() {
-                                                                    isTapped[i] =
+                                                                    isTapped[
+                                                                            i] =
                                                                         false;
                                                                   });
                                                                 }
@@ -6356,7 +6417,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                               color:
                                                                   defaultPalette
                                                                       .tertiary,
-                                                              icon: TablerIcons.x,
+                                                              icon:
+                                                                  TablerIcons.x,
                                                             ),
                                                             ListItemModel(
                                                               isTapped:
@@ -6368,7 +6430,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             .length;
                                                                     i++) {
                                                                   setState(() {
-                                                                    isTapped[i] =
+                                                                    isTapped[
+                                                                            i] =
                                                                         false;
                                                                   });
                                                                 }
@@ -6401,7 +6464,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             .length;
                                                                     i++) {
                                                                   setState(() {
-                                                                    isTapped[i] =
+                                                                    isTapped[
+                                                                            i] =
                                                                         false;
                                                                   });
                                                                 }
@@ -6435,7 +6499,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             .length;
                                                                     i++) {
                                                                   setState(() {
-                                                                    isTapped[i] =
+                                                                    isTapped[
+                                                                            i] =
                                                                         false;
                                                                   });
                                                                 }
@@ -6469,7 +6534,8 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                                                             .length;
                                                                     i++) {
                                                                   setState(() {
-                                                                    isTapped[i] =
+                                                                    isTapped[
+                                                                            i] =
                                                                         false;
                                                                   });
                                                                 }
@@ -6498,12 +6564,121 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                                             ),
                                           ))
                                     ],
-                                  ),
-                                ),
+                                  );
+                                }),
                               ),
                             ),
                           ),
                         ),
+                        //
+                        //RESIZE HANDLE VERTICAL
+                        Positioned(
+                            top: Platform.isAndroid ? 35 : 0,
+                            left: sWidth * (1 - wH2DividerPosition),
+                            child: MouseRegion(
+                              cursor: _cursor,
+                              onHover: (PointerHoverEvent event) {
+                                Offset position = event.localPosition;
+                                Size? widgetSize = context.size;
+                                setState(() {
+                                  // Change the cursor based on position
+                                  if (widgetSize == null)
+                                    _cursor = SystemMouseCursors.basic;
+
+                                  // Define the edge proximity threshold
+                                  const edgeThreshold = 10.0;
+
+                                  // Check if the cursor is near the edges and set the cursor style accordingly
+                                  if (position.dx < edgeThreshold ||
+                                      position.dx >
+                                          (widgetSize?.width ?? 0) -
+                                              edgeThreshold) {
+                                    _cursor = SystemMouseCursors.resizeColumn;
+                                  } else if (position.dy < edgeThreshold ||
+                                      position.dy >
+                                          (widgetSize?.height ?? 0) -
+                                              edgeThreshold) {
+                                    _cursor = SystemMouseCursors.resizeRow;
+                                  } else {
+                                    _cursor = SystemMouseCursors.basic;
+                                  }
+                                });
+                              },
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  double newPosition = ((0.9 -
+                                              wH2DividerPosition -
+                                              wH1DividerPosition) +
+                                          details.delta.dx /
+                                              context.size!.width)
+                                      .clamp(0.1, 0.6);
+                                  setState(() {
+                                    wH2DividerPosition =
+                                        (newPosition - .9 + wH1DividerPosition)
+                                            .abs()
+                                            .clamp(0.21, 0.9);
+                                  });
+                                },
+                                child: Container(
+                                  color: Colors.transparent,
+                                  height: sHeight,
+                                  width: 10,
+                                ),
+                              ),
+                            )),
+                        //Resize Handle Horizontal
+                        Positioned(
+                            top: Platform.isAndroid
+                                ? sHeight * wVDividerPosition + 35
+                                : sHeight * wVDividerPosition + 0,
+                            left: sWidth * (1 - wH2DividerPosition) + 10,
+                            child: MouseRegion(
+                              onEnter: (event) {
+                                setState(() {
+                                  _cursor = SystemMouseCursors.resizeRow;
+                                });
+                              },
+                              onHover: (PointerHoverEvent event) {
+                                Offset position = event.localPosition;
+                                // Size? widgetSize = context.size;
+                                setState(() {
+                                  // Change the cursor based on position
+                                  // if (widgetSize == null)
+                                  //   _cursor = SystemMouseCursors.basic;
+
+                                  // Define the edge proximity threshold
+                                  const edgeThreshold = 10.0;
+
+                                  // Check if the cursor is near the edges and set the cursor style accordingly
+
+                                  _cursor = SystemMouseCursors.resizeRow;
+                                });
+                              },
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  ref
+                                      .read(pgPropsEnableProvider.notifier)
+                                      .update((cb) {
+                                    return true;
+                                  });
+                                  double newPosition = ((wVDividerPosition) +
+                                          details.delta.dy /
+                                              context.size!.height)
+                                      .clamp(0.1, 0.9);
+                                  setState(() {
+                                    var x = (Platform.isAndroid ? 50 : 80) /
+                                        sHeight;
+                                    wVDividerPosition =
+                                        (newPosition).abs().clamp(x, 1);
+                                  });
+                                },
+                                child: Container(
+                                  color: Colors.transparent,
+                                  height: 10,
+                                  width: sWidth * wH2DividerPosition - 10,
+                                ),
+                              ),
+                            )),
 
                         //APPBAR //Desktop WEB
                         Positioned(
@@ -6530,107 +6705,147 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                       child: Container(
                         color: Colors.transparent,
                         height: 40,
-                        child: Row(
-                          children: [
-                            Text(
-                              '',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            Spacer(),
-                            //minimize button
-                            ElevatedLayerButton(
-                              // isTapped: false,
-                              // toggleOnTap: true,
-                              onClick: () {
-                                Future.delayed(Duration.zero).then((y) {
-                                  appWindow.minimize();
-                                });
-                              },
-                              buttonHeight: 30,
-                              buttonWidth: 30,
-                              borderRadius: BorderRadius.circular(5),
-                              animationDuration:
-                                  const Duration(milliseconds: 1),
-                              animationCurve: Curves.ease,
-                              topDecoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(),
+                        child: Consumer(builder: (context, ref, c) {
+                          return Stack(
+                            children: [
+                              AnimatedPositioned(
+                                right: 0,
+                                duration: Durations.short4,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: AnimatedContainer(
+                                    duration: Durations.short4,
+                                    padding:
+                                        EdgeInsets.only(right: 8, bottom: 4),
+                                    margin: EdgeInsets.only(top: 4),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          bottomLeft: Radius.circular(12),
+                                        )),
+                                    child: Row(
+                                      children: [
+                                        // UtilityWidgets.maybeTooltip(
+                                        //   message: 'put it away',
+                                        //   child: GestureDetector(
+                                        //       onTap: () {
+                                        //         ref
+                                        //             .read(topToolBarProvider
+                                        //                 .notifier)
+                                        //             .update((cb) {
+                                        //           if (cb) {
+                                        //             return false;
+                                        //           } else {
+                                        //             return true;
+                                        //           }
+                                        //         });
+                                        //       },
+                                        //       child:
+                                        //           Icon(TablerIcons.grip_vertical, size:  25,)),
+                                        // ),
+                                        //minimize button
+                                        ElevatedLayerButton(
+                                          // isTapped: false,
+                                          // toggleOnTap: true,
+                                          onClick: () {
+                                            Future.delayed(Duration.zero)
+                                                .then((y) {
+                                              appWindow.minimize();
+                                            });
+                                          },
+                                          buttonHeight: 30,
+                                          buttonWidth: 30,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          animationDuration:
+                                              const Duration(milliseconds: 1),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.rectangle,
+                                            size: 15,
+                                            // color: Colors.blue,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                        //
+                                        //maximize button
+                                        ElevatedLayerButton(
+                                          // isTapped: false,
+                                          // toggleOnTap: true,
+                                          onClick: () {
+                                            Future.delayed(Durations.short1)
+                                                .then((y) {
+                                              appWindow.maximizeOrRestore();
+                                            });
+                                          },
+                                          buttonHeight: 30,
+                                          buttonWidth: 30,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          animationDuration:
+                                              const Duration(milliseconds: 1),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.triangle,
+                                            size: 14,
+                                            // color: Colors.amber,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                        //close button
+                                        ElevatedLayerButton(
+                                          // isTapped: false,
+                                          // toggleOnTap: true,
+                                          onClick: () {
+                                            Future.delayed(Duration.zero)
+                                                .then((y) {
+                                              appWindow.close();
+                                            });
+                                          },
+                                          buttonHeight: 30,
+                                          buttonWidth: 30,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          animationDuration:
+                                              const Duration(milliseconds: 1),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.circle,
+                                            size: 15,
+                                            // color: Colors.red,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                              topLayerChild: Icon(
-                                TablerIcons.rectangle,
-                                size: 15,
-                                // color: Colors.blue,
-                              ),
-                              baseDecoration: BoxDecoration(
-                                color: Colors.green,
-                                border: Border.all(),
-                              ),
-                            ),
-                            //
-                            //maximize button
-                            ElevatedLayerButton(
-                              // isTapped: false,
-                              // toggleOnTap: true,
-                              onClick: () {
-                                Future.delayed(Durations.short1).then((y) {
-                                  appWindow.maximizeOrRestore();
-                                });
-                              },
-                              buttonHeight: 30,
-                              buttonWidth: 30,
-                              borderRadius: BorderRadius.circular(5),
-                              animationDuration:
-                                  const Duration(milliseconds: 1),
-                              animationCurve: Curves.ease,
-                              topDecoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(),
-                              ),
-                              topLayerChild: Icon(
-                                TablerIcons.triangle,
-                                size: 14,
-                                // color: Colors.amber,
-                              ),
-                              baseDecoration: BoxDecoration(
-                                color: Colors.green,
-                                border: Border.all(),
-                              ),
-                            ),
-                            //close button
-                            ElevatedLayerButton(
-                              // isTapped: false,
-                              // toggleOnTap: true,
-                              onClick: () {
-                                Future.delayed(Duration.zero).then((y) {
-                                  appWindow.close();
-                                });
-                              },
-                              buttonHeight: 30,
-                              buttonWidth: 30,
-                              borderRadius: BorderRadius.circular(5),
-                              animationDuration:
-                                  const Duration(milliseconds: 1),
-                              animationCurve: Curves.ease,
-                              topDecoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(),
-                              ),
-                              topLayerChild: Icon(
-                                TablerIcons.circle,
-                                size: 15,
-                                // color: Colors.red,
-                              ),
-                              baseDecoration: BoxDecoration(
-                                color: Colors.green,
-                                border: Border.all(),
-                              ),
-                            ),
-                            //space
-                            SizedBox(
-                              width: 10,
-                            )
-                          ],
-                        ),
+                            ],
+                          );
+                        }),
                       ),
                     ),
 
@@ -6638,50 +6853,64 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                   //BILLBLAZE MAIN TITLE //Desktop WEB
                   AnimatedPositioned(
                     duration: defaultDuration,
-                    top: topPadPosDistance - (topPadPosDistance / 1.1),
-                    left: 60,
+                    top: topPadPosDistance - (topPadPosDistance / 1.2),
+                    left: Platform.isAndroid ? 45 : 60,
                     child: AnimatedTextKit(
                       // key: ValueKey(appinioLoop),
                       animatedTexts: [
                         TypewriterAnimatedText("Bill\nBlaze.",
                             textStyle: GoogleFonts.abrilFatface(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 color: Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
                             speed: Duration(milliseconds: 100)),
                         TypewriterAnimatedText("Bill\nBlaze.",
                             textStyle: GoogleFonts.zcoolKuaiLe(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 color: Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
                             speed: Duration(milliseconds: 100)),
                         TypewriterAnimatedText("Bill\nBlaze.",
                             textStyle: GoogleFonts.splash(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 color: Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
                             speed: Duration(milliseconds: 100)),
                         TypewriterAnimatedText("Bill\nBlaze",
                             textStyle: GoogleFonts.libreBarcode39ExtendedText(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 letterSpacing: 0,
                                 height: 1),
                             speed: Duration(milliseconds: 100)),
                         TypewriterAnimatedText("Bill\nBlaze.",
                             textStyle: GoogleFonts.redactedScript(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 color: Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
                             speed: Duration(milliseconds: 100)),
                         TypewriterAnimatedText("Bill\nBlaze.",
                             textStyle: GoogleFonts.fascinateInline(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 color: Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
                             speed: Duration(milliseconds: 100)),
                         TypewriterAnimatedText("Bill\nBlaze.",
                             textStyle: GoogleFonts.nabla(
-                                fontSize: titleFontSize / 4,
+                                fontSize: Platform.isAndroid
+                                    ? titleFontSize / 3.5
+                                    : 15,
                                 color: Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
                             speed: Duration(milliseconds: 100)),
@@ -6730,6 +6959,70 @@ class _LayoutDesigner3State extends State<LayoutDesigner3>
                       baseDecoration: BoxDecoration(
                         color: Colors.green,
                         border: Border.all(),
+                      ),
+                    ),
+                  ),
+                  //
+                  //Layout Name Rename
+                  Positioned(
+                    top: 2,
+                    height: Platform.isAndroid ? 30 : 40,
+                    left: Platform.isAndroid
+                        ? sWidth / 2.5
+                        : (sWidth * (1 - wH2DividerPosition)) / 2,
+                    // width: (sWidth * wH2DividerPosition - 10) * 0.3,
+                    child: IntrinsicWidth(
+                      child: Focus(
+                        onFocusChange: _onFieldFocusChange,
+                        child: TextFormField(
+                          focusNode: layoutNamefocusNode,
+                          cursorColor: defaultPalette.tertiary,
+                          controller: layoutName,
+
+                          textAlignVertical: TextAlignVertical.top,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 5),
+                            filled: true,
+                            fillColor: defaultPalette.primary,
+                            border: OutlineInputBorder(
+                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                              borderRadius: BorderRadius.circular(
+                                  5), // Replace with your desired radius
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  width: 0, color: defaultPalette.transparent),
+                              borderRadius:
+                                  BorderRadius.circular(5), // Same as border
+                            ),
+                            disabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  width: 1.2,
+                                  color: defaultPalette.transparent),
+                              borderRadius:
+                                  BorderRadius.circular(6), // Same as border
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                width: 3,
+                                color: nameExists
+                                    ? layoutName.text == initialLayoutName
+                                        ? defaultPalette.extras[1]
+                                        : Colors.red
+                                    : defaultPalette.transparent,
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(5), // Same as border
+                            ),
+                          ),
+                          // keyboardType: TextInputType.number,
+                          style: GoogleFonts.bungee(
+                              color: defaultPalette.black, fontSize: 12),
+                          onChanged: (value) {
+                            _checkLayoutName();
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -12538,4 +12831,24 @@ class LetterSpacingAttribute extends Attribute<String?> {
   static const _key = 'letterSpacing';
   const LetterSpacingAttribute(String? value)
       : super('letterSpacing', AttributeScope.inline, value);
+}
+
+class CustomScrollPhysics extends ScrollPhysics {
+  final double scrollFactor;
+
+  const CustomScrollPhysics({ScrollPhysics? parent, this.scrollFactor = 1.0})
+      : super(parent: parent);
+
+  @override
+  Simulation? createBallisticSimulation(
+      ScrollMetrics position, double velocity) {
+    // Adjust the velocity to control the scroll distance
+    return super.createBallisticSimulation(position, velocity * scrollFactor);
+  }
+
+  @override
+  CustomScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return CustomScrollPhysics(
+        parent: buildParent(ancestor), scrollFactor: scrollFactor);
+  }
 }
