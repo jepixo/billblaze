@@ -12,6 +12,7 @@ class ElevatedLayerButton extends StatefulWidget {
   final BorderRadius? borderRadius;
   final bool toggleOnTap;
   final bool isTapped;
+  final double subfac;
 
   const ElevatedLayerButton({
     Key? key,
@@ -26,6 +27,7 @@ class ElevatedLayerButton extends StatefulWidget {
     this.borderRadius,
     this.toggleOnTap = false,
     this.isTapped = false,
+    this.subfac = 10,
   }) : super(key: key);
 
   @override
@@ -33,45 +35,50 @@ class ElevatedLayerButton extends StatefulWidget {
 }
 
 class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
-  late bool _isTappedDown;
+  late bool toggleOnTap;
+  late bool down;
 
   @override
   void initState() {
     super.initState();
-    _isTappedDown = widget.isTapped;
+    down = widget.isTapped;
+    toggleOnTap = widget.toggleOnTap;
   }
 
   void _handleTapDown(TapDownDetails details) {
+    widget.onClick!();
+
     setState(() {
-      _isTappedDown = true;
+      down = true;
+      print(down);
     });
-    widget.onClick?.call();
   }
 
   void _handleTapUp(TapUpDetails details) {
-    setState(() {
-      _isTappedDown = false;
-    });
+    if (!toggleOnTap && down) {
+      setState(() {
+        down = !down;
+      });
+    }
   }
 
-  void _handleTapCancel() {
-    setState(() {
-      _isTappedDown = false;
-    });
-  }
+  void _handleTapCancel() {}
 
   @override
   Widget build(BuildContext context) {
+    double subfac = widget.subfac;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _isTappedDown = true;
-        });
-        Future.delayed(Durations.long1).then((y) {
+        if (!toggleOnTap) {
           setState(() {
-            _isTappedDown = false;
+            down = true;
           });
-        });
+          Future.delayed(Durations.short4).then((y) {
+            setState(() {
+              down = false;
+            });
+          });
+        }
       },
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
@@ -86,8 +93,8 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
               bottom: 0,
               right: 0,
               child: Container(
-                width: widget.buttonWidth! - 10,
-                height: widget.buttonHeight! - 10,
+                width: widget.buttonWidth! -subfac,
+                height: widget.buttonHeight! -subfac,
                 decoration: widget.baseDecoration!.copyWith(
                   borderRadius: widget.borderRadius,
                 ),
@@ -96,11 +103,11 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
             AnimatedPositioned(
               duration: widget.animationDuration!,
               curve: widget.animationCurve!,
-              bottom: !_isTappedDown ? 4 : 0,
-              right: !_isTappedDown ? 4 : 0,
+              bottom: !down ? 4 : 0,
+              right: !down ? 4 : 0,
               child: Container(
-                width: widget.buttonWidth! - 10,
-                height: widget.buttonHeight! - 10,
+                width: widget.buttonWidth! -subfac,
+                height: widget.buttonHeight! -subfac,
                 alignment: Alignment.center,
                 decoration: widget.topDecoration!.copyWith(
                   borderRadius: widget.borderRadius,

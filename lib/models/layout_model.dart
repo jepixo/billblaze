@@ -14,9 +14,19 @@ class LayoutModel extends HiveObject {
   List<SheetListBox> spreadSheetList;
   @HiveField(2)
   String id;
+  @HiveField(3)
+  String name;
+  @HiveField(4)
+  DateTime createdAt;
+  @HiveField(5)
+  DateTime modifiedAt;
+
   LayoutModel({
     required this.docPropsList,
     required this.spreadSheetList,
     required this.id,
+    required this.name,
+    required this.createdAt,
+    required this.modifiedAt,
   });
 }
