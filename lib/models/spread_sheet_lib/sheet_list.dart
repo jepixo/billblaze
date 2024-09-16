@@ -14,29 +14,36 @@ class SheetListBox extends SheetItem {
   List<SheetItem> sheetList;
   @HiveField(3)
   bool direction;
+  @HiveField(4)
+  List size;
   SheetListBox({
     required this.sheetList,
     required this.direction,
     required super.id,
     required super.parentId,
+    this.size = const [0,0],
   });
   SheetList toSheetList() {
     return SheetList(
         sheetList: sheetList,
         direction: direction == true ? Axis.vertical : Axis.horizontal,
         id: id,
-        parentId: parentId);
+        parentId: parentId,
+        size: Size(size[0],size[1])
+        );
   }
 }
 
 class SheetList extends SheetItem {
   List<SheetItem> sheetList;
   Axis direction;
+  Size size;
   SheetList({
     required String id,
     required String parentId,
     required this.sheetList,
     this.direction = Axis.vertical,
+    this.size = const Size(0,0)
   }) : super(id: id, parentId: parentId) {
     // Assign the parentId to each item in the sheetList
     for (var item in sheetList) {
@@ -45,12 +52,13 @@ class SheetList extends SheetItem {
   }
 
   SheetListBox toSheetListBox() {
-    
     return SheetListBox(
         sheetList: sheetList,
         direction: direction == Axis.vertical ? true : false,
         id: id,
-        parentId: parentId);
+        parentId: parentId,
+        size: [size.width,size.height]
+        );
   }
 
   // Adding an item to the list

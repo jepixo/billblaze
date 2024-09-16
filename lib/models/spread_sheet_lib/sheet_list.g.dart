@@ -21,17 +21,20 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       direction: fields[3] as bool,
       id: fields[0] as String,
       parentId: fields[1] as String,
+      size: (fields[4] as List).cast<dynamic>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetListBox obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(2)
       ..write(obj.sheetList)
       ..writeByte(3)
       ..write(obj.direction)
+      ..writeByte(4)
+      ..write(obj.size)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:math';
 import 'package:billblaze/Home.dart';
+
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -62,7 +63,7 @@ class PanelIndex {
   String id;
   String parentId = '';
   int panelIndex;
-  PanelIndex({required this.id, required this.panelIndex, parentId = ''});
+  PanelIndex({required this.id, required this.panelIndex, this.parentId = ''});
 
   PanelIndex copyWith({
     String? id,
@@ -368,6 +369,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     SheetListBox sheetListBox = SheetListBox(
         sheetList: [],
         direction: sheetlist.direction == Axis.vertical ? true : false,
+        size: [sheetlist.size.width, sheetlist.size.height],
         id: sheetlist.id,
         parentId: sheetlist.parentId);
     for (var i = 0; i < sheetlist.length; i++) {
@@ -411,6 +413,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         direction: sheetListBox.direction ? Axis.vertical : Axis.horizontal,
         id: sheetListBox.id,
         parentId: sheetListBox.parentId,
+        size: Size(sheetListBox.size[0], sheetListBox.size[1]),
         sheetList: []);
     for (var item in sheetListBox.sheetList) {
       if (item is TextEditorItemBox) {
@@ -491,9 +494,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     String newId = id.isEmpty ? Uuid().v4() : id;
     var textEditorConfigurations = QuillEditorConfigurations(
+      enableScribble: true,
+      enableSelectionToolbar: true,
       padding: EdgeInsets.all(2),
       controller: textController,
       placeholder: 'Enter Text',
+      // maxHeight: 50,
       customStyleBuilder: (attribute) {
         // Handle custom styles
         if (attribute.key == 'letterSpacing') {
@@ -517,11 +523,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         return Stack(
           children: [
             Container(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.only(left: 0),
                 decoration: BoxDecoration(
                     color: defaultPalette.black.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10)),
-                child: rawEditor),
+                    borderRadius: BorderRadius.circular(8)),
+                child: Transform.scale(
+                    scale: 0.9, alignment: Alignment.center, child: rawEditor)),
           ],
         );
       },
@@ -532,11 +539,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               _sheetItemIterator(newId, spreadSheetList[currentPageIndex]);
 
           var index = _sheetListIterator(
-                  itemE!.parentId, spreadSheetList[currentPageIndex])
+                  itemE.parentId, spreadSheetList[currentPageIndex])
               .indexOf(itemE);
           panelIndex = PanelIndex(
               id: itemE.id, panelIndex: index, parentId: itemE.parentId);
-
+          print('this that pID from within the addText: ${itemE.parentId}');
+          print(
+              'this that id from addtext from panelindex: ${panelIndex.parentId}');
           if (hDividerPosition > 0.48) {
             hDividerPosition = 0.4;
           }
@@ -634,39 +643,69 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   SheetItem _sheetItemIterator(String id, SheetList sheetList) {
-    print('id for search: $id');
+    // print('Length: ${sheetList.length}');
+    // print('id for search: $id');
+
     for (var i = 0; i < sheetList.length; i++) {
-      print('item id in iterator: ${sheetList[i].id}');
-      print('item in iterator: ${sheetList[i]}');
+      // print('item id in iterator: ${sheetList[i].id}');
+      // print('item in iterator: ${sheetList[i]}');
+
       if (sheetList[i] is TextEditorItem && sheetList[i].id == id) {
-        print('textitem id in iterator: ${sheetList[i].id}');
+        // print('Found TextEditorItem with matching id: ${sheetList[i].id}');
         return sheetList[i];
       }
+
       if (sheetList[i] is SheetList) {
-        print('listitem id in iterator: ${sheetList[i].id}');
-        if (_itemIterator(id, sheetList[i] as SheetList) != null) {
-          return _itemIterator(id, sheetList[i] as SheetList)!;
+        // print('Descending into nested SheetList with id: ${sheetList[i].id}');
+        try {
+          var itemItered = _itemIterator(id, sheetList[i] as SheetList);
+          if (itemItered != null) {
+            return itemItered;
+          }
+        } catch (e) {
+          // print('Exception caught in nested SheetList: $e');
+          continue; // Continue the loop to check the next item
         }
       }
+
+      // print('ItemIterationParent: $i');
     }
-    throw throw Exception('SheetItem with id $id not found');
+
+    // Throw if the item was not found after iterating through the entire list
+    throw Exception('SheetItem with id $id not found');
   }
 
   SheetItem? _itemIterator(String id, SheetList sheetList) {
-    print('id for search: $id');
+    // print('id for search in sublist: $id');
+
     for (var i = 0; i < sheetList.length; i++) {
-      print('item id in iterator: ${sheetList[i].id}');
-      print('item in iterator: ${sheetList[i]}');
+      // print('item id in sublist iterator: ${sheetList[i].id}');
+      // print('item in sublist iterator: ${sheetList[i]}');
+
       if (sheetList[i] is TextEditorItem && sheetList[i].id == id) {
-        print('textitem id in iterator: ${sheetList[i].id}');
+        // print(
+        //     'Found TextEditorItem in sublist with matching id: ${sheetList[i].id}');
         return sheetList[i];
       }
+
       if (sheetList[i] is SheetList) {
-        print('listitem id in iterator: ${sheetList[i].id}');
-        return _sheetItemIterator(id, sheetList[i] as SheetList);
+        // print(
+        //     'Descending further into nested SheetList with id: ${sheetList[i].id}');
+        try {
+          var itemItered = _sheetItemIterator(id, sheetList[i] as SheetList);
+          if (itemItered != null) {
+            return itemItered;
+          }
+        } catch (e) {
+          // print('Exception caught in deeper nested SheetList: $e');
+          continue; // Continue the loop to check the next item
+        }
       }
+
+      // print('ItemIterationChild: $i');
     }
-    return null;
+
+    return null; // This should return null if nothing is found, letting the parent function decide what to do
   }
 
   void _updatehDividerPosition(double newPosition) {
@@ -1407,7 +1446,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     height: sHeight,
                     child: Stack(
                       children: [
-                        //center preview, spreadsheet and propTab //Desktop WEB
+                        //sidebar tools //Desktop WEB
                         Positioned(
                           top: Platform.isWindows ? 45 : 30,
                           width: sWidth,
@@ -1618,25 +1657,27 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               const edgeThreshold = 10.0;
 
                               // Check if the cursor is near the edges and set the cursor style accordingly
-                              if (position.dx < edgeThreshold ||
-                                  position.dx >
-                                      (widgetSize?.width ?? 0) -
-                                          edgeThreshold) {
-                                setState(() {
-                                  _cursor = SystemMouseCursors.resizeColumn;
-                                });
+                              if (position.dx < edgeThreshold) {
+                                // setState(() {
+                                //   _cursor = SystemMouseCursors.resizeColumn;
+                                // });
                               } else if (position.dy < edgeThreshold ||
                                   position.dy >
                                       (widgetSize?.height ?? 0) -
                                           edgeThreshold) {
                                 // _cursor = SystemMouseCursors.resizeRow;
                               } else {
-                                setState(() {
-                                  // _cursor = SystemMouseCursors.basic;
-                                });
+                                // setState(() {
+                                //   _cursor = SystemMouseCursors.basic;
+                                // });
                               }
                             },
                             child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  panelIndex.panelIndex = -1;
+                                });
+                              },
                               onPanUpdate: (details) {
                                 if (_cursor ==
                                     SystemMouseCursors.resizeColumn) {
@@ -1660,244 +1701,289 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     borderRadius: BorderRadius.circular(12)),
                                 // margin: EdgeInsets.only(
                                 //     top: 8, bottom: 8, right: 8),
-                                child: Stack(
-                                  children: [
-                                    // botomGraph //Desktop WEB
-                                    IgnorePointer(
-                                      ignoring: true,
-                                      child: AnimatedContainer(
-                                        duration: Durations.extralong1,
-                                        height: sHeight,
-                                        width: sWidth,
-                                        alignment: Alignment.centerRight,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.0),
-                                        ),
-                                        padding: EdgeInsets.only(
-                                          top: 0,
-                                        ),
-                                        //layGraph
-                                        child: Opacity(
-                                          opacity: 0.35,
-                                          child: LineChart(LineChartData(
-                                              lineBarsData: [
-                                                LineChartBarData()
-                                              ],
-                                              titlesData:
-                                                  FlTitlesData(show: false),
-                                              gridData: FlGridData(
-                                                  show: true,
-                                                  horizontalInterval: 10,
-                                                  verticalInterval: 30),
-                                              borderData:
-                                                  FlBorderData(show: false),
-                                              minY: 0,
-                                              maxY: 50,
-                                              maxX: dateTimeNow
-                                                          .millisecondsSinceEpoch
-                                                          .ceilToDouble() /
-                                                      500 +
-                                                  250,
-                                              minX: dateTimeNow
-                                                      .millisecondsSinceEpoch
-                                                      .ceilToDouble() /
-                                                  500)),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Stack(
+                                    children: [
+                                      // Graph //Desktop WEB
+                                      IgnorePointer(
+                                        ignoring: true,
+                                        child: AnimatedContainer(
+                                          duration: Durations.extralong1,
+                                          height: sHeight,
+                                          width: sWidth,
+                                          alignment: Alignment.centerRight,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.white.withOpacity(0.0),
+                                          ),
+                                          padding: EdgeInsets.only(
+                                            top: 0,
+                                          ),
+                                          //layGraph
+                                          child: Opacity(
+                                            opacity: 0.35,
+                                            child: LineChart(LineChartData(
+                                                lineBarsData: [
+                                                  LineChartBarData()
+                                                ],
+                                                titlesData:
+                                                    FlTitlesData(show: false),
+                                                gridData: FlGridData(
+                                                    show: true,
+                                                    horizontalInterval: 10,
+                                                    verticalInterval: 30),
+                                                borderData:
+                                                    FlBorderData(show: false),
+                                                minY: 0,
+                                                maxY: 50,
+                                                maxX: dateTimeNow
+                                                            .millisecondsSinceEpoch
+                                                            .ceilToDouble() /
+                                                        500 +
+                                                    250,
+                                                minX: dateTimeNow
+                                                        .millisecondsSinceEpoch
+                                                        .ceilToDouble() /
+                                                    500)),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    //Main SpreadSheet //Desktop WEB
-                                    ReorderableListView.builder(
-                                      footer: null,
-                                      header: null,
-                                      // scrollDirection: Axis.horizontal,
-                                      itemExtentBuilder: null,
-                                      proxyDecorator:
-                                          (child, index, animation) {
-                                        return child;
-                                      },
-                                      padding: EdgeInsets.all(0),
-                                      onReorder: (int oldIndex, int newIndex) {
-                                        setState(() {
-                                          if (newIndex > oldIndex) {
-                                            newIndex -= 1;
-                                          }
-                                          final item =
-                                              spreadSheetList[currentPageIndex]
-                                                  .removeAt(oldIndex);
-                                          spreadSheetList[currentPageIndex]
-                                              .insert(newIndex, item);
-                                        });
-                                      },
-                                      itemCount:
-                                          spreadSheetList[currentPageIndex]
-                                              .length,
-                                      itemBuilder: (context, index) {
-                                        print(
-                                            'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
-                                        if (spreadSheetList[currentPageIndex]
-                                            [index] is TextEditorItem) {
-                                          var textEditorItem =
-                                              spreadSheetList[currentPageIndex]
-                                                  [index] as TextEditorItem;
-                                          return Stack(
-                                            key: ValueKey(textEditorItem
-                                                .id), // Ensure each item has a unique key
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  FocusScope.of(context)
-                                                      .unfocus();
-                                                  var isTrue = false;
-                                                  SheetItem? itemE;
-                                                  if (panelIndex.id ==
-                                                      textEditorItem.id) {
-                                                    isTrue = true;
-                                                  }
-                                                  setState(() {
-                                                    itemE = _sheetItemIterator(
-                                                        textEditorItem.id,
-                                                        spreadSheetList[
-                                                            currentPageIndex]);
-
-                                                    if (itemE != null) {
-                                                      index = _sheetListIterator(
-                                                              itemE!.parentId,
-                                                              spreadSheetList[
-                                                                  currentPageIndex])
-                                                          .indexOf(itemE!);
-                                                      panelIndex = PanelIndex(
-                                                          id: itemE!.id,
-                                                          panelIndex: index,
-                                                          parentId:
-                                                              itemE?.parentId);
-                                                    } else {
-                                                      panelIndex = PanelIndex(
-                                                          id: textEditorItem.id,
-                                                          panelIndex: index,
-                                                          parentId:
-                                                              textEditorItem
-                                                                  .parentId);
-                                                    }
-
-                                                    // index = temp ?? index;
-
-                                                    if (hDividerPosition >
-                                                        0.48) {
-                                                      hDividerPosition = 0.4;
-                                                    }
-                                                  });
-                                                  // Future.delayed(Duration.zero)
-                                                  //     .then((_) {
-                                                  //   textStylePageController
-                                                  //       .jumpToPage(panelIndex
-                                                  //           .panelIndex);
-                                                  // });
-                                                  Future.delayed(
-                                                          Durations.short1)
-                                                      .then((h) {
-                                                    if (!isTrue) {
-                                                      textStyleTabControler
-                                                          .animateToPage(0,
-                                                              curve: Curves
-                                                                  .bounceIn,
-                                                              duration:
-                                                                  Durations
-                                                                      .short1);
-                                                      for (var i = 0;
-                                                          i < isTapped.length;
-                                                          i++) {
-                                                        setState(() {
-                                                          isTapped[i] = false;
-                                                        });
+                                      //Main SpreadSheet //Desktop WEB
+                                      ReorderableListView.builder(
+                                        footer: null,
+                                        header: null,
+                                        buildDefaultDragHandles: false,
+                                        // scrollDirection: Axis.horizontal,
+                                        itemExtentBuilder: null,
+                                        proxyDecorator:
+                                            (child, index, animation) {
+                                          return child;
+                                        },
+                                        padding: EdgeInsets.all(0),
+                                        onReorder:
+                                            (int oldIndex, int newIndex) {
+                                          setState(() {
+                                            if (newIndex > oldIndex) {
+                                              newIndex -= 1;
+                                            }
+                                            final item = spreadSheetList[
+                                                    currentPageIndex]
+                                                .removeAt(oldIndex);
+                                            spreadSheetList[currentPageIndex]
+                                                .insert(newIndex, item);
+                                          });
+                                        },
+                                        itemCount:
+                                            spreadSheetList[currentPageIndex]
+                                                .length,
+                                        itemBuilder: (context, index) {
+                                          print(
+                                              'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
+                                          if (spreadSheetList[currentPageIndex]
+                                              [index] is TextEditorItem) {
+                                            var textEditorItem =
+                                                spreadSheetList[
+                                                        currentPageIndex][index]
+                                                    as TextEditorItem;
+                                            return ReorderableDelayedDragStartListener(
+                                              index: index,
+                                              key: ValueKey(textEditorItem.id),
+                                              child: Stack(
+                                                // Ensure each item has a unique key
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      FocusScope.of(context)
+                                                          .unfocus();
+                                                      var isTrue = false;
+                                                      SheetItem? itemE;
+                                                      if (panelIndex.id ==
+                                                          textEditorItem.id) {
+                                                        isTrue = true;
                                                       }
                                                       setState(() {
-                                                        isTapped[1] = true;
+                                                        itemE = _sheetItemIterator(
+                                                            textEditorItem.id,
+                                                            spreadSheetList[
+                                                                currentPageIndex]);
+
+                                                        if (itemE != null) {
+                                                          index = _sheetListIterator(
+                                                                  itemE!
+                                                                      .parentId,
+                                                                  spreadSheetList[
+                                                                      currentPageIndex])
+                                                              .indexOf(itemE!);
+                                                          panelIndex = PanelIndex(
+                                                              id: itemE!.id,
+                                                              panelIndex: index,
+                                                              parentId: itemE
+                                                                  ?.parentId??'');
+                                                        } else {
+                                                          panelIndex = PanelIndex(
+                                                              id: textEditorItem
+                                                                  .id,
+                                                              panelIndex: index,
+                                                              parentId:
+                                                                  textEditorItem
+                                                                      .parentId);
+                                                        }
+
+                                                        // index = temp ?? index;
+
+                                                        if (hDividerPosition >
+                                                            0.48) {
+                                                          hDividerPosition =
+                                                              0.4;
+                                                        }
                                                       });
-                                                    }
-                                                  });
+                                                      // Future.delayed(Duration.zero)
+                                                      //     .then((_) {
+                                                      //   textStylePageController
+                                                      //       .jumpToPage(panelIndex
+                                                      //           .panelIndex);
+                                                      // });
+                                                      Future.delayed(
+                                                              Durations.short1)
+                                                          .then((h) {
+                                                        if (!isTrue) {
+                                                          textStyleTabControler
+                                                              .animateToPage(0,
+                                                                  curve: Curves
+                                                                      .bounceIn,
+                                                                  duration:
+                                                                      Durations
+                                                                          .short1);
+                                                          for (var i = 0;
+                                                              i <
+                                                                  isTapped
+                                                                      .length;
+                                                              i++) {
+                                                            setState(() {
+                                                              isTapped[i] =
+                                                                  false;
+                                                            });
+                                                          }
+                                                          setState(() {
+                                                            isTapped[1] = true;
+                                                          });
+                                                        }
+                                                      });
 
-                                                  print('clicked');
+                                                      print('clicked');
 
-                                                  print(panelIndex);
-                                                },
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          top: 4,
-                                                          bottom: 8,
-                                                          left: 20,
-                                                          right: 20),
-                                                  margin: EdgeInsets.all(8),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        defaultPalette.primary,
-                                                    border: Border.all(
-                                                      width: panelIndex.id ==
-                                                              textEditorItem.id
-                                                          ? 4
-                                                          : 2,
-                                                      color: panelIndex.id ==
-                                                              textEditorItem.id
-                                                          ? defaultPalette
-                                                              .tertiary
-                                                          : defaultPalette
-                                                              .black,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                  ),
-                                                  child: IntrinsicWidth(
-                                                    child: Column(
-                                                      children: [
-                                                        //id above editor
-                                                        Container(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          padding:
-                                                              EdgeInsets.only(
-                                                                  bottom: 4),
-                                                          child: Text(
-                                                              'id : ${textEditorItem.id}',
-                                                              style: TextStyle(
-                                                                  fontSize:
-                                                                      10)),
-                                                        ),
-                                                        QuillEditor(
-                                                          configurations:
-                                                              textEditorItem
-                                                                  .textEditorConfigurations,
-                                                          focusNode:
-                                                              textEditorItem
-                                                                  .focusNode,
-                                                          scrollController:
-                                                              textEditorItem
-                                                                  .scrollController,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              //contextMenu in main spreadsheet
-                                              AnimatedPositioned(
-                                                duration: Durations.medium3,
-                                                bottom: 0,
-                                                left: panelIndex.id ==
-                                                        textEditorItem.id
-                                                    ? 0
-                                                    : -50,
-                                                right: 0,
-                                                child: SingleChildScrollView(
-                                                  child: Transform.flip(
-                                                    flipX: true,
-                                                    child: Transform.flip(
-                                                      flipX: true,
-                                                      child:
-                                                          panelIndex.id ==
+                                                      print(panelIndex);
+                                                    },
+                                                    child: Container(
+                                                      height: null,
+                                                      width: sWidth,
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 2,
+                                                              bottom: 2,
+                                                              left: 4,
+                                                              right: 4),
+                                                      margin: EdgeInsets.all(2),
+                                                      decoration: BoxDecoration(
+                                                        color: defaultPalette
+                                                            .primary,
+                                                        border: Border.all(
+                                                          width: panelIndex
+                                                                      .id ==
                                                                   textEditorItem
                                                                       .id
+                                                              ? 2
+                                                              : 1.2,
+                                                          color: panelIndex
+                                                                      .id ==
+                                                                  textEditorItem
+                                                                      .id
+                                                              ? defaultPalette
+                                                                  .tertiary
+                                                              : defaultPalette
+                                                                  .black,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          //id above editor
+                                                          Container(
+                                                              // width: 40,
+                                                              alignment:
+                                                                  Alignment
+                                                                      .topLeft,
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      left: 4,
+                                                                      bottom:
+                                                                          4),
+                                                              child: Icon(
+                                                                IconsaxPlusLinear
+                                                                    .message_text,
+                                                                size: 12,
+                                                              )
+                                                              // Text(
+                                                              //     ' Text : ${textEditorItem.id}',
+                                                              //     maxLines: 1,
+                                                              //     overflow:
+                                                              //         TextOverflow
+                                                              //             .ellipsis,
+                                                              //     textAlign:
+                                                              //         TextAlign
+                                                              //             .left,
+                                                              //     style: TextStyle(
+                                                              //         fontSize: 6)),
+                                                              ),
+                                                          Transform.scale(
+                                                            scale: 1,
+                                                            alignment: Alignment
+                                                                .topLeft,
+                                                            child: QuillEditor(
+                                                              configurations:
+                                                                  textEditorItem
+                                                                      .textEditorConfigurations,
+                                                              focusNode:
+                                                                  textEditorItem
+                                                                      .focusNode,
+                                                              scrollController:
+                                                                  textEditorItem
+                                                                      .scrollController,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  //contextMenu in main spreadsheet
+                                                  AnimatedPositioned(
+                                                    duration: Durations.medium3,
+                                                    top: 4,
+                                                    left: panelIndex.id ==
+                                                            textEditorItem.id
+                                                        ? 4
+                                                        : 4,
+                                                    right: 4,
+                                                    child:
+                                                        SingleChildScrollView(
+                                                      child: Transform.flip(
+                                                        flipX: true,
+                                                        child: Transform.flip(
+                                                          flipX: true,
+                                                          child: true
+                                                              // panelIndex.id ==
+                                                              //         textEditorItem
+                                                              //             .id
                                                               ? ExpandableMenu(
+                                                                  key: ValueKey(
+                                                                      _cursor),
+                                                                  // isExpanded: true,
                                                                   backgroundColor:
                                                                       defaultPalette
                                                                           .white
@@ -1909,8 +1995,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   itemContainerColor:
                                                                       defaultPalette
                                                                           .secondary,
-                                                                  width: 40.0,
-                                                                  height: 40.0,
+                                                                  width: 15,
+                                                                  height: 15,
                                                                   items: List
                                                                       .generate(
                                                                           12,
@@ -1918,10 +2004,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     switch (
                                                                         intt) {
                                                                       case 0:
+                                                                        //ADD BUTTON
                                                                         return PopupMenuButton<
                                                                             String>(
                                                                           iconSize:
-                                                                              20,
+                                                                              12,
                                                                           padding:
                                                                               EdgeInsets.all(0),
                                                                           icon:
@@ -1952,12 +2039,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                                 setState(() {
                                                                                   var newId = Uuid().v4();
                                                                                   var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                  spreadSheetList[currentPageIndex].insert(
-                                                                                      index,
-                                                                                      SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                        _addTextField(shouldReturn: true),
-                                                                                        item
-                                                                                      ]));
+                                                                                  spreadSheetList[currentPageIndex].insert(index, SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [_addTextField(shouldReturn: true), item], size: Size(sWidth, 100)));
                                                                                 });
                                                                                 break;
                                                                               //in main spreadsheet
@@ -1967,10 +2049,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                                   var item = spreadSheetList[currentPageIndex].removeAt(index);
                                                                                   spreadSheetList[currentPageIndex].insert(
                                                                                       index,
-                                                                                      SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                        item,
-                                                                                        _addTextField(shouldReturn: true),
-                                                                                      ]));
+                                                                                      SheetList(
+                                                                                          direction: Axis.horizontal,
+                                                                                          id: newId,
+                                                                                          parentId: spreadSheetList[currentPageIndex].id,
+                                                                                          sheetList: [
+                                                                                            item,
+                                                                                            _addTextField(shouldReturn: true),
+                                                                                          ],
+                                                                                          size: Size(sWidth, 100)));
                                                                                 });
                                                                                 break;
                                                                             }
@@ -2044,6 +2131,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           child:
                                                                               Icon(
                                                                             TablerIcons.arrow_up,
+                                                                            size:
+                                                                                12,
                                                                             color:
                                                                                 defaultPalette.black.withOpacity(0.8),
                                                                           ),
@@ -2065,6 +2154,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           child:
                                                                               Icon(
                                                                             TablerIcons.arrow_down,
+                                                                            size:
+                                                                                12,
                                                                             color:
                                                                                 defaultPalette.black.withOpacity(0.8),
                                                                           ),
@@ -2203,6 +2294,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           child:
                                                                               Icon(
                                                                             TablerIcons.file_export,
+                                                                            size:
+                                                                                12,
                                                                             color:
                                                                                 defaultPalette.black.withOpacity(0.8),
                                                                           ),
@@ -2240,6 +2333,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           child:
                                                                               Icon(
                                                                             TablerIcons.x,
+                                                                            size:
+                                                                                12,
                                                                             color:
                                                                                 defaultPalette.black.withOpacity(0.8),
                                                                           ),
@@ -2279,6 +2374,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           child:
                                                                               Icon(
                                                                             TablerIcons.trash,
+                                                                            size:
+                                                                                12,
                                                                             color:
                                                                                 defaultPalette.black.withOpacity(0.8),
                                                                           ),
@@ -2289,506 +2386,43 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   }), // simplified item generation in main spreadsheet
                                                                 )
                                                               : null,
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                ),
-                                              ), // Expandable menus and other widgets can stay the same
-                                            ],
-                                          );
-                                        } else if (spreadSheetList[
-                                                currentPageIndex][index]
-                                            is SheetList) {
-                                          return Stack(
-                                            key: ValueKey((spreadSheetList[
-                                                        currentPageIndex][index]
-                                                    as SheetList)
-                                                .id),
-                                            children: [
-                                              _buildListWidget(spreadSheetList[
+                                                  ), // Expandable menus and other widgets can stay the same
+                                                ],
+                                              ),
+                                            );
+                                          } else if (spreadSheetList[
+                                                  currentPageIndex][index]
+                                              is SheetList) {
+                                            return ReorderableDelayedDragStartListener(
+                                              index: index,
+                                              key: ValueKey(spreadSheetList[
                                                       currentPageIndex][index]
-                                                  as SheetList),
-                                              AnimatedPositioned(
-                                                duration: Durations.medium3,
-                                                bottom: 0,
-                                                left: panelIndex.parentId ==
-                                                        spreadSheetList[
-                                                                    currentPageIndex]
-                                                                [index]
-                                                            .id
-                                                    ? 0
-                                                    : -50,
-                                                right: 0,
-                                                child: SingleChildScrollView(
-                                                  child: Transform.flip(
-                                                    flipX: true,
-                                                    child: Transform.flip(
-                                                      flipX: true,
-                                                      child: panelIndex
-                                                                  .parentId ==
-                                                              spreadSheetList[
-                                                                          currentPageIndex]
-                                                                      [index]
-                                                                  .id
-                                                          ? ExpandableMenu(
-                                                              backgroundColor:
-                                                                  defaultPalette
-                                                                      .white
-                                                                      .withOpacity(
-                                                                          1),
-                                                              iconColor:
-                                                                  defaultPalette
-                                                                      .tertiary,
-                                                              itemContainerColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              width: 40.0,
-                                                              height: 40.0,
-                                                              items:
-                                                                  List.generate(
-                                                                      12,
-                                                                      (intt) {
-                                                                switch (intt) {
-                                                                  case 0:
-                                                                    return PopupMenuButton<
-                                                                        String>(
-                                                                      iconSize:
-                                                                          20,
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              0),
-                                                                      icon:
-                                                                          Icon(
-                                                                        TablerIcons
-                                                                            .message_plus,
-                                                                        color: defaultPalette
-                                                                            .black
-                                                                            .withOpacity(0.8),
-                                                                      ),
-                                                                      onSelected:
-                                                                          (String
-                                                                              value) {
-                                                                        // Handle the selected option here
-                                                                        switch (
-                                                                            value) {
-                                                                          case 'Above':
-                                                                            setState(() {
-                                                                              var newItem = _addTextField(shouldReturn: true);
-                                                                              (spreadSheetList[currentPageIndex][index] as SheetList).insert(0, newItem);
-                                                                              index++;
-                                                                            });
-                                                                            break;
-                                                                          case 'Below':
-                                                                            setState(() {
-                                                                              var newItem = _addTextField(shouldReturn: true);
-                                                                              (spreadSheetList[currentPageIndex][index] as SheetList).sheetList.add(newItem);
-                                                                            });
-                                                                            // Your logic for "Below"
-                                                                            break;
-                                                                          case 'Left':
-                                                                            setState(() {
-                                                                              var newId = Uuid().v4();
-                                                                              var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                              spreadSheetList[currentPageIndex].insert(
-                                                                                  index,
-                                                                                  SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                    _addTextField(shouldReturn: true),
-                                                                                    item
-                                                                                  ]));
-                                                                            });
-                                                                            break;
-                                                                          case 'Right':
-                                                                            // Your logic for "Right"
-                                                                            setState(() {
-                                                                              var newId = Uuid().v4();
-                                                                              var item = spreadSheetList[currentPageIndex].removeAt(index);
-                                                                              spreadSheetList[currentPageIndex].insert(
-                                                                                  index,
-                                                                                  SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
-                                                                                    item,
-                                                                                    _addTextField(shouldReturn: true),
-                                                                                  ]));
-                                                                            });
-                                                                            break;
-                                                                        }
-                                                                      },
-                                                                      itemBuilder:
-                                                                          (BuildContext
-                                                                              context) {
-                                                                        return [
-                                                                          const PopupMenuItem<
-                                                                              String>(
-                                                                            value:
-                                                                                'Above',
-                                                                            child:
-                                                                                Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                              children: [
-                                                                                Icon(TablerIcons.arrow_bar_to_up),
-                                                                                Text('Above')
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                          const PopupMenuItem<
-                                                                              String>(
-                                                                            value:
-                                                                                'Below',
-                                                                            child:
-                                                                                Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                              children: [
-                                                                                Icon(TablerIcons.arrow_bar_to_down),
-                                                                                Text('Below')
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                          const PopupMenuItem<
-                                                                              String>(
-                                                                            value:
-                                                                                'Left',
-                                                                            child:
-                                                                                Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                              children: [
-                                                                                Icon(TablerIcons.arrow_bar_to_left),
-                                                                                Text('Left')
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                          const PopupMenuItem<
-                                                                              String>(
-                                                                            value:
-                                                                                'Right',
-                                                                            child:
-                                                                                Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                              children: [
-                                                                                Icon(TablerIcons.arrow_bar_to_right),
-                                                                                Text('Right')
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ];
-                                                                      },
-                                                                    );
-
-                                                                  case 1:
-                                                                    //MOVE TEXT UP
-                                                                    return GestureDetector(
-                                                                      onTap:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          if (index !=
-                                                                              0) {
-                                                                            var item =
-                                                                                spreadSheetList[currentPageIndex].removeAt(index);
-                                                                            spreadSheetList[currentPageIndex].insert(index - 1,
-                                                                                item);
-
-                                                                            // Update the index to reflect the new position of the item
-                                                                            index--; // Decrement index to reflect the item's new position
-
-                                                                            panelIndex = PanelIndex(
-                                                                                id: panelIndex.id,
-                                                                                panelIndex: panelIndex.panelIndex + 1,
-                                                                                parentId: panelIndex.parentId);
-                                                                            print('Updated index of text editor: $index');
-                                                                          }
-                                                                          print(
-                                                                              'Current index of text editor: $index');
-                                                                        });
-                                                                      },
-                                                                      child:
-                                                                          Icon(
-                                                                        TablerIcons
-                                                                            .arrow_up,
-                                                                        color: defaultPalette
-                                                                            .black
-                                                                            .withOpacity(0.8),
-                                                                      ),
-                                                                    );
-                                                                  case 2:
-                                                                    //MOVE TEXT DOWN
-                                                                    return GestureDetector(
-                                                                      onTap:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          if (index !=
-                                                                              spreadSheetList[currentPageIndex].length - 1) {
-                                                                            var item =
-                                                                                spreadSheetList[currentPageIndex].removeAt(index);
-                                                                            spreadSheetList[currentPageIndex].insert(index + 1,
-                                                                                item);
-                                                                            index++;
-                                                                            print('index of texteditor DT: $index');
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                      child:
-                                                                          Icon(
-                                                                        TablerIcons
-                                                                            .arrow_down,
-                                                                        color: defaultPalette
-                                                                            .black
-                                                                            .withOpacity(0.8),
-                                                                      ),
-                                                                    );
-                                                                  case 3:
-                                                                    //EXPORT TEXT
-                                                                    return GestureDetector(
-                                                                      onTap:
-                                                                          () async {
-                                                                        // Get the current text editor item
-                                                                        var textEditorItem =
-                                                                            spreadSheetList[currentPageIndex][index]
-                                                                                as TextEditorItem;
-
-                                                                        // Create a GlobalKey for the RepaintBoundary
-                                                                        GlobalKey
-                                                                            repaintBoundaryKey =
-                                                                            GlobalKey();
-
-                                                                        // Navigate to a new page with the PDF preview
-                                                                        await Navigator
-                                                                            .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                Scaffold(
-                                                                              appBar: AppBar(
-                                                                                title: Text('PDF Preview'),
-                                                                                actions: [
-                                                                                  IconButton(
-                                                                                    icon: Icon(Icons.image),
-                                                                                    onPressed: () async {
-                                                                                      RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                                                                                      ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                                                                                      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                                                                                      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                                                                                      // Get the directory to save the image
-                                                                                      final directory = await getApplicationDocumentsDirectory();
-                                                                                      final imagePath = '${directory.path}/captured_image.png';
-                                                                                      File(imagePath).writeAsBytesSync(pngBytes);
-
-                                                                                      print('Image saved at: $imagePath');
-                                                                                    },
-                                                                                  ),
-                                                                                  IconButton(
-                                                                                    icon: Icon(Icons.print),
-                                                                                    onPressed: () async {
-                                                                                      RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-                                                                                      ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                                                                                      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-                                                                                      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                                                                                      // Get the directory to save the image
-                                                                                      final directory = await getApplicationDocumentsDirectory();
-                                                                                      final imagePath = '${directory.path}/captured_image.png';
-                                                                                      File(imagePath).writeAsBytesSync(pngBytes);
-
-                                                                                      // Prepare the PDF document
-                                                                                      final pdf = pw.Document();
-                                                                                      final imageProvider = pw.MemoryImage(pngBytes);
-
-                                                                                      pdf.addPage(
-                                                                                        pw.Page(
-                                                                                          pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
-                                                                                          margin: pw.EdgeInsets.only(
-                                                                                            top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
-                                                                                            bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
-                                                                                            left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
-                                                                                            right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
-                                                                                          ),
-                                                                                          build: (pw.Context context) {
-                                                                                            return pw.Center(
-                                                                                              child: pw.Image(imageProvider),
-                                                                                            ); // Center the image on the page
-                                                                                          },
-                                                                                        ),
-                                                                                      );
-
-                                                                                      // Save the PDF to a file
-                                                                                      final pdfPath = '${directory.path}/document.pdf';
-                                                                                      final file = File(pdfPath);
-                                                                                      await file.writeAsBytes(await pdf.save());
-
-                                                                                      print('PDF saved at: $pdfPath');
-                                                                                    },
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                              body: RepaintBoundary(
-                                                                                key: repaintBoundaryKey,
-                                                                                child: Container(
-                                                                                  width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
-                                                                                      ? 793.7
-                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
-                                                                                          ? 812.8
-                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
-                                                                                              ? 559.4
-                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
-                                                                                                  ? 396.9
-                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
-                                                                                                      ? 816
-                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                                                          ? 816
-                                                                                                          : 1240, // Default width
-                                                                                  height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
-                                                                                      ? 1122.5
-                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
-                                                                                          ? 1122.5
-                                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
-                                                                                              ? 793.7
-                                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
-                                                                                                  ? 559.4
-                                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
-                                                                                                      ? 1056
-                                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                                                          ? 1344
-                                                                                                          : 3508, // Default height
-                                                                                  padding: EdgeInsets.only(
-                                                                                    top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
-                                                                                    bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
-                                                                                    left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
-                                                                                    right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
-                                                                                  ),
-                                                                                  margin: EdgeInsets.all(20),
-                                                                                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                                                                                    BoxShadow(blurRadius: 10, color: Colors.black)
-                                                                                  ]),
-                                                                                  child: QuillEditor(
-                                                                                    // Replace with your QuillEditor configurations
-                                                                                    configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller),
-                                                                                    focusNode: FocusNode(),
-                                                                                    scrollController: ScrollController(),
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                      child:
-                                                                          Icon(
-                                                                        TablerIcons
-                                                                            .file_export,
-                                                                        color: defaultPalette
-                                                                            .black
-                                                                            .withOpacity(0.8),
-                                                                      ),
-                                                                    );
-                                                                  case 4:
-                                                                    //clear text in text field
-                                                                    return GestureDetector(
-                                                                      onTap:
-                                                                          () async {
-                                                                        await showAdaptiveDialog(
-                                                                          context:
-                                                                              context,
-                                                                          builder:
-                                                                              (context) {
-                                                                            return AlertDialog(
-                                                                              title: Text('Confirm Clear'),
-                                                                              content: Text('This will clear the text from current Text Field. Are you sure?'),
-                                                                              actions: [
-                                                                                TextButton(
-                                                                                    onPressed: () {
-                                                                                      setState(() {
-                                                                                        (spreadSheetList[currentPageIndex][index] as SheetList).sheetList = [];
-                                                                                      });
-                                                                                      Navigator.pop(context);
-                                                                                    },
-                                                                                    child: Text('Yes')),
-                                                                                TextButton(
-                                                                                    onPressed: () {
-                                                                                      Navigator.pop(context);
-                                                                                    },
-                                                                                    child: Text('No')),
-                                                                              ],
-                                                                            );
-                                                                          },
-                                                                        );
-                                                                      },
-                                                                      child:
-                                                                          Icon(
-                                                                        TablerIcons
-                                                                            .x,
-                                                                        color: defaultPalette
-                                                                            .black
-                                                                            .withOpacity(0.8),
-                                                                      ),
-                                                                    );
-                                                                  case 5:
-                                                                    //Delete Text Field
-                                                                    return GestureDetector(
-                                                                      onTap:
-                                                                          () async {
-                                                                        await showAdaptiveDialog(
-                                                                          context:
-                                                                              context,
-                                                                          builder:
-                                                                              (context) {
-                                                                            return AlertDialog(
-                                                                              title: Text('Confirm Delete'),
-                                                                              content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                                              actions: [
-                                                                                TextButton(
-                                                                                    onPressed: () {
-                                                                                      setState(() {
-                                                                                        spreadSheetList[currentPageIndex].removeAt(index);
-                                                                                        panelIndex.id = '';
-                                                                                        panelIndex.panelIndex = -1;
-                                                                                      });
-                                                                                      Navigator.pop(context);
-                                                                                    },
-                                                                                    child: Text('Yes')),
-                                                                                TextButton(
-                                                                                    onPressed: () {
-                                                                                      Navigator.pop(context);
-                                                                                    },
-                                                                                    child: Text('No')),
-                                                                              ],
-                                                                            );
-                                                                          },
-                                                                        );
-                                                                      },
-                                                                      child:
-                                                                          Icon(
-                                                                        TablerIcons
-                                                                            .trash,
-                                                                        color: defaultPalette
-                                                                            .black
-                                                                            .withOpacity(0.8),
-                                                                      ),
-                                                                    );
-                                                                  default:
-                                                                    return Container();
-                                                                }
-                                                              }), // simplified item generation
-                                                            )
-                                                          : null,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ), // Expandable menus and other widgets can stay the same
-                                            ],
+                                                  .id),
+                                              child: _buildListWidget(
+                                                  spreadSheetList[
+                                                          currentPageIndex]
+                                                      [index] as SheetList),
+                                            );
+                                          }
+                                          return Container(
+                                            key: ValueKey(Uuid().v4()),
+                                            color: Colors.amberAccent,
+                                            height: 12,
                                           );
-                                        }
-                                        return Container(
-                                          key: ValueKey(Uuid().v4()),
-                                          color: Colors.amberAccent,
-                                          height: 12,
-                                        );
-                                      },
-                                    ),
-                                  ],
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
+                        //
+
                         //prppos
                         Positioned(
                           width: sWidth * (wH2DividerPosition),
@@ -2836,34 +2470,228 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     Consumer(builder: (context, ref, c) {
                                   return Stack(
                                     children: [
-                                     //Properties botomTool Bar parent
+                                      //Properties botomTool Bar parent
                                       if (ref.watch(pgPropsEnableProvider))
                                         Positioned(
                                             top: sHeight * wVDividerPosition -
                                                 (Platform.isAndroid ? 40 : 30),
                                             height:
-                                                (Platform.isAndroid ? 35 : 30),
+                                                (Platform.isAndroid ? 35 : 32),
                                             width: sWidth * wH2DividerPosition -
                                                 12,
                                             child: Container(
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.extras[1],
-                                                borderRadius: BorderRadius.only(
-                                                    bottomLeft: Radius.circular(
-                                                        Platform.isAndroid
-                                                            ? 26
-                                                            : 30),
-                                                    bottomRight:
-                                                        Radius.circular(26)),
-                                              ),
-                                            )),
- 
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      defaultPalette.extras[1],
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                          bottomLeft: Radius
+                                                              .circular(Platform
+                                                                      .isAndroid
+                                                                  ? 26
+                                                                  : 30),
+                                                          bottomRight:
+                                                              Radius.circular(
+                                                                  26)),
+                                                ),
+                                                padding: EdgeInsets.only(
+                                                    top: 8,
+                                                    left: 20,
+                                                    bottom: 10),
+                                                child: Row(children: [
+                                                  //nextprev buittons
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                        color: defaultPalette
+                                                            .transparent,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8)),
+
+                                                    // height: 30,
+                                                    // width: 50,
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        GestureDetector(
+                                                          child: Icon(
+                                                            Icons
+                                                                .keyboard_arrow_left_sharp,
+                                                            color:
+                                                                defaultPalette
+                                                                    .black,
+                                                            size: 20,
+                                                          ),
+                                                          onTap: () {
+                                                            setState(() {
+                                                              print(
+                                                                  '________PREV PAGE STARTED LD_________');
+                                                              if (currentPageIndex ==
+                                                                  0) {
+                                                                pdfScrollController.animateTo(
+                                                                    currentPageIndex *
+                                                                        ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
+                                                                            16),
+                                                                    duration: Duration(
+                                                                        milliseconds:
+                                                                            100),
+                                                                    curve: Curves
+                                                                        .easeIn);
+                                                                return;
+                                                              }
+                                                              currentPageIndex--;
+
+                                                              pdfScrollController.animateTo(
+                                                                  currentPageIndex *
+                                                                      ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
+                                                                          16),
+                                                                  duration: Duration(
+                                                                      milliseconds:
+                                                                          100),
+                                                                  curve: Curves
+                                                                      .easeIn);
+                                                            });
+                                                            print(
+                                                                '________END PREV PAGE LD_________');
+                                                          },
+                                                        ),
+                                                        SizedBox(
+                                                          width: 10,
+                                                        ),
+                                                        GestureDetector(
+                                                          child: Icon(
+                                                            Icons
+                                                                .keyboard_arrow_right_sharp,
+                                                            color:
+                                                                defaultPalette
+                                                                    .black,
+                                                            size: 20,
+                                                          ),
+                                                          onTap: () {
+                                                            setState(() {
+                                                              print(
+                                                                  '________NEXT PAGE STARTED LD_________');
+                                                              if (pageCount ==
+                                                                  (currentPageIndex +
+                                                                      1)) {
+                                                                _addPdfPage();
+
+                                                                currentPageIndex++;
+                                                                pdfScrollController.animateTo(
+                                                                    currentPageIndex *
+                                                                        ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) +
+                                                                            6),
+                                                                    duration: Duration(
+                                                                        milliseconds:
+                                                                            100),
+                                                                    curve: Curves
+                                                                        .easeIn);
+
+                                                                print(
+                                                                    '________END NEXT PAGE LD_________');
+                                                                return;
+                                                              }
+
+                                                              currentPageIndex++;
+
+                                                              pdfScrollController.animateTo(
+                                                                  currentPageIndex *
+                                                                      ((1.41428571429 *
+                                                                              ((sWidth * (1 - vDividerPosition)) -
+                                                                                  6)) +
+                                                                          6),
+                                                                  duration: Duration(
+                                                                      milliseconds:
+                                                                          100),
+                                                                  curve: Curves
+                                                                      .easeIn);
+                                                              // ref.read(panelIndexProvider.notifier).state = PanelIndex(
+                                                              //     id: ref
+                                                              //         .read(sheetListProviderFamily(ref.read(spreadSheetProvider.select((p) => p[ref.read(currentPageIndexProvider)]
+                                                              //             .id))))
+                                                              //         .id,
+                                                              //     panelIndex:
+                                                              //         0);
+                                                              print(
+                                                                  '________END NEXT PAGE LD_________');
+                                                            });
+                                                          },
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  //RightSide Close Icon Properties Tab Web
+                                                  if (ref.watch(
+                                                      pgPropsEnableProvider))
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        ref
+                                                            .read(
+                                                                pgPropsEnableProvider
+                                                                    .notifier)
+                                                            .update((cb) {
+                                                          return false;
+                                                        });
+                                                        setState(() {
+                                                          wVDividerPosition =
+                                                              20 / sHeight;
+                                                        });
+                                                        print(
+                                                            'Close page props clicked.');
+                                                      },
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                top: 2.0,
+                                                                left: 5),
+                                                        child: Icon(
+                                                            TablerIcons.x,
+                                                            size: 15),
+                                                      ),
+                                                    ),
+                                                  //DELETE ICON
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 5.0, top: 2),
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        _confirmDeleteLayout(
+                                                            deletePage: true);
+                                                        pdfScrollController.animateTo(
+                                                            currentPageIndex *
+                                                                ((1.41428571429 *
+                                                                        ((sWidth *
+                                                                            (1 -
+                                                                                vDividerPosition)))) +
+                                                                    16),
+                                                            duration: Duration(
+                                                                milliseconds:
+                                                                    100),
+                                                            curve:
+                                                                Curves.easeIn);
+                                                      },
+                                                      child: Icon(
+                                                        TablerIcons.trash,
+                                                        color: defaultPalette
+                                                            .black,
+                                                        size: 15,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ]))),
+
                                       // porperties Tab Parent
                                       Positioned(
                                         top: 0,
                                         height: Platform.isAndroid
                                             ? ref.watch(pgPropsEnableProvider)
-                                                ? (sHeight * wVDividerPosition) -20
+                                                ? (sHeight *
+                                                        wVDividerPosition) -
+                                                    20
                                                 : 25
                                             : (sHeight * wVDividerPosition) -
                                                 20,
@@ -2873,7 +2701,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               top: Platform.isAndroid ? 20 : 40,
                                               left: 5,
                                               right: 5,
-                                              bottom:0),
+                                              bottom: 0),
                                           decoration: BoxDecoration(
                                               borderRadius: BorderRadius.only(
                                                   bottomLeft: Radius.circular(
@@ -2910,7 +2738,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       : 0,
                                                   left: 5,
                                                   right: 5,
-                                                  bottom:0),
+                                                  bottom: 0),
                                               color: defaultPalette.primary,
                                               child: SingleChildScrollView(
                                                 physics: CustomScrollPhysics(
@@ -2919,7 +2747,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
-                                                    SizedBox(height: 20,),
+                                                    SizedBox(
+                                                      height: 20,
+                                                    ),
                                                     //pageNumber //delete //potrtait landscape aNCESTOR
                                                     SizedBox(
                                                       height: Platform.isAndroid
@@ -3188,7 +3018,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ],
                                                       ),
                                                     ),
-//Space
+                                                    //Space
                                                     SizedBox(
                                                       height: 10,
                                                     ),
@@ -3202,10 +3032,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   2,
                                                           child: Row(
                                                             children: [
-                                                              Text(
-                                                                'Margin',
-                                                                style: GoogleFonts
-                                                                    .bungee(),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  'Margin',
+                                                                  style: GoogleFonts
+                                                                      .bungee(),
+                                                                ),
                                                               ),
 
                                                               SizedBox(
@@ -3498,428 +3330,262 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           ),
                                                         ),
 
-                                                        if (Platform
-                                                                .isAndroid &&
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .useIndividualMargins)
+                                                        if (documentPropertiesList[
+                                                                currentPageIndex]
+                                                            .useIndividualMargins)
                                                           Column(
                                                             children: [
                                                               SizedBox(
                                                                 height: 10,
                                                               ),
+                                                              //TOP AND BOTTOM Margin TiTle
+
                                                               Row(
                                                                 children: [
-                                                                  //TOP MARGIN
+                                                                  //Top Margin text
                                                                   Expanded(
+                                                                    flex: 2,
                                                                     child:
-                                                                        //TOP MARGIN TEXT
                                                                         SizedBox(
                                                                       height:
-                                                                          textFieldHeight,
+                                                                          textFieldHeight /
+                                                                              2,
                                                                       child:
-                                                                          Stack(
+                                                                          Row(
                                                                         children: [
-                                                                          TextFormField(
-                                                                            onTapOutside:
-                                                                                (event) {
-                                                                              marginTopFocus.unfocus();
-                                                                            },
-                                                                            focusNode:
-                                                                                marginTopFocus,
-                                                                            controller:
-                                                                                documentPropertiesList[currentPageIndex].marginTopController,
-                                                                            inputFormatters: [
-                                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                                              NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
-                                                                            ],
-                                                                            style:
-                                                                                TextStyle(color: defaultPalette.black),
-                                                                            cursorColor:
-                                                                                defaultPalette.secondary,
-                                                                            textAlign:
-                                                                                TextAlign.center,
-                                                                            textAlignVertical:
-                                                                                TextAlignVertical.top,
-                                                                            decoration:
-                                                                                InputDecoration(
-                                                                              contentPadding: EdgeInsets.all(0),
-                                                                              labelText: 'Top',
-                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                              prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                              suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                              filled: true,
-                                                                              fillColor: defaultPalette.primary,
-                                                                              border: OutlineInputBorder(
-                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                              ),
-                                                                              enabledBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                              ),
-                                                                              focusedBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                              ),
-                                                                            ),
-                                                                            keyboardType:
-                                                                                TextInputType.number,
-                                                                            // onChanged: (value) => _updatePdfPreview(''),
-                                                                          ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            left:
-                                                                                15 / 2,
+                                                                          Expanded(
+                                                                            flex:
+                                                                                1,
                                                                             child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toString();
-                                                                                });
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_left_1,
-                                                                                size: 15,
-                                                                              ),
+                                                                                Text(
+                                                                              'Top',
+                                                                              style: GoogleFonts.bungee(),
                                                                             ),
                                                                           ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            right:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toString();
-                                                                                });
 
-                                                                                // _updatePdfPreview('');
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //TOP Margin ONE Field
+                                                                          Expanded(
+                                                                            flex:
+                                                                                1,
+                                                                            child:
+                                                                                TextFormField(
+                                                                              onTapOutside: (event) {
+                                                                                marginTopFocus.unfocus();
                                                                               },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_right_3,
-                                                                                size: 15,
+                                                                              focusNode: marginTopFocus,
+                                                                              controller: documentPropertiesList[currentPageIndex].marginTopController,
+                                                                              inputFormatters: [
+                                                                                // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                                NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
+                                                                              ],
+                                                                              cursorColor: defaultPalette.secondary,
+                                                                              textAlign: TextAlign.center,
+                                                                              textAlignVertical: TextAlignVertical.top,
+                                                                              decoration: InputDecoration(
+                                                                                contentPadding: EdgeInsets.all(0),
+                                                                                filled: true,
+                                                                                fillColor: defaultPalette.primary,
+                                                                                border: OutlineInputBorder(
+                                                                                  // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Replace with your desired radius
+                                                                                ),
+                                                                                enabledBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 1.2, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                                focusedBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
                                                                               ),
+                                                                              keyboardType: TextInputType.number,
+                                                                              style: GoogleFonts.bungee(
+                                                                                  // fontStyle: FontStyle.italic,
+                                                                                  fontSize: 12,
+                                                                                  color: defaultPalette.black),
+                                                                              onChanged: (value) {
+                                                                                // setState(() {
+                                                                                if (value.isEmpty) {
+                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = '0';
+                                                                                }
+                                                                                setState(() {});
+                                                                                // _updatePdfPreview(
+                                                                                //     '');
+                                                                                // });
+                                                                              },
+                                                                              enabled: documentPropertiesList[currentPageIndex].useIndividualMargins,
                                                                             ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Increase Decrease
+                                                                          Column(
+                                                                            children: [
+                                                                              //Margin increment button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_up_1,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                              //Margin decrement button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_down,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                            ],
                                                                           ),
                                                                         ],
                                                                       ),
                                                                     ),
                                                                   ),
+
                                                                   SizedBox(
                                                                     width: 10,
                                                                   ),
-                                                                  //BOTTOM MARGIN TEXT
+                                                                  //Bottom Margin text
                                                                   Expanded(
+                                                                    flex: 3,
                                                                     child:
                                                                         SizedBox(
                                                                       height:
-                                                                          textFieldHeight,
+                                                                          textFieldHeight /
+                                                                              2,
                                                                       child:
-                                                                          //STACK FOR INCREDECRE
-                                                                          Stack(
+                                                                          Row(
                                                                         children: [
-                                                                          //BOTTOM TEXT FIELD
-                                                                          TextFormField(
-                                                                            onTapOutside:
-                                                                                (event) {
-                                                                              marginBottomFocus.unfocus();
-                                                                            },
-                                                                            focusNode:
-                                                                                marginBottomFocus,
-                                                                            controller:
-                                                                                documentPropertiesList[currentPageIndex].marginBottomController,
-                                                                            inputFormatters: [
-                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))
+                                                                          Expanded(
+                                                                            flex:
+                                                                                3,
+                                                                            child:
+                                                                                Text(
+                                                                              'Bottom',
+                                                                              style: GoogleFonts.bungee(),
+                                                                            ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Bottom Margin ONE Field
+                                                                          Expanded(
+                                                                            flex:
+                                                                                2,
+                                                                            child:
+                                                                                TextFormField(
+                                                                              onTapOutside: (event) {
+                                                                                marginBottomFocus.unfocus();
+                                                                              },
+                                                                              focusNode: marginBottomFocus,
+                                                                              controller: documentPropertiesList[currentPageIndex].marginBottomController,
+                                                                              inputFormatters: [
+                                                                                // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                                NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))),
+                                                                              ],
+                                                                              cursorColor: defaultPalette.secondary,
+                                                                              textAlign: TextAlign.center,
+                                                                              textAlignVertical: TextAlignVertical.top,
+                                                                              decoration: InputDecoration(
+                                                                                contentPadding: EdgeInsets.all(0),
+                                                                                filled: true,
+                                                                                fillColor: defaultPalette.primary,
+                                                                                border: OutlineInputBorder(
+                                                                                  // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Replace with your desired radius
+                                                                                ),
+                                                                                enabledBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 1.2, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                                focusedBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                              ),
+                                                                              keyboardType: TextInputType.number,
+                                                                              style: GoogleFonts.bungee(
+                                                                                  // fontStyle: FontStyle.italic,
+                                                                                  fontSize: 12,
+                                                                                  color: defaultPalette.black),
+                                                                              onChanged: (value) {
+                                                                                // setState(() {
+                                                                                if (value.isEmpty) {
+                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = '0';
+                                                                                }
+                                                                                setState(() {});
+                                                                                // _updatePdfPreview(
+                                                                                //     '');
+                                                                                // });
+                                                                              },
+                                                                              enabled: documentPropertiesList[currentPageIndex].useIndividualMargins,
+                                                                            ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Increase Decrease
+                                                                          Column(
+                                                                            children: [
+                                                                              //Margin increment button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_up_1,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                              //Margin decrement button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_down,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
                                                                             ],
-                                                                            style:
-                                                                                TextStyle(color: defaultPalette.black),
-                                                                            cursorColor:
-                                                                                defaultPalette.secondary,
-                                                                            textAlign:
-                                                                                TextAlign.center,
-                                                                            textAlignVertical:
-                                                                                TextAlignVertical.top,
+                                                                          ),
 
-                                                                            ///INPUT DECORATION
-                                                                            decoration:
-                                                                                InputDecoration(
-                                                                              contentPadding: EdgeInsets.all(0),
-                                                                              labelText: 'Bottom',
-                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                              filled: true,
-                                                                              fillColor: defaultPalette.primary,
-                                                                              border: OutlineInputBorder(
-                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                              ),
-                                                                              enabledBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                              ),
-                                                                              focusedBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                              ),
-                                                                            ),
-                                                                            keyboardType:
-                                                                                TextInputType.number,
-                                                                            // onChanged: (value) => _updatePdfPreview(''),
-                                                                          ),
-                                                                          //BOTTOM DECREMENT
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            left:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toString();
-                                                                                });
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_left_1,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          //BOTTOM INCREMENT
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            right:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toString();
-                                                                                });
-
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_right_3,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              SizedBox(
-                                                                height: 15,
-                                                              ),
-                                                              Row(
-                                                                children: [
-                                                                  //Left MARGIN WIDGET
-                                                                  Expanded(
-                                                                    child:
-                                                                        SizedBox(
-                                                                      height:
-                                                                          textFieldHeight,
-                                                                      child:
-                                                                          Stack(
-                                                                        children: [
-                                                                          TextFormField(
-                                                                            onTapOutside:
-                                                                                (event) {
-                                                                              marginLeftFocus.unfocus();
-                                                                            },
-                                                                            focusNode:
-                                                                                marginLeftFocus,
-                                                                            controller:
-                                                                                documentPropertiesList[currentPageIndex].marginLeftController,
-                                                                            inputFormatters: [
-                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))
-                                                                            ],
-                                                                            style:
-                                                                                TextStyle(color: defaultPalette.black),
-                                                                            cursorColor:
-                                                                                defaultPalette.black,
-                                                                            textAlign:
-                                                                                TextAlign.center,
-                                                                            textAlignVertical:
-                                                                                TextAlignVertical.top,
-                                                                            decoration:
-                                                                                InputDecoration(
-                                                                              contentPadding: EdgeInsets.all(0),
-                                                                              labelText: 'Left',
-                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                              floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                                              filled: true,
-                                                                              fillColor: defaultPalette.primary,
-                                                                              border: OutlineInputBorder(
-                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                              ),
-                                                                              enabledBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                              ),
-                                                                              focusedBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                              ),
-                                                                            ),
-                                                                            keyboardType:
-                                                                                TextInputType.number,
-                                                                            onChanged: (value) =>
-                                                                                {
-                                                                              // _updatePdfPreview('')
-                                                                            },
-                                                                          ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            left:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toString();
-                                                                                });
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_left_1,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            right:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toString();
-                                                                                });
-
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_right_3,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  SizedBox(
-                                                                    width: 10,
-                                                                  ),
-                                                                  //RIGHT MARGIN TEXT
-                                                                  Expanded(
-                                                                    child:
-                                                                        SizedBox(
-                                                                      height:
-                                                                          textFieldHeight,
-                                                                      child:
-                                                                          Stack(
-                                                                        children: [
-                                                                          TextFormField(
-                                                                            onTapOutside:
-                                                                                (event) {
-                                                                              marginRightFocus.unfocus();
-                                                                            },
-                                                                            focusNode:
-                                                                                marginRightFocus,
-                                                                            controller:
-                                                                                documentPropertiesList[currentPageIndex].marginRightController,
-                                                                            style:
-                                                                                TextStyle(color: defaultPalette.black),
-                                                                            cursorColor:
-                                                                                defaultPalette.secondary,
-                                                                            inputFormatters: [
-                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))
-                                                                            ],
-                                                                            textAlign:
-                                                                                TextAlign.center,
-                                                                            textAlignVertical:
-                                                                                TextAlignVertical.top,
-                                                                            decoration:
-                                                                                InputDecoration(
-                                                                              contentPadding: EdgeInsets.all(0),
-                                                                              labelText: 'Right',
-                                                                              labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                              filled: true,
-                                                                              fillColor: defaultPalette.primary,
-                                                                              border: OutlineInputBorder(
-                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                              ),
-                                                                              enabledBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                              ),
-                                                                              focusedBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                              ),
-                                                                            ),
-                                                                            keyboardType:
-                                                                                TextInputType.number,
-                                                                            // onChanged: (value) => _updatePdfPreview,
-                                                                          ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            left:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toString();
-                                                                                });
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_left_1,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            right:
-                                                                                15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toString();
-                                                                                });
-
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: Icon(
-                                                                                IconsaxPlusLinear.arrow_right_3,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
+                                                                          SizedBox(
+                                                                            width:
+                                                                                10,
                                                                           ),
                                                                         ],
                                                                       ),
@@ -3929,6 +3595,259 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               ),
                                                               SizedBox(
                                                                 height: 10,
+                                                              ),
+                                                              // LEFT AND RIGHT Margin Title
+                                                              Row(
+                                                                children: [
+                                                                  //Left Margin text
+                                                                  Expanded(
+                                                                    child:
+                                                                        SizedBox(
+                                                                      height:
+                                                                          textFieldHeight /
+                                                                              2,
+                                                                      child:
+                                                                          Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child:
+                                                                                Text(
+                                                                              'Left',
+                                                                              style: GoogleFonts.bungee(),
+                                                                            ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Left Margin ONE Field
+                                                                          Expanded(
+                                                                            child:
+                                                                                TextFormField(
+                                                                              onTapOutside: (event) {
+                                                                                marginBottomFocus.unfocus();
+                                                                              },
+                                                                              focusNode: marginLeftFocus,
+                                                                              controller: documentPropertiesList[currentPageIndex].marginLeftController,
+                                                                              inputFormatters: [
+                                                                                // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                                NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))),
+                                                                              ],
+                                                                              cursorColor: defaultPalette.secondary,
+                                                                              textAlign: TextAlign.center,
+                                                                              textAlignVertical: TextAlignVertical.top,
+                                                                              decoration: InputDecoration(
+                                                                                contentPadding: EdgeInsets.all(0),
+                                                                                filled: true,
+                                                                                fillColor: defaultPalette.primary,
+                                                                                border: OutlineInputBorder(
+                                                                                  // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Replace with your desired radius
+                                                                                ),
+                                                                                enabledBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 1.2, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                                focusedBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                              ),
+                                                                              keyboardType: TextInputType.number,
+                                                                              style: GoogleFonts.bungee(
+                                                                                  // fontStyle: FontStyle.italic,
+                                                                                  fontSize: 12,
+                                                                                  color: defaultPalette.black),
+                                                                              onChanged: (value) {
+                                                                                // setState(() {
+                                                                                if (value.isEmpty) {
+                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = '0';
+                                                                                }
+                                                                                setState(() {});
+                                                                                // _updatePdfPreview(
+                                                                                //     '');
+                                                                                // });
+                                                                              },
+                                                                              enabled: documentPropertiesList[currentPageIndex].useIndividualMargins,
+                                                                            ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Increase Decrease
+                                                                          Column(
+                                                                            children: [
+                                                                              //Margin increment button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_up_1,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                              //Margin decrement button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_down,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                10,
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  //Right Margin text
+                                                                  Expanded(
+                                                                    child:
+                                                                        SizedBox(
+                                                                      height:
+                                                                          textFieldHeight /
+                                                                              2,
+                                                                      child:
+                                                                          Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            flex:
+                                                                                2,
+                                                                            child:
+                                                                                Text(
+                                                                              'Right',
+                                                                              style: GoogleFonts.bungee(),
+                                                                            ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Right Margin ONE Field
+                                                                          Expanded(
+                                                                            child:
+                                                                                TextFormField(
+                                                                              onTapOutside: (event) {
+                                                                                marginBottomFocus.unfocus();
+                                                                              },
+                                                                              focusNode: marginRightFocus,
+                                                                              controller: documentPropertiesList[currentPageIndex].marginRightController,
+                                                                              inputFormatters: [
+                                                                                // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                                NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))),
+                                                                              ],
+                                                                              cursorColor: defaultPalette.secondary,
+                                                                              textAlign: TextAlign.center,
+                                                                              textAlignVertical: TextAlignVertical.top,
+                                                                              decoration: InputDecoration(
+                                                                                contentPadding: EdgeInsets.all(0),
+                                                                                filled: true,
+                                                                                fillColor: defaultPalette.primary,
+                                                                                border: OutlineInputBorder(
+                                                                                  // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Replace with your desired radius
+                                                                                ),
+                                                                                enabledBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 1.2, color: defaultPalette.black),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                                focusedBorder: OutlineInputBorder(
+                                                                                  borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
+                                                                                  borderRadius: BorderRadius.circular(5.0), // Same as border
+                                                                                ),
+                                                                              ),
+                                                                              keyboardType: TextInputType.number,
+                                                                              style: GoogleFonts.bungee(
+                                                                                  // fontStyle: FontStyle.italic,
+                                                                                  fontSize: 12,
+                                                                                  color: defaultPalette.black),
+                                                                              onChanged: (value) {
+                                                                                // setState(() {
+                                                                                if (value.isEmpty) {
+                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = '0';
+                                                                                }
+                                                                                setState(() {});
+                                                                                // _updatePdfPreview(
+                                                                                //     '');
+                                                                                // });
+                                                                              },
+                                                                              enabled: documentPropertiesList[currentPageIndex].useIndividualMargins,
+                                                                            ),
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                5,
+                                                                          ),
+                                                                          //Increase Decrease
+                                                                          Column(
+                                                                            children: [
+                                                                              //Margin increment button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_up_1,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                              //Margin decrement button
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  setState(() {
+                                                                                    documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toInt().toString();
+                                                                                  });
+
+                                                                                  // _updatePdfPreview('');
+                                                                                },
+                                                                                child: Icon(
+                                                                                  IconsaxPlusLinear.arrow_down,
+                                                                                  size: 10,
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+
+                                                                          SizedBox(
+                                                                            width:
+                                                                                10,
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              SizedBox(
+                                                                height: 0,
                                                               )
                                                             ],
                                                           ),
@@ -3986,7 +3905,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               SizedBox(
                                                                 width: 10,
                                                               ),
-                                                              Text(item)
+                                                              Text(
+                                                                item,
+                                                                style: GoogleFonts
+                                                                    .bungee(),
+                                                              )
                                                             ],
                                                           );
                                                         },
@@ -4003,7 +3926,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 : Icons
                                                                     .crop_3_2_sharp,
                                                             size: 20,
-                                                          ),expandedBorderRadius: BorderRadius.circular(5),
+                                                          ),
+                                                          expandedBorderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
                                                           closedBorderRadius:
                                                               BorderRadius
                                                                   .circular(5),
@@ -4011,7 +3937,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               color:
                                                                   defaultPalette
                                                                       .black,
-                                                              width: 2),
+                                                              width: 1.2),
                                                           expandedBorder: Border.all(
                                                               color:
                                                                   defaultPalette
@@ -4026,7 +3952,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     .black,
                                                           ),
                                                           headerStyle:
-                                                              TextStyle(
+                                                              GoogleFonts
+                                                                  .bungee(
                                                             color:
                                                                 defaultPalette
                                                                     .black,
@@ -4037,7 +3964,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     SizedBox(height: 10),
                                                     //Page Format
                                                     SizedBox(
-                                                      height: textFieldHeight/1.5,
+                                                      height:
+                                                          textFieldHeight / 1.5,
                                                       child:
                                                           CustomDropdown.search(
                                                         hintText: 'Page Format',
@@ -4066,12 +3994,32 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           // _updatePdfPreview(
                                                           //     '');
                                                         },
-                                                        
                                                         closedHeaderPadding:
-                                                            EdgeInsets.only(left:5),
+                                                            EdgeInsets.only(
+                                                                left: 5),
+                                                        listItemBuilder:
+                                                            (context,
+                                                                item,
+                                                                isSelected,
+                                                                onItemSelect) {
+                                                          return Row(
+                                                            children: [
+                                                              SizedBox(
+                                                                width: 10,
+                                                              ),
+                                                              Text(
+                                                                item,
+                                                                style: GoogleFonts
+                                                                    .bungee(),
+                                                              )
+                                                            ],
+                                                          );
+                                                        },
                                                         decoration:
                                                             CustomDropdownDecoration(
-                                                              expandedBorderRadius: BorderRadius.circular(5),
+                                                          expandedBorderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
                                                           closedBorderRadius:
                                                               BorderRadius
                                                                   .circular(5),
@@ -4079,7 +4027,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               color:
                                                                   defaultPalette
                                                                       .black,
-                                                              width: 2),
+                                                              width: 1.2),
                                                           expandedBorder: Border.all(
                                                               color:
                                                                   defaultPalette
@@ -4092,10 +4040,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               color:
                                                                   defaultPalette
                                                                       .black),
-                                                          headerStyle: TextStyle(
-                                                              color:
-                                                                  defaultPalette
-                                                                      .black),
+                                                          headerStyle:
+                                                              GoogleFonts.bungee(
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .black),
                                                         ),
                                                       ),
                                                     ),
@@ -4175,35 +4124,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       size: Platform.isAndroid
                                                           ? 20
                                                           : 40)),
-                                              //RightSide Close Icon Properties Tab Web
-                                              if (Platform.isAndroid &&
-                                                  ref.watch(
-                                                      pgPropsEnableProvider))
-                                                Positioned(
-                                                    top: 4,
-                                                    right: 2,
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        ref
-                                                            .read(
-                                                                pgPropsEnableProvider
-                                                                    .notifier)
-                                                            .update((cb) {
-                                                          return false;
-                                                        });
-                                                        setState(() {
-                                                          wVDividerPosition =
-                                                              20 / sHeight;
-                                                        });
-                                                      },
-                                                      child: Icon(TablerIcons.x,
-                                                          size: 15),
-                                                    )),
                                             ],
                                           ),
                                         ),
                                       ),
-                                      
+
                                       //Text Styling //Desktop WEB
                                       Positioned(
                                           //Text Styling //Desktop WEB
@@ -6577,6 +6502,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             left: sWidth * (1 - wH2DividerPosition),
                             child: MouseRegion(
                               cursor: _cursor,
+                              onExit: (event) {
+                                setState(() {
+                                  _cursor = SystemMouseCursors.basic;
+                                });
+                              },
                               onHover: (PointerHoverEvent event) {
                                 Offset position = event.localPosition;
                                 Size? widgetSize = context.size;
@@ -6679,15 +6609,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ),
                               ),
                             )),
-
-                        //APPBAR //Desktop WEB
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          child: Container(
-                            height: 40,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -6726,24 +6647,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         )),
                                     child: Row(
                                       children: [
-                                        // UtilityWidgets.maybeTooltip(
-                                        //   message: 'put it away',
-                                        //   child: GestureDetector(
-                                        //       onTap: () {
-                                        //         ref
-                                        //             .read(topToolBarProvider
-                                        //                 .notifier)
-                                        //             .update((cb) {
-                                        //           if (cb) {
-                                        //             return false;
-                                        //           } else {
-                                        //             return true;
-                                        //           }
-                                        //         });
-                                        //       },
-                                        //       child:
-                                        //           Icon(TablerIcons.grip_vertical, size:  25,)),
-                                        // ),
                                         //minimize button
                                         ElevatedLayerButton(
                                           // isTapped: false,
@@ -6840,6 +6743,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ),
                                       ],
                                     ),
+                                    //
                                   ),
                                 ),
                               ),
@@ -10834,7 +10738,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             id: itemE!.id,
                                                             panelIndex: index,
                                                             parentId: itemE
-                                                                ?.parentId);
+                                                                ?.parentId??'');
                                                       } else {
                                                         panelIndex = PanelIndex(
                                                             id: textEditorItem
@@ -11861,6 +11765,147 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     ),
                   ),
                   //
+                  // Windows top bar mobile
+                  if (Platform.isWindows)
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onPanStart: (details) {
+                        appWindow.startDragging();
+                      },
+                      onDoubleTap: () {
+                        appWindow.maximizeOrRestore();
+                      },
+                      child: Container(
+                        color: Colors.transparent,
+                        height: 40,
+                        child: Consumer(builder: (context, ref, c) {
+                          return Stack(
+                            children: [
+                              AnimatedPositioned(
+                                right: 0,
+                                duration: Durations.short4,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: AnimatedContainer(
+                                    duration: Durations.short4,
+                                    padding:
+                                        EdgeInsets.only(right: 8, bottom: 4),
+                                    margin: EdgeInsets.only(top: 4),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          bottomLeft: Radius.circular(12),
+                                        )),
+                                    child: Row(
+                                      children: [
+                                        //minimize button
+                                        ElevatedLayerButton(
+                                          // isTapped: false,
+                                          // toggleOnTap: true,
+                                          onClick: () {
+                                            Future.delayed(Duration.zero)
+                                                .then((y) {
+                                              appWindow.minimize();
+                                            });
+                                          },
+                                          buttonHeight: 30,
+                                          buttonWidth: 30,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          animationDuration:
+                                              const Duration(milliseconds: 1),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.rectangle,
+                                            size: 15,
+                                            // color: Colors.blue,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                        //
+                                        //maximize button
+                                        ElevatedLayerButton(
+                                          // isTapped: false,
+                                          // toggleOnTap: true,
+                                          onClick: () {
+                                            Future.delayed(Durations.short1)
+                                                .then((y) {
+                                              appWindow.maximizeOrRestore();
+                                            });
+                                          },
+                                          buttonHeight: 30,
+                                          buttonWidth: 30,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          animationDuration:
+                                              const Duration(milliseconds: 1),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.triangle,
+                                            size: 14,
+                                            // color: Colors.amber,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                        //close button
+                                        ElevatedLayerButton(
+                                          // isTapped: false,
+                                          // toggleOnTap: true,
+                                          onClick: () {
+                                            Future.delayed(Duration.zero)
+                                                .then((y) {
+                                              appWindow.close();
+                                            });
+                                          },
+                                          buttonHeight: 30,
+                                          buttonWidth: 30,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          animationDuration:
+                                              const Duration(milliseconds: 1),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.circle,
+                                            size: 15,
+                                            // color: Colors.red,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    //
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    ),
+
+                  //
                   //BILLBLAZE MAIN TITLE
                   AnimatedPositioned(
                     duration: defaultDuration,
@@ -12008,807 +12053,1335 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
   Widget _buildListWidget(SheetList sheetList) {
     // sheetList = sheetList as SheetList;
-    return GestureDetector(
-      // key: ValueKey(sheetList.id),
-      onTap: () {
-        setState(() {
-          panelIndex.parentId = sheetList.id;
-        });
-      },
-      // buildlistw
-      child: Container(
-        width:
-            sheetList.direction == Axis.vertical ? 150 : sheetList.length * 250,
-        height: sheetList.direction == Axis.vertical
-            ? (100 * sheetList.length).ceilToDouble()
-            : 100,
-        padding: EdgeInsets.all(0),
-        margin: EdgeInsets.all(10),
-        // buildlistw
-        decoration: BoxDecoration(
-            border: Border.all(),
-            color: defaultPalette.primary,
-            borderRadius: BorderRadius.circular(10)),
-        child: ReorderableListView.builder(
-          scrollDirection: sheetList.direction,
-          // buildlistw
-          proxyDecorator: (child, index, animation) {
-            return Container(child: child);
+    return Stack(
+      children: [
+        GestureDetector(
+          // key: ValueKey(sheetList.id),
+          onTap: () {
+            setState(() {
+              panelIndex.parentId = sheetList.id;
+            });
           },
-          itemBuilder: (context, index) {
-            print('hello hello sprdListBuilding: ${sheetList[index]}');
-            if (sheetList[index] is TextEditorItem) {
-              var textEditorItem = sheetList[index] as TextEditorItem;
-              return Stack(
-                key: ValueKey(
-                    textEditorItem.id), // Ensure each item has a unique key
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-                      var isTrue = false;
-                      SheetItem? itemE;
-                      if (panelIndex.id == textEditorItem.id) {
-                        isTrue = true;
-                      }
-                      setState(() {
-                        itemE =
-                            _sheetItemIterator(textEditorItem.id, sheetList);
-
-                        if (itemE != null) {
-                          index = _sheetListIterator(itemE!.parentId, sheetList)
-                              .indexOf(itemE!);
-                          panelIndex = PanelIndex(
-                              id: itemE!.id,
-                              panelIndex: index,
-                              parentId: sheetList.id);
-                        } else {
-                          panelIndex = PanelIndex(
-                              id: textEditorItem.id,
-                              panelIndex: index,
-                              parentId: sheetList.id);
-                        }
-
-                        // index = temp ?? index;
-
-                        if (hDividerPosition > 0.48) {
-                          hDividerPosition = 0.4;
-                        }
-                      });
-                      // Future.delayed(Duration.zero).then((_) {
-                      //   textStylePageController.jumpToPage(panelIndex.panelIndex);
-                      // });
-                      Future.delayed(Durations.short1).then((h) {
-                        if (!isTrue) {
-                          textStyleTabControler.animateToPage(0,
-                              curve: Curves.bounceIn,
-                              duration: Durations.short1);
-                          for (var i = 0; i < isTapped.length; i++) {
-                            setState(() {
-                              isTapped[i] = false;
-                            });
-                          }
-                          setState(() {
-                            isTapped[1] = true;
-                          });
-                        }
-                      });
-
-                      print('clicked');
-
-                      print(panelIndex);
-                    },
-                    child: SingleChildScrollView(
-                      child: Container(
-                        width:
-                            sheetList.direction == Axis.vertical ? null : 200,
-                        padding: const EdgeInsets.only(
-                            top: 4, bottom: 8, left: 20, right: 20),
-                        margin: EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: defaultPalette.primary,
-                          border: Border.all(
-                            width: panelIndex.id == textEditorItem.id ? 4 : 2,
-                            color: panelIndex.id == textEditorItem.id
-                                ? defaultPalette.tertiary
-                                : defaultPalette.black,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          children: [
-                            // id above editor in the child list
-                            Container(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'id : ${textEditorItem.id}',
-                                style: TextStyle(fontSize: 10),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            QuillEditor(
-                              configurations:
-                                  textEditorItem.textEditorConfigurations,
-                              focusNode: textEditorItem.focusNode,
-                              scrollController: textEditorItem.scrollController,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+          // buildlistw
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //The title Row or Column
+              IntrinsicWidth(
+                child: Container(
+                  
+                  alignment: Alignment.centerLeft,
+                  decoration: BoxDecoration(
+                      color: sheetList.direction == Axis.vertical
+                          ? defaultPalette.tertiary
+                          : defaultPalette.extras[1],
+                      borderRadius: BorderRadius.circular(5)),
+                  margin: EdgeInsets.only(left: 4, bottom: 2, top: 4, right: 4),
+                  padding: EdgeInsets.all(4),
+                  child: Text(
+                    '${sheetList.direction == Axis.vertical ? 'Column:' : 'Row:'} ${sheetList.id}',
+                    style: GoogleFonts.bungee(fontSize: 8),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  //contextMenu inside build function
-                  AnimatedPositioned(
-                    duration: Durations.medium3,
-                    bottom: 0,
-                    left: panelIndex.id == textEditorItem.id ? 0 : -50,
-                    right: 0,
-                    child: SingleChildScrollView(
-                      child: Transform.flip(
-                        flipX: true,
-                        child: Transform.flip(
-                          flipX: true,
-                          child: panelIndex.id == textEditorItem.id
-                              ? ExpandableMenu(
-                                  backgroundColor:
-                                      defaultPalette.white.withOpacity(1),
-                                  iconColor: defaultPalette.tertiary,
-                                  itemContainerColor: defaultPalette.secondary,
-                                  width: 40.0,
-                                  height: 40.0,
-                                  items: List.generate(12, (intt) {
-                                    switch (intt) {
-                                      case 0:
-                                        return PopupMenuButton<String>(
-                                          iconSize: 20,
-                                          padding: EdgeInsets.all(0),
-                                          icon: Icon(
-                                            TablerIcons.message_plus,
-                                            color: defaultPalette.black
-                                                .withOpacity(0.8),
-                                          ),
-                                          onSelected: (String value) {
-                                            // Handle the selected option here
-                                            switch (value) {
-                                              case 'Above':
-                                                setState(() {
-                                                  if (sheetList.direction ==
-                                                      Axis.vertical) {
-                                                    var newItem = _addTextField(
-                                                        shouldReturn: true);
-                                                    sheetList.insert(
-                                                        index, newItem);
-                                                  } else {
-                                                    setState(() {
-                                                      var newId = Uuid().v4();
-                                                      var item = sheetList
-                                                          .removeAt(index);
-                                                      sheetList.insert(
-                                                          index,
-                                                          SheetList(
-                                                              direction:
-                                                                  Axis.vertical,
-                                                              id: newId,
-                                                              parentId:
-                                                                  sheetList.id,
-                                                              sheetList: [
-                                                                _addTextField(
-                                                                    shouldReturn:
-                                                                        true),
-                                                                item
-                                                              ]));
-                                                    });
-                                                  }
-                                                });
-                                                break;
-                                              case 'Below':
-                                                setState(() {
-                                                  if (sheetList.direction ==
-                                                      Axis.vertical) {
-                                                    var newItem = _addTextField(
-                                                        shouldReturn: true);
-                                                    sheetList.insert(
-                                                        index + 1, newItem);
-                                                  } else {
-                                                    setState(() {
-                                                      var newId = Uuid().v4();
-                                                      var item = sheetList
-                                                          .removeAt(index);
-                                                      sheetList.insert(
-                                                          index,
-                                                          SheetList(
-                                                              direction:
-                                                                  Axis.vertical,
-                                                              id: newId,
-                                                              parentId:
-                                                                  sheetList.id,
-                                                              sheetList: [
-                                                                item,
-                                                                _addTextField(
-                                                                    shouldReturn:
-                                                                        true),
-                                                              ]));
-                                                    });
-                                                  }
-                                                });
-                                                // Your logic for "Below"
-                                                break;
-                                              case 'Left':
-                                                setState(() {
-                                                  if (sheetList.direction ==
-                                                      Axis.vertical) {
-                                                    var newId = Uuid().v4();
-                                                    var item = sheetList
-                                                        .removeAt(index);
-                                                    sheetList.insert(
-                                                        index,
-                                                        SheetList(
-                                                            direction:
-                                                                Axis.horizontal,
-                                                            id: newId,
-                                                            parentId:
-                                                                sheetList.id,
-                                                            sheetList: [
-                                                              _addTextField(
-                                                                  shouldReturn:
-                                                                      true),
-                                                              item
-                                                            ]));
-                                                  } else {
-                                                    var newItem = _addTextField(
-                                                        shouldReturn: true);
-                                                    sheetList.insert(
-                                                        index, newItem);
-                                                  }
-                                                });
-                                                break;
-                                              case 'Right':
-                                                // Your logic for "Right" inside listwidgetbuild
-                                                setState(() {
-                                                  if (sheetList.direction ==
-                                                      Axis.vertical) {
-                                                    var newId = Uuid().v4();
-                                                    var item = sheetList
-                                                        .removeAt(index);
-                                                    sheetList.insert(
-                                                        index,
-                                                        SheetList(
-                                                            direction:
-                                                                Axis.horizontal,
-                                                            id: newId,
-                                                            parentId:
-                                                                sheetList.id,
-                                                            sheetList: [
-                                                              _addTextField(
-                                                                  shouldReturn:
-                                                                      true),
-                                                              item
-                                                            ]));
-                                                  } else {
-                                                    var newItem = _addTextField(
-                                                        shouldReturn: true);
-                                                    sheetList.insert(
-                                                        index + 1, newItem);
-                                                  }
-                                                });
-                                                break;
-                                            }
-                                          },
-                                          itemBuilder: (BuildContext context) {
-                                            return [
-                                              const PopupMenuItem<String>(
-                                                value: 'Above',
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceEvenly,
-                                                  children: [
-                                                    Icon(TablerIcons
-                                                        .arrow_bar_to_up),
-                                                    Text('Above')
-                                                  ],
-                                                ),
+                ),
+              ),
+              //The content inside ancestor
+              Container(
+                width: sheetList.size.width == 0 ? 100 : sheetList.size.width,
+                height:
+                    sheetList.size.height == 0 ? 100 : sheetList.size.height,
+                padding: EdgeInsets.all(2),
+                margin: EdgeInsets.only(
+                  right: 4,
+                  bottom: 4,
+                  left: 4,
+                ),
+                // buildlistw
+                decoration: BoxDecoration(
+                    border: Border.all(
+                        width: panelIndex.parentId == sheetList.id ? 2 : 1.2,
+                        color: panelIndex.parentId == sheetList.id
+                            ? sheetList.direction == Axis.vertical
+                                ? defaultPalette.tertiary
+                                : defaultPalette.extras[1]
+                            : Color(0xFF000000)),
+                    color: defaultPalette.primary,
+                    borderRadius: BorderRadius.circular(10)),
+                child: IntrinsicHeight(
+                  child: ReorderableListView.builder(
+                    buildDefaultDragHandles: false,
+                    scrollDirection: sheetList.direction,
+                    // buildlistw
+                    proxyDecorator: (child, index, animation) {
+                      return Container(child: child);
+                    },
+                    itemBuilder: (context, index) {
+                      print(
+                          'hello hello sprdListBuilding: ${sheetList[index]}');
+                      if (sheetList[index] is TextEditorItem) {
+                        var textEditorItem = sheetList[index] as TextEditorItem;
+                        return ReorderableDelayedDragStartListener(
+                          index: index,
+                          key: ValueKey(textEditorItem.id),
+                          child: Stack(
+                            // Ensure each item has a unique key
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
+                                  var isTrue = false;
+                                  SheetItem? itemE;
+                                  if (panelIndex.id == textEditorItem.id) {
+                                    isTrue = true;
+                                  }
+                                  setState(() {
+                                    itemE = _sheetItemIterator(
+                                        textEditorItem.id, sheetList);
+
+                                    if (itemE != null) {
+                                      index = _sheetListIterator(
+                                              itemE!.parentId, sheetList)
+                                          .indexOf(itemE!);
+                                      panelIndex = PanelIndex(
+                                          id: itemE!.id,
+                                          panelIndex: index,
+                                          parentId: sheetList.id);
+                                      print(
+                                          'that this id from buildlist function ontap textfield: ${sheetList.id}');
+                                      print(
+                                          'that this id from buildlist function ontap textfield from panelindex: ${panelIndex.parentId}');
+                                    } else {
+                                      panelIndex = PanelIndex(
+                                          id: textEditorItem.id,
+                                          panelIndex: index,
+                                          parentId: sheetList.id);
+                                    }
+                                    panelIndex.parentId = sheetList.id;
+                                    // index = temp ?? index;
+
+                                    if (hDividerPosition > 0.48) {
+                                      hDividerPosition = 0.4;
+                                    }
+                                  });
+                                  // Future.delayed(Duration.zero).then((_) {
+                                  //   textStylePageController.jumpToPage(panelIndex.panelIndex);
+                                  // });
+                                  Future.delayed(Durations.short1).then((h) {
+                                    if (!isTrue) {
+                                      textStyleTabControler.animateToPage(0,
+                                          curve: Curves.bounceIn,
+                                          duration: Durations.short1);
+                                      for (var i = 0;
+                                          i < isTapped.length;
+                                          i++) {
+                                        setState(() {
+                                          isTapped[i] = false;
+                                        });
+                                      }
+                                      setState(() {
+                                        isTapped[1] = true;
+                                      });
+                                    }
+                                  });
+
+                                  print('clicked');
+
+                                  print(panelIndex);
+                                },
+                                child: SingleChildScrollView(
+                                  child: Container(
+                                    padding: const EdgeInsets.only(
+                                        top: 2, bottom: 4, left: 4, right: 4),
+                                    margin: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: defaultPalette.primary,
+                                      border: Border.all(
+                                        width:
+                                            panelIndex.id == textEditorItem.id
+                                                ? 2
+                                                : 1.2,
+                                        color:
+                                            panelIndex.id == textEditorItem.id
+                                                ? defaultPalette.tertiary
+                                                : defaultPalette.black,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: IntrinsicWidth(
+                                      child: IntrinsicHeight(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            // id above editor in the child list
+                                            Container(
+                                              width: 80,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                ' Text: ${textEditorItem.id}',
+                                                style: TextStyle(fontSize: 6),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                              const PopupMenuItem<String>(
-                                                value: 'Below',
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceEvenly,
-                                                  children: [
-                                                    Icon(TablerIcons
-                                                        .arrow_bar_to_down),
-                                                    Text('Below')
-                                                  ],
-                                                ),
-                                              ),
-                                              const PopupMenuItem<String>(
-                                                value: 'Left',
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceEvenly,
-                                                  children: [
-                                                    Icon(TablerIcons
-                                                        .arrow_bar_to_left),
-                                                    Text('Left')
-                                                  ],
-                                                ),
-                                              ),
-                                              const PopupMenuItem<String>(
-                                                value: 'Right',
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceEvenly,
-                                                  children: [
-                                                    Icon(TablerIcons
-                                                        .arrow_bar_to_right),
-                                                    Text('Right')
-                                                  ],
-                                                ),
-                                              ),
-                                            ];
-                                          },
-                                        );
-
-                                      case 1:
-                                        //MOVE TEXT UP
-                                        return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              if (index != 0) {
-                                                var item =
-                                                    sheetList.removeAt(index);
-                                                sheetList.insert(
-                                                    index - 1, item);
-
-                                                // Update the index to reflect the new position of the item
-                                                index--; // Decrement index to reflect the item's new position
-
-                                                panelIndex = PanelIndex(
-                                                    parentId:
-                                                        panelIndex.parentId,
-                                                    id: panelIndex.id,
-                                                    panelIndex:
-                                                        panelIndex.panelIndex +
-                                                            1);
-                                                print(
-                                                    'Updated index of text editor: $index');
-                                              }
-                                              print(
-                                                  'Current index of text editor: $index');
-                                            });
-                                          },
-                                          child: Icon(
-                                            TablerIcons.arrow_up,
-                                            color: defaultPalette.black
-                                                .withOpacity(0.8),
-                                          ),
-                                        );
-                                      case 2:
-                                        //MOVE TEXT DOWN
-                                        return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              if (index !=
-                                                  sheetList.length - 1) {
-                                                var item =
-                                                    sheetList.removeAt(index);
-                                                sheetList.insert(
-                                                    index + 1, item);
-                                                index++;
-                                                print(
-                                                    'index of texteditor DT: $index');
-                                              }
-                                            });
-                                          },
-                                          child: Icon(
-                                            TablerIcons.arrow_down,
-                                            color: defaultPalette.black
-                                                .withOpacity(0.8),
-                                          ),
-                                        );
-                                      case 3:
-                                        //EXPORT TEXT
-                                        return GestureDetector(
-                                          onTap: () async {
-                                            // Get the current text editor item
-                                            var textEditorItem =
-                                                sheetList[index]
-                                                    as TextEditorItem;
-
-                                            // Create a GlobalKey for the RepaintBoundary
-                                            GlobalKey repaintBoundaryKey =
-                                                GlobalKey();
-
-                                            // Navigate to a new page with the PDF preview
-                                            await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => Scaffold(
-                                                  appBar: AppBar(
-                                                    title: Text('PDF Preview'),
-                                                    actions: [
-                                                      IconButton(
-                                                        icon: Icon(Icons.image),
-                                                        onPressed: () async {
-                                                          RenderRepaintBoundary
-                                                              boundary =
-                                                              repaintBoundaryKey
-                                                                      .currentContext!
-                                                                      .findRenderObject()
-                                                                  as RenderRepaintBoundary;
-                                                          ui.Image image =
-                                                              await boundary
-                                                                  .toImage(
-                                                                      pixelRatio:
-                                                                          6.0);
-                                                          ByteData? byteData =
-                                                              await image
-                                                                  .toByteData(
-                                                                      format: ui
-                                                                          .ImageByteFormat
-                                                                          .png);
-                                                          Uint8List pngBytes =
-                                                              byteData!.buffer
-                                                                  .asUint8List();
-
-                                                          // Get the directory to save the image
-                                                          final directory =
-                                                              await getApplicationDocumentsDirectory();
-                                                          final imagePath =
-                                                              '${directory.path}/captured_image.png';
-                                                          File(imagePath)
-                                                              .writeAsBytesSync(
-                                                                  pngBytes);
-
-                                                          print(
-                                                              'Image saved at: $imagePath');
-                                                        },
+                                            ),
+                                            QuillEditor(
+                                              configurations: textEditorItem
+                                                  .textEditorConfigurations,
+                                              focusNode:
+                                                  textEditorItem.focusNode,
+                                              scrollController: textEditorItem
+                                                  .scrollController,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              //contextMenu inside build function
+                              AnimatedPositioned(
+                                duration: Durations.medium3,
+                                top: 0,
+                                left: panelIndex.id == textEditorItem.id
+                                    ? 4
+                                    : -50,
+                                right: 4,
+                                child: SingleChildScrollView(
+                                  child: Transform.flip(
+                                    flipX: true,
+                                    child: Transform.flip(
+                                      flipX: true,
+                                      child: panelIndex.id == textEditorItem.id
+                                          ? ExpandableMenu(
+                                              backgroundColor: defaultPalette
+                                                  .white
+                                                  .withOpacity(1),
+                                              iconColor:
+                                                  defaultPalette.tertiary,
+                                              itemContainerColor:
+                                                  defaultPalette.secondary,
+                                              width: 20.0,
+                                              height: 20.0,
+                                              items: List.generate(12, (intt) {
+                                                switch (intt) {
+                                                  case 0:
+                                                    return PopupMenuButton<
+                                                        String>(
+                                                      iconSize: 12,
+                                                      padding:
+                                                          EdgeInsets.all(0),
+                                                      icon: Icon(
+                                                        TablerIcons
+                                                            .message_plus,
+                                                        color: defaultPalette
+                                                            .black
+                                                            .withOpacity(0.8),
                                                       ),
-                                                      IconButton(
-                                                        icon: Icon(Icons.print),
-                                                        onPressed: () async {
-                                                          RenderRepaintBoundary
-                                                              boundary =
-                                                              repaintBoundaryKey
-                                                                      .currentContext!
-                                                                      .findRenderObject()
-                                                                  as RenderRepaintBoundary;
-                                                          ui.Image image =
-                                                              await boundary
-                                                                  .toImage(
-                                                                      pixelRatio:
-                                                                          6.0);
-                                                          ByteData? byteData =
-                                                              await image
-                                                                  .toByteData(
-                                                                      format: ui
-                                                                          .ImageByteFormat
-                                                                          .png);
-                                                          Uint8List pngBytes =
-                                                              byteData!.buffer
-                                                                  .asUint8List();
+                                                      onSelected:
+                                                          (String value) {
+                                                        // Handle the selected option here
+                                                        switch (value) {
+                                                          case 'Above':
+                                                            setState(() {
+                                                              if (sheetList
+                                                                      .direction ==
+                                                                  Axis.vertical) {
+                                                                var newItem =
+                                                                    _addTextField(
+                                                                        shouldReturn:
+                                                                            true);
+                                                                sheetList.insert(
+                                                                    index,
+                                                                    newItem);
+                                                              } else {
+                                                                setState(() {
+                                                                  var newId =
+                                                                      Uuid()
+                                                                          .v4();
+                                                                  var item = sheetList
+                                                                      .removeAt(
+                                                                          index);
+                                                                  sheetList.insert(
+                                                                      index,
+                                                                      SheetList(
+                                                                          direction:
+                                                                              Axis.vertical,
+                                                                          id: newId,
+                                                                          parentId: sheetList.id,
+                                                                          sheetList: [
+                                                                            _addTextField(shouldReturn: true),
+                                                                            item
+                                                                          ]));
+                                                                });
+                                                              }
+                                                            });
+                                                            break;
+                                                          case 'Below':
+                                                            setState(() {
+                                                              if (sheetList
+                                                                      .direction ==
+                                                                  Axis.vertical) {
+                                                                var newItem =
+                                                                    _addTextField(
+                                                                        shouldReturn:
+                                                                            true);
+                                                                sheetList.insert(
+                                                                    index + 1,
+                                                                    newItem);
+                                                              } else {
+                                                                setState(() {
+                                                                  var newId =
+                                                                      Uuid()
+                                                                          .v4();
+                                                                  var item = sheetList
+                                                                      .removeAt(
+                                                                          index);
+                                                                  sheetList
+                                                                      .insert(
+                                                                          index,
+                                                                          SheetList(
+                                                                              direction: Axis.vertical,
+                                                                              id: newId,
+                                                                              parentId: sheetList.id,
+                                                                              sheetList: [
+                                                                                item,
+                                                                                _addTextField(shouldReturn: true),
+                                                                              ]));
+                                                                });
+                                                              }
+                                                            });
+                                                            // Your logic for "Below"
+                                                            break;
+                                                          case 'Left':
+                                                            setState(() {
+                                                              if (sheetList
+                                                                      .direction ==
+                                                                  Axis.vertical) {
+                                                                var newId =
+                                                                    Uuid().v4();
+                                                                var item = sheetList
+                                                                    .removeAt(
+                                                                        index);
+                                                                sheetList.insert(
+                                                                    index,
+                                                                    SheetList(
+                                                                        direction:
+                                                                            Axis.horizontal,
+                                                                        id: newId,
+                                                                        parentId: sheetList.id,
+                                                                        sheetList: [
+                                                                          _addTextField(
+                                                                              shouldReturn: true),
+                                                                          item
+                                                                        ]));
+                                                              } else {
+                                                                var newItem =
+                                                                    _addTextField(
+                                                                        shouldReturn:
+                                                                            true);
+                                                                sheetList.insert(
+                                                                    index,
+                                                                    newItem);
+                                                              }
+                                                            });
+                                                            break;
+                                                          case 'Right':
+                                                            // Your logic for "Right" inside listwidgetbuild
+                                                            setState(() {
+                                                              if (sheetList
+                                                                      .direction ==
+                                                                  Axis.vertical) {
+                                                                var newId =
+                                                                    Uuid().v4();
+                                                                var item = sheetList
+                                                                    .removeAt(
+                                                                        index);
+                                                                sheetList.insert(
+                                                                    index,
+                                                                    SheetList(
+                                                                        direction:
+                                                                            Axis.horizontal,
+                                                                        id: newId,
+                                                                        parentId: sheetList.id,
+                                                                        sheetList: [
+                                                                          _addTextField(
+                                                                              shouldReturn: true),
+                                                                          item
+                                                                        ]));
+                                                              } else {
+                                                                var newItem =
+                                                                    _addTextField(
+                                                                        shouldReturn:
+                                                                            true);
+                                                                sheetList.insert(
+                                                                    index + 1,
+                                                                    newItem);
+                                                              }
+                                                            });
+                                                            break;
+                                                        }
+                                                      },
+                                                      itemBuilder: (BuildContext
+                                                          context) {
+                                                        return [
+                                                          const PopupMenuItem<
+                                                              String>(
+                                                            value: 'Above',
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                Icon(TablerIcons
+                                                                    .arrow_bar_to_up),
+                                                                Text('Above')
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          const PopupMenuItem<
+                                                              String>(
+                                                            value: 'Below',
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                Icon(TablerIcons
+                                                                    .arrow_bar_to_down),
+                                                                Text('Below')
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          const PopupMenuItem<
+                                                              String>(
+                                                            value: 'Left',
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                Icon(TablerIcons
+                                                                    .arrow_bar_to_left),
+                                                                Text('Left')
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          const PopupMenuItem<
+                                                              String>(
+                                                            value: 'Right',
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceEvenly,
+                                                              children: [
+                                                                Icon(TablerIcons
+                                                                    .arrow_bar_to_right),
+                                                                Text('Right')
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ];
+                                                      },
+                                                    );
 
-                                                          // Get the directory to save the image
-                                                          final directory =
-                                                              await getApplicationDocumentsDirectory();
-                                                          final imagePath =
-                                                              '${directory.path}/captured_image.png';
-                                                          File(imagePath)
-                                                              .writeAsBytesSync(
-                                                                  pngBytes);
+                                                  case 1:
+                                                    //MOVE TEXT UP
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          if (index != 0) {
+                                                            var item = sheetList
+                                                                .removeAt(
+                                                                    index);
+                                                            sheetList.insert(
+                                                                index - 1,
+                                                                item);
 
-                                                          // Prepare the PDF document
-                                                          final pdf =
-                                                              pw.Document();
-                                                          final imageProvider =
-                                                              pw.MemoryImage(
-                                                                  pngBytes);
+                                                            // Update the index to reflect the new position of the item
+                                                            index--; // Decrement index to reflect the item's new position
 
-                                                          pdf.addPage(
-                                                            pw.Page(
-                                                              pageFormat: documentPropertiesList[
-                                                                      currentPageIndex]
-                                                                  .pageFormatController,
-                                                              margin:
-                                                                  pw.EdgeInsets
-                                                                      .only(
-                                                                top: double.parse(
-                                                                    documentPropertiesList[
+                                                            panelIndex = PanelIndex(
+                                                                parentId:
+                                                                    panelIndex
+                                                                        .parentId,
+                                                                id: panelIndex
+                                                                    .id,
+                                                                panelIndex:
+                                                                    panelIndex
+                                                                            .panelIndex +
+                                                                        1);
+                                                            print(
+                                                                'Updated index of text editor: $index');
+                                                          }
+                                                          print(
+                                                              'Current index of text editor: $index');
+                                                        });
+                                                      },
+                                                      child: Icon(
+                                                        TablerIcons.arrow_up,
+                                                        size: 12,
+                                                        color: defaultPalette
+                                                            .black
+                                                            .withOpacity(0.8),
+                                                      ),
+                                                    );
+                                                  case 2:
+                                                    //MOVE TEXT DOWN
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          if (index !=
+                                                              sheetList.length -
+                                                                  1) {
+                                                            var item = sheetList
+                                                                .removeAt(
+                                                                    index);
+                                                            sheetList.insert(
+                                                                index + 1,
+                                                                item);
+                                                            index++;
+                                                            print(
+                                                                'index of texteditor DT: $index');
+                                                          }
+                                                        });
+                                                      },
+                                                      child: Icon(
+                                                        TablerIcons.arrow_down,
+                                                        size: 12,
+                                                        color: defaultPalette
+                                                            .black
+                                                            .withOpacity(0.8),
+                                                      ),
+                                                    );
+                                                  case 3:
+                                                    //EXPORT TEXT
+                                                    return GestureDetector(
+                                                      onTap: () async {
+                                                        // Get the current text editor item
+                                                        var textEditorItem =
+                                                            sheetList[index]
+                                                                as TextEditorItem;
+
+                                                        // Create a GlobalKey for the RepaintBoundary
+                                                        GlobalKey
+                                                            repaintBoundaryKey =
+                                                            GlobalKey();
+
+                                                        // Navigate to a new page with the PDF preview
+                                                        await Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder:
+                                                                (context) =>
+                                                                    Scaffold(
+                                                              appBar: AppBar(
+                                                                title: Text(
+                                                                    'PDF Preview'),
+                                                                actions: [
+                                                                  IconButton(
+                                                                    icon: Icon(Icons
+                                                                        .image),
+                                                                    onPressed:
+                                                                        () async {
+                                                                      RenderRepaintBoundary
+                                                                          boundary =
+                                                                          repaintBoundaryKey
+                                                                              .currentContext!
+                                                                              .findRenderObject() as RenderRepaintBoundary;
+                                                                      ui.Image
+                                                                          image =
+                                                                          await boundary.toImage(
+                                                                              pixelRatio: 6.0);
+                                                                      ByteData?
+                                                                          byteData =
+                                                                          await image.toByteData(
+                                                                              format: ui.ImageByteFormat.png);
+                                                                      Uint8List
+                                                                          pngBytes =
+                                                                          byteData!
+                                                                              .buffer
+                                                                              .asUint8List();
+
+                                                                      // Get the directory to save the image
+                                                                      final directory =
+                                                                          await getApplicationDocumentsDirectory();
+                                                                      final imagePath =
+                                                                          '${directory.path}/captured_image.png';
+                                                                      File(imagePath)
+                                                                          .writeAsBytesSync(
+                                                                              pngBytes);
+
+                                                                      print(
+                                                                          'Image saved at: $imagePath');
+                                                                    },
+                                                                  ),
+                                                                  IconButton(
+                                                                    icon: Icon(Icons
+                                                                        .print),
+                                                                    onPressed:
+                                                                        () async {
+                                                                      RenderRepaintBoundary
+                                                                          boundary =
+                                                                          repaintBoundaryKey
+                                                                              .currentContext!
+                                                                              .findRenderObject() as RenderRepaintBoundary;
+                                                                      ui.Image
+                                                                          image =
+                                                                          await boundary.toImage(
+                                                                              pixelRatio: 6.0);
+                                                                      ByteData?
+                                                                          byteData =
+                                                                          await image.toByteData(
+                                                                              format: ui.ImageByteFormat.png);
+                                                                      Uint8List
+                                                                          pngBytes =
+                                                                          byteData!
+                                                                              .buffer
+                                                                              .asUint8List();
+
+                                                                      // Get the directory to save the image
+                                                                      final directory =
+                                                                          await getApplicationDocumentsDirectory();
+                                                                      final imagePath =
+                                                                          '${directory.path}/captured_image.png';
+                                                                      File(imagePath)
+                                                                          .writeAsBytesSync(
+                                                                              pngBytes);
+
+                                                                      // Prepare the PDF document
+                                                                      final pdf =
+                                                                          pw.Document();
+                                                                      final imageProvider =
+                                                                          pw.MemoryImage(
+                                                                              pngBytes);
+
+                                                                      pdf.addPage(
+                                                                        pw.Page(
+                                                                          pageFormat:
+                                                                              documentPropertiesList[currentPageIndex].pageFormatController,
+                                                                          margin:
+                                                                              pw.EdgeInsets.only(
+                                                                            top:
+                                                                                double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                                                                            bottom:
+                                                                                double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                                                                            left:
+                                                                                double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                                                                            right:
+                                                                                double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                                                                          ),
+                                                                          build: (pw
+                                                                              .Context
+                                                                              context) {
+                                                                            return pw.Center(
+                                                                              child: pw.Image(imageProvider),
+                                                                            ); // Center the image on the page
+                                                                          },
+                                                                        ),
+                                                                      );
+
+                                                                      // Save the PDF to a file
+                                                                      final pdfPath =
+                                                                          '${directory.path}/document.pdf';
+                                                                      final file =
+                                                                          File(
+                                                                              pdfPath);
+                                                                      await file
+                                                                          .writeAsBytes(
+                                                                              await pdf.save());
+
+                                                                      print(
+                                                                          'PDF saved at: $pdfPath');
+                                                                    },
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              body:
+                                                                  RepaintBoundary(
+                                                                key:
+                                                                    repaintBoundaryKey,
+                                                                child:
+                                                                    Container(
+                                                                  width: documentPropertiesList[currentPageIndex]
+                                                                              .pageFormatController ==
+                                                                          PdfPageFormat
+                                                                              .a4
+                                                                      ? 793.7
+                                                                      : documentPropertiesList[currentPageIndex].pageFormatController ==
+                                                                              PdfPageFormat.a3
+                                                                          ? 812.8
+                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                              ? 559.4
+                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                  ? 396.9
+                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                      ? 816
+                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                          ? 816
+                                                                                          : 1240, // Default width
+                                                                  height: documentPropertiesList[currentPageIndex]
+                                                                              .pageFormatController ==
+                                                                          PdfPageFormat
+                                                                              .a4
+                                                                      ? 1122.5
+                                                                      : documentPropertiesList[currentPageIndex].pageFormatController ==
+                                                                              PdfPageFormat.a3
+                                                                          ? 1122.5
+                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                                                                              ? 793.7
+                                                                              : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                                                                                  ? 559.4
+                                                                                  : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                                                                                      ? 1056
+                                                                                      : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                                                                                          ? 1344
+                                                                                          : 3508, // Default height
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .only(
+                                                                    top: double.parse(documentPropertiesList[
                                                                             currentPageIndex]
                                                                         .marginTopController
                                                                         .text),
-                                                                bottom: double.parse(
-                                                                    documentPropertiesList[
+                                                                    bottom: double.parse(documentPropertiesList[
                                                                             currentPageIndex]
                                                                         .marginBottomController
                                                                         .text),
-                                                                left: double.parse(
-                                                                    documentPropertiesList[
+                                                                    left: double.parse(documentPropertiesList[
                                                                             currentPageIndex]
                                                                         .marginLeftController
                                                                         .text),
-                                                                right: double.parse(
-                                                                    documentPropertiesList[
+                                                                    right: double.parse(documentPropertiesList[
                                                                             currentPageIndex]
                                                                         .marginRightController
                                                                         .text),
+                                                                  ),
+                                                                  margin:
+                                                                      EdgeInsets
+                                                                          .all(
+                                                                              20),
+                                                                  decoration: BoxDecoration(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      boxShadow: [
+                                                                        BoxShadow(
+                                                                            blurRadius:
+                                                                                10,
+                                                                            color:
+                                                                                Colors.black)
+                                                                      ]),
+                                                                  child:
+                                                                      QuillEditor(
+                                                                    // Replace with your QuillEditor configurations
+                                                                    configurations: QuillEditorConfigurations(
+                                                                        controller: textEditorItem
+                                                                            .textEditorConfigurations
+                                                                            .controller),
+                                                                    focusNode:
+                                                                        FocusNode(),
+                                                                    scrollController:
+                                                                        ScrollController(),
+                                                                  ),
+                                                                ),
                                                               ),
-                                                              build: (pw.Context
-                                                                  context) {
-                                                                return pw
-                                                                    .Center(
-                                                                  child: pw.Image(
-                                                                      imageProvider),
-                                                                ); // Center the image on the page
-                                                              },
                                                             ),
-                                                          );
-
-                                                          // Save the PDF to a file
-                                                          final pdfPath =
-                                                              '${directory.path}/document.pdf';
-                                                          final file =
-                                                              File(pdfPath);
-                                                          await file
-                                                              .writeAsBytes(
-                                                                  await pdf
-                                                                      .save());
-
-                                                          print(
-                                                              'PDF saved at: $pdfPath');
-                                                        },
+                                                          ),
+                                                        );
+                                                      },
+                                                      child: Icon(
+                                                        TablerIcons.file_export,
+                                                        size: 12,
+                                                        color: defaultPalette
+                                                            .black
+                                                            .withOpacity(0.8),
                                                       ),
-                                                    ],
-                                                  ),
-                                                  body: RepaintBoundary(
-                                                    key: repaintBoundaryKey,
-                                                    child: Container(
-                                                      width: documentPropertiesList[
-                                                                      currentPageIndex]
-                                                                  .pageFormatController ==
-                                                              PdfPageFormat.a4
-                                                          ? 793.7
-                                                          : documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .pageFormatController ==
-                                                                  PdfPageFormat
-                                                                      .a3
-                                                              ? 812.8
-                                                              : documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .pageFormatController ==
-                                                                      PdfPageFormat
-                                                                          .a5
-                                                                  ? 559.4
-                                                                  : documentPropertiesList[currentPageIndex]
-                                                                              .pageFormatController ==
-                                                                          PdfPageFormat
-                                                                              .a6
-                                                                      ? 396.9
-                                                                      : documentPropertiesList[currentPageIndex].pageFormatController ==
-                                                                              PdfPageFormat.letter
-                                                                          ? 816
-                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                              ? 816
-                                                                              : 1240, // Default width
-                                                      height: documentPropertiesList[
-                                                                      currentPageIndex]
-                                                                  .pageFormatController ==
-                                                              PdfPageFormat.a4
-                                                          ? 1122.5
-                                                          : documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .pageFormatController ==
-                                                                  PdfPageFormat
-                                                                      .a3
-                                                              ? 1122.5
-                                                              : documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .pageFormatController ==
-                                                                      PdfPageFormat
-                                                                          .a5
-                                                                  ? 793.7
-                                                                  : documentPropertiesList[currentPageIndex]
-                                                                              .pageFormatController ==
-                                                                          PdfPageFormat
-                                                                              .a6
-                                                                      ? 559.4
-                                                                      : documentPropertiesList[currentPageIndex].pageFormatController ==
-                                                                              PdfPageFormat.letter
-                                                                          ? 1056
-                                                                          : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
-                                                                              ? 1344
-                                                                              : 3508, // Default height
-                                                      padding: EdgeInsets.only(
-                                                        top: double.parse(
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginTopController
-                                                                .text),
-                                                        bottom: double.parse(
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginBottomController
-                                                                .text),
-                                                        left: double.parse(
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginLeftController
-                                                                .text),
-                                                        right: double.parse(
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginRightController
-                                                                .text),
+                                                    );
+                                                  case 4:
+                                                    //clear text in text field
+                                                    return GestureDetector(
+                                                      onTap: () async {
+                                                        await showAdaptiveDialog(
+                                                          context: context,
+                                                          builder: (context) {
+                                                            return AlertDialog(
+                                                              title: Text(
+                                                                  'Confirm Clear'),
+                                                              content: Text(
+                                                                  'This will clear the text from current Text Field. Are you sure?'),
+                                                              actions: [
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      setState(
+                                                                          () {
+                                                                        textEditorItem
+                                                                            .textEditorController
+                                                                            .document = Document();
+                                                                      });
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    },
+                                                                    child: Text(
+                                                                        'Yes')),
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    },
+                                                                    child: Text(
+                                                                        'No')),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      },
+                                                      child: Icon(
+                                                        TablerIcons.x,
+                                                        size: 12,
+                                                        color: defaultPalette
+                                                            .black
+                                                            .withOpacity(0.8),
                                                       ),
-                                                      margin:
-                                                          EdgeInsets.all(20),
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                                blurRadius: 10,
-                                                                color: Colors
-                                                                    .black)
-                                                          ]),
-                                                      child: QuillEditor(
-                                                        // Replace with your QuillEditor configurations
-                                                        configurations:
-                                                            QuillEditorConfigurations(
-                                                                controller: textEditorItem
-                                                                    .textEditorConfigurations
-                                                                    .controller),
-                                                        focusNode: FocusNode(),
-                                                        scrollController:
-                                                            ScrollController(),
+                                                    );
+                                                  case 5:
+                                                    //Delete Text Field
+                                                    return GestureDetector(
+                                                      onTap: () async {
+                                                        await showAdaptiveDialog(
+                                                          context: context,
+                                                          builder: (context) {
+                                                            return AlertDialog(
+                                                              title: Text(
+                                                                  'Confirm Delete'),
+                                                              content: Text(
+                                                                  'This will DELETE the current Text Field with its contents. Are you sure?'),
+                                                              actions: [
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      setState(
+                                                                          () {
+                                                                        sheetList
+                                                                            .removeAt(index);
+                                                                        panelIndex.id =
+                                                                            '';
+                                                                        panelIndex.panelIndex =
+                                                                            -1;
+                                                                      });
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    },
+                                                                    child: Text(
+                                                                        'Yes')),
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    },
+                                                                    child: Text(
+                                                                        'No')),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      },
+                                                      child: Icon(
+                                                        TablerIcons.trash,
+                                                        size: 12,
+                                                        color: defaultPalette
+                                                            .black
+                                                            .withOpacity(0.8),
                                                       ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: Icon(
-                                            TablerIcons.file_export,
-                                            color: defaultPalette.black
-                                                .withOpacity(0.8),
-                                          ),
-                                        );
-                                      case 4:
-                                        //clear text in text field
-                                        return GestureDetector(
-                                          onTap: () async {
-                                            await showAdaptiveDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return AlertDialog(
-                                                  title: Text('Confirm Clear'),
-                                                  content: Text(
-                                                      'This will clear the text from current Text Field. Are you sure?'),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            textEditorItem
-                                                                    .textEditorController
-                                                                    .document =
-                                                                Document();
-                                                          });
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Text('Yes')),
-                                                    TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Text('No')),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                          child: Icon(
-                                            TablerIcons.x,
-                                            color: defaultPalette.black
-                                                .withOpacity(0.8),
-                                          ),
-                                        );
-                                      case 5:
-                                        //Delete Text Field
-                                        return GestureDetector(
-                                          onTap: () async {
-                                            await showAdaptiveDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return AlertDialog(
-                                                  title: Text('Confirm Delete'),
-                                                  content: Text(
-                                                      'This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            sheetList.removeAt(
-                                                                index);
-                                                            panelIndex.id = '';
-                                                            panelIndex
-                                                                .panelIndex = -1;
-                                                          });
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Text('Yes')),
-                                                    TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        child: Text('No')),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                          child: Icon(
-                                            TablerIcons.trash,
-                                            color: defaultPalette.black
-                                                .withOpacity(0.8),
-                                          ),
-                                        );
-                                      default:
-                                        return Container();
-                                    }
-                                  }), // simplified item generation
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ), // Expandable menus and other widgets can stay the same
-                ],
-              );
-              // buildlistw
-            } else if (sheetList[index] is SheetList) {
-              return Stack(key: ValueKey(sheetList[index].id), children: [
-                Positioned(
-                    // width: (sheetList[index] as SheetList).direction ==
-                    //         Axis.vertical
-                    //     ? sWidth
-                    //     : null,
-                    // height: (sheetList[index] as SheetList).direction ==
-                    //         Axis.vertical
-                    //     ? (100 * (sheetList[index] as SheetList).length)
-                    //         .ceilToDouble()
-                    //     : 100,
-                    child: _buildListWidget(sheetList[index] as SheetList))
-              ]);
-            }
-            return Container(
-              key: ValueKey(Uuid().v4()),
-              color: Colors.amberAccent,
-              height: 12,
-              // buildlistw
-            );
-          },
-          itemCount: sheetList.length,
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
-              final item = sheetList.removeAt(oldIndex);
-              // buildlistw
-              sheetList.insert(newIndex, item);
-            });
-          },
+                                                    );
+                                                  default:
+                                                    return Container();
+                                                }
+                                              }), // simplified item generation
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              ), // Expandable menus and other widgets can stay the same
+                            ],
+                          ),
+                        );
+                        // buildlistw
+                      } else if (sheetList[index] is SheetList) {
+                        return ReorderableDelayedDragStartListener(
+                          index: index,
+                          key: ValueKey(sheetList[index].id),
+                          child: Stack(children: [
+                            Positioned(
+                                // width: (sheetList[index] as SheetList).direction ==
+                                //         Axis.vertical
+                                //     ? sWidth
+                                //     : null,
+                                // height: (sheetList[index] as SheetList).direction ==
+                                //         Axis.vertical
+                                //     ? (100 * (sheetList[index] as SheetList).length)
+                                //         .ceilToDouble()
+                                //     : 100,
+                                child: _buildListWidget(
+                                    sheetList[index] as SheetList))
+                          ]),
+                        );
+                      }
+                      return Container(
+                        key: ValueKey(Uuid().v4()),
+                        color: Colors.amberAccent,
+                        height: 12,
+                        // buildlistw
+                      );
+                    },
+                    itemCount: sheetList.length,
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) {
+                          newIndex -= 1;
+                        }
+                        final item = sheetList.removeAt(oldIndex);
+                        // buildlistw
+                        sheetList.insert(newIndex, item);
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        AnimatedPositioned(
+          duration: Durations.medium3,
+          top: 3,
+          // left: panelIndex.parentId == sheetList.id ? 3 : -50,
+          left: 3,
+          right: 4,
+          child: SingleChildScrollView(
+            child: Transform.flip(
+              flipX: true,
+              child: Transform.flip(
+                  flipX: true,
+                  child:
+                      // panelIndex.parentId == sheetList.id
+                      //     ?
+                      ExpandableMenu(
+                    backgroundColor: sheetList.direction == Axis.vertical
+                        ? defaultPalette.tertiary
+                        : defaultPalette.extras[1],
+                    iconColor: defaultPalette.black,
+                    itemContainerColor: sheetList.direction == Axis.vertical
+                        ? defaultPalette.tertiary
+                        : defaultPalette.extras[1],
+
+                    width: 20.0,
+                    height: 20.0,
+                    items: List.generate(12, (intt) {
+                      switch (intt) {
+                        case 0:
+                          return PopupMenuButton<String>(
+                            iconSize: 12,
+                            padding: EdgeInsets.all(0),
+                            icon: Icon(
+                              TablerIcons.message_plus,
+                              color: defaultPalette.black.withOpacity(0.8),
+                            ),
+                            onSelected: (String value) {
+                              // Handle the selected option here
+                              switch (value) {
+                                case 'Above':
+                                  setState(() {
+                                    var newItem =
+                                        _addTextField(shouldReturn: true);
+                                    (sheetList as SheetList).insert(0, newItem);
+                                  });
+                                  break;
+                                case 'Below':
+                                  setState(() {
+                                    var newItem =
+                                        _addTextField(shouldReturn: true);
+                                    (sheetList as SheetList)
+                                        .sheetList
+                                        .add(newItem);
+                                  });
+                                  // Your logic for "Below"
+                                  break;
+                                case 'Left':
+                                  // setState(() {
+                                  //   var newId = Uuid().v4();
+                                  //   var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                  //   spreadSheetList[currentPageIndex].insert(
+                                  //       index,
+                                  //       SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                  //         _addTextField(shouldReturn: true),
+                                  //         item
+                                  //       ]));
+                                  // });
+                                  break;
+                                case 'Right':
+                                  // Your logic for "Right"
+                                  // setState(() {
+                                  //   var newId = Uuid().v4();
+                                  //   var item = spreadSheetList[currentPageIndex].removeAt(index);
+                                  //   spreadSheetList[currentPageIndex].insert(
+                                  //       index,
+                                  //       SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                  //         item,
+                                  //         _addTextField(shouldReturn: true),
+                                  //       ]));
+                                  // });
+                                  break;
+                              }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              return [
+                                const PopupMenuItem<String>(
+                                  value: 'Above',
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Icon(TablerIcons.arrow_bar_to_up),
+                                      Text('Above')
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem<String>(
+                                  value: 'Below',
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Icon(TablerIcons.arrow_bar_to_down),
+                                      Text('Below')
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem<String>(
+                                  value: 'Left',
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Icon(TablerIcons.arrow_bar_to_left),
+                                      Text('Left')
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem<String>(
+                                  value: 'Right',
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Icon(TablerIcons.arrow_bar_to_right),
+                                      Text('Right')
+                                    ],
+                                  ),
+                                ),
+                              ];
+                            },
+                          );
+
+                        case 1:
+                          //MOVE TEXT UP
+                          return GestureDetector(
+                            onTap: () {
+                              // setState(
+                              //     () {
+                              //   if (index !=
+                              //       0) {
+                              //     var item =
+                              //         spreadSheetList[currentPageIndex].removeAt(index);
+                              //     spreadSheetList[currentPageIndex].insert(index - 1,
+                              //         item);
+//
+                              //     // Update the index to reflect the new position of the item
+                              //     index--; // Decrement index to reflect the item's new position
+//
+                              //     panelIndex = PanelIndex(
+                              //         id: panelIndex.id,
+                              //         panelIndex: panelIndex.panelIndex + 1,
+                              //         parentId: panelIndex.parentId);
+                              //     print('Updated index of text editor: $index');
+                              //   }
+                              //   print(
+                              //       'Current index of text editor: $index');
+                              // });
+                            },
+                            child: Icon(
+                              TablerIcons.arrow_up,
+                              size: 12,
+                              color: defaultPalette.black.withOpacity(0.8),
+                            ),
+                          );
+                        case 2:
+                          //MOVE TEXT DOWN
+                          return GestureDetector(
+                            onTap: () {
+                              // setState(
+                              //     () {
+                              //   if (index !=
+                              //       spreadSheetList[currentPageIndex].length - 1) {
+                              //     var item =
+                              //         spreadSheetList[currentPageIndex].removeAt(index);
+                              //     spreadSheetList[currentPageIndex].insert(index + 1,
+                              //         item);
+                              //     index++;
+                              //     print('index of texteditor DT: $index');
+                              //   }
+                              // });
+                            },
+                            child: Icon(
+                              TablerIcons.arrow_down,
+                              size: 12,
+                              color: defaultPalette.black.withOpacity(0.8),
+                            ),
+                          );
+                        // case 3:
+                        //   //EXPORT TEXT
+                        //   return GestureDetector(
+                        //     onTap:
+                        //         () async {
+                        //       // Get the current text editor item
+                        //       var textEditorItem =
+                        //           spreadSheetList[currentPageIndex][index]
+                        //               as TextEditorItem;
+//
+                        //       // Create a GlobalKey for the RepaintBoundary
+                        //       GlobalKey
+                        //           repaintBoundaryKey =
+                        //           GlobalKey();
+//
+                        //       // Navigate to a new page with the PDF preview
+                        //       await Navigator
+                        //           .push(
+                        //         context,
+                        //         MaterialPageRoute(
+                        //           builder: (context) =>
+                        //               Scaffold(
+                        //             appBar: AppBar(
+                        //               title: Text('PDF Preview'),
+                        //               actions: [
+                        //                 IconButton(
+                        //                   icon: Icon(Icons.image),
+                        //                   onPressed: () async {
+                        //                     RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                        //                     ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                        //                     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                        //                     Uint8List pngBytes = byteData!.buffer.asUint8List();
+//
+                        //                     // Get the directory to save the image
+                        //                     final directory = await getApplicationDocumentsDirectory();
+                        //                     final imagePath = '${directory.path}/captured_image.png';
+                        //                     File(imagePath).writeAsBytesSync(pngBytes);
+//
+                        //                     print('Image saved at: $imagePath');
+                        //                   },
+                        //                 ),
+                        //                 IconButton(
+                        //                   icon: Icon(Icons.print),
+                        //                   onPressed: () async {
+                        //                     RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+                        //                     ui.Image image = await boundary.toImage(pixelRatio: 6.0);
+                        //                     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+                        //                     Uint8List pngBytes = byteData!.buffer.asUint8List();
+//
+                        //                     // Get the directory to save the image
+                        //                     final directory = await getApplicationDocumentsDirectory();
+                        //                     final imagePath = '${directory.path}/captured_image.png';
+                        //                     File(imagePath).writeAsBytesSync(pngBytes);
+//
+                        //                     // Prepare the PDF document
+                        //                     final pdf = pw.Document();
+                        //                     final imageProvider = pw.MemoryImage(pngBytes);
+//
+                        //                     pdf.addPage(
+                        //                       pw.Page(
+                        //                         pageFormat: documentPropertiesList[currentPageIndex].pageFormatController,
+                        //                         margin: pw.EdgeInsets.only(
+                        //                           top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                        //                           bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                        //                           left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                        //                           right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                        //                         ),
+                        //                         build: (pw.Context context) {
+                        //                           return pw.Center(
+                        //                             child: pw.Image(imageProvider),
+                        //                           ); // Center the image on the page
+                        //                         },
+                        //                       ),
+                        //                     );
+//
+                        //                     // Save the PDF to a file
+                        //                     final pdfPath = '${directory.path}/document.pdf';
+                        //                     final file = File(pdfPath);
+                        //                     await file.writeAsBytes(await pdf.save());
+//
+                        //                     print('PDF saved at: $pdfPath');
+                        //                   },
+                        //                 ),
+                        //               ],
+                        //             ),
+                        //             body: RepaintBoundary(
+                        //               key: repaintBoundaryKey,
+                        //               child: Container(
+                        //                 width: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                        //                     ? 793.7
+                        //                     : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                        //                         ? 812.8
+                        //                         : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                        //                             ? 559.4
+                        //                             : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                        //                                 ? 396.9
+                        //                                 : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                        //                                     ? 816
+                        //                                     : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                        //                                         ? 816
+                        //                                         : 1240, // Default width
+                        //                 height: documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a4
+                        //                     ? 1122.5
+                        //                     : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a3
+                        //                         ? 1122.5
+                        //                         : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a5
+                        //                             ? 793.7
+                        //                             : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.a6
+                        //                                 ? 559.4
+                        //                                 : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.letter
+                        //                                     ? 1056
+                        //                                     : documentPropertiesList[currentPageIndex].pageFormatController == PdfPageFormat.legal
+                        //                                         ? 1344
+                        //                                         : 3508, // Default height
+                        //                 padding: EdgeInsets.only(
+                        //                   top: double.parse(documentPropertiesList[currentPageIndex].marginTopController.text),
+                        //                   bottom: double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text),
+                        //                   left: double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text),
+                        //                   right: double.parse(documentPropertiesList[currentPageIndex].marginRightController.text),
+                        //                 ),
+                        //                 margin: EdgeInsets.all(20),
+                        //                 decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                        //                   BoxShadow(blurRadius: 10, color: Colors.black)
+                        //                 ]),
+                        //                 child: QuillEditor(
+                        //                   // Replace with your QuillEditor configurations
+                        //                   configurations: QuillEditorConfigurations(controller: textEditorItem.textEditorConfigurations.controller),
+                        //                   focusNode: FocusNode(),
+                        //                   scrollController: ScrollController(),
+                        //                 ),
+                        //               ),
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       );
+                        //     },
+                        //     child:
+                        //         Icon(
+                        //       TablerIcons
+                        //           .file_export,
+                        //       color: defaultPalette
+                        //           .black
+                        //           .withOpacity(0.8),
+                        //     ),
+                        //   );
+                        // case 4:
+                        //   //clear text in text field
+                        //   return GestureDetector(
+                        //     onTap:
+                        //         () async {
+                        //       await showAdaptiveDialog(
+                        //         context:
+                        //             context,
+                        //         builder:
+                        //             (context) {
+                        //           return AlertDialog(
+                        //             title: Text('Confirm Clear'),
+                        //             content: Text('This will clear the text from current Text Field. Are you sure?'),
+                        //             actions: [
+                        //               TextButton(
+                        //                   onPressed: () {
+                        //                     setState(() {
+                        //                       (spreadSheetList[currentPageIndex][index] as SheetList).sheetList = [];
+                        //                     });
+                        //                     Navigator.pop(context);
+                        //                   },
+                        //                   child: Text('Yes')),
+                        //               TextButton(
+                        //                   onPressed: () {
+                        //                     Navigator.pop(context);
+                        //                   },
+                        //                   child: Text('No')),
+                        //             ],
+                        //           );
+                        //         },
+                        //       );
+                        //     },
+                        //     child:
+                        //         Icon(
+                        //       TablerIcons
+                        //           .x,
+                        //       color: defaultPalette
+                        //           .black
+                        //           .withOpacity(0.8),
+                        //     ),
+                        //   );
+                        // case 5:
+                        //   //Delete Text Field
+                        //   return GestureDetector(
+                        //     onTap:
+                        //         () async {
+                        //       await showAdaptiveDialog(
+                        //         context:
+                        //             context,
+                        //         builder:
+                        //             (context) {
+                        //           return AlertDialog(
+                        //             title: Text('Confirm Delete'),
+                        //             content: Text('This will DELETE the current Text Field with its contents. Are you sure?'),
+                        //             actions: [
+                        //               TextButton(
+                        //                   onPressed: () {
+                        //                     setState(() {
+                        //                       spreadSheetList[currentPageIndex].removeAt(index);
+                        //                       panelIndex.id = '';
+                        //                       panelIndex.panelIndex = -1;
+                        //                     });
+                        //                     Navigator.pop(context);
+                        //                   },
+                        //                   child: Text('Yes')),
+                        //               TextButton(
+                        //                   onPressed: () {
+                        //                     Navigator.pop(context);
+                        //                   },
+                        //                   child: Text('No')),
+                        //             ],
+                        //           );
+                        //         },
+                        //       );
+                        //     },
+                        //     child:
+                        //         Icon(
+                        //       TablerIcons
+                        //           .trash,
+                        //       color: defaultPalette
+                        //           .black
+                        //           .withOpacity(0.8),
+                        //     ),
+                        //   );
+                        default:
+                          return Container();
+                      }
+                    }), // simplified item generation
+                  )
+                  // : null,
+                  ),
+            ),
+          ),
+        ), // Expandable menus and other widgets can stay the same
+      ],
     );
   }
 
