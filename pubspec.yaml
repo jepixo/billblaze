@@ -38,6 +38,7 @@ dependencies:
   flutter_hsvcolor_picker: ^1.5.1
   pdf: ^3.10.8
   printing: ^5.12.0
+  animated_menu: ^1.0.2
   # ffi: ^2.1.2
   # http: ^1.2.1
   # image: ^4.2.0
