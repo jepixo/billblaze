@@ -12,6 +12,7 @@ import 'package:billblaze/screens/layout_designer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -32,17 +33,20 @@ Future<void> main() async {
   // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
   // await Hive.box<LayoutModel>('layouts').clear();
+  debugPaintSizeEnabled = false; // Disable size debug outlines.
+  debugPaintBaselinesEnabled = false; // Disable baseline rendering.
+  debugPaintPointersEnabled = false;
   runApp(const ProviderScope(child: MainApp()));
   if (Platform.isWindows) {
-  doWhenWindowReady(() {
-    final win = appWindow;
-    win.minSize = Size(700, 400);
-    
-    win.size = Size(800, 600);
-    win.alignment = Alignment.center;
-    win.show();
-  });
-}
+    doWhenWindowReady(() {
+      final win = appWindow;
+      win.minSize = Size(700, 400);
+
+      win.size = Size(800, 600);
+      win.alignment = Alignment.center;
+      win.show();
+    });
+  }
 }
 
 class MainApp extends StatefulWidget {

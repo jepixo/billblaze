@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -16,21 +17,53 @@ class SheetListBox extends SheetItem {
   bool direction;
   @HiveField(4)
   List size;
-  SheetListBox({
-    required this.sheetList,
-    required this.direction,
-    required super.id,
-    required super.parentId,
-    this.size = const [0,0],
-  });
+  @HiveField(5)
+  List<double> padding;
+  @HiveField(6)
+  String mainAxisAlignment;
+  @HiveField(7)
+  String crossAxisAlignment;
+  @HiveField(8)
+  List<double> widthAdjustment;
+  @HiveField(9)
+  Uint8List? image;
+  @HiveField(10)
+  String imageFit;
+
+  SheetListBox(
+      {required this.sheetList,
+      required this.direction,
+      required super.id,
+      required super.parentId,
+      this.size = const [0, 0],
+      this.padding = const [0, 0, 0, 0],
+      this.mainAxisAlignment = 'start',
+      this.crossAxisAlignment = 'start',
+      this.image,
+      this.imageFit = 'fitWidth',
+      this.widthAdjustment = const [0, 0, 0, 0]});
   SheetList toSheetList() {
     return SheetList(
         sheetList: sheetList,
         direction: direction == true ? Axis.vertical : Axis.horizontal,
         id: id,
         parentId: parentId,
-        size: Size(size[0],size[1])
-        );
+        size: Size(size[0], size[1]),
+        listDecoration: ListDecoration(
+          padding: getEdgeInsets(padding),
+          crossAxisAlignment: crossAxisAlignment == 'end'
+              ? CrossAxisAlignment.end
+              : crossAxisAlignment == 'center'
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
+          mainAxisAlignment: getMainAxisAlignment(mainAxisAlignment),
+          decoration: BoxDecoration(
+              image: image == null
+                  ? null
+                  : DecorationImage(
+                      image: MemoryImage(image!), fit: getBoxFit(imageFit))),
+          widthAdjustment: getEdgeInsets(widthAdjustment),
+        ));
   }
 }
 
@@ -38,13 +71,17 @@ class SheetList extends SheetItem {
   List<SheetItem> sheetList;
   Axis direction;
   Size size;
-  SheetList({
-    required String id,
-    required String parentId,
-    required this.sheetList,
-    this.direction = Axis.vertical,
-    this.size = const Size(0,0)
-  }) : super(id: id, parentId: parentId) {
+  ListDecoration listDecoration;
+
+  SheetList(
+      {required String id,
+      required String parentId,
+      required this.sheetList,
+      this.direction = Axis.vertical,
+      this.listDecoration =
+          const ListDecoration(crossAxisAlignment: CrossAxisAlignment.start),
+      this.size = const Size(0, 0)})
+      : super(id: id, parentId: parentId) {
     // Assign the parentId to each item in the sheetList
     for (var item in sheetList) {
       item.parentId = id;
@@ -57,8 +94,7 @@ class SheetList extends SheetItem {
         direction: direction == Axis.vertical ? true : false,
         id: id,
         parentId: parentId,
-        size: [size.width,size.height]
-        );
+        size: [size.width, size.height]);
   }
 
   // Adding an item to the list
@@ -130,44 +166,170 @@ class SheetList extends SheetItem {
     sheetList.addAll(items);
   }
 
-  // Checking if the list contains a specific item
-  bool contains(SheetItem item) {
-    return sheetList.contains(item);
-  }
-
   // Finding the index of a specific item
   int indexOf(SheetItem item) {
     return sheetList.indexOf(item);
   }
 
-  // Sorting the list
-  void sort([int Function(SheetItem a, SheetItem b)? compare]) {
-    sheetList.sort(compare);
+  SheetList copyWith(
+      {List<SheetItem>? sheetList,
+      Axis? direction,
+      Size? size,
+      ListDecoration? listDecoration}) {
+    return SheetList(
+      id: super.id,
+      parentId: super.parentId,
+      sheetList: sheetList ?? this.sheetList,
+      direction: direction ?? this.direction,
+      size: size ?? this.size,
+      listDecoration: listDecoration ?? this.listDecoration,
+    );
   }
+}
 
-  // Shuffling the list
-  void shuffle([Random? random]) {
-    sheetList.shuffle(random);
-  }
+class ListDecoration {
+  final EdgeInsets padding;
+  final MainAxisAlignment mainAxisAlignment;
+  final CrossAxisAlignment crossAxisAlignment;
+  final EdgeInsets widthAdjustment;
+  final BoxDecoration decoration;
 
-  // Reversing the list
-  Iterable<SheetItem> get reversed {
-    return sheetList.reversed;
-  }
+  const ListDecoration({
+    this.padding = const EdgeInsets.all(0),
+    this.mainAxisAlignment = MainAxisAlignment.start,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
+    this.widthAdjustment = const EdgeInsets.all(0),
+    this.decoration = const BoxDecoration(),
+  });
+}
 
-  // Getting a sublist
-  List<SheetItem> sublist(int start, [int? end]) {
-    return sheetList.sublist(start, end);
+MainAxisAlignment getMainAxisAlignment(String? mainAxisAlignment) {
+  switch (mainAxisAlignment) {
+    case 'end':
+      return MainAxisAlignment.end;
+    case 'center':
+      return MainAxisAlignment.center;
+    case 'spaceBetween':
+      return MainAxisAlignment.spaceBetween;
+    case 'spaceEvenly':
+      return MainAxisAlignment.spaceEvenly;
+    case 'spaceAround':
+      return MainAxisAlignment.spaceAround;
+    default:
+      return MainAxisAlignment.start;
   }
+}
 
-  // Getting a list iterator
-  Iterator<SheetItem> get iterator {
-    return sheetList.iterator;
+CrossAxisAlignment getCrossAxisAlignment(String? crossAxisAlignment) {
+  switch (crossAxisAlignment) {
+    case 'end':
+      return CrossAxisAlignment.end;
+    case 'center':
+      return CrossAxisAlignment.center;
+    case 'stretch':
+      return CrossAxisAlignment.stretch;
+    case 'baseline':
+      return CrossAxisAlignment.baseline;
+    default:
+      return CrossAxisAlignment.start; // Default value
   }
+}
 
-  // Finding the first item that matches the given condition
-  SheetItem firstWhere(bool Function(SheetItem item) test,
-      {SheetItem Function()? orElse}) {
-    return sheetList.firstWhere(test, orElse: orElse);
+BoxFit getBoxFit(String? boxFit) {
+  switch (boxFit) {
+    case 'fill':
+      return BoxFit.fill;
+    case 'contain':
+      return BoxFit.contain;
+    case 'cover':
+      return BoxFit.cover;
+    case 'fitWidth':
+      return BoxFit.fitWidth;
+    case 'fitHeight':
+      return BoxFit.fitHeight;
+    case 'none':
+      return BoxFit.none;
+    case 'scaleDown':
+      return BoxFit.scaleDown;
+    default:
+      return BoxFit.cover; // Default value
   }
+}
+
+EdgeInsets getEdgeInsets(List<double> padding) {
+  if (padding.length != 4) {
+    throw ArgumentError(
+        'Padding list must contain exactly 4 values: [top, right, bottom, left]');
+  }
+  return EdgeInsets.only(
+    top: padding[0],
+    right: padding[1],
+    bottom: padding[2],
+    left: padding[3],
+  );
+}
+
+String getStringFromMainAxisAlignment(MainAxisAlignment alignment) {
+  switch (alignment) {
+    case MainAxisAlignment.end:
+      return 'end';
+    case MainAxisAlignment.center:
+      return 'center';
+    case MainAxisAlignment.spaceBetween:
+      return 'spaceBetween';
+    case MainAxisAlignment.spaceEvenly:
+      return 'spaceEvenly';
+    case MainAxisAlignment.spaceAround:
+      return 'spaceAround';
+    default:
+      return 'start';
+  }
+}
+
+String getStringFromCrossAxisAlignment(CrossAxisAlignment alignment) {
+  switch (alignment) {
+    case CrossAxisAlignment.end:
+      return 'end';
+    case CrossAxisAlignment.center:
+      return 'center';
+    case CrossAxisAlignment.stretch:
+      return 'stretch';
+    case CrossAxisAlignment.baseline:
+      return 'baseline';
+    default:
+      return 'start'; // Default value
+  }
+}
+
+String getStringFromBoxFit(BoxFit? boxFit) {
+  if (boxFit == null) {
+    return 'fitWidth';
+  }
+  switch (boxFit) {
+    case BoxFit.fill:
+      return 'fill';
+    case BoxFit.contain:
+      return 'contain';
+    case BoxFit.cover:
+      return 'cover';
+    case BoxFit.fitWidth:
+      return 'fitWidth';
+    case BoxFit.fitHeight:
+      return 'fitHeight';
+    case BoxFit.none:
+      return 'none';
+    case BoxFit.scaleDown:
+      return 'scaleDown';
+    default:
+      return 'cover'; // Default value
+  }
+}
+
+List<double> getPaddingFromEdgeInsets(EdgeInsets edgeInsets) {
+  return [
+    edgeInsets.top,
+    edgeInsets.right,
+    edgeInsets.bottom,
+    edgeInsets.left,
+  ];
 }
