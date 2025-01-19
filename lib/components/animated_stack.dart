@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:billblaze/components/elevated_button.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:simple_animated_button/simple_animated_button.dart';
+import 'package:iconsax_plus/iconsax_plus.dart'; 
 
 class AnimatedStack extends StatefulWidget {
   final double scaleWidth;

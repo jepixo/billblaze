@@ -13,6 +13,8 @@ class ElevatedLayerButton extends StatefulWidget {
   final bool toggleOnTap;
   final bool isTapped;
   final double subfac;
+  final double depth;
+  final bool extrudeLeft;
 
   const ElevatedLayerButton({
     Key? key,
@@ -28,6 +30,8 @@ class ElevatedLayerButton extends StatefulWidget {
     this.toggleOnTap = false,
     this.isTapped = false,
     this.subfac = 10,
+    this.depth = 4,
+    this.extrudeLeft = true,
   }) : super(key: key);
 
   @override
@@ -108,8 +112,19 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
             AnimatedPositioned(
               duration: widget.animationDuration!,
               curve: widget.animationCurve!,
-              bottom: isDown ? 0 : 4, // Adjust based on the pressed or toggled state
-              right: isDown ? 0 : 4,
+              bottom: widget.extrudeLeft? isDown
+                  ? 0
+                  : widget
+                      .depth: null, // Adjust based on the pressed or toggled state
+              right:widget.extrudeLeft? isDown ? 0 : widget.depth: null,
+              left: !widget.extrudeLeft? isDown
+                  ? 0
+                  : widget
+                      .depth:null,
+              top:!widget.extrudeLeft?  isDown
+                  ? 0
+                  : widget
+                      .depth:null,
               child: Container(
                 width: widget.buttonWidth! - subfac,
                 height: widget.buttonHeight! - subfac,
@@ -125,7 +140,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
       ),
     );
   }
-} 
+}
 
 class ResizableElevatedLayerButton extends StatelessWidget {
   final int flex;
@@ -163,7 +178,8 @@ class ResizableElevatedLayerButton extends StatelessWidget {
         height: buttonHeight, // Constrain height
         child: ElevatedLayerButton(
           buttonHeight: buttonHeight,
-          buttonWidth: null, // Allow the parent's constraints to determine width
+          buttonWidth:
+              null, // Allow the parent's constraints to determine width
           borderRadius: borderRadius,
           animationDuration: animationDuration,
           animationCurve: animationCurve,

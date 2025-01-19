@@ -153,14 +153,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
-  borders:
-    dependency: "direct main"
-    description:
-      name: borders
-      sha256: "24b4d7d4b9b06b2f119c9a8528f52be2c7c94a159157ab649b8887a6bcb596d0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.2"
   build:
     dependency: transitive
     description:
@@ -401,14 +393,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.5"
-  expandable_menu:
-    dependency: "direct main"
-    description:
-      name: expandable_menu
-      sha256: "0a56238179c7a177baabea1bac159547abb13c6b801179e53e4c9cf02057e032"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.5"
   extension_google_sign_in_as_googleapis_auth:
     dependency: transitive
     description:
@@ -981,6 +965,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  number_counting_animation:
+    dependency: "direct main"
+    description:
+      name: number_counting_animation
+      sha256: "9e76394b910081d537ffaa987e9fc8aac922377a2d70af097a4824693a8cc745"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   package_config:
     dependency: transitive
     description:
@@ -1301,14 +1293,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
-  simple_animated_button:
-    dependency: "direct main"
-    description:
-      name: simple_animated_button
-      sha256: "128cf48cd3002c323eaf23738386674d5830eef09443291387627b2bff864a9b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.9"
   sky_engine:
     dependency: transitive
     description: flutter

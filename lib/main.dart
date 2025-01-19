@@ -40,7 +40,7 @@ Future<void> main() async {
   if (Platform.isWindows) {
     doWhenWindowReady(() {
       final win = appWindow;
-      win.minSize = Size(700, 400);
+      win.minSize = Size(800, 500);
 
       win.size = Size(800, 600);
       win.alignment = Alignment.center;
