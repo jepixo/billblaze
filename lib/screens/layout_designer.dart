@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:math';
@@ -7,6 +8,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/Home.dart';
 import 'package:billblaze/components/circle_color_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -159,7 +161,8 @@ class LayoutDesigner3 extends ConsumerStatefulWidget {
 }
 
 class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  final _googleFontsApiKey = 'AIzaSyBSG_5VsGG03fTeSihFNxYSCVN3m6Ltb0c';
   double hDividerPosition = 0.5;
   double vDividerPosition = 0.55;
   double appbarHeight = 0.065;
@@ -175,9 +178,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   SheetListClipboard sheetListClipboard = SheetListClipboard(data: []);
   PageController pageViewIndicatorController = PageController();
   PageController textStyleTabControler = PageController();
-
+  late TabController fontsTabContainerController;
   ScrollController pdfScrollController = ScrollController();
   AppinioSwiperController propertyCardsController = AppinioSwiperController();
+  AppinioSwiperController textPropertyCardsController =
+      AppinioSwiperController();
   PieMenuController opsAddPieController = PieMenuController();
   PieMenuController opsMovePieController = PieMenuController();
   PieMenuController opsCopyPieController = PieMenuController();
@@ -199,7 +204,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   zz.TransformationController transformationcontroller =
       zz.TransformationController();
   late TabController tabcunt;
-  List<String> fonts = [
+  List<String> fonts2 = [
     'Billabong',
     'AlexBrush',
     'Allura',
@@ -217,6 +222,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     'SEASRN',
     'Windsong',
   ];
+  final List<String> fonts = GoogleFonts.asMap()
+      .keys
+      .toList()
+      .where((font) => !font.startsWith('Noto'))
+      .toList();
   List<Color> paletteColors = [
     Colors.black,
     Colors.white,
@@ -239,6 +249,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     Color(int.parse('0xff1289A7')),
     Color(int.parse('0xffD980FA'))
   ];
+  Map<String, List<String>> categorizedFonts = {};
 
   List<bool> isTapped = [false, true, false, false, false];
   List<GlobalKey> globalKeys = [];
@@ -257,6 +268,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool nameExists = false;
   final FocusNode layoutNamefocusNode = FocusNode();
   double whichPropertyTabIsClicked = 1;
+  int whichTextPropertyTabIsClicked = 0;
   Uint8List? cachedImageData;
   bool hasRenderedOnce = false;
   bool addToTheLeft = false;
@@ -328,6 +340,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     // _updatePdfPreview('');
     tabcunt = TabController(length: 2, vsync: this);
     globalKeys = List.generate(1000, (_) => GlobalKey());
+    fetchFonts();
+    fontsTabContainerController = TabController(length: 6, vsync: this);
+    fontsTabContainerController.animateTo(1);
   }
 
   @override
@@ -2302,6 +2317,37 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     }
   }
 
+  Future<void> fetchFonts() async {
+    final url = Uri.parse(
+      "https://www.googleapis.com/webfonts/v1/webfonts?key=$_googleFontsApiKey",
+    );
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final fonts = data['items'];
+
+      // Classify fonts into categories
+      final Map<String, List<String>> tempCategories = {};
+      for (var font in fonts) {
+        final String category = font['category'];
+        final String fontName = font['family'];
+
+        if (!tempCategories.containsKey(category)) {
+          tempCategories[category] = [];
+        }
+        tempCategories[category]!.add(fontName);
+      }
+
+      setState(() {
+        categorizedFonts = tempCategories;
+        print(categorizedFonts);
+      });
+    } else {
+      print('Failed to fetch fonts: ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // print('________BUILD LAYOUT STARTED LD_________');
@@ -2595,305 +2641,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         //
                         //
                         //
-                        //prppos redone
-                        Positioned(
-                          width: sWidth * (wH2DividerPosition),
-                          top: Platform.isAndroid ? 35 : 0,
-                          height: Platform.isAndroid
-                              ? sHeight * 0.85
-                              : sHeight * 0.9,
-                          left: sWidth * (1 - wH2DividerPosition),
-                          child: Stack(
-                            children: [
-                              //Properties page, text, list tab animatedborders
-                              Container(
-                                height: (50),
-                                margin: EdgeInsets.only(
-                                    top: 45, left: 15, right: 10),
-                                padding: EdgeInsets.only(bottom: 0),
-                                decoration: BoxDecoration(
-                                  color: defaultPalette.transparent,
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                        flex: 1,
-                                        child: Padding(
-                                          padding: EdgeInsets.only(left: 5),
-                                          child: CustomBorder(
-                                            color: whichPropertyTabIsClicked ==
-                                                    1
-                                                ? defaultPalette.primary
-                                                : defaultPalette.transparent,
-                                            animateDuration:
-                                                const Duration(seconds: 1),
-                                            animateBorder: true,
-                                            radius: const Radius.circular(10),
-                                            dashPattern: const [15, 10],
-                                            strokeWidth: 3,
-                                            child: SizedBox(
-                                              height: 40,
-                                              width: _getPropertiesButtonWidth(
-                                                  'page'),
-                                            ),
-                                          ),
-                                        )),
-                                    //text field properties button border
-                                    if (panelIndex.id != '')
-                                      Expanded(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(left: 5),
-                                            child: CustomBorder(
-                                              color:
-                                                  whichPropertyTabIsClicked == 2
-                                                      ? defaultPalette.primary
-                                                      : defaultPalette
-                                                          .transparent,
-                                              animateDuration:
-                                                  const Duration(seconds: 1),
-                                              animateBorder: true,
-                                              radius: const Radius.circular(10),
-                                              dashPattern: const [15, 10],
-                                              strokeWidth: 3,
-                                              child: SizedBox(
-                                                height: 40,
-                                                width: (2 *
-                                                    (sWidth *
-                                                        (wH2DividerPosition)) /
-                                                    5),
-                                              ),
-                                            ),
-                                          )),
-                                    //sheet list properties button border
-                                    if (panelIndex.parentId != '')
-                                      Expanded(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(left: 5),
-                                            child: CustomBorder(
-                                              color:
-                                                  whichPropertyTabIsClicked == 3
-                                                      ? defaultPalette.primary
-                                                      : defaultPalette
-                                                          .transparent,
-                                              animateDuration:
-                                                  const Duration(seconds: 1),
-                                              animateBorder: true,
-                                              radius: const Radius.circular(10),
-                                              dashPattern: const [15, 10],
-                                              strokeWidth: 3,
-                                              child: SizedBox(
-                                                height: 40,
-                                                width: 2 *
-                                                    (sWidth *
-                                                        (wH2DividerPosition)) /
-                                                    5,
-                                              ),
-                                            ),
-                                          )),
-                                  ],
-                                ),
-                              ),
-                              //Properties page, text, list tab browser buttons
-                              Container(
-                                height: (50),
-                                margin: EdgeInsets.only(
-                                    top: 40, left: 15, right: 10),
-                                padding: EdgeInsets.only(bottom: 0),
-                                decoration: BoxDecoration(
-                                  color: defaultPalette.transparent,
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    //page properties button button
-                                    Expanded(
-                                      flex: 1,
-                                      child: ElevatedLayerButton(
-                                        // isTapped: false,t
-                                        onClick: () {
-                                          setState(() {
-                                            whichPropertyTabIsClicked = 1;
-                                          });
-                                        },
-                                        buttonHeight: 50,
-                                        buttonWidth:
-                                            _getPropertiesButtonWidth('page'),
-                                        borderRadius: BorderRadius.circular(10),
-                                        animationDuration:
-                                            const Duration(milliseconds: 100),
-                                        animationCurve: Curves.ease,
-                                        topDecoration: BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border.all(),
-                                        ),
-                                        topLayerChild: const Icon(
-                                          TablerIcons.script,
-                                          size: 20,
-                                          // color: Colors.blue,
-                                        ),
-                                        subfac: 10,
-                                        baseDecoration: BoxDecoration(
-                                          color: defaultPalette.extras[0],
-                                          border: Border.all(),
-                                        ),
-                                      ),
-                                    ),
-                                    //text field properties button button
-                                    if (panelIndex.id != '')
-                                      Expanded(
-                                        flex: 2,
-                                        child: Stack(
-                                          children: [
-                                            Container(
-                                              margin: EdgeInsets.only(
-                                                  top: 9, left: 5),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.tertiary,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                border: Border.all(),
-                                              ),
-                                            ),
-                                            ElevatedLayerButton(
-                                              // isTapped: false,0
-                                              onClick: () {
-                                                setState(() {
-                                                  whichPropertyTabIsClicked = 2;
-                                                });
-                                              },
-                                              buttonHeight: 30,
-                                              buttonWidth:
-                                                  _getPropertiesButtonWidth(
-                                                      'text-field'),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              animationDuration: const Duration(
-                                                  milliseconds: 100),
-                                              animationCurve: Curves.ease,
-                                              topDecoration: BoxDecoration(
-                                                color: Colors.white,
-                                                border: Border.all(),
-                                              ),
-                                              topLayerChild: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Icon(
-                                                    TablerIcons
-                                                        .text_recognition,
-                                                    size: 15,
-                                                    // color: Colors.blue,
-                                                  ),
-                                                  Text(
-                                                    'text',
-                                                    style: GoogleFonts.bungee(
-                                                        color: defaultPalette
-                                                            .black,
-                                                        fontSize: 12),
-                                                  )
-                                                ],
-                                              ),
-                                              subfac: 10,
-                                              baseDecoration: BoxDecoration(
-                                                color: defaultPalette.extras[0]
-                                                    .withOpacity(0.3),
-                                                // border: Border.all(),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    //sheetlist properties button button
-                                    if (panelIndex.parentId != '')
-                                      Expanded(
-                                        flex: 2,
-                                        child: Stack(
-                                          children: [
-                                            Container(
-                                              margin: EdgeInsets.only(
-                                                  top: 9, left: 5),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.extras[1],
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                border: Border.all(),
-                                              ),
-                                            ),
-                                            ElevatedLayerButton(
-                                              // isTapped: false,
-                                              // toggleOnTap: true,
-                                              onClick: () {
-                                                setState(() {
-                                                  whichPropertyTabIsClicked = 3;
-                                                });
-                                              },
-                                              buttonHeight: 30,
-                                              buttonWidth:
-                                                  _getPropertiesButtonWidth(
-                                                      'sheet-list'),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              animationDuration: const Duration(
-                                                  milliseconds: 100),
-                                              animationCurve: Curves.ease,
-                                              topDecoration: BoxDecoration(
-                                                color: Colors.white,
-                                                border: Border.all(),
-                                              ),
-                                              topLayerChild: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Icon(
-                                                    TablerIcons
-                                                        .brackets_contain,
-                                                    size: 15,
-                                                    // color: Colors.blue,
-                                                  ),
-                                                  Text(
-                                                    'List',
-                                                    style: GoogleFonts.bungee(
-                                                        color: defaultPalette
-                                                            .black,
-                                                        fontSize: 12),
-                                                  )
-                                                ],
-                                              ),
-                                              subfac: 10,
-                                              baseDecoration: BoxDecoration(
-                                                color: defaultPalette.extras[0]
-                                                    .withOpacity(0.3),
-                                                // border: Border.all(),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              //Content inside properties CARDS Main Parent
-                              Container(
-                                padding: EdgeInsets.only(top: 85),
-                                child: FadeInLeft(child: _getProperTiesCards()),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        //
-                        //
-                        //////////Spread SHEET Layout //Desktop WEB
+                        //Spread SHEET Layout //Desktop WEB
                         Positioned(
                           left: sWidth * wH1DividerPosition,
                           width: sWidth *
@@ -2912,6 +2660,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 panelIndex.parentId = '';
                                 panelIndex.id = '';
                                 whichPropertyTabIsClicked = 1;
+                                whichTextPropertyTabIsClicked = 0;
                               });
                             },
                             onSecondaryTap: () {
@@ -3878,6 +3627,304 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ),
                               ),
                             ),
+                          ),
+                        ),
+
+                        //
+                        //
+                        //////////PROPERTIES SECTION
+                        Positioned(
+                          width: sWidth * (wH2DividerPosition),
+                          top: Platform.isAndroid ? 35 : 0,
+                          height: Platform.isAndroid
+                              ? sHeight * 0.85
+                              : sHeight * 0.9,
+                          left: sWidth * (1 - wH2DividerPosition),
+                          child: Stack(
+                            children: [
+                              //Properties page, text, list tab animatedborders
+                              Container(
+                                height: (50),
+                                margin: EdgeInsets.only(
+                                    top: 45, left: 15, right: 10),
+                                padding: EdgeInsets.only(bottom: 0),
+                                decoration: BoxDecoration(
+                                  color: defaultPalette.transparent,
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                        flex: 1,
+                                        child: Padding(
+                                          padding: EdgeInsets.only(left: 5),
+                                          child: CustomBorder(
+                                            color: whichPropertyTabIsClicked ==
+                                                    1
+                                                ? defaultPalette.primary
+                                                : defaultPalette.transparent,
+                                            animateDuration:
+                                                const Duration(seconds: 1),
+                                            animateBorder: true,
+                                            radius: const Radius.circular(10),
+                                            dashPattern: const [15, 10],
+                                            strokeWidth: 3,
+                                            child: SizedBox(
+                                              height: 40,
+                                              width: _getPropertiesButtonWidth(
+                                                  'page'),
+                                            ),
+                                          ),
+                                        )),
+                                    //text field properties button border
+                                    if (panelIndex.id != '')
+                                      Expanded(
+                                          flex: 2,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(left: 5),
+                                            child: CustomBorder(
+                                              color:
+                                                  whichPropertyTabIsClicked == 2
+                                                      ? defaultPalette.primary
+                                                      : defaultPalette
+                                                          .transparent,
+                                              animateDuration:
+                                                  const Duration(seconds: 1),
+                                              animateBorder: true,
+                                              radius: const Radius.circular(10),
+                                              dashPattern: const [15, 10],
+                                              strokeWidth: 3,
+                                              child: SizedBox(
+                                                height: 40,
+                                                width: (2 *
+                                                    (sWidth *
+                                                        (wH2DividerPosition)) /
+                                                    5),
+                                              ),
+                                            ),
+                                          )),
+                                    //sheet list properties button border
+                                    if (panelIndex.parentId != '')
+                                      Expanded(
+                                          flex: 2,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(left: 5),
+                                            child: CustomBorder(
+                                              color:
+                                                  whichPropertyTabIsClicked == 3
+                                                      ? defaultPalette.primary
+                                                      : defaultPalette
+                                                          .transparent,
+                                              animateDuration:
+                                                  const Duration(seconds: 1),
+                                              animateBorder: true,
+                                              radius: const Radius.circular(10),
+                                              dashPattern: const [15, 10],
+                                              strokeWidth: 3,
+                                              child: SizedBox(
+                                                height: 40,
+                                                width: 2 *
+                                                    (sWidth *
+                                                        (wH2DividerPosition)) /
+                                                    5,
+                                              ),
+                                            ),
+                                          )),
+                                  ],
+                                ),
+                              ),
+                              //Properties page, text, list tab browser buttons
+                              Container(
+                                height: (50),
+                                margin: EdgeInsets.only(
+                                    top: 40, left: 15, right: 10),
+                                padding: EdgeInsets.only(bottom: 0),
+                                decoration: BoxDecoration(
+                                  color: defaultPalette.transparent,
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    //page properties button button
+                                    Expanded(
+                                      flex: 1,
+                                      child: ElevatedLayerButton(
+                                        // isTapped: false,t
+                                        onClick: () {
+                                          setState(() {
+                                            whichPropertyTabIsClicked = 1;
+                                          });
+                                        },
+                                        buttonHeight: 50,
+                                        buttonWidth:
+                                            _getPropertiesButtonWidth('page'),
+                                        borderRadius: BorderRadius.circular(10),
+                                        animationDuration:
+                                            const Duration(milliseconds: 100),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild: const Icon(
+                                          TablerIcons.script,
+                                          size: 20,
+                                          // color: Colors.blue,
+                                        ),
+                                        subfac: 10,
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),
+                                    ),
+                                    //text field properties button button
+                                    if (panelIndex.id != '')
+                                      Expanded(
+                                        flex: 2,
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              margin: EdgeInsets.only(
+                                                  top: 9, left: 5),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.tertiary,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(),
+                                              ),
+                                            ),
+                                            ElevatedLayerButton(
+                                              // isTapped: false,0
+                                              onClick: () {
+                                                setState(() {
+                                                  whichPropertyTabIsClicked = 2;
+                                                });
+                                              },
+                                              buttonHeight: 30,
+                                              buttonWidth:
+                                                  _getPropertiesButtonWidth(
+                                                      'text-field'),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              animationDuration: const Duration(
+                                                  milliseconds: 100),
+                                              animationCurve: Curves.ease,
+                                              topDecoration: BoxDecoration(
+                                                color: Colors.white,
+                                                border: Border.all(),
+                                              ),
+                                              topLayerChild: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Icon(
+                                                    TablerIcons
+                                                        .text_recognition,
+                                                    size: 15,
+                                                    // color: Colors.blue,
+                                                  ),
+                                                  Text(
+                                                    'text',
+                                                    style: GoogleFonts.bungee(
+                                                        color: defaultPalette
+                                                            .black,
+                                                        fontSize: 12),
+                                                  )
+                                                ],
+                                              ),
+                                              subfac: 10,
+                                              baseDecoration: BoxDecoration(
+                                                color: defaultPalette.extras[0]
+                                                    .withOpacity(0.3),
+                                                // border: Border.all(),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    //sheetlist properties button button
+                                    if (panelIndex.parentId != '')
+                                      Expanded(
+                                        flex: 2,
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              margin: EdgeInsets.only(
+                                                  top: 9, left: 5),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.extras[1],
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(),
+                                              ),
+                                            ),
+                                            ElevatedLayerButton(
+                                              // isTapped: false,
+                                              // toggleOnTap: true,
+                                              onClick: () {
+                                                setState(() {
+                                                  whichPropertyTabIsClicked = 3;
+                                                });
+                                              },
+                                              buttonHeight: 30,
+                                              buttonWidth:
+                                                  _getPropertiesButtonWidth(
+                                                      'sheet-list'),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              animationDuration: const Duration(
+                                                  milliseconds: 100),
+                                              animationCurve: Curves.ease,
+                                              topDecoration: BoxDecoration(
+                                                color: Colors.white,
+                                                border: Border.all(),
+                                              ),
+                                              topLayerChild: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Icon(
+                                                    TablerIcons
+                                                        .brackets_contain,
+                                                    size: 15,
+                                                    // color: Colors.blue,
+                                                  ),
+                                                  Text(
+                                                    'List',
+                                                    style: GoogleFonts.bungee(
+                                                        color: defaultPalette
+                                                            .black,
+                                                        fontSize: 12),
+                                                  )
+                                                ],
+                                              ),
+                                              subfac: 10,
+                                              baseDecoration: BoxDecoration(
+                                                color: defaultPalette.extras[0]
+                                                    .withOpacity(0.3),
+                                                // border: Border.all(),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              //Content inside properties CARDS Main Parent
+                              Container(
+                                padding: EdgeInsets.only(top: 85),
+                                child: FadeInLeft(child: _getProperTiesCards()),
+                              ),
+                            ],
                           ),
                         ),
                         //
@@ -7513,7 +7560,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                                                   ],
                                                                                                   onFieldSubmitted: (value) {
                                                                                                     item.textEditorController.formatSelection(
-                                                                                                      BackgroundAttribute('${value}'),
+                                                                                                      BackgroundAttribute(value),
                                                                                                     );
                                                                                                     FocusScope.of(context).previousFocus();
                                                                                                   },
@@ -10307,31 +10354,28 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               duration: Duration(milliseconds: 150),
               backgroundCardScale: 1,
               loop: true,
-              cardCount: pageCount < 2 ? 2 : pageCount,
+              cardCount: 3,
               allowUnSwipe: true,
               allowUnlimitedUnSwipe: true,
               initialIndex: currentPageIndex,
-              controller: propertyCardsController,
+              controller: textPropertyCardsController,
               onCardPositionChanged: (position) {
-                // setState(() {
-                //   _cardPosition =
-                //       position.offset.dx.abs() + position.offset.dy.abs();
-                //   print(_cardPosition);
-                // });
+                setState(() {
+                  _cardPosition =
+                      position.offset.dx.abs() + position.offset.dy.abs();
+                  print(_cardPosition);
+                });
               },
               onSwipeEnd: (a, b, direction) {
                 // print(direction.toString());
-                // setState(() {
-                //   ref
-                //       .read(propertyCardIndexProvider.notifier)
-                //       .update((s) => s = b);
-                //   if (_cardPosition > 50) {
-                //     currentPageIndex = (currentPageIndex + 1) % pageCount;
-                //     _renderPagePreviewOnProperties();
-                //   }
-                  // _currentCardIndex = b;
-                  // _cardPosition = 0;
-                // });
+                setState(() {
+                  // if (_cardPosition > 50) {
+                  //   currentPageIndex = (currentPageIndex + 1) % pageCount;
+                  //   _renderPagePreviewOnProperties();
+                  // }
+                  whichTextPropertyTabIsClicked = b;
+                  _cardPosition = 0;
+                });
               },
               onSwipeCancelled: (activity) {
                 setState(() {
@@ -10340,2404 +10384,4244 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 });
               },
               cardBuilder: (BuildContext context, int index) {
-                int currentCardIndex = ref.watch(propertyCardIndexProvider);
+                int currentCardIndex = whichTextPropertyTabIsClicked;
                 int ind = pageCount == 1 ? 0 : index;
                 TextEditingController pgHexController = TextEditingController(
                     text:
                         '#${colorToHex(documentPropertiesList[ind].pageColor)}');
-                return Stack(children: [
-                  Positioned.fill(
-                    child: AnimatedContainer(
-                      duration: Durations.short3,
-                      margin: EdgeInsets.all(15),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(width: 2),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: AnimatedOpacity(
-                      opacity: currentCardIndex == index
-                          ? 0
-                          : index >= (currentCardIndex + 2) % 10
-                              ? 1
-                              : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
-                      duration: Duration(milliseconds: 300),
+
+                if (false) {
+                  return Stack(children: [
+                    Positioned.fill(
                       child: AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
+                        duration: Durations.short3,
                         margin: EdgeInsets.all(15),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: index == (currentCardIndex + 1) % 10
-                              ? defaultPalette.extras[0]
-                              : index == (currentCardIndex + 2) % 10
-                                  ? defaultPalette.extras[0]
-                                  : defaultPalette.extras[0],
+                          color: Colors.white,
                           border: Border.all(width: 2),
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
                     ),
-                  ),
-                  Container(
-                                            padding: EdgeInsets.only(top: 8),
-                                            height: sHeight * 0.55,
-                                            width:
-                                                (sWidth * wH2DividerPosition),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(30),
-                                                  topRight:
-                                                      Radius.circular(30)),
-                                              child: Stack(
-                                                children: [
-                                                  AnimatedPositioned(
-                                                    duration: Durations.medium3,
-                                                    left:
-                                                        panelIndex.panelIndex ==
-                                                                -1
-                                                            ? 10
-                                                            : 44,
-                                                    child: Container(
-                                                      height: sHeight * 0.55,
-                                                      width: (sWidth *
-                                                          wH2DividerPosition),
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.black
-                                                              .withOpacity(
-                                                                  0.2)),
-                                                      child: Column(
-                                                        // direction: Axis.vertical,
-                                                        children: [
-                                                          Container(
-                                                            height: 50,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                                    color: Colors
-                                                                        .white
-                                                                        .withOpacity(
-                                                                            1)),
-                                                            alignment: Alignment
-                                                                .centerLeft,
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        opacity: currentCardIndex == index
+                            ? 0
+                            : index >= (currentCardIndex + 2) % 10
+                                ? 1
+                                : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                        duration: Duration(milliseconds: 300),
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 300),
+                          margin: EdgeInsets.all(15),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: index == (currentCardIndex + 1) % 10
+                                ? defaultPalette.extras[0]
+                                : index == (currentCardIndex + 2) % 10
+                                    ? defaultPalette.extras[0]
+                                    : defaultPalette.extras[0],
+                            border: Border.all(width: 2),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(top: 8),
+                      height: sHeight * 0.55,
+                      width: (sWidth * wH2DividerPosition),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(30),
+                            topRight: Radius.circular(30)),
+                        child: Stack(
+                          children: [
+                            AnimatedPositioned(
+                              duration: Durations.medium3,
+                              left: panelIndex.panelIndex == -1 ? 10 : 44,
+                              child: Container(
+                                height: sHeight * 0.55,
+                                width: (sWidth * wH2DividerPosition),
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.2)),
+                                child: Column(
+                                  // direction: Axis.vertical,
+                                  children: [
+                                    Container(
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(1)),
+                                      alignment: Alignment.centerLeft,
+                                      padding: EdgeInsets.only(left: 5, top: 5),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          //heading //Desktop WEB
+                                          Text(
+                                            'TEXT STYLE',
+                                            style: GoogleFonts.bungee(
+                                                fontSize: 18,
+                                                letterSpacing: 0,
+                                                height: 1),
+                                          ),
+                                          //id //Desktop WEB
+                                          Text(
+                                            panelIndex.id,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.lexend(
+                                                fontSize: 8,
+                                                letterSpacing: 0,
+                                                height: 0.9),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    panelIndex.panelIndex == -1
+                                        ? Container(
+                                            color: Colors.transparent,
+                                            height: 10,
+                                            width: 5,
+                                          )
+                                        : Expanded(
+                                            child: Container(
+                                              padding: EdgeInsets.all(5),
+                                              child: Builder(
+                                                builder: (context) {
+                                                  var item;
+                                                  try {
+                                                    item = _sheetItemIterator(
+                                                            panelIndex.id,
+                                                            spreadSheetList[
+                                                                currentPageIndex])
+                                                        as TextEditorItem;
+                                                  } on Exception catch (e) {
+                                                    item = TextEditorItem(
+                                                        id: '', parentId: '');
+                                                  }
+
+                                                  bool _getIsToggled(
+                                                      Map<String, Attribute>
+                                                          attrs,
+                                                      Attribute attribute) {
+                                                    if (attribute.key ==
+                                                            Attribute
+                                                                .list.key ||
+                                                        attribute.key ==
+                                                            Attribute
+                                                                .header.key ||
+                                                        attribute.key ==
+                                                            Attribute
+                                                                .script.key ||
+                                                        attribute.key ==
+                                                            Attribute
+                                                                .align.key) {
+                                                      final currentAttribute =
+                                                          attrs[attribute.key];
+                                                      if (currentAttribute ==
+                                                          null) {
+                                                        print(
+                                                            'returning false');
+                                                        return false;
+                                                      }
+                                                      print(
+                                                          'returning ${currentAttribute.value == attribute.value}');
+                                                      return currentAttribute
+                                                              .value ==
+                                                          attribute.value;
+                                                    }
+                                                    print(
+                                                        'returning ${attrs.containsKey(attribute.key)}');
+                                                    return attrs.containsKey(
+                                                        attribute.key);
+                                                  }
+
+                                                  Widget
+                                                      buildElevatedLayerButton({
+                                                    required double
+                                                        buttonHeight,
+                                                    required double buttonWidth,
+                                                    required Duration
+                                                        animationDuration,
+                                                    required Curve
+                                                        animationCurve,
+                                                    required void Function()
+                                                        onClick,
+                                                    required BoxDecoration
+                                                        baseDecoration,
+                                                    required BoxDecoration
+                                                        topDecoration,
+                                                    required Widget
+                                                        topLayerChild,
+                                                    required BorderRadius
+                                                        borderRadius,
+                                                    bool toggleOnTap = false,
+                                                    bool isTapped = false,
+                                                  }) {
+                                                    var down = isTapped;
+                                                    void _handleTapDown(
+                                                        TapDownDetails
+                                                            details) {
+                                                      onClick();
+
+                                                      setState(() {
+                                                        down = true;
+                                                        print(down);
+                                                      });
+                                                    }
+
+                                                    void _handleTapUp(
+                                                        TapUpDetails details) {
+                                                      if (!toggleOnTap &&
+                                                          down) {
+                                                        setState(() {
+                                                          down = !down;
+                                                        });
+                                                      }
+                                                    }
+
+                                                    void _handleTapCancel() {}
+
+                                                    return GestureDetector(
+                                                      onTap: () {},
+                                                      onTapDown: _handleTapDown,
+                                                      onTapUp: _handleTapUp,
+                                                      onTapCancel:
+                                                          _handleTapCancel,
+                                                      child: SizedBox(
+                                                        height: buttonHeight,
+                                                        width: buttonWidth,
+                                                        child: Stack(
+                                                          alignment: Alignment
+                                                              .bottomRight,
+                                                          children: [
+                                                            Positioned(
+                                                              bottom: 0,
+                                                              right: 0,
+                                                              child: Container(
+                                                                width:
+                                                                    buttonWidth -
+                                                                        10,
+                                                                height:
+                                                                    buttonHeight -
+                                                                        10,
+                                                                decoration:
+                                                                    baseDecoration
+                                                                        .copyWith(
+                                                                  borderRadius:
+                                                                      borderRadius,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            AnimatedPositioned(
+                                                              duration:
+                                                                  animationDuration,
+                                                              curve:
+                                                                  animationCurve,
+                                                              bottom:
+                                                                  !down ? 4 : 0,
+                                                              right:
+                                                                  !down ? 4 : 0,
+                                                              child: Container(
+                                                                width:
+                                                                    buttonWidth -
+                                                                        10,
+                                                                height:
+                                                                    buttonHeight -
+                                                                        10,
+                                                                alignment:
+                                                                    Alignment
+                                                                        .center,
+                                                                decoration:
+                                                                    topDecoration
+                                                                        .copyWith(
+                                                                  borderRadius:
+                                                                      borderRadius,
+                                                                ),
+                                                                child:
+                                                                    topLayerChild,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+
+                                                  var width = (sWidth *
+                                                          wH2DividerPosition *
+                                                          0.92) -
+                                                      44;
+
+                                                  TextEditingController
+                                                      hexController =
+                                                      TextEditingController()
+                                                        ..text =
+                                                            '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
+                                                  TextEditingController
+                                                      bghexController =
+                                                      TextEditingController()
+                                                        ..text =
+                                                            '${(item.textEditorController.getSelectionStyle().attributes['background']?.value ?? '#00000000')}';
+                                                  TextEditingController
+                                                      fontSizeController =
+                                                      TextEditingController()
+                                                        ..text =
+                                                            '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
+                                                  if (fontSizeController.text
+                                                      .endsWith('.0')) {
+                                                    fontSizeController.text =
+                                                        '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0').ceil()}';
+                                                  }
+                                                  TextEditingController
+                                                      letterSpaceController =
+                                                      TextEditingController()
+                                                        ..text =
+                                                            '${double.parse(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value ?? '0')}';
+                                                  if (letterSpaceController.text
+                                                      .endsWith('.0')) {
+                                                    letterSpaceController.text =
+                                                        letterSpaceController
+                                                            .text
+                                                            .replaceAll(
+                                                                '.0', '');
+                                                  }
+                                                  TextEditingController
+                                                      wordSpaceController =
+                                                      TextEditingController()
+                                                        ..text =
+                                                            '${double.parse(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value ?? '0')}';
+                                                  if (wordSpaceController.text
+                                                      .endsWith('.0')) {
+                                                    wordSpaceController.text =
+                                                        wordSpaceController.text
+                                                            .replaceAll(
+                                                                '.0', '');
+                                                  }
+                                                  TextEditingController
+                                                      lineSpaceController =
+                                                      TextEditingController()
+                                                        ..text =
+                                                            '${double.parse(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value ?? '0')}';
+                                                  if (lineSpaceController.text
+                                                      .endsWith('.0')) {
+                                                    lineSpaceController.text =
+                                                        lineSpaceController.text
+                                                            .replaceAll(
+                                                                '.0', '');
+                                                  }
+                                                  int crossAxisCount = width <
+                                                          (width /
+                                                                  vDividerPosition) /
+                                                              1.75
+                                                      ? 2
+                                                      : 4;
+                                                  var iconWidth = width /
+                                                      crossAxisCount /
+                                                      1.05;
+                                                  var iconHeight =
+                                                      // 50.0;
+                                                      width <
+                                                              (width /
+                                                                      vDividerPosition) /
+                                                                  2.2
+                                                          ? iconWidth
+                                                          : width <
+                                                                  (width /
+                                                                          vDividerPosition) /
+                                                                      1.75
+                                                              ? iconWidth / 1.3
+                                                              : iconWidth;
+                                                  var fCrossAxisCount = width <
+                                                          (sWidth) / 3
+                                                      ? 1
+                                                      : width < (sWidth) / 1.7
+                                                          ? 2
+                                                          : 3;
+                                                  var fButtonWidth = width /
+                                                      fCrossAxisCount /
+                                                      1.05;
+                                                  var fButtonHeight =
+                                                      fButtonWidth * 0.5;
+                                                  return PageView(
+                                                    controller:
+                                                        textStyleTabControler,
+                                                    scrollDirection:
+                                                        Axis.horizontal,
+                                                    // physics:
+                                                    //     NeverScrollableScrollPhysics(),
+                                                    onPageChanged: (value) {
+                                                      print(value);
+                                                    },
+                                                    children: [
+                                                      if (item.id != '') ...[
+                                                        //Font Size, Word Spacing, Letter Spacing, Line Spacing //Desktop WEB
+                                                        SingleChildScrollView(
+                                                          child:
+                                                              //SIZE SPACE PARENT //Desktop WEB
+                                                              Container(
                                                             padding:
                                                                 EdgeInsets.only(
-                                                                    left: 5,
-                                                                    top: 5),
+                                                                    left: 5),
+                                                            width: width,
+                                                            height: 70 * 6,
                                                             child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceEvenly,
                                                               crossAxisAlignment:
                                                                   CrossAxisAlignment
                                                                       .start,
                                                               children: [
-                                                                //heading //Desktop WEB
-                                                                Text(
-                                                                  'TEXT STYLE',
-                                                                  style: GoogleFonts.bungee(
-                                                                      fontSize:
-                                                                          18,
-                                                                      letterSpacing:
-                                                                          0,
-                                                                      height:
-                                                                          1),
+                                                                //Font Size TEXT FIELD PARENT
+                                                                ClipRRect(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10),
+                                                                  child:
+                                                                      Container(
+                                                                    decoration: BoxDecoration(
+                                                                        color: defaultPalette
+                                                                            .primary,
+                                                                        border: Border.all(
+                                                                            width:
+                                                                                2,
+                                                                            strokeAlign: BorderSide
+                                                                                .strokeAlignInside),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(8)),
+                                                                    height: 70,
+                                                                    width:
+                                                                        width,
+                                                                    child: Row(
+                                                                      children: [
+                                                                        //Icon title slider field
+                                                                        Expanded(
+                                                                          flex:
+                                                                              (1600 * vDividerPosition).ceil(),
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              //Row font and title
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  // fontSizeFocus.unfocus();
+                                                                                  fontSizeFocus.requestFocus();
+                                                                                },
+                                                                                child: Padding(
+                                                                                  padding: EdgeInsets.only(top: 5, left: 5),
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      Expanded(
+                                                                                          flex: 100,
+                                                                                          child: Icon(
+                                                                                            TablerIcons.text_size,
+                                                                                            size: 18,
+                                                                                          )),
+                                                                                      vDividerPosition > 0.45
+                                                                                          ? Expanded(
+                                                                                              flex: 700,
+                                                                                              child: Container(
+                                                                                                height: 18,
+                                                                                                alignment: Alignment.bottomLeft,
+                                                                                                child: Text(
+                                                                                                  '  Font Size',
+                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
+                                                                                                ),
+                                                                                              ))
+                                                                                          : Container(),
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              //TextField
+                                                                              TextField(
+                                                                                onTapOutside: (event) {
+                                                                                  // fontSizeFocus.unfocus();
+                                                                                },
+                                                                                onSubmitted: (value) {
+                                                                                  item.textEditorController.formatSelection(
+                                                                                    Attribute.clone(Attribute.size, value.toString()),
+                                                                                  );
+                                                                                },
+                                                                                focusNode: fontSizeFocus,
+                                                                                controller: fontSizeController,
+                                                                                inputFormatters: [
+                                                                                  NumericInputFormatter(maxValue: 100),
+                                                                                ],
+                                                                                style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
+                                                                                cursorColor: defaultPalette.black,
+                                                                                // selectionControls: MaterialTextSelectionControls(),
+                                                                                textAlign: TextAlign.right,
+                                                                                scrollPadding: EdgeInsets.all(0),
+                                                                                textAlignVertical: TextAlignVertical.top,
+                                                                                decoration: InputDecoration(
+                                                                                  contentPadding: EdgeInsets.all(0),
+
+                                                                                  // filled: true,
+                                                                                  // fillColor: defaultPalette.primary,
+                                                                                  enabledBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                  focusedBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                ),
+                                                                                keyboardType: TextInputType.number,
+                                                                              ),
+
+                                                                              //Balloon Slider
+                                                                              Positioned(
+                                                                                bottom: 0,
+                                                                                width: width * 0.6,
+                                                                                child: BalloonSlider(
+                                                                                    trackHeight: 15,
+                                                                                    thumbRadius: 7.5,
+                                                                                    showRope: true,
+                                                                                    color: defaultPalette.tertiary,
+                                                                                    ropeLength: 300 / 8,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[Attribute.size.key]?.value) ?? 20.toString()) / 100,
+                                                                                    onChanged: (val) {
+                                                                                      setState(() {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          Attribute.clone(Attribute.size, (val * 100).toStringAsFixed(0)),
+                                                                                        );
+                                                                                      });
+                                                                                    }),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                        //+ -
+                                                                        Expanded(
+                                                                          flex: vDividerPosition > 0.45
+                                                                              ? (450 * vDividerPosition).ceil()
+                                                                              : 1,
+                                                                          child:
+                                                                              Stack(
+                                                                            // mainAxisAlignment: MainAxisAlignment.start,
+                                                                            children: [
+                                                                              Positioned(
+                                                                                top: -4,
+                                                                                right: 4,
+                                                                                height: 35,
+                                                                                child: ElevatedLayerButton(
+                                                                                  // isTapped: false,
+                                                                                  // toggleOnTap: true,
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = int.parse(fontSizeController.text) + 1;
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        Attribute.clone(Attribute.size, val.toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.add,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              Positioned(
+                                                                                bottom: 5,
+                                                                                right: 4,
+                                                                                child: ElevatedLayerButton(
+                                                                                  // isTapped: false,
+                                                                                  // toggleOnTap: true,
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = (int.parse(fontSizeController.text) - 1).clamp(0, 100);
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        Attribute.clone(Attribute.size, val.toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.minus,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                  ),
                                                                 ),
-                                                                //id //Desktop WEB
-                                                                Text(
-                                                                  panelIndex.id,
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: GoogleFonts.lexend(
-                                                                      fontSize:
-                                                                          8,
-                                                                      letterSpacing:
-                                                                          0,
-                                                                      height:
-                                                                          0.9),
+                                                                //
+                                                                //
+                                                                SizedBox(
+                                                                  height: 20,
                                                                 ),
+                                                                //LetterSpacing Parentt
+                                                                ClipRRect(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10),
+                                                                  child:
+                                                                      Container(
+                                                                    decoration: BoxDecoration(
+                                                                        color: defaultPalette
+                                                                            .primary,
+                                                                        border: Border.all(
+                                                                            width:
+                                                                                2,
+                                                                            strokeAlign: BorderSide
+                                                                                .strokeAlignInside),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(8)),
+                                                                    height: 70,
+                                                                    width:
+                                                                        width,
+                                                                    child: Row(
+                                                                      children: [
+                                                                        //LetterSpacing
+                                                                        //Icon title slider field
+                                                                        Expanded(
+                                                                          flex:
+                                                                              (1600 * vDividerPosition).ceil(),
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              //LetterSpacing
+                                                                              //Row font and title
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  letterSpaceFocus.requestFocus();
+                                                                                },
+                                                                                //LetterSpacing
+                                                                                //Row font and title
+                                                                                child: Padding(
+                                                                                  padding: EdgeInsets.only(top: 5, left: 5),
+                                                                                  //LetterSpacing
+                                                                                  //Row font and title
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      //LetterSpacing
+                                                                                      //icon
+                                                                                      Expanded(
+                                                                                          flex: 100,
+                                                                                          child: Icon(
+                                                                                            TablerIcons.letter_spacing,
+                                                                                            size: 18,
+                                                                                          )),
+                                                                                      //LetterSpacing
+                                                                                      //title
+                                                                                      vDividerPosition > 0.45
+                                                                                          ? Expanded(
+                                                                                              flex: 700,
+                                                                                              child: Container(
+                                                                                                height: 18,
+                                                                                                alignment: Alignment.bottomLeft,
+                                                                                                child: Text(
+                                                                                                  '  Letter Space',
+                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
+                                                                                                ),
+                                                                                              ))
+                                                                                          : Container(),
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              //LetterSpacing
+                                                                              //TextField
+                                                                              TextField(
+                                                                                onTapOutside: (event) {
+                                                                                  // fontSizeFocus.unfocus();
+                                                                                },
+                                                                                onSubmitted: (value) {
+                                                                                  item.textEditorController.formatSelection(
+                                                                                    LetterSpacingAttribute((value).toString()),
+                                                                                  );
+                                                                                },
+                                                                                focusNode: letterSpaceFocus,
+                                                                                controller: letterSpaceController,
+                                                                                inputFormatters: [
+                                                                                  NumericInputFormatter(maxValue: 100),
+                                                                                ],
+                                                                                style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
+                                                                                cursorColor: defaultPalette.black,
+                                                                                // selectionControls: MaterialTextSelectionControls(),
+                                                                                textAlign: TextAlign.right,
+                                                                                scrollPadding: EdgeInsets.all(0),
+                                                                                textAlignVertical: TextAlignVertical.top,
+                                                                                decoration: InputDecoration(
+                                                                                  contentPadding: EdgeInsets.all(0),
+
+                                                                                  // filled: true,
+                                                                                  // fillColor: defaultPalette.primary,
+                                                                                  enabledBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                  focusedBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                ),
+                                                                                keyboardType: TextInputType.number,
+                                                                              ),
+                                                                              //LetterSpacing
+                                                                              //Balloon Slider
+                                                                              Positioned(
+                                                                                bottom: 0,
+                                                                                width: width * 0.6,
+                                                                                child: BalloonSlider(
+                                                                                    trackHeight: 15,
+                                                                                    thumbRadius: 7.5,
+                                                                                    showRope: true,
+                                                                                    color: defaultPalette.tertiary,
+                                                                                    ropeLength: 300 / 8,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
+                                                                                    onChanged: (val) {
+                                                                                      setState(() {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          LetterSpacingAttribute((val * 100).ceil().toString()),
+                                                                                        );
+                                                                                      });
+                                                                                    }),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                        //LetterSpacing
+                                                                        //+ -
+                                                                        Expanded(
+                                                                          flex: vDividerPosition > 0.45
+                                                                              ? (450 * vDividerPosition).ceil()
+                                                                              : 1,
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              Positioned(
+                                                                                top: -4,
+                                                                                right: 4,
+                                                                                height: 35,
+                                                                                child: ElevatedLayerButton(
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = int.parse(letterSpaceController.text) + 1;
+
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        LetterSpacingAttribute((val).toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.add,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              Positioned(
+                                                                                bottom: 5,
+                                                                                right: 4,
+                                                                                child: ElevatedLayerButton(
+                                                                                  // isTapped: false,
+                                                                                  // toggleOnTap: true,
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = (int.parse(letterSpaceController.text) - 1).clamp(0, 100);
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        LetterSpacingAttribute((val).toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.minus,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+
+                                                                SizedBox(
+                                                                  height: 20,
+                                                                ),
+                                                                //WordSpacing
+                                                                ClipRRect(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10),
+                                                                  child:
+                                                                      Container(
+                                                                    decoration: BoxDecoration(
+                                                                        color: defaultPalette
+                                                                            .primary,
+                                                                        border: Border.all(
+                                                                            width:
+                                                                                2,
+                                                                            strokeAlign: BorderSide
+                                                                                .strokeAlignInside),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(8)),
+                                                                    height: 70,
+                                                                    width:
+                                                                        width,
+                                                                    child: Row(
+                                                                      children: [
+                                                                        //WordSpacing
+                                                                        //Icon title slider field
+                                                                        Expanded(
+                                                                          flex:
+                                                                              (1600 * vDividerPosition).ceil(),
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              //WordSpacing
+                                                                              //Row font and title
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  wordSpaceFocus.requestFocus();
+                                                                                },
+                                                                                //WordSpacing
+                                                                                //Row font and title
+                                                                                child: Padding(
+                                                                                  padding: EdgeInsets.only(top: 5, left: 5),
+                                                                                  //WordSpacing
+                                                                                  //Row font and title
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      //WordSpacing
+                                                                                      //icon
+                                                                                      Expanded(
+                                                                                          flex: 100,
+                                                                                          child: Icon(
+                                                                                            TablerIcons.spacing_horizontal,
+                                                                                            size: 18,
+                                                                                          )),
+                                                                                      //WordSpacing
+                                                                                      //title
+                                                                                      vDividerPosition > 0.45
+                                                                                          ? Expanded(
+                                                                                              flex: 700,
+                                                                                              child: Container(
+                                                                                                height: 18,
+                                                                                                alignment: Alignment.bottomLeft,
+                                                                                                child: Text(
+                                                                                                  '  Word Space',
+                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
+                                                                                                ),
+                                                                                              ))
+                                                                                          : Container(),
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              //WordSpacing
+                                                                              //TextField
+                                                                              TextField(
+                                                                                onTapOutside: (event) {
+                                                                                  // fontSizeFocus.unfocus();
+                                                                                },
+                                                                                onSubmitted: (value) {
+                                                                                  item.textEditorController.formatSelection(
+                                                                                    WordSpacingAttribute((value).toString()),
+                                                                                  );
+                                                                                },
+                                                                                focusNode: wordSpaceFocus,
+                                                                                controller: wordSpaceController,
+                                                                                inputFormatters: [
+                                                                                  NumericInputFormatter(maxValue: 100),
+                                                                                ],
+                                                                                style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
+                                                                                cursorColor: defaultPalette.black,
+                                                                                // selectionControls: MaterialTextSelectionControls(),
+                                                                                textAlign: TextAlign.right,
+                                                                                scrollPadding: EdgeInsets.all(0),
+                                                                                textAlignVertical: TextAlignVertical.top,
+                                                                                decoration: InputDecoration(
+                                                                                  contentPadding: EdgeInsets.all(0),
+
+                                                                                  // filled: true,
+                                                                                  // fillColor: defaultPalette.primary,
+                                                                                  enabledBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                  focusedBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                ),
+                                                                                keyboardType: TextInputType.number,
+                                                                              ),
+                                                                              //WordSpacing
+                                                                              //Balloon Slider
+                                                                              Positioned(
+                                                                                bottom: 0,
+                                                                                width: width * 0.6,
+                                                                                child: BalloonSlider(
+                                                                                    trackHeight: 15,
+                                                                                    thumbRadius: 7.5,
+                                                                                    showRope: true,
+                                                                                    color: defaultPalette.tertiary,
+                                                                                    ropeLength: 300 / 8,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
+                                                                                    onChanged: (val) {
+                                                                                      setState(() {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          WordSpacingAttribute((val * 100).ceil().toString()),
+                                                                                        );
+                                                                                      });
+                                                                                    }),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                        //WordSpacing
+                                                                        //+ -
+                                                                        Expanded(
+                                                                          flex: vDividerPosition > 0.45
+                                                                              ? (450 * vDividerPosition).ceil()
+                                                                              : 1,
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              Positioned(
+                                                                                top: -4,
+                                                                                right: 4,
+                                                                                height: 35,
+                                                                                child: ElevatedLayerButton(
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = int.parse(wordSpaceController.text) + 1;
+
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        WordSpacingAttribute((val).toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.add,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              Positioned(
+                                                                                bottom: 5,
+                                                                                right: 4,
+                                                                                child: ElevatedLayerButton(
+                                                                                  // isTapped: false,
+                                                                                  // toggleOnTap: true,
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = (int.parse(wordSpaceController.text) - 1).clamp(0, 100);
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        WordSpacingAttribute((val).toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.minus,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                //
+                                                                SizedBox(
+                                                                  height: 20,
+                                                                ),
+                                                                //LineHeight
+                                                                ClipRRect(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10),
+                                                                  child:
+                                                                      Container(
+                                                                    decoration: BoxDecoration(
+                                                                        color: defaultPalette
+                                                                            .primary,
+                                                                        border: Border.all(
+                                                                            width:
+                                                                                2,
+                                                                            strokeAlign: BorderSide
+                                                                                .strokeAlignInside),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(8)),
+                                                                    height: 70,
+                                                                    width:
+                                                                        width,
+                                                                    child: Row(
+                                                                      children: [
+                                                                        //LineHeight
+                                                                        //Icon title slider field
+                                                                        Expanded(
+                                                                          flex:
+                                                                              (1600 * vDividerPosition).ceil(),
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              //LineHeight
+                                                                              //Row font and title
+                                                                              GestureDetector(
+                                                                                onTap: () {
+                                                                                  lineSpaceFocus.requestFocus();
+                                                                                },
+                                                                                //LineHeight
+                                                                                //Row font and title
+                                                                                child: Padding(
+                                                                                  padding: EdgeInsets.only(top: 5, left: 5),
+                                                                                  //LineHeight
+                                                                                  //Row font and title
+                                                                                  child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                    children: [
+                                                                                      //LineHeight
+                                                                                      //icon
+                                                                                      Expanded(
+                                                                                          flex: 100,
+                                                                                          child: Icon(
+                                                                                            TablerIcons.spacing_vertical,
+                                                                                            size: 18,
+                                                                                          )),
+                                                                                      //LineHeight
+                                                                                      //title
+                                                                                      vDividerPosition > 0.45
+                                                                                          ? Expanded(
+                                                                                              flex: 700,
+                                                                                              child: Container(
+                                                                                                height: 18,
+                                                                                                alignment: Alignment.bottomLeft,
+                                                                                                child: Text(
+                                                                                                  '  Line Space',
+                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
+                                                                                                ),
+                                                                                              ))
+                                                                                          : Container(),
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              //LineHeight
+                                                                              //TextField
+                                                                              TextField(
+                                                                                onTapOutside: (event) {
+                                                                                  // fontSizeFocus.unfocus();
+                                                                                },
+                                                                                onSubmitted: (value) {
+                                                                                  item.textEditorController.formatSelection(
+                                                                                    LineHeightAttribute((value).toString()),
+                                                                                  );
+                                                                                },
+                                                                                focusNode: lineSpaceFocus,
+                                                                                controller: lineSpaceController,
+                                                                                inputFormatters: [
+                                                                                  NumericInputFormatter(maxValue: 100),
+                                                                                ],
+                                                                                style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
+                                                                                cursorColor: defaultPalette.black,
+                                                                                // selectionControls: MaterialTextSelectionControls(),
+                                                                                textAlign: TextAlign.right,
+                                                                                scrollPadding: EdgeInsets.all(0),
+                                                                                textAlignVertical: TextAlignVertical.top,
+                                                                                decoration: InputDecoration(
+                                                                                  contentPadding: EdgeInsets.all(0),
+
+                                                                                  // filled: true,
+                                                                                  // fillColor: defaultPalette.primary,
+                                                                                  enabledBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                  focusedBorder: OutlineInputBorder(
+                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
+                                                                                  ),
+                                                                                ),
+                                                                                keyboardType: TextInputType.number,
+                                                                              ),
+                                                                              //LineHeight
+                                                                              //Balloon Slider
+                                                                              Positioned(
+                                                                                bottom: 0,
+                                                                                width: width * 0.6,
+                                                                                child: BalloonSlider(
+                                                                                    trackHeight: 15,
+                                                                                    thumbRadius: 7.5,
+                                                                                    showRope: true,
+                                                                                    color: defaultPalette.tertiary,
+                                                                                    ropeLength: 300 / 8,
+                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value) ?? 0.toString()) / 100,
+                                                                                    onChanged: (val) {
+                                                                                      setState(() {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          LineHeightAttribute((val * 100).ceil().toString()),
+                                                                                        );
+                                                                                      });
+                                                                                    }),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                        //LineHeight
+                                                                        //+ -
+                                                                        Expanded(
+                                                                          flex: vDividerPosition > 0.45
+                                                                              ? (450 * vDividerPosition).ceil()
+                                                                              : 1,
+                                                                          child:
+                                                                              Stack(
+                                                                            children: [
+                                                                              Positioned(
+                                                                                top: -4,
+                                                                                right: 4,
+                                                                                height: 35,
+                                                                                child: ElevatedLayerButton(
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = int.parse(lineSpaceController.text) + 1;
+
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        LineHeightAttribute((val).toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.add,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              Positioned(
+                                                                                bottom: 5,
+                                                                                right: 4,
+                                                                                child: ElevatedLayerButton(
+                                                                                  // isTapped: false,
+                                                                                  // toggleOnTap: true,
+                                                                                  onClick: () {
+                                                                                    setState(() {
+                                                                                      var val = (int.parse(lineSpaceController.text) - 1).clamp(0, 100);
+                                                                                      item.textEditorController.formatSelection(
+                                                                                        LineHeightAttribute((val).toString()),
+                                                                                      );
+                                                                                    });
+                                                                                  },
+                                                                                  buttonHeight: 32,
+                                                                                  buttonWidth: 65 * vDividerPosition,
+                                                                                  borderRadius: BorderRadius.circular(100),
+                                                                                  animationDuration: const Duration(milliseconds: 100),
+                                                                                  animationCurve: Curves.ease,
+                                                                                  topDecoration: BoxDecoration(
+                                                                                    color: Colors.white,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                  topLayerChild: Icon(
+                                                                                    IconsaxPlusLinear.minus,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  baseDecoration: BoxDecoration(
+                                                                                    color: Colors.green,
+                                                                                    border: Border.all(),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                //
                                                               ],
                                                             ),
                                                           ),
-                                                          panelIndex.panelIndex ==
-                                                                  -1
-                                                              ? Container(
+                                                        ),
+                                                        //Colors //Desktop WEB
+                                                        SingleChildScrollView(
+                                                          child: Container(
+                                                            width: 30,
+                                                            height:
+                                                                sHeight * 0.4,
+
+                                                            child: TabContainer(
+                                                                controller:
+                                                                    tabcunt,
+                                                                tabEdge:
+                                                                    TabEdge.top,
+                                                                tabsStart: 0,
+                                                                tabExtent: 30,
+                                                                childPadding: EdgeInsets
+                                                                    .symmetric(
+                                                                        vertical:
+                                                                            0),
+                                                                colors: [
+                                                                  Colors.grey
+                                                                      .withOpacity(
+                                                                          .4),
+                                                                  Colors.grey
+                                                                      .withOpacity(
+                                                                          .4)
+                                                                  // hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
+                                                                  // hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+                                                                ],
+                                                                selectedTextStyle:
+                                                                    TextStyle(
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .black,
+                                                                  fontSize: 14,
+                                                                ),
+                                                                unselectedTextStyle:
+                                                                    const TextStyle(
                                                                   color: Colors
-                                                                      .transparent,
-                                                                  height: 10,
-                                                                  width: 5,
-                                                                )
-                                                              : Expanded(
-                                                                  child:
-                                                                      Container(
-                                                                    padding:
-                                                                        EdgeInsets
-                                                                            .all(5),
+                                                                      .black,
+                                                                  fontSize:
+                                                                      13.0,
+                                                                ),
+                                                                // borderRadius: BorderRadius.circular(20),
+                                                                // tabBorderRadius: BorderRadius.circular(20),
+                                                                tabs: [
+                                                                  Text(
+                                                                    'Font',
+                                                                  ),
+                                                                  Text('Bg')
+                                                                ],
+                                                                children: [
+                                                                  //FONT COLOR
+                                                                  DefaultTabController(
+                                                                    length: 2,
                                                                     child:
-                                                                        Builder(
-                                                                      builder:
-                                                                          (context) {
-                                                                        var item;
-                                                                        try {
-                                                                          item = _sheetItemIterator(
-                                                                              panelIndex.id,
-                                                                              spreadSheetList[currentPageIndex]) as TextEditorItem;
-                                                                        } on Exception catch (e) {
-                                                                          item = TextEditorItem(
-                                                                              id: '',
-                                                                              parentId: '');
-                                                                        }
-
-                                                                        bool _getIsToggled(
-                                                                            Map<String, Attribute>
-                                                                                attrs,
-                                                                            Attribute
-                                                                                attribute) {
-                                                                          if (attribute.key == Attribute.list.key ||
-                                                                              attribute.key == Attribute.header.key ||
-                                                                              attribute.key == Attribute.script.key ||
-                                                                              attribute.key == Attribute.align.key) {
-                                                                            final currentAttribute =
-                                                                                attrs[attribute.key];
-                                                                            if (currentAttribute ==
-                                                                                null) {
-                                                                              print('returning false');
-                                                                              return false;
-                                                                            }
-                                                                            print('returning ${currentAttribute.value == attribute.value}');
-                                                                            return currentAttribute.value ==
-                                                                                attribute.value;
-                                                                          }
-                                                                          print(
-                                                                              'returning ${attrs.containsKey(attribute.key)}');
-                                                                          return attrs
-                                                                              .containsKey(attribute.key);
-                                                                        }
-
-                                                                        Widget
-                                                                            buildElevatedLayerButton({
-                                                                          required double
-                                                                              buttonHeight,
-                                                                          required double
-                                                                              buttonWidth,
-                                                                          required Duration
-                                                                              animationDuration,
-                                                                          required Curve
-                                                                              animationCurve,
-                                                                          required void Function()
-                                                                              onClick,
-                                                                          required BoxDecoration
-                                                                              baseDecoration,
-                                                                          required BoxDecoration
-                                                                              topDecoration,
-                                                                          required Widget
-                                                                              topLayerChild,
-                                                                          required BorderRadius
-                                                                              borderRadius,
-                                                                          bool toggleOnTap =
-                                                                              false,
-                                                                          bool isTapped =
-                                                                              false,
-                                                                        }) {
-                                                                          var down =
-                                                                              isTapped;
-                                                                          void _handleTapDown(
-                                                                              TapDownDetails details) {
-                                                                            onClick();
-
-                                                                            setState(() {
-                                                                              down = true;
-                                                                              print(down);
-                                                                            });
-                                                                          }
-
-                                                                          void _handleTapUp(
-                                                                              TapUpDetails details) {
-                                                                            if (!toggleOnTap &&
-                                                                                down) {
-                                                                              setState(() {
-                                                                                down = !down;
-                                                                              });
-                                                                            }
-                                                                          }
-
-                                                                          void
-                                                                              _handleTapCancel() {}
-
-                                                                          return GestureDetector(
-                                                                            onTap:
-                                                                                () {},
-                                                                            onTapDown:
-                                                                                _handleTapDown,
-                                                                            onTapUp:
-                                                                                _handleTapUp,
-                                                                            onTapCancel:
-                                                                                _handleTapCancel,
+                                                                        ClipRRect(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              8),
+                                                                      child:
+                                                                          Column(
+                                                                        children: [
+                                                                          //FONT COLOR
+                                                                          //HEX TEXT FIEKLD
+                                                                          Container(
+                                                                            height: hDividerPosition < 0.25
+                                                                                ? textFieldHeight * 1.5
+                                                                                : textFieldHeight * 1.3,
+                                                                            margin:
+                                                                                EdgeInsets.only(top: 0),
+                                                                            padding:
+                                                                                EdgeInsets.all(5),
                                                                             child:
-                                                                                SizedBox(
-                                                                              height: buttonHeight,
-                                                                              width: buttonWidth,
-                                                                              child: Stack(
-                                                                                alignment: Alignment.bottomRight,
-                                                                                children: [
+                                                                                Stack(
+                                                                              children: [
+                                                                                TextFormField(
+                                                                                  onTapOutside: (event) {},
+                                                                                  controller: hexController,
+                                                                                  inputFormatters: [
+                                                                                    HexColorInputFormatter()
+                                                                                  ],
+                                                                                  onFieldSubmitted: (value) {
+                                                                                    item.textEditorController.formatSelection(
+                                                                                      ColorAttribute('#${value}'),
+                                                                                    );
+                                                                                  },
+                                                                                  style: TextStyle(color: defaultPalette.black),
+                                                                                  cursorColor: defaultPalette.secondary,
+                                                                                  textAlign: TextAlign.center,
+                                                                                  textAlignVertical: TextAlignVertical.center,
+                                                                                  decoration: InputDecoration(
+                                                                                    contentPadding: EdgeInsets.all(0),
+                                                                                    prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                                    suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                                    filled: true,
+                                                                                    fillColor: defaultPalette.primary,
+                                                                                    border: OutlineInputBorder(
+                                                                                      borderRadius: BorderRadius.circular(10.0),
+                                                                                    ),
+                                                                                    enabledBorder: OutlineInputBorder(
+                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                      borderRadius: BorderRadius.circular(12.0),
+                                                                                    ),
+                                                                                    focusedBorder: OutlineInputBorder(
+                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
+                                                                                      borderRadius: BorderRadius.circular(10.0),
+                                                                                    ),
+                                                                                  ),
+                                                                                  keyboardType: TextInputType.number,
+                                                                                ),
+                                                                                ...[
                                                                                   Positioned(
-                                                                                    bottom: 0,
-                                                                                    right: 0,
-                                                                                    child: Container(
-                                                                                      width: buttonWidth - 10,
-                                                                                      height: buttonHeight - 10,
-                                                                                      decoration: baseDecoration.copyWith(
-                                                                                        borderRadius: borderRadius,
+                                                                                    top: (textFieldHeight / 2) - 10,
+                                                                                    left: 10,
+                                                                                    child: GestureDetector(
+                                                                                      child: Icon(
+                                                                                        IconsaxPlusLinear.text,
+                                                                                        size: 20,
+                                                                                        color: hexToColor(hexController.text),
                                                                                       ),
                                                                                     ),
                                                                                   ),
-                                                                                  AnimatedPositioned(
-                                                                                    duration: animationDuration,
-                                                                                    curve: animationCurve,
-                                                                                    bottom: !down ? 4 : 0,
-                                                                                    right: !down ? 4 : 0,
-                                                                                    child: Container(
-                                                                                      width: buttonWidth - 10,
-                                                                                      height: buttonHeight - 10,
-                                                                                      alignment: Alignment.center,
-                                                                                      decoration: topDecoration.copyWith(
-                                                                                        borderRadius: borderRadius,
-                                                                                      ),
-                                                                                      child: topLayerChild,
-                                                                                    ),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
+                                                                                ]
+                                                                              ],
                                                                             ),
-                                                                          );
-                                                                        }
-
-                                                                        var width =
-                                                                            (sWidth * wH2DividerPosition * 0.92) -
-                                                                                44;
-
-                                                                        TextEditingController
-                                                                            hexController =
-                                                                            TextEditingController()
-                                                                              ..text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
-                                                                        TextEditingController
-                                                                            bghexController =
-                                                                            TextEditingController()
-                                                                              ..text = '${(item.textEditorController.getSelectionStyle().attributes['background']?.value ?? '#00000000')}';
-                                                                        TextEditingController
-                                                                            fontSizeController =
-                                                                            TextEditingController()
-                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
-                                                                        if (fontSizeController
-                                                                            .text
-                                                                            .endsWith('.0')) {
-                                                                          fontSizeController.text =
-                                                                              '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0').ceil()}';
-                                                                        }
-                                                                        TextEditingController
-                                                                            letterSpaceController =
-                                                                            TextEditingController()
-                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value ?? '0')}';
-                                                                        if (letterSpaceController
-                                                                            .text
-                                                                            .endsWith('.0')) {
-                                                                          letterSpaceController.text = letterSpaceController.text.replaceAll(
-                                                                              '.0',
-                                                                              '');
-                                                                        }
-                                                                        TextEditingController
-                                                                            wordSpaceController =
-                                                                            TextEditingController()
-                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value ?? '0')}';
-                                                                        if (wordSpaceController
-                                                                            .text
-                                                                            .endsWith('.0')) {
-                                                                          wordSpaceController.text = wordSpaceController.text.replaceAll(
-                                                                              '.0',
-                                                                              '');
-                                                                        }
-                                                                        TextEditingController
-                                                                            lineSpaceController =
-                                                                            TextEditingController()
-                                                                              ..text = '${double.parse(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value ?? '0')}';
-                                                                        if (lineSpaceController
-                                                                            .text
-                                                                            .endsWith('.0')) {
-                                                                          lineSpaceController.text = lineSpaceController.text.replaceAll(
-                                                                              '.0',
-                                                                              '');
-                                                                        }
-                                                                        int crossAxisCount = width <
-                                                                                (width / vDividerPosition) / 1.75
-                                                                            ? 2
-                                                                            : 4;
-                                                                        var iconWidth = width /
-                                                                            crossAxisCount /
-                                                                            1.05;
-                                                                        var iconHeight =
-                                                                            // 50.0;
-                                                                            width < (width / vDividerPosition) / 2.2
-                                                                                ? iconWidth
-                                                                                : width < (width / vDividerPosition) / 1.75
-                                                                                    ? iconWidth / 1.3
-                                                                                    : iconWidth;
-                                                                        var fCrossAxisCount = width <
-                                                                                (sWidth) / 3
-                                                                            ? 1
-                                                                            : width < (sWidth) / 1.7
-                                                                                ? 2
-                                                                                : 3;
-                                                                        var fButtonWidth = width /
-                                                                            fCrossAxisCount /
-                                                                            1.05;
-                                                                        var fButtonHeight =
-                                                                            fButtonWidth *
-                                                                                0.5;
-                                                                        return PageView(
-                                                                          controller:
-                                                                              textStyleTabControler,
-                                                                          scrollDirection:
-                                                                              Axis.vertical,
-                                                                          physics:
-                                                                              NeverScrollableScrollPhysics(),
-                                                                          onPageChanged:
-                                                                              (value) {
-                                                                            print(value);
-                                                                          },
-                                                                          children: [
-                                                                            if (item.id !=
-                                                                                '') ...[
-                                                                              //FONTS //Desktop WEB
-                                                                              Stack(
+                                                                          ),
+                                                                          //
+                                                                          ...[
+                                                                            //FONT COLOR
+                                                                            //PICKER ND EVERYHTING
+                                                                            Expanded(
+                                                                              child: TabBarView(
+                                                                                physics: NeverScrollableScrollPhysics(),
                                                                                 children: [
-                                                                                  Positioned(
-                                                                                    top: 0,
-                                                                                    height: sHeight * 0.4,
-                                                                                    width: width - 10,
-                                                                                    child: GridView.builder(
-                                                                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: fCrossAxisCount, childAspectRatio: 2),
-                                                                                      itemCount: fonts.length,
-                                                                                      itemBuilder: (context, index) {
-                                                                                        return buildElevatedLayerButton(
-                                                                                          buttonHeight: fButtonHeight,
-                                                                                          buttonWidth: fButtonWidth,
-                                                                                          toggleOnTap: true,
-                                                                                          isTapped: item.textEditorController.getSelectionStyle().attributes[Attribute.font.key]?.value == fonts[index],
-                                                                                          animationDuration: const Duration(milliseconds: 100),
-                                                                                          animationCurve: Curves.ease,
-                                                                                          onClick: () {
-                                                                                            item.textEditorController.formatSelection(Attribute.fromKeyValue(
-                                                                                              Attribute.font.key,
-                                                                                              fonts[index] == 'Clear' ? null : fonts[index],
-                                                                                            ));
-                                                                                            setState(() {});
-                                                                                          },
-                                                                                          baseDecoration: BoxDecoration(
-                                                                                            color: Colors.green,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topDecoration: BoxDecoration(
-                                                                                            color: Colors.white,
-                                                                                            border: Border.all(),
-                                                                                          ),
-                                                                                          topLayerChild: Text(
-                                                                                            fonts[index],
-                                                                                            style: TextStyle(fontFamily: fonts[index], fontSize: fButtonWidth / 7),
-                                                                                            maxLines: 1,
-                                                                                          ),
-                                                                                          borderRadius: BorderRadius.circular(8),
+                                                                                  SingleChildScrollView(
+                                                                                    child: Padding(
+                                                                                      padding: const EdgeInsets.all(10),
+                                                                                      child: ColorPicker(
+                                                                                        displayThumbColor: true,
+                                                                                        portraitOnly: true,
+                                                                                        pickerAreaBorderRadius: BorderRadius.circular(5),
+                                                                                        colorPickerWidth: 500 * hDividerPosition,
+                                                                                        labelTypes: [],
+                                                                                        pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
+                                                                                        onColorChanged: (color) {
+                                                                                          item.textEditorController.formatSelection(
+                                                                                            ColorAttribute('#${colorToHex(color)}'),
+                                                                                          );
+                                                                                          setState(() {
+                                                                                            hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                                                          });
+                                                                                        },
+                                                                                        pickerAreaHeightPercent: 0.4,
+                                                                                      ),
+                                                                                    ),
+                                                                                  ), //FONT COLOR
+                                                                                  Padding(
+                                                                                    padding: const EdgeInsets.all(8.0),
+                                                                                    child: MaterialPicker(
+                                                                                      pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
+                                                                                      onColorChanged: (color) {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          ColorAttribute('#${colorToHex(color)}'),
                                                                                         );
+                                                                                        setState(() {
+                                                                                          hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                                                        });
                                                                                       },
                                                                                     ),
                                                                                   ),
                                                                                 ],
                                                                               ),
-                                                                              //FORMATTING ALL THAT PAGE  //Desktop WEB
-                                                                              SingleChildScrollView(
-                                                                                child: SizedBox(
-                                                                                  width: width,
-                                                                                  height: width < (width / vDividerPosition) / 2.2
-                                                                                      ? iconWidth * 7
-                                                                                      : width < (width / vDividerPosition) / 1.75
-                                                                                          ? (iconWidth / 1.3) * 7
-                                                                                          : iconWidth * 5,
-                                                                                  child: Stack(
-                                                                                    children: [
-                                                                                      // BOLD ITALIC UNDERLINE STRIKETHRU
-                                                                                      Positioned(
-                                                                                        left: 0,
-                                                                                        top: 0,
-                                                                                        width: width - 10,
-                                                                                        height: iconHeight * 3,
-                                                                                        child: GridView.builder(
-                                                                                          physics: NeverScrollableScrollPhysics(),
-                                                                                          itemCount: 4,
-                                                                                          padding: EdgeInsets.all(0),
-                                                                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                              crossAxisCount: crossAxisCount,
-                                                                                              crossAxisSpacing: 0,
-                                                                                              mainAxisSpacing: 0,
-                                                                                              // mainAxisExtent: width/3
-                                                                                              childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                                  ? 1
-                                                                                                  : width < (width / vDividerPosition) / 1.75
-                                                                                                      ? 1.3
-                                                                                                      : 1),
-                                                                                          itemBuilder: (BuildContext context, int index) {
-                                                                                            switch (index) {
-                                                                                              case 0:
-                                                                                                // BOLD
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.bold),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.bold.key);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.bold, null) : Attribute.bold,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.bold,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 1:
-                                                                                                //ITALIC
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.italic),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.italic.key);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.italic, null) : Attribute.italic,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.italic,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 2:
-                                                                                                //UNDERLINE
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.underline),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.underline.key);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.underline, null) : Attribute.underline,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.underline,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 3:
-                                                                                                //STRIKETHRU
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.strikeThrough),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.strikeThrough.key);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.strikeThrough, null) : Attribute.strikeThrough,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.strikethrough,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              default:
-                                                                                                return Container();
-                                                                                            }
-                                                                                          },
-                                                                                        ),
+                                                                            ),
+                                                                            if (hDividerPosition >
+                                                                                0.25)
+                                                                              TabBar(
+                                                                                dividerHeight: 0,
+                                                                                indicatorSize: TabBarIndicatorSize.label,
+                                                                                indicatorColor: defaultPalette.tertiary,
+                                                                                labelColor: defaultPalette.tertiary,
+                                                                                labelPadding: EdgeInsets.all(0),
+                                                                                tabs: [
+                                                                                  //FONT COLOR
+                                                                                  Tab(
+                                                                                    height: 30,
+                                                                                    child: Container(
+                                                                                      padding: EdgeInsets.all(2),
+                                                                                      // margin: EdgeInsets.only(left: 5, right: 5),
+                                                                                      height: 30,
+                                                                                      width: width,
+                                                                                      alignment: Alignment.center,
+                                                                                      decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
+                                                                                      child: Text(
+                                                                                        'Picker',
+                                                                                        style: GoogleFonts.lexend(fontSize: 12),
                                                                                       ),
-                                                                                      // SUPER, SUBS, LTR, RTL
-                                                                                      Positioned(
-                                                                                        top: width < (width / vDividerPosition) / 2.2
-                                                                                            ? iconWidth * 2.2
-                                                                                            : width < (width / vDividerPosition) / 1.75
-                                                                                                ? (iconWidth / 1.3) * 2.2
-                                                                                                : iconWidth * 1.2,
-                                                                                        left: 0,
-                                                                                        width: width - 10,
-                                                                                        height: iconHeight * 2,
-                                                                                        child: GridView.builder(
-                                                                                          physics: NeverScrollableScrollPhysics(),
-                                                                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                            crossAxisCount: crossAxisCount,
-                                                                                            crossAxisSpacing: 0,
-                                                                                            mainAxisSpacing: 0,
-                                                                                            childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                                ? 1
-                                                                                                : width < (width / vDividerPosition) / 1.75
-                                                                                                    ? 1.3
-                                                                                                    : 1,
-                                                                                          ),
-                                                                                          itemCount: 4,
-                                                                                          itemBuilder: (BuildContext context, int index) {
-                                                                                            switch (index) {
-                                                                                              case 0:
-                                                                                                //SUBSCRIPT
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
-                                                                                                    );
-                                                                                                    final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.superscript.key);
-                                                                                                    if (uncurrentValue && currentValue) {
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.clone(Attribute.subscript, null),
-                                                                                                      );
-                                                                                                      currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                                    }
-                                                                                                    print('$uncurrentValue && $currentValue');
-                                                                                                    if (uncurrentValue && !currentValue) {
-                                                                                                      print('un');
-                                                                                                      print(uncurrentValue);
-                                                                                                      item.textEditorController.formatSelection(Attribute.clone(Attribute.superscript, null));
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.subscript,
-                                                                                                      );
-                                                                                                      setState(() {
-                                                                                                        currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                                      });
-                                                                                                      print('cu');
-                                                                                                      print(currentValue);
-                                                                                                      return;
-                                                                                                    }
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.subscript,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 1:
-                                                                                                //SUPERSCIPT
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
-                                                                                                    );
-                                                                                                    final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.subscript.key);
-                                                                                                    if (uncurrentValue && currentValue) {
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.clone(Attribute.superscript, null),
-                                                                                                      );
-                                                                                                      currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                                    }
-                                                                                                    print('$uncurrentValue && $currentValue');
-                                                                                                    if (uncurrentValue && !currentValue) {
-                                                                                                      print('un');
-                                                                                                      print(uncurrentValue);
-                                                                                                      item.textEditorController.formatSelection(Attribute.clone(Attribute.subscript, null));
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.superscript,
-                                                                                                      );
-                                                                                                      setState(() {
-                                                                                                        currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                                      });
-                                                                                                      print('cu');
-                                                                                                      print(currentValue);
-                                                                                                      return;
-                                                                                                    }
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.superscript,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 2:
-                                                                                                //DIRECTION LTR
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: !_getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.text_direction_ltr,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 3:
-                                                                                                //DIRECTION RTL
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.text_direction_rtl,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-
-                                                                                              default:
-                                                                                                return Container();
-                                                                                            }
-                                                                                          },
-                                                                                        ),
+                                                                                    ),
+                                                                                  ), //FONT COLOR
+                                                                                  Tab(
+                                                                                    height: 30,
+                                                                                    child: Container(
+                                                                                      padding: EdgeInsets.all(2),
+                                                                                      // margin: EdgeInsets.only(right: 5, left: 5),
+                                                                                      alignment: Alignment.center,
+                                                                                      height: 30,
+                                                                                      width: width,
+                                                                                      decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
+                                                                                      child: Text(
+                                                                                        'Palette',
+                                                                                        style: GoogleFonts.lexend(fontSize: 12),
                                                                                       ),
-                                                                                      // LEFT RIGHT CENTER JUSTIFY
-                                                                                      Positioned(
-                                                                                        top: width < (width / vDividerPosition) / 2.2
-                                                                                            ? iconWidth * 2.2
-                                                                                                //height of the previous wdiget
-                                                                                                +
-                                                                                                iconHeight * 2.2
-                                                                                            : width < (width / vDividerPosition) / 1.75
-                                                                                                ? (iconWidth / 1.3) * 2.2
-                                                                                                    //height of the previous wdiget
-                                                                                                    +
-                                                                                                    iconHeight * 2.2
-                                                                                                : iconWidth * 1.2
-                                                                                                    //height of the previous wdiget
-                                                                                                    +
-                                                                                                    iconHeight * 1.2,
-                                                                                        left: 0,
-                                                                                        width: width - 10,
-                                                                                        height: iconHeight * 2,
-                                                                                        child: GridView.builder(
-                                                                                          physics: NeverScrollableScrollPhysics(),
-                                                                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                            crossAxisCount: crossAxisCount,
-                                                                                            crossAxisSpacing: 0,
-                                                                                            mainAxisSpacing: 0,
-                                                                                            childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                                ? 1
-                                                                                                : width < (width / vDividerPosition) / 1.75
-                                                                                                    ? 1.3
-                                                                                                    : 1,
-                                                                                          ),
-                                                                                          itemCount: 4,
-                                                                                          itemBuilder: (BuildContext context, int index) {
-                                                                                            switch (index) {
-                                                                                              case 0:
-                                                                                                //LEFT ALIGN
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.leftAlignment, null) : Attribute.leftAlignment,
-                                                                                                    );
-                                                                                                    final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.rightAlignment.key);
-                                                                                                    if (uncurrentValue && currentValue) {
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.clone(Attribute.leftAlignment, null),
-                                                                                                      );
-                                                                                                      currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
-                                                                                                    }
-                                                                                                    print('$uncurrentValue && $currentValue');
-                                                                                                    if (uncurrentValue && !currentValue) {
-                                                                                                      print('un');
-                                                                                                      print(uncurrentValue);
-                                                                                                      item.textEditorController.formatSelection(Attribute.clone(Attribute.rightAlignment, null));
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.leftAlignment,
-                                                                                                      );
-                                                                                                      setState(() {
-                                                                                                        currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
-                                                                                                      });
-                                                                                                      print('cu');
-                                                                                                      print(currentValue);
-                                                                                                      return;
-                                                                                                    }
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.leftAlignment, null) : Attribute.leftAlignment,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.align_left,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 1:
-                                                                                                //RIGHT ALIGN
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.rightAlignment, null) : Attribute.rightAlignment,
-                                                                                                    );
-                                                                                                    final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.leftAlignment.key);
-                                                                                                    if (uncurrentValue && currentValue) {
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.clone(Attribute.rightAlignment, null),
-                                                                                                      );
-                                                                                                      currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
-                                                                                                    }
-                                                                                                    print('$uncurrentValue && $currentValue');
-                                                                                                    if (uncurrentValue && !currentValue) {
-                                                                                                      print('un');
-                                                                                                      print(uncurrentValue);
-                                                                                                      item.textEditorController.formatSelection(Attribute.clone(Attribute.leftAlignment, null));
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.rightAlignment,
-                                                                                                      );
-                                                                                                      setState(() {
-                                                                                                        currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
-                                                                                                      });
-                                                                                                      print('cu');
-                                                                                                      print(currentValue);
-                                                                                                      return;
-                                                                                                    }
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.rightAlignment, null) : Attribute.rightAlignment,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.align_right,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 2:
-                                                                                                //CENTER ALIGN
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.centerAlignment),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.centerAlignment);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.centerAlignment, null) : Attribute.centerAlignment,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.align_center,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-                                                                                              case 3:
-                                                                                                //JUSTIFY ALIGN
-                                                                                                return buildElevatedLayerButton(
-                                                                                                  buttonHeight: iconHeight,
-                                                                                                  buttonWidth: iconWidth,
-                                                                                                  toggleOnTap: true,
-                                                                                                  isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.justifyAlignment),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  onClick: () {
-                                                                                                    var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.justifyAlignment);
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      currentValue ? Attribute.clone(Attribute.justifyAlignment, null) : Attribute.justifyAlignment,
-                                                                                                    );
-                                                                                                  },
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: Icon(
-                                                                                                    TablerIcons.align_justified,
-                                                                                                    color: Colors.black,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                                );
-
-                                                                                              default:
-                                                                                                return Container();
-                                                                                            }
-                                                                                          },
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
+                                                                                    ),
                                                                                   ),
-                                                                                ),
+                                                                                ],
                                                                               ),
-                                                                              //Font Size, Word Spacing, Letter Spacing, Line Spacing //Desktop WEB
-                                                                              SingleChildScrollView(
-                                                                                child:
-                                                                                    //SIZE SPACE PARENT //Desktop WEB
-                                                                                    Container(
-                                                                                  padding: EdgeInsets.only(left: 5),
-                                                                                  width: width,
-                                                                                  height: 70 * 6,
-                                                                                  child: Column(
-                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                    children: [
-                                                                                      //Font Size TEXT FIELD PARENT
-                                                                                      ClipRRect(
-                                                                                        borderRadius: BorderRadius.circular(10),
-                                                                                        child: Container(
-                                                                                          decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                          height: 70,
-                                                                                          width: width,
-                                                                                          child: Row(
-                                                                                            children: [
-                                                                                              //Icon title slider field
-                                                                                              Expanded(
-                                                                                                flex: (1600 * vDividerPosition).ceil(),
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    //Row font and title
-                                                                                                    GestureDetector(
-                                                                                                      onTap: () {
-                                                                                                        // fontSizeFocus.unfocus();
-                                                                                                        fontSizeFocus.requestFocus();
-                                                                                                      },
-                                                                                                      child: Padding(
-                                                                                                        padding: EdgeInsets.only(top: 5, left: 5),
-                                                                                                        child: Row(
-                                                                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                          children: [
-                                                                                                            Expanded(
-                                                                                                                flex: 100,
-                                                                                                                child: Icon(
-                                                                                                                  TablerIcons.text_size,
-                                                                                                                  size: 18,
-                                                                                                                )),
-                                                                                                            vDividerPosition > 0.45
-                                                                                                                ? Expanded(
-                                                                                                                    flex: 700,
-                                                                                                                    child: Container(
-                                                                                                                      height: 18,
-                                                                                                                      alignment: Alignment.bottomLeft,
-                                                                                                                      child: Text(
-                                                                                                                        '  Font Size',
-                                                                                                                        style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                      ),
-                                                                                                                    ))
-                                                                                                                : Container(),
-                                                                                                          ],
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    //TextField
-                                                                                                    TextField(
-                                                                                                      onTapOutside: (event) {
-                                                                                                        // fontSizeFocus.unfocus();
-                                                                                                      },
-                                                                                                      onSubmitted: (value) {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          Attribute.clone(Attribute.size, value.toString()),
-                                                                                                        );
-                                                                                                      },
-                                                                                                      focusNode: fontSizeFocus,
-                                                                                                      controller: fontSizeController,
-                                                                                                      inputFormatters: [
-                                                                                                        NumericInputFormatter(maxValue: 100),
-                                                                                                      ],
-                                                                                                      style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
-                                                                                                      cursorColor: defaultPalette.black,
-                                                                                                      // selectionControls: MaterialTextSelectionControls(),
-                                                                                                      textAlign: TextAlign.right,
-                                                                                                      scrollPadding: EdgeInsets.all(0),
-                                                                                                      textAlignVertical: TextAlignVertical.top,
-                                                                                                      decoration: InputDecoration(
-                                                                                                        contentPadding: EdgeInsets.all(0),
-
-                                                                                                        // filled: true,
-                                                                                                        // fillColor: defaultPalette.primary,
-                                                                                                        enabledBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                        focusedBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                      keyboardType: TextInputType.number,
-                                                                                                    ),
-
-                                                                                                    //Balloon Slider
-                                                                                                    Positioned(
-                                                                                                      bottom: 0,
-                                                                                                      width: width * 0.6,
-                                                                                                      child: BalloonSlider(
-                                                                                                          trackHeight: 15,
-                                                                                                          thumbRadius: 7.5,
-                                                                                                          showRope: true,
-                                                                                                          color: defaultPalette.tertiary,
-                                                                                                          ropeLength: 300 / 8,
-                                                                                                          value: double.parse((item.textEditorController.getSelectionStyle().attributes[Attribute.size.key]?.value) ?? 20.toString()) / 100,
-                                                                                                          onChanged: (val) {
-                                                                                                            setState(() {
-                                                                                                              item.textEditorController.formatSelection(
-                                                                                                                Attribute.clone(Attribute.size, (val * 100).toStringAsFixed(0)),
-                                                                                                              );
-                                                                                                            });
-                                                                                                          }),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              ),
-                                                                                              //+ -
-                                                                                              Expanded(
-                                                                                                flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                                child: Stack(
-                                                                                                  // mainAxisAlignment: MainAxisAlignment.start,
-                                                                                                  children: [
-                                                                                                    Positioned(
-                                                                                                      top: -4,
-                                                                                                      right: 4,
-                                                                                                      height: 35,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        // isTapped: false,
-                                                                                                        // toggleOnTap: true,
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = int.parse(fontSizeController.text) + 1;
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              Attribute.clone(Attribute.size, val.toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.add,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    Positioned(
-                                                                                                      bottom: 5,
-                                                                                                      right: 4,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        // isTapped: false,
-                                                                                                        // toggleOnTap: true,
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = (int.parse(fontSizeController.text) - 1).clamp(0, 100);
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              Attribute.clone(Attribute.size, val.toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.minus,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              )
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      //
-                                                                                      //
-                                                                                      SizedBox(
-                                                                                        height: 20,
-                                                                                      ),
-                                                                                      //LetterSpacing Parentt
-                                                                                      ClipRRect(
-                                                                                        borderRadius: BorderRadius.circular(10),
-                                                                                        child: Container(
-                                                                                          decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                          height: 70,
-                                                                                          width: width,
-                                                                                          child: Row(
-                                                                                            children: [
-                                                                                              //LetterSpacing
-                                                                                              //Icon title slider field
-                                                                                              Expanded(
-                                                                                                flex: (1600 * vDividerPosition).ceil(),
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    //LetterSpacing
-                                                                                                    //Row font and title
-                                                                                                    GestureDetector(
-                                                                                                      onTap: () {
-                                                                                                        letterSpaceFocus.requestFocus();
-                                                                                                      },
-                                                                                                      //LetterSpacing
-                                                                                                      //Row font and title
-                                                                                                      child: Padding(
-                                                                                                        padding: EdgeInsets.only(top: 5, left: 5),
-                                                                                                        //LetterSpacing
-                                                                                                        //Row font and title
-                                                                                                        child: Row(
-                                                                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                          children: [
-                                                                                                            //LetterSpacing
-                                                                                                            //icon
-                                                                                                            Expanded(
-                                                                                                                flex: 100,
-                                                                                                                child: Icon(
-                                                                                                                  TablerIcons.letter_spacing,
-                                                                                                                  size: 18,
-                                                                                                                )),
-                                                                                                            //LetterSpacing
-                                                                                                            //title
-                                                                                                            vDividerPosition > 0.45
-                                                                                                                ? Expanded(
-                                                                                                                    flex: 700,
-                                                                                                                    child: Container(
-                                                                                                                      height: 18,
-                                                                                                                      alignment: Alignment.bottomLeft,
-                                                                                                                      child: Text(
-                                                                                                                        '  Letter Space',
-                                                                                                                        style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                      ),
-                                                                                                                    ))
-                                                                                                                : Container(),
-                                                                                                          ],
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    //LetterSpacing
-                                                                                                    //TextField
-                                                                                                    TextField(
-                                                                                                      onTapOutside: (event) {
-                                                                                                        // fontSizeFocus.unfocus();
-                                                                                                      },
-                                                                                                      onSubmitted: (value) {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          LetterSpacingAttribute((value).toString()),
-                                                                                                        );
-                                                                                                      },
-                                                                                                      focusNode: letterSpaceFocus,
-                                                                                                      controller: letterSpaceController,
-                                                                                                      inputFormatters: [
-                                                                                                        NumericInputFormatter(maxValue: 100),
-                                                                                                      ],
-                                                                                                      style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
-                                                                                                      cursorColor: defaultPalette.black,
-                                                                                                      // selectionControls: MaterialTextSelectionControls(),
-                                                                                                      textAlign: TextAlign.right,
-                                                                                                      scrollPadding: EdgeInsets.all(0),
-                                                                                                      textAlignVertical: TextAlignVertical.top,
-                                                                                                      decoration: InputDecoration(
-                                                                                                        contentPadding: EdgeInsets.all(0),
-
-                                                                                                        // filled: true,
-                                                                                                        // fillColor: defaultPalette.primary,
-                                                                                                        enabledBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                        focusedBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                      keyboardType: TextInputType.number,
-                                                                                                    ),
-                                                                                                    //LetterSpacing
-                                                                                                    //Balloon Slider
-                                                                                                    Positioned(
-                                                                                                      bottom: 0,
-                                                                                                      width: width * 0.6,
-                                                                                                      child: BalloonSlider(
-                                                                                                          trackHeight: 15,
-                                                                                                          thumbRadius: 7.5,
-                                                                                                          showRope: true,
-                                                                                                          color: defaultPalette.tertiary,
-                                                                                                          ropeLength: 300 / 8,
-                                                                                                          value: double.parse((item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
-                                                                                                          onChanged: (val) {
-                                                                                                            setState(() {
-                                                                                                              item.textEditorController.formatSelection(
-                                                                                                                LetterSpacingAttribute((val * 100).ceil().toString()),
-                                                                                                              );
-                                                                                                            });
-                                                                                                          }),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              ),
-                                                                                              //LetterSpacing
-                                                                                              //+ -
-                                                                                              Expanded(
-                                                                                                flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    Positioned(
-                                                                                                      top: -4,
-                                                                                                      right: 4,
-                                                                                                      height: 35,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = int.parse(letterSpaceController.text) + 1;
-
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              LetterSpacingAttribute((val).toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.add,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    Positioned(
-                                                                                                      bottom: 5,
-                                                                                                      right: 4,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        // isTapped: false,
-                                                                                                        // toggleOnTap: true,
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = (int.parse(letterSpaceController.text) - 1).clamp(0, 100);
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              LetterSpacingAttribute((val).toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.minus,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              )
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-
-                                                                                      SizedBox(
-                                                                                        height: 20,
-                                                                                      ),
-                                                                                      //WordSpacing
-                                                                                      ClipRRect(
-                                                                                        borderRadius: BorderRadius.circular(10),
-                                                                                        child: Container(
-                                                                                          decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                          height: 70,
-                                                                                          width: width,
-                                                                                          child: Row(
-                                                                                            children: [
-                                                                                              //WordSpacing
-                                                                                              //Icon title slider field
-                                                                                              Expanded(
-                                                                                                flex: (1600 * vDividerPosition).ceil(),
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    //WordSpacing
-                                                                                                    //Row font and title
-                                                                                                    GestureDetector(
-                                                                                                      onTap: () {
-                                                                                                        wordSpaceFocus.requestFocus();
-                                                                                                      },
-                                                                                                      //WordSpacing
-                                                                                                      //Row font and title
-                                                                                                      child: Padding(
-                                                                                                        padding: EdgeInsets.only(top: 5, left: 5),
-                                                                                                        //WordSpacing
-                                                                                                        //Row font and title
-                                                                                                        child: Row(
-                                                                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                          children: [
-                                                                                                            //WordSpacing
-                                                                                                            //icon
-                                                                                                            Expanded(
-                                                                                                                flex: 100,
-                                                                                                                child: Icon(
-                                                                                                                  TablerIcons.spacing_horizontal,
-                                                                                                                  size: 18,
-                                                                                                                )),
-                                                                                                            //WordSpacing
-                                                                                                            //title
-                                                                                                            vDividerPosition > 0.45
-                                                                                                                ? Expanded(
-                                                                                                                    flex: 700,
-                                                                                                                    child: Container(
-                                                                                                                      height: 18,
-                                                                                                                      alignment: Alignment.bottomLeft,
-                                                                                                                      child: Text(
-                                                                                                                        '  Word Space',
-                                                                                                                        style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                      ),
-                                                                                                                    ))
-                                                                                                                : Container(),
-                                                                                                          ],
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    //WordSpacing
-                                                                                                    //TextField
-                                                                                                    TextField(
-                                                                                                      onTapOutside: (event) {
-                                                                                                        // fontSizeFocus.unfocus();
-                                                                                                      },
-                                                                                                      onSubmitted: (value) {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          WordSpacingAttribute((value).toString()),
-                                                                                                        );
-                                                                                                      },
-                                                                                                      focusNode: wordSpaceFocus,
-                                                                                                      controller: wordSpaceController,
-                                                                                                      inputFormatters: [
-                                                                                                        NumericInputFormatter(maxValue: 100),
-                                                                                                      ],
-                                                                                                      style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
-                                                                                                      cursorColor: defaultPalette.black,
-                                                                                                      // selectionControls: MaterialTextSelectionControls(),
-                                                                                                      textAlign: TextAlign.right,
-                                                                                                      scrollPadding: EdgeInsets.all(0),
-                                                                                                      textAlignVertical: TextAlignVertical.top,
-                                                                                                      decoration: InputDecoration(
-                                                                                                        contentPadding: EdgeInsets.all(0),
-
-                                                                                                        // filled: true,
-                                                                                                        // fillColor: defaultPalette.primary,
-                                                                                                        enabledBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                        focusedBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                      keyboardType: TextInputType.number,
-                                                                                                    ),
-                                                                                                    //WordSpacing
-                                                                                                    //Balloon Slider
-                                                                                                    Positioned(
-                                                                                                      bottom: 0,
-                                                                                                      width: width * 0.6,
-                                                                                                      child: BalloonSlider(
-                                                                                                          trackHeight: 15,
-                                                                                                          thumbRadius: 7.5,
-                                                                                                          showRope: true,
-                                                                                                          color: defaultPalette.tertiary,
-                                                                                                          ropeLength: 300 / 8,
-                                                                                                          value: double.parse((item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
-                                                                                                          onChanged: (val) {
-                                                                                                            setState(() {
-                                                                                                              item.textEditorController.formatSelection(
-                                                                                                                WordSpacingAttribute((val * 100).ceil().toString()),
-                                                                                                              );
-                                                                                                            });
-                                                                                                          }),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              ),
-                                                                                              //WordSpacing
-                                                                                              //+ -
-                                                                                              Expanded(
-                                                                                                flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    Positioned(
-                                                                                                      top: -4,
-                                                                                                      right: 4,
-                                                                                                      height: 35,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = int.parse(wordSpaceController.text) + 1;
-
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              WordSpacingAttribute((val).toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.add,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    Positioned(
-                                                                                                      bottom: 5,
-                                                                                                      right: 4,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        // isTapped: false,
-                                                                                                        // toggleOnTap: true,
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = (int.parse(wordSpaceController.text) - 1).clamp(0, 100);
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              WordSpacingAttribute((val).toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.minus,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              )
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      //
-                                                                                      SizedBox(
-                                                                                        height: 20,
-                                                                                      ),
-                                                                                      //LineHeight
-                                                                                      ClipRRect(
-                                                                                        borderRadius: BorderRadius.circular(10),
-                                                                                        child: Container(
-                                                                                          decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                          height: 70,
-                                                                                          width: width,
-                                                                                          child: Row(
-                                                                                            children: [
-                                                                                              //LineHeight
-                                                                                              //Icon title slider field
-                                                                                              Expanded(
-                                                                                                flex: (1600 * vDividerPosition).ceil(),
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    //LineHeight
-                                                                                                    //Row font and title
-                                                                                                    GestureDetector(
-                                                                                                      onTap: () {
-                                                                                                        lineSpaceFocus.requestFocus();
-                                                                                                      },
-                                                                                                      //LineHeight
-                                                                                                      //Row font and title
-                                                                                                      child: Padding(
-                                                                                                        padding: EdgeInsets.only(top: 5, left: 5),
-                                                                                                        //LineHeight
-                                                                                                        //Row font and title
-                                                                                                        child: Row(
-                                                                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                          children: [
-                                                                                                            //LineHeight
-                                                                                                            //icon
-                                                                                                            Expanded(
-                                                                                                                flex: 100,
-                                                                                                                child: Icon(
-                                                                                                                  TablerIcons.spacing_vertical,
-                                                                                                                  size: 18,
-                                                                                                                )),
-                                                                                                            //LineHeight
-                                                                                                            //title
-                                                                                                            vDividerPosition > 0.45
-                                                                                                                ? Expanded(
-                                                                                                                    flex: 700,
-                                                                                                                    child: Container(
-                                                                                                                      height: 18,
-                                                                                                                      alignment: Alignment.bottomLeft,
-                                                                                                                      child: Text(
-                                                                                                                        '  Line Space',
-                                                                                                                        style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                      ),
-                                                                                                                    ))
-                                                                                                                : Container(),
-                                                                                                          ],
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    //LineHeight
-                                                                                                    //TextField
-                                                                                                    TextField(
-                                                                                                      onTapOutside: (event) {
-                                                                                                        // fontSizeFocus.unfocus();
-                                                                                                      },
-                                                                                                      onSubmitted: (value) {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          LineHeightAttribute((value).toString()),
-                                                                                                        );
-                                                                                                      },
-                                                                                                      focusNode: lineSpaceFocus,
-                                                                                                      controller: lineSpaceController,
-                                                                                                      inputFormatters: [
-                                                                                                        NumericInputFormatter(maxValue: 100),
-                                                                                                      ],
-                                                                                                      style: GoogleFonts.lexend(color: defaultPalette.black.withOpacity(fontSizeFocus.hasFocus ? 0.5 : 0.1), fontWeight: FontWeight.bold, fontSize: (80 * vDividerPosition).clamp(70, 100)),
-                                                                                                      cursorColor: defaultPalette.black,
-                                                                                                      // selectionControls: MaterialTextSelectionControls(),
-                                                                                                      textAlign: TextAlign.right,
-                                                                                                      scrollPadding: EdgeInsets.all(0),
-                                                                                                      textAlignVertical: TextAlignVertical.top,
-                                                                                                      decoration: InputDecoration(
-                                                                                                        contentPadding: EdgeInsets.all(0),
-
-                                                                                                        // filled: true,
-                                                                                                        // fillColor: defaultPalette.primary,
-                                                                                                        enabledBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                        focusedBorder: OutlineInputBorder(
-                                                                                                          borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                          borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                      keyboardType: TextInputType.number,
-                                                                                                    ),
-                                                                                                    //LineHeight
-                                                                                                    //Balloon Slider
-                                                                                                    Positioned(
-                                                                                                      bottom: 0,
-                                                                                                      width: width * 0.6,
-                                                                                                      child: BalloonSlider(
-                                                                                                          trackHeight: 15,
-                                                                                                          thumbRadius: 7.5,
-                                                                                                          showRope: true,
-                                                                                                          color: defaultPalette.tertiary,
-                                                                                                          ropeLength: 300 / 8,
-                                                                                                          value: double.parse((item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value) ?? 0.toString()) / 100,
-                                                                                                          onChanged: (val) {
-                                                                                                            setState(() {
-                                                                                                              item.textEditorController.formatSelection(
-                                                                                                                LineHeightAttribute((val * 100).ceil().toString()),
-                                                                                                              );
-                                                                                                            });
-                                                                                                          }),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              ),
-                                                                                              //LineHeight
-                                                                                              //+ -
-                                                                                              Expanded(
-                                                                                                flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                                child: Stack(
-                                                                                                  children: [
-                                                                                                    Positioned(
-                                                                                                      top: -4,
-                                                                                                      right: 4,
-                                                                                                      height: 35,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = int.parse(lineSpaceController.text) + 1;
-
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              LineHeightAttribute((val).toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.add,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    Positioned(
-                                                                                                      bottom: 5,
-                                                                                                      right: 4,
-                                                                                                      child: ElevatedLayerButton(
-                                                                                                        // isTapped: false,
-                                                                                                        // toggleOnTap: true,
-                                                                                                        onClick: () {
-                                                                                                          setState(() {
-                                                                                                            var val = (int.parse(lineSpaceController.text) - 1).clamp(0, 100);
-                                                                                                            item.textEditorController.formatSelection(
-                                                                                                              LineHeightAttribute((val).toString()),
-                                                                                                            );
-                                                                                                          });
-                                                                                                        },
-                                                                                                        buttonHeight: 32,
-                                                                                                        buttonWidth: 65 * vDividerPosition,
-                                                                                                        borderRadius: BorderRadius.circular(100),
-                                                                                                        animationDuration: const Duration(milliseconds: 100),
-                                                                                                        animationCurve: Curves.ease,
-                                                                                                        topDecoration: BoxDecoration(
-                                                                                                          color: Colors.white,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                        topLayerChild: Icon(
-                                                                                                          IconsaxPlusLinear.minus,
-                                                                                                          size: 20,
-                                                                                                        ),
-                                                                                                        baseDecoration: BoxDecoration(
-                                                                                                          color: Colors.green,
-                                                                                                          border: Border.all(),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              )
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      //
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              //Colors //Desktop WEB
-                                                                              SingleChildScrollView(
-                                                                                child: Container(
-                                                                                  width: 30,
-                                                                                  height: sHeight * 0.4,
-
-                                                                                  child: TabContainer(
-                                                                                      controller: tabcunt,
-                                                                                      tabEdge: TabEdge.top,
-                                                                                      tabsStart: 0,
-                                                                                      tabExtent: 30,
-                                                                                      childPadding: EdgeInsets.symmetric(vertical: 0),
-                                                                                      colors: [
-                                                                                        Colors.grey.withOpacity(.4),
-                                                                                        Colors.grey.withOpacity(.4)
-                                                                                        // hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
-                                                                                        // hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
-                                                                                      ],
-                                                                                      selectedTextStyle: TextStyle(
-                                                                                        color: defaultPalette.black,
-                                                                                        fontSize: 14,
-                                                                                      ),
-                                                                                      unselectedTextStyle: const TextStyle(
-                                                                                        color: Colors.black,
-                                                                                        fontSize: 13.0,
-                                                                                      ),
-                                                                                      // borderRadius: BorderRadius.circular(20),
-                                                                                      // tabBorderRadius: BorderRadius.circular(20),
-                                                                                      tabs: [
-                                                                                        Text(
-                                                                                          'Font',
-                                                                                        ),
-                                                                                        Text('Bg')
-                                                                                      ],
-                                                                                      children: [
-                                                                                        //FONT COLOR
-                                                                                        DefaultTabController(
-                                                                                          length: 2,
-                                                                                          child: ClipRRect(
-                                                                                            borderRadius: BorderRadius.circular(8),
-                                                                                            child: Column(
-                                                                                              children: [
-                                                                                                //FONT COLOR
-                                                                                                //HEX TEXT FIEKLD
-                                                                                                Container(
-                                                                                                  height: hDividerPosition < 0.25 ? textFieldHeight * 1.5 : textFieldHeight * 1.3,
-                                                                                                  margin: EdgeInsets.only(top: 0),
-                                                                                                  padding: EdgeInsets.all(5),
-                                                                                                  child: Stack(
-                                                                                                    children: [
-                                                                                                      TextFormField(
-                                                                                                        onTapOutside: (event) {},
-                                                                                                        controller: hexController,
-                                                                                                        inputFormatters: [HexColorInputFormatter()],
-                                                                                                        onFieldSubmitted: (value) {
-                                                                                                          item.textEditorController.formatSelection(
-                                                                                                            ColorAttribute('#${value}'),
-                                                                                                          );
-                                                                                                        },
-                                                                                                        style: TextStyle(color: defaultPalette.black),
-                                                                                                        cursorColor: defaultPalette.secondary,
-                                                                                                        textAlign: TextAlign.center,
-                                                                                                        textAlignVertical: TextAlignVertical.center,
-                                                                                                        decoration: InputDecoration(
-                                                                                                          contentPadding: EdgeInsets.all(0),
-                                                                                                          prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                          suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                          filled: true,
-                                                                                                          fillColor: defaultPalette.primary,
-                                                                                                          border: OutlineInputBorder(
-                                                                                                            borderRadius: BorderRadius.circular(10.0),
-                                                                                                          ),
-                                                                                                          enabledBorder: OutlineInputBorder(
-                                                                                                            borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                            borderRadius: BorderRadius.circular(12.0),
-                                                                                                          ),
-                                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                                            borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
-                                                                                                            borderRadius: BorderRadius.circular(10.0),
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                        keyboardType: TextInputType.number,
-                                                                                                      ),
-                                                                                                      ...[
-                                                                                                        Positioned(
-                                                                                                          top: (textFieldHeight / 2) - 10,
-                                                                                                          left: 10,
-                                                                                                          child: GestureDetector(
-                                                                                                            child: Icon(
-                                                                                                              IconsaxPlusLinear.text,
-                                                                                                              size: 20,
-                                                                                                              color: hexToColor(hexController.text),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ]
-                                                                                                    ],
-                                                                                                  ),
-                                                                                                ),
-                                                                                                //
-                                                                                                ...[
-                                                                                                  //FONT COLOR
-                                                                                                  //PICKER ND EVERYHTING
-                                                                                                  Expanded(
-                                                                                                    child: TabBarView(
-                                                                                                      physics: NeverScrollableScrollPhysics(),
-                                                                                                      children: [
-                                                                                                        SingleChildScrollView(
-                                                                                                          child: Padding(
-                                                                                                            padding: const EdgeInsets.all(10),
-                                                                                                            child: ColorPicker(
-                                                                                                              displayThumbColor: true,
-                                                                                                              portraitOnly: true,
-                                                                                                              pickerAreaBorderRadius: BorderRadius.circular(5),
-                                                                                                              colorPickerWidth: 500 * hDividerPosition,
-                                                                                                              labelTypes: [],
-                                                                                                              pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
-                                                                                                              onColorChanged: (color) {
-                                                                                                                item.textEditorController.formatSelection(
-                                                                                                                  ColorAttribute('#${colorToHex(color)}'),
-                                                                                                                );
-                                                                                                                setState(() {
-                                                                                                                  hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
-                                                                                                                });
-                                                                                                              },
-                                                                                                              pickerAreaHeightPercent: 0.4,
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ), //FONT COLOR
-                                                                                                        Padding(
-                                                                                                          padding: const EdgeInsets.all(8.0),
-                                                                                                          child: MaterialPicker(
-                                                                                                            pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
-                                                                                                            onColorChanged: (color) {
-                                                                                                              item.textEditorController.formatSelection(
-                                                                                                                ColorAttribute('#${colorToHex(color)}'),
-                                                                                                              );
-                                                                                                              setState(() {
-                                                                                                                hexController.text = '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
-                                                                                                              });
-                                                                                                            },
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ],
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                  if (hDividerPosition > 0.25)
-                                                                                                    TabBar(
-                                                                                                      dividerHeight: 0,
-                                                                                                      indicatorSize: TabBarIndicatorSize.label,
-                                                                                                      indicatorColor: defaultPalette.tertiary,
-                                                                                                      labelColor: defaultPalette.tertiary,
-                                                                                                      labelPadding: EdgeInsets.all(0),
-                                                                                                      tabs: [
-                                                                                                        //FONT COLOR
-                                                                                                        Tab(
-                                                                                                          height: 30,
-                                                                                                          child: Container(
-                                                                                                            padding: EdgeInsets.all(2),
-                                                                                                            // margin: EdgeInsets.only(left: 5, right: 5),
-                                                                                                            height: 30,
-                                                                                                            width: width,
-                                                                                                            alignment: Alignment.center,
-                                                                                                            decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8))),
-                                                                                                            child: Text(
-                                                                                                              'Picker',
-                                                                                                              style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ), //FONT COLOR
-                                                                                                        Tab(
-                                                                                                          height: 30,
-                                                                                                          child: Container(
-                                                                                                            padding: EdgeInsets.all(2),
-                                                                                                            // margin: EdgeInsets.only(right: 5, left: 5),
-                                                                                                            alignment: Alignment.center,
-                                                                                                            height: 30,
-                                                                                                            width: width,
-                                                                                                            decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: BorderRadius.only(bottomRight: Radius.circular(8))),
-                                                                                                            child: Text(
-                                                                                                              'Palette',
-                                                                                                              style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ],
-                                                                                                    ),
-                                                                                                ] //
-                                                                                              ],
-                                                                                            ),
-                                                                                          ),
-                                                                                        ),
-                                                                                        //BG COLORRR
-                                                                                        DefaultTabController(
-                                                                                          length: 2,
-                                                                                          child: ClipRRect(
-                                                                                            borderRadius: BorderRadius.circular(8),
-                                                                                            child: Column(
-                                                                                              children: [
-                                                                                                //Background color
-                                                                                                //HEX TEXT FIEKLD
-                                                                                                Container(
-                                                                                                  height: hDividerPosition < 0.25 ? textFieldHeight * 1.5 : textFieldHeight * 1.3,
-                                                                                                  margin: EdgeInsets.only(top: hDividerPosition < 0.25 ? 10 : 0),
-                                                                                                  padding: EdgeInsets.all(5),
-                                                                                                  child: Stack(
-                                                                                                    children: [
-                                                                                                      TextFormField(
-                                                                                                        onTapOutside: (event) {
-                                                                                                          // Focus.unfocus();
-                                                                                                        },
-                                                                                                        // focusNode: marginTopFocus,
-                                                                                                        controller: bghexController,
-                                                                                                        inputFormatters: [
-                                                                                                          HexColorInputFormatter()
-                                                                                                          // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                                                                          // NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
-                                                                                                        ],
-                                                                                                        onFieldSubmitted: (value) {
-                                                                                                          item.textEditorController.formatSelection(
-                                                                                                            BackgroundAttribute('${value}'),
-                                                                                                          );
-                                                                                                          FocusScope.of(context).previousFocus();
-                                                                                                        },
-                                                                                                        style: TextStyle(color: defaultPalette.black),
-                                                                                                        cursorColor: defaultPalette.secondary,
-                                                                                                        textAlign: TextAlign.center,
-                                                                                                        textAlignVertical: TextAlignVertical.center,
-                                                                                                        decoration: InputDecoration(
-                                                                                                          contentPadding: EdgeInsets.all(0),
-                                                                                                          prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                          suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                          filled: true,
-                                                                                                          fillColor: defaultPalette.primary,
-                                                                                                          border: OutlineInputBorder(
-                                                                                                            // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                                            borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                                          ),
-                                                                                                          enabledBorder: OutlineInputBorder(
-                                                                                                            borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                            borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                                          ),
-                                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                                            borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
-                                                                                                            borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                        keyboardType: TextInputType.number,
-                                                                                                        // onChanged: (value) => _updatePdfPreview(''),
-                                                                                                      ),
-                                                                                                      if (vDividerPosition > 0.45) ...[
-                                                                                                        if (vDividerPosition > 0.48)
-                                                                                                          Positioned(
-                                                                                                            top: (textFieldHeight / 2) - 14,
-                                                                                                            left: 6,
-                                                                                                            child: GestureDetector(
-                                                                                                              child: Icon(
-                                                                                                                IconsaxPlusBold.text,
-                                                                                                                size: 28,
-                                                                                                                color: hexToColor(bghexController.text),
-                                                                                                              ),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                      ]
-                                                                                                    ],
-                                                                                                  ),
-                                                                                                ),
-                                                                                                //
-                                                                                                if (hDividerPosition > 0.2) ...[
-                                                                                                  //Background color
-                                                                                                  //PICKER ND EVERYHTING
-                                                                                                  Expanded(
-                                                                                                    child: TabBarView(
-                                                                                                      physics: NeverScrollableScrollPhysics(),
-                                                                                                      children: [
-                                                                                                        SingleChildScrollView(
-                                                                                                          child: Padding(
-                                                                                                            padding: const EdgeInsets.all(10),
-                                                                                                            child: ColorPicker(
-                                                                                                              displayThumbColor: true,
-                                                                                                              portraitOnly: true,
-                                                                                                              pickerAreaBorderRadius: BorderRadius.circular(5),
-                                                                                                              colorPickerWidth: 500 * hDividerPosition,
-                                                                                                              labelTypes: [],
-                                                                                                              pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
-                                                                                                              onColorChanged: (color) {
-                                                                                                                item.textEditorController.formatSelection(
-                                                                                                                  BackgroundAttribute('#${colorToHex(color)}'),
-                                                                                                                );
-                                                                                                                setState(() {
-                                                                                                                  bghexController.text = '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
-                                                                                                                });
-                                                                                                              },
-                                                                                                              pickerAreaHeightPercent: 0.4,
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ), //FONT COLOR
-                                                                                                        Padding(
-                                                                                                          padding: const EdgeInsets.all(8.0),
-                                                                                                          child: MaterialPicker(
-                                                                                                            pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
-                                                                                                            onColorChanged: (color) {
-                                                                                                              item.textEditorController.formatSelection(
-                                                                                                                BackgroundAttribute('#${colorToHex(color)}'),
-                                                                                                              );
-                                                                                                              setState(() {
-                                                                                                                bghexController.text = '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
-                                                                                                              });
-                                                                                                            },
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ],
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                  if (hDividerPosition > 0.25)
-                                                                                                    TabBar(
-                                                                                                      dividerHeight: 0,
-                                                                                                      indicatorSize: TabBarIndicatorSize.label,
-                                                                                                      indicatorColor: defaultPalette.tertiary,
-                                                                                                      labelColor: defaultPalette.tertiary,
-                                                                                                      labelPadding: EdgeInsets.all(0),
-                                                                                                      tabs: [
-                                                                                                        //FONT COLOR
-                                                                                                        Tab(
-                                                                                                          height: 30,
-                                                                                                          child: Container(
-                                                                                                            padding: EdgeInsets.all(2),
-                                                                                                            // margin: EdgeInsets.only(left: 5, right: 5),
-                                                                                                            height: 30,
-                                                                                                            width: width,
-                                                                                                            alignment: Alignment.center,
-                                                                                                            decoration: BoxDecoration(
-                                                                                                              color: defaultPalette.primary.withOpacity(0.7),
-                                                                                                            ),
-                                                                                                            child: Text(
-                                                                                                              'Picker',
-                                                                                                              style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ), //FONT COLOR
-                                                                                                        Tab(
-                                                                                                          height: 30,
-                                                                                                          child: Container(
-                                                                                                            padding: EdgeInsets.all(2),
-                                                                                                            alignment: Alignment.center,
-                                                                                                            height: 30,
-                                                                                                            width: width,
-                                                                                                            decoration: BoxDecoration(
-                                                                                                              color: defaultPalette.primary.withOpacity(0.7),
-                                                                                                            ),
-                                                                                                            child: Text(
-                                                                                                              'Palette',
-                                                                                                              style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ],
-                                                                                                    ),
-                                                                                                ] //
-                                                                                              ],
-                                                                                            ),
-                                                                                          ),
-                                                                                        ),
-                                                                                      ]),
-                                                                                  //
-                                                                                ),
-                                                                              )
-                                                                            ]
-                                                                          ],
-                                                                        );
-                                                                      },
+                                                                          ] //
+                                                                        ],
+                                                                      ),
                                                                     ),
                                                                   ),
-                                                                ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  //Text SIDEBAR //Desktop WEB
-                                                  AnimatedPositioned(
-                                                      left: panelIndex
-                                                                  .panelIndex ==
-                                                              -1
-                                                          ? -35
-                                                          : 0,
-                                                      top: 0,
-                                                      duration: Durations.long4,
-                                                      child: PlayableToolbarWidget(
-                                                          itemsGutter: 0,
-                                                          toolbarBackgroundRadius:
-                                                              0,
-                                                          toolbarWidth: 44,
-                                                          toolbarShadow:
-                                                              defaultPalette
-                                                                  .black
-                                                                  .withOpacity(
-                                                                      0.05),
-                                                          toolbarHorizontalPadding:
-                                                              0,
-                                                          toolbarHeight:
-                                                              sHeight * 0.9,
-                                                          itemsOffset: 0,
-                                                          toolbarItems: [
-                                                            ListItemModel(
-                                                              isTapped:
-                                                                  isTapped[0],
-                                                              onTap: () {
-                                                                var item;
-                                                                try {
-                                                                  item = _sheetItemIterator(
-                                                                      panelIndex
-                                                                          .id,
-                                                                      spreadSheetList[
-                                                                          currentPageIndex]) as TextEditorItem;
-                                                                } on Exception catch (e) {
-                                                                  // TODO
-                                                                  item = TextEditorItem(
-                                                                      id: '',
-                                                                      parentId:
-                                                                          '');
-                                                                }
-                                                                item.focusNode
-                                                                    .unfocus();
-                                                                setState(() {
-                                                                  panelIndex =
-                                                                      PanelIndex(
-                                                                          id:
-                                                                              '',
-                                                                          panelIndex:
-                                                                              -1);
-                                                                });
-                                                                for (var i = 0;
-                                                                    i <
-                                                                        isTapped
-                                                                            .length;
-                                                                    i++) {
-                                                                  setState(() {
-                                                                    isTapped[
-                                                                            i] =
-                                                                        false;
-                                                                  });
-                                                                }
-                                                                setState(() {
-                                                                  isTapped[1] =
-                                                                      true;
-                                                                });
-                                                              },
-                                                              title: 'Duh',
-                                                              color:
-                                                                  defaultPalette
-                                                                      .tertiary,
-                                                              icon:
-                                                                  TablerIcons.x,
-                                                            ),
-                                                            ListItemModel(
-                                                              isTapped:
-                                                                  isTapped[1],
-                                                              onTap: () {
-                                                                for (var i = 0;
-                                                                    i <
-                                                                        isTapped
-                                                                            .length;
-                                                                    i++) {
-                                                                  setState(() {
-                                                                    isTapped[
-                                                                            i] =
-                                                                        false;
-                                                                  });
-                                                                }
-                                                                setState(() {
-                                                                  isTapped[1] =
-                                                                      true;
-                                                                  textStyleTabControler.animateToPage(
-                                                                      0,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                                });
-                                                              },
-                                                              title: 'Font',
-                                                              color:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              icon: TablerIcons
-                                                                  .typography,
-                                                            ),
-                                                            ListItemModel(
-                                                              isTapped:
-                                                                  isTapped[2],
-                                                              onTap: () {
-                                                                for (var i = 0;
-                                                                    i <
-                                                                        isTapped
-                                                                            .length;
-                                                                    i++) {
-                                                                  setState(() {
-                                                                    isTapped[
-                                                                            i] =
-                                                                        false;
-                                                                  });
-                                                                }
-                                                                setState(() {
-                                                                  isTapped[2] =
-                                                                      true;
-                                                                  textStyleTabControler.animateToPage(
-                                                                      1,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                                });
-                                                              },
-                                                              title: 'Format',
-                                                              color:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              icon: TablerIcons
-                                                                  .bold,
-                                                            ),
-                                                            //sizespace
-                                                            ListItemModel(
-                                                              isTapped:
-                                                                  isTapped[3],
-                                                              onTap: () {
-                                                                for (var i = 0;
-                                                                    i <
-                                                                        isTapped
-                                                                            .length;
-                                                                    i++) {
-                                                                  setState(() {
-                                                                    isTapped[
-                                                                            i] =
-                                                                        false;
-                                                                  });
-                                                                }
-                                                                setState(() {
-                                                                  isTapped[3] =
-                                                                      true;
-                                                                  textStyleTabControler.animateToPage(
-                                                                      2,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                                });
-                                                              },
-                                                              title: 'Size',
-                                                              color:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              icon: TablerIcons
-                                                                  .text_size,
-                                                            ),
-                                                            //paint
-                                                            ListItemModel(
-                                                              isTapped:
-                                                                  isTapped[4],
-                                                              onTap: () {
-                                                                for (var i = 0;
-                                                                    i <
-                                                                        isTapped
-                                                                            .length;
-                                                                    i++) {
-                                                                  setState(() {
-                                                                    isTapped[
-                                                                            i] =
-                                                                        false;
-                                                                  });
-                                                                }
-                                                                setState(() {
-                                                                  isTapped[4] =
-                                                                      true;
-                                                                  textStyleTabControler.animateToPage(
-                                                                      3,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                                });
-                                                              },
-                                                              title: 'Color',
-                                                              color:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              icon: TablerIcons
-                                                                  .paint,
-                                                            ),
-                                                          ])),
-                                                ],
+                                                                  //BG COLORRR
+                                                                  DefaultTabController(
+                                                                    length: 2,
+                                                                    child:
+                                                                        ClipRRect(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              8),
+                                                                      child:
+                                                                          Column(
+                                                                        children: [
+                                                                          //Background color
+                                                                          //HEX TEXT FIEKLD
+                                                                          Container(
+                                                                            height: hDividerPosition < 0.25
+                                                                                ? textFieldHeight * 1.5
+                                                                                : textFieldHeight * 1.3,
+                                                                            margin:
+                                                                                EdgeInsets.only(top: hDividerPosition < 0.25 ? 10 : 0),
+                                                                            padding:
+                                                                                EdgeInsets.all(5),
+                                                                            child:
+                                                                                Stack(
+                                                                              children: [
+                                                                                TextFormField(
+                                                                                  onTapOutside: (event) {
+                                                                                    // Focus.unfocus();
+                                                                                  },
+                                                                                  // focusNode: marginTopFocus,
+                                                                                  controller: bghexController,
+                                                                                  inputFormatters: [
+                                                                                    HexColorInputFormatter()
+                                                                                    // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                                                                    // NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
+                                                                                  ],
+                                                                                  onFieldSubmitted: (value) {
+                                                                                    item.textEditorController.formatSelection(
+                                                                                      BackgroundAttribute(value),
+                                                                                    );
+                                                                                    FocusScope.of(context).previousFocus();
+                                                                                  },
+                                                                                  style: TextStyle(color: defaultPalette.black),
+                                                                                  cursorColor: defaultPalette.secondary,
+                                                                                  textAlign: TextAlign.center,
+                                                                                  textAlignVertical: TextAlignVertical.center,
+                                                                                  decoration: InputDecoration(
+                                                                                    contentPadding: EdgeInsets.all(0),
+                                                                                    prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                                    suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
+                                                                                    filled: true,
+                                                                                    fillColor: defaultPalette.primary,
+                                                                                    border: OutlineInputBorder(
+                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
+                                                                                    ),
+                                                                                    enabledBorder: OutlineInputBorder(
+                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
+                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
+                                                                                    ),
+                                                                                    focusedBorder: OutlineInputBorder(
+                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
+                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
+                                                                                    ),
+                                                                                  ),
+                                                                                  keyboardType: TextInputType.number,
+                                                                                  // onChanged: (value) => _updatePdfPreview(''),
+                                                                                ),
+                                                                                if (vDividerPosition > 0.45) ...[
+                                                                                  if (vDividerPosition > 0.48)
+                                                                                    Positioned(
+                                                                                      top: (textFieldHeight / 2) - 14,
+                                                                                      left: 6,
+                                                                                      child: GestureDetector(
+                                                                                        child: Icon(
+                                                                                          IconsaxPlusBold.text,
+                                                                                          size: 28,
+                                                                                          color: hexToColor(bghexController.text),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                ]
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          //
+                                                                          if (hDividerPosition >
+                                                                              0.2) ...[
+                                                                            //Background color
+                                                                            //PICKER ND EVERYHTING
+                                                                            Expanded(
+                                                                              child: TabBarView(
+                                                                                physics: NeverScrollableScrollPhysics(),
+                                                                                children: [
+                                                                                  SingleChildScrollView(
+                                                                                    child: Padding(
+                                                                                      padding: const EdgeInsets.all(10),
+                                                                                      child: ColorPicker(
+                                                                                        displayThumbColor: true,
+                                                                                        portraitOnly: true,
+                                                                                        pickerAreaBorderRadius: BorderRadius.circular(5),
+                                                                                        colorPickerWidth: 500 * hDividerPosition,
+                                                                                        labelTypes: [],
+                                                                                        pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+                                                                                        onColorChanged: (color) {
+                                                                                          item.textEditorController.formatSelection(
+                                                                                            BackgroundAttribute('#${colorToHex(color)}'),
+                                                                                          );
+                                                                                          setState(() {
+                                                                                            bghexController.text = '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
+                                                                                          });
+                                                                                        },
+                                                                                        pickerAreaHeightPercent: 0.4,
+                                                                                      ),
+                                                                                    ),
+                                                                                  ), //FONT COLOR
+                                                                                  Padding(
+                                                                                    padding: const EdgeInsets.all(8.0),
+                                                                                    child: MaterialPicker(
+                                                                                      pickerColor: hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
+                                                                                      onColorChanged: (color) {
+                                                                                        item.textEditorController.formatSelection(
+                                                                                          BackgroundAttribute('#${colorToHex(color)}'),
+                                                                                        );
+                                                                                        setState(() {
+                                                                                          bghexController.text = '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
+                                                                                        });
+                                                                                      },
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                            if (hDividerPosition >
+                                                                                0.25)
+                                                                              TabBar(
+                                                                                dividerHeight: 0,
+                                                                                indicatorSize: TabBarIndicatorSize.label,
+                                                                                indicatorColor: defaultPalette.tertiary,
+                                                                                labelColor: defaultPalette.tertiary,
+                                                                                labelPadding: EdgeInsets.all(0),
+                                                                                tabs: [
+                                                                                  //FONT COLOR
+                                                                                  Tab(
+                                                                                    height: 30,
+                                                                                    child: Container(
+                                                                                      padding: EdgeInsets.all(2),
+                                                                                      // margin: EdgeInsets.only(left: 5, right: 5),
+                                                                                      height: 30,
+                                                                                      width: width,
+                                                                                      alignment: Alignment.center,
+                                                                                      decoration: BoxDecoration(
+                                                                                        color: defaultPalette.primary.withOpacity(0.7),
+                                                                                      ),
+                                                                                      child: Text(
+                                                                                        'Picker',
+                                                                                        style: GoogleFonts.lexend(fontSize: 12),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ), //FONT COLOR
+                                                                                  Tab(
+                                                                                    height: 30,
+                                                                                    child: Container(
+                                                                                      padding: EdgeInsets.all(2),
+                                                                                      alignment: Alignment.center,
+                                                                                      height: 30,
+                                                                                      width: width,
+                                                                                      decoration: BoxDecoration(
+                                                                                        color: defaultPalette.primary.withOpacity(0.7),
+                                                                                      ),
+                                                                                      child: Text(
+                                                                                        'Palette',
+                                                                                        style: GoogleFonts.lexend(fontSize: 12),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                          ] //
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ]),
+                                                            //
+                                                          ),
+                                                        )
+                                                      ]
+                                                    ],
+                                                  );
+                                                },
                                               ),
                                             ),
-                                          )
-                ]);
+                                          ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  ]);
+                }
+
+                var item;
+                try {
+                  item = _sheetItemIterator(
+                          panelIndex.id, spreadSheetList[currentPageIndex])
+                      as TextEditorItem;
+                } on Exception catch (e) {
+                  item = TextEditorItem(id: '', parentId: '');
+                }
+
+                bool _getIsToggled(
+                    Map<String, Attribute> attrs, Attribute attribute) {
+                  if (attribute.key == Attribute.list.key ||
+                      attribute.key == Attribute.header.key ||
+                      attribute.key == Attribute.script.key ||
+                      attribute.key == Attribute.align.key) {
+                    final currentAttribute = attrs[attribute.key];
+                    if (currentAttribute == null) {
+                      print('returning false');
+                      return false;
+                    }
+                    print(
+                        'returning ${currentAttribute.value == attribute.value}');
+                    return currentAttribute.value == attribute.value;
+                  }
+                  print('returning ${attrs.containsKey(attribute.key)}');
+                  return attrs.containsKey(attribute.key);
+                }
+
+                Widget buildElevatedLayerButton({
+                  required double buttonHeight,
+                  required double buttonWidth,
+                  required Duration animationDuration,
+                  required Curve animationCurve,
+                  required void Function() onClick,
+                  required BoxDecoration baseDecoration,
+                  required BoxDecoration topDecoration,
+                  required Widget topLayerChild,
+                  required BorderRadius borderRadius,
+                  bool toggleOnTap = false,
+                  bool isTapped = false,
+                }) {
+                  var down = isTapped;
+                  void _handleTapDown(TapDownDetails details) {
+                    onClick();
+
+                    setState(() {
+                      down = true;
+                      print(down);
+                    });
+                  }
+
+                  void _handleTapUp(TapUpDetails details) {
+                    if (!toggleOnTap && down) {
+                      setState(() {
+                        down = !down;
+                      });
+                    }
+                  }
+
+                  void _handleTapCancel() {}
+
+                  return GestureDetector(
+                    onTap: () {},
+                    onTapDown: _handleTapDown,
+                    onTapUp: _handleTapUp,
+                    onTapCancel: _handleTapCancel,
+                    child: SizedBox(
+                      height: buttonHeight,
+                      width: buttonWidth,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: buttonWidth - 10,
+                              height: buttonHeight - 10,
+                              decoration: baseDecoration.copyWith(
+                                borderRadius: borderRadius,
+                              ),
+                            ),
+                          ),
+                          AnimatedPositioned(
+                            duration: animationDuration,
+                            curve: animationCurve,
+                            bottom: !down ? 2 : 0,
+                            right: !down ? 2 : 0,
+                            child: Container(
+                              width: buttonWidth - 10,
+                              height: buttonHeight - 10,
+                              alignment: Alignment.center,
+                              decoration: topDecoration.copyWith(
+                                borderRadius: borderRadius,
+                              ),
+                              child: topLayerChild,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                var width = (sWidth * wH2DividerPosition - 45);
+
+                TextEditingController hexController = TextEditingController()
+                  ..text =
+                      '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
+                TextEditingController bghexController = TextEditingController()
+                  ..text =
+                      '${(item.textEditorController.getSelectionStyle().attributes['background']?.value ?? '#00000000')}';
+                TextEditingController fontSizeController = TextEditingController()
+                  ..text =
+                      '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
+                if (fontSizeController.text.endsWith('.0')) {
+                  fontSizeController.text =
+                      '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0').ceil()}';
+                }
+                TextEditingController letterSpaceController =
+                    TextEditingController()
+                      ..text =
+                          '${double.parse(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value ?? '0')}';
+                if (letterSpaceController.text.endsWith('.0')) {
+                  letterSpaceController.text =
+                      letterSpaceController.text.replaceAll('.0', '');
+                }
+                TextEditingController wordSpaceController = TextEditingController()
+                  ..text =
+                      '${double.parse(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value ?? '0')}';
+                if (wordSpaceController.text.endsWith('.0')) {
+                  wordSpaceController.text =
+                      wordSpaceController.text.replaceAll('.0', '');
+                }
+                TextEditingController lineSpaceController = TextEditingController()
+                  ..text =
+                      '${double.parse(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value ?? '0')}';
+                if (lineSpaceController.text.endsWith('.0')) {
+                  lineSpaceController.text =
+                      lineSpaceController.text.replaceAll('.0', '');
+                }
+                int crossAxisCount = width < 200 ? 2 : 4;
+                var iconWidth = width / crossAxisCount / 1.05;
+                var iconHeight =
+                    // 50.0;
+                    width < 200
+                        ? iconWidth
+                        : width < (width / vDividerPosition) / 1.75
+                            ? iconWidth / 1.3
+                            : iconWidth;
+                var fCrossAxisCount = width < 150
+                    ? 1
+                    : width > 300
+                        ? width > 420
+                            ? 4
+                            : 3
+                        : 2;
+
+                return Stack(
+                  children: [
+                    //The main bgCOLOR OF THE CARD
+                    Positioned.fill(
+                      child: AnimatedContainer(
+                        duration: Durations.short3,
+                        margin: EdgeInsets.all(15),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: defaultPalette.extras[0],
+                          border: Border.all(width: 2),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                    ),
+                    //OPACITY OF BGCOLOR OF THE CARD
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        opacity: currentCardIndex == index
+                            ? 0
+                            : index >= (currentCardIndex + 2) % 10
+                                ? 1
+                                : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                        duration: Duration(milliseconds: 300),
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 300),
+                          margin: EdgeInsets.all(15),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: index == (currentCardIndex + 1) % 10
+                                ? defaultPalette.primary
+                                : index == (currentCardIndex + 2) % 10
+                                    ? defaultPalette.primary
+                                    : defaultPalette.primary,
+                            border: Border.all(width: 2),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (index == 0)
+                      //FONTS //Desktop WEB
+                      Positioned.fill(
+                        child: Stack(
+                          children: [
+                            Container(
+                              height: sHeight * 0.9,
+                              width: width + 4,
+                              margin: const EdgeInsets.only(
+                                  top: 120, left: 20, bottom: 22, right: 20),
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(22),
+                                    bottomRight: Radius.circular(22)),
+                                child: TabContainer(
+                                  tabs: [
+                                    // Text('ss'),
+                                    // Text('d'),
+                                    // Text('s'),
+                                    // Text('h'),
+                                    // Text('m'),
+                                    Icon(
+                                      TablerIcons.search,
+                                      size: 10,
+                                      color: defaultPalette.primary,
+                                    ),
+                                    Icon(
+                                      TablerIcons.circle,
+                                      size: 10,
+                                      color: defaultPalette.primary,
+                                    ),
+                                    Icon(
+                                      TablerIcons.circles,
+                                      size: 10,
+                                      color: defaultPalette.primary,
+                                    ),
+                                    Icon(
+                                      TablerIcons.circle_dashed,
+                                      size: 10,
+                                      color: defaultPalette.primary,
+                                    ),
+                                    Icon(
+                                      TablerIcons.oval_vertical,
+                                      size: 10,
+                                      color: defaultPalette.primary,
+                                    ),
+                                    Icon(
+                                      TablerIcons.grain,
+                                      size: 10,
+                                      color: defaultPalette.primary,
+                                    ),
+                                  ],
+                                  tabEdge: TabEdge.left,
+                                  controller: fontsTabContainerController,
+                                  borderRadius: BorderRadius.circular(12),
+                                  // bottomLeft: Radius.circular(12),
+                                  // bottomRight: Radius.circular(12)),
+                                  tabExtent: 25,
+                                  tabsStart: 0.08  ,
+                                  tabsEnd: 0.8,
+                                  colors: [
+                                    defaultPalette.primary,
+                                    defaultPalette.primary,
+                                    defaultPalette.primary,
+                                    defaultPalette.primary,
+                                    defaultPalette.primary,
+                                    defaultPalette.primary,
+                                    // defaultPalette.extras[4],
+                                    // defaultPalette.extras[5]
+                                  ],
+                                  selectedTextStyle: GoogleFonts.abrilFatface(
+                                    fontSize: 14,
+                                    color: defaultPalette.extras[0],
+                                  ),
+                                  unselectedTextStyle: GoogleFonts.abrilFatface(
+                                    fontSize: 12,
+                                    color: defaultPalette.primary,
+                                  ),
+                                  children:
+                                      [
+                                        Center(
+                                        child: Text(
+                                          'No fonts available in this category.',
+                                          style: TextStyle(
+                                              color: Colors.grey, fontSize: 16),
+                                        ),
+                                      ),
+                                        ...categorizedFonts.keys.map((category) {
+                                    final fontsInCategory =
+                                        categorizedFonts[category]!
+                                            .where((font) => GoogleFonts.asMap()
+                                                .containsKey(font))
+                                            .toList();
+
+                                    if (fontsInCategory.isEmpty) {
+                                      return Center(
+                                        child: Text(
+                                          'No fonts available in this category.',
+                                          style: TextStyle(
+                                              color: Colors.grey, fontSize: 16),
+                                        ),
+                                      );
+                                    }
+                                    final fontName = fontsInCategory[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 3, left: 3, right: 3, bottom: 3),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        //       topLeft:  Radius.circular(5),
+                                        //       topRight:  Radius.circular(5),
+                                        // bottomLeft: Radius.circular(5),
+                                        // bottomRight: Radius.circular(5)),
+                                        child: GridView.builder(
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: fCrossAxisCount,
+                                            childAspectRatio: 2.8,
+                                            crossAxisSpacing: 5,
+                                            mainAxisSpacing: 0,
+                                          ),
+                                          itemCount: fontsInCategory.length,
+                                          itemBuilder: (context, index) {
+                                            final fontName =
+                                                fontsInCategory[index];
+
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                  bottom: 5),
+                                              child: TextButton(
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: item
+                                                                .textEditorController
+                                                                .getSelectionStyle()
+                                                                .attributes[
+                                                                    Attribute
+                                                                        .font
+                                                                        .key]
+                                                                ?.value ==
+                                                            GoogleFonts.getFont(
+                                                                    fontName)
+                                                                .fontFamily
+                                                        ? defaultPalette
+                                                            .tertiary
+                                                        : defaultPalette
+                                                            .primary,
+                                                    foregroundColor:
+                                                        defaultPalette
+                                                            .extras[0],
+                                                    minimumSize: Size(75, 75),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      side: item.textEditorController
+                                                                  .getSelectionStyle()
+                                                                  .attributes[
+                                                                      Attribute
+                                                                          .font
+                                                                          .key]
+                                                                  ?.value !=
+                                                              GoogleFonts.getFont(
+                                                                      fontName)
+                                                                  .fontFamily
+                                                          ? BorderSide(
+                                                              color: defaultPalette
+                                                                  .extras[0]
+                                                                  .withOpacity(
+                                                                      0.2),
+                                                              width: 0.8)
+                                                          : BorderSide.none,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    item.textEditorController
+                                                        .formatSelection(
+                                                      Attribute.fromKeyValue(
+                                                        Attribute.font.key,
+                                                        GoogleFonts.getFont(
+                                                                        fontName)
+                                                                    .fontFamily ==
+                                                                'Clear'
+                                                            ? null
+                                                            : GoogleFonts
+                                                                    .getFont(
+                                                                        fontName)
+                                                                .fontFamily,
+                                                      ),
+                                                    );
+                                                    setState(() {});
+                                                  },
+                                                  child: Text(
+                                                    fontName,
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.getFont(
+                                                        fontName,
+                                                        fontSize: 14),
+                                                    maxLines: 1,
+                                                  )),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }).toList()
+                                  
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                                right: 30,
+                                top: 30,
+                                width: width,
+                                child: Text('Fonts',
+                                textAlign: TextAlign.end,
+                                    style: GoogleFonts.pressStart2p(
+                                        color: defaultPalette.primary,
+                                        fontSize: 30)))
+                          ],
+                        ),
+                      ),
+
+                    if (index == 1)
+                      //FORMATTING ALL THAT PAGE  //Desktop WEB
+                      Positioned.fill(
+                        child: SizedBox(
+                          width: width,
+                          child: Stack(
+                            children: [
+                              // BOLD ITALIC UNDERLINE STRIKETHRU
+                              Positioned(
+                                left: 20,
+                                top: 0,
+                                width: width,
+                                height: iconHeight * 3,
+                                child: GridView.builder(
+                                  physics: NeverScrollableScrollPhysics(),
+                                  itemCount: 4,
+                                  padding: EdgeInsets.all(0),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: crossAxisCount,
+                                          crossAxisSpacing: 0,
+                                          mainAxisSpacing: 0,
+                                          // mainAxisExtent: width/3
+                                          childAspectRatio: 1),
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    switch (index) {
+                                      case 0:
+                                        // BOLD
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.bold),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            final currentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(
+                                                    Attribute.bold.key);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.bold, null)
+                                                  : Attribute.bold,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.bold,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 1:
+                                        //ITALIC
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.italic),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            final currentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(
+                                                    Attribute.italic.key);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.italic, null)
+                                                  : Attribute.italic,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.italic,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 2:
+                                        //UNDERLINE
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.underline),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            final currentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(
+                                                    Attribute.underline.key);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.underline, null)
+                                                  : Attribute.underline,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.underline,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 3:
+                                        //STRIKETHRU
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.strikeThrough),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            final currentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(Attribute
+                                                    .strikeThrough.key);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.strikeThrough,
+                                                      null)
+                                                  : Attribute.strikeThrough,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.strikethrough,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      default:
+                                        return Container();
+                                    }
+                                  },
+                                ),
+                              ),
+                              // SUPER, SUBS, LTR, RTL
+                              Positioned(
+                                top: width < 200
+                                    ? iconWidth * 2.2
+                                    : iconWidth * 1.2,
+                                left: 25,
+                                width: width - 10,
+                                height: iconHeight * 2,
+                                child: GridView.builder(
+                                  physics: NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: 0,
+                                    mainAxisSpacing: 0,
+                                    childAspectRatio:
+                                        width < (width / vDividerPosition) / 2.2
+                                            ? 1
+                                            : width <
+                                                    (width / vDividerPosition) /
+                                                        1.75
+                                                ? 1.3
+                                                : 1,
+                                  ),
+                                  itemCount: 4,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    switch (index) {
+                                      case 0:
+                                        //SUBSCRIPT
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.subscript),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.subscript);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.subscript, null)
+                                                  : Attribute.subscript,
+                                            );
+                                            final uncurrentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(
+                                                    Attribute.superscript.key);
+                                            if (uncurrentValue &&
+                                                currentValue) {
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.clone(
+                                                    Attribute.subscript, null),
+                                              );
+                                              currentValue = _getIsToggled(
+                                                  item.textEditorController
+                                                      .getSelectionStyle()
+                                                      .attributes,
+                                                  Attribute.subscript);
+                                            }
+                                            print(
+                                                '$uncurrentValue && $currentValue');
+                                            if (uncurrentValue &&
+                                                !currentValue) {
+                                              print('un');
+                                              print(uncurrentValue);
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                      Attribute.clone(
+                                                          Attribute.superscript,
+                                                          null));
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.subscript,
+                                              );
+                                              setState(() {
+                                                currentValue = _getIsToggled(
+                                                    item.textEditorController
+                                                        .getSelectionStyle()
+                                                        .attributes,
+                                                    Attribute.subscript);
+                                              });
+                                              print('cu');
+                                              print(currentValue);
+                                              return;
+                                            }
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.subscript, null)
+                                                  : Attribute.subscript,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.subscript,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 1:
+                                        //SUPERSCIPT
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.superscript),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.superscript);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.superscript,
+                                                      null)
+                                                  : Attribute.superscript,
+                                            );
+                                            final uncurrentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(
+                                                    Attribute.subscript.key);
+                                            if (uncurrentValue &&
+                                                currentValue) {
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.clone(
+                                                    Attribute.superscript,
+                                                    null),
+                                              );
+                                              currentValue = _getIsToggled(
+                                                  item.textEditorController
+                                                      .getSelectionStyle()
+                                                      .attributes,
+                                                  Attribute.superscript);
+                                            }
+                                            print(
+                                                '$uncurrentValue && $currentValue');
+                                            if (uncurrentValue &&
+                                                !currentValue) {
+                                              print('un');
+                                              print(uncurrentValue);
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                      Attribute.clone(
+                                                          Attribute.subscript,
+                                                          null));
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.superscript,
+                                              );
+                                              setState(() {
+                                                currentValue = _getIsToggled(
+                                                    item.textEditorController
+                                                        .getSelectionStyle()
+                                                        .attributes,
+                                                    Attribute.superscript);
+                                              });
+                                              print('cu');
+                                              print(currentValue);
+                                              return;
+                                            }
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.superscript,
+                                                      null)
+                                                  : Attribute.superscript,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.superscript,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 2:
+                                        //DIRECTION LTR
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: !_getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.rtl),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.rtl);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.rtl, null)
+                                                  : Attribute.rtl,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.text_direction_ltr,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 3:
+                                        //DIRECTION RTL
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.rtl),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.rtl);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.rtl, null)
+                                                  : Attribute.rtl,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.text_direction_rtl,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+
+                                      default:
+                                        return Container();
+                                    }
+                                  },
+                                ),
+                              ),
+                              // LEFT RIGHT CENTER JUSTIFY
+                              Positioned(
+                                top: width < 200
+                                    ? iconWidth * 2.2
+                                        //height of the previous wdiget
+                                        +
+                                        iconHeight * 2.2
+                                    : iconWidth * 1.2
+                                        //height of the previous wdiget
+                                        +
+                                        iconHeight * 1.2,
+                                left: 25,
+                                width: width - 10,
+                                height: iconHeight * 2,
+                                child: GridView.builder(
+                                  physics: NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: 0,
+                                    mainAxisSpacing: 0,
+                                    childAspectRatio:
+                                        width < (width / vDividerPosition) / 2.2
+                                            ? 1
+                                            : width <
+                                                    (width / vDividerPosition) /
+                                                        1.75
+                                                ? 1.3
+                                                : 1,
+                                  ),
+                                  itemCount: 4,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    switch (index) {
+                                      case 0:
+                                        //LEFT ALIGN
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.leftAlignment),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.leftAlignment);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.leftAlignment,
+                                                      null)
+                                                  : Attribute.leftAlignment,
+                                            );
+                                            final uncurrentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(Attribute
+                                                    .rightAlignment.key);
+                                            if (uncurrentValue &&
+                                                currentValue) {
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.clone(
+                                                    Attribute.leftAlignment,
+                                                    null),
+                                              );
+                                              currentValue = _getIsToggled(
+                                                  item.textEditorController
+                                                      .getSelectionStyle()
+                                                      .attributes,
+                                                  Attribute.leftAlignment);
+                                            }
+                                            print(
+                                                '$uncurrentValue && $currentValue');
+                                            if (uncurrentValue &&
+                                                !currentValue) {
+                                              print('un');
+                                              print(uncurrentValue);
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                      Attribute.clone(
+                                                          Attribute
+                                                              .rightAlignment,
+                                                          null));
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.leftAlignment,
+                                              );
+                                              setState(() {
+                                                currentValue = _getIsToggled(
+                                                    item.textEditorController
+                                                        .getSelectionStyle()
+                                                        .attributes,
+                                                    Attribute.leftAlignment);
+                                              });
+                                              print('cu');
+                                              print(currentValue);
+                                              return;
+                                            }
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.leftAlignment,
+                                                      null)
+                                                  : Attribute.leftAlignment,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.align_left,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 1:
+                                        //RIGHT ALIGN
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.rightAlignment),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.rightAlignment);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.rightAlignment,
+                                                      null)
+                                                  : Attribute.rightAlignment,
+                                            );
+                                            final uncurrentValue = item
+                                                .textEditorController
+                                                .getSelectionStyle()
+                                                .attributes
+                                                .containsKey(Attribute
+                                                    .leftAlignment.key);
+                                            if (uncurrentValue &&
+                                                currentValue) {
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.clone(
+                                                    Attribute.rightAlignment,
+                                                    null),
+                                              );
+                                              currentValue = _getIsToggled(
+                                                  item.textEditorController
+                                                      .getSelectionStyle()
+                                                      .attributes,
+                                                  Attribute.rightAlignment);
+                                            }
+                                            print(
+                                                '$uncurrentValue && $currentValue');
+                                            if (uncurrentValue &&
+                                                !currentValue) {
+                                              print('un');
+                                              print(uncurrentValue);
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                      Attribute.clone(
+                                                          Attribute
+                                                              .leftAlignment,
+                                                          null));
+                                              item.textEditorController
+                                                  .formatSelection(
+                                                Attribute.rightAlignment,
+                                              );
+                                              setState(() {
+                                                currentValue = _getIsToggled(
+                                                    item.textEditorController
+                                                        .getSelectionStyle()
+                                                        .attributes,
+                                                    Attribute.rightAlignment);
+                                              });
+                                              print('cu');
+                                              print(currentValue);
+                                              return;
+                                            }
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.rightAlignment,
+                                                      null)
+                                                  : Attribute.rightAlignment,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.align_right,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 2:
+                                        //CENTER ALIGN
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.centerAlignment),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.centerAlignment);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute.centerAlignment,
+                                                      null)
+                                                  : Attribute.centerAlignment,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.align_center,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+                                      case 3:
+                                        //JUSTIFY ALIGN
+                                        return buildElevatedLayerButton(
+                                          buttonHeight: iconHeight,
+                                          buttonWidth: iconWidth,
+                                          toggleOnTap: true,
+                                          isTapped: _getIsToggled(
+                                              item.textEditorController
+                                                  .getSelectionStyle()
+                                                  .attributes,
+                                              Attribute.justifyAlignment),
+                                          animationDuration:
+                                              const Duration(milliseconds: 100),
+                                          animationCurve: Curves.ease,
+                                          onClick: () {
+                                            var currentValue = _getIsToggled(
+                                                item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes,
+                                                Attribute.justifyAlignment);
+                                            item.textEditorController
+                                                .formatSelection(
+                                              currentValue
+                                                  ? Attribute.clone(
+                                                      Attribute
+                                                          .justifyAlignment,
+                                                      null)
+                                                  : Attribute.justifyAlignment,
+                                            );
+                                          },
+                                          baseDecoration: BoxDecoration(
+                                            color: Colors.green,
+                                            border: Border.all(),
+                                          ),
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.align_justified,
+                                            color: Colors.black,
+                                            size: 20,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        );
+
+                                      default:
+                                        return Container();
+                                    }
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                top: width < 200
+                                    ? (iconWidth * 2.2 ) *
+                                        3
+                                    : (iconWidth * 1.2 ) *
+                                       3,
+                                left: 22,
+                                child: Container(
+                                  margin: EdgeInsets.only(left: 0,bottom: 30),
+                                  width: width,
+                                  height: 70 * 6,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        //Font Size TEXT FIELD PARENT
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: defaultPalette.primary,
+                                                border: Border.all(
+                                                    width: 2,
+                                                    strokeAlign: BorderSide
+                                                        .strokeAlignInside),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            height: 70,
+                                            width: width,
+                                            child: Row(
+                                              children: [
+                                                //Icon title slider field
+                                                Expanded(
+                                                  flex: (1600 * vDividerPosition)
+                                                      .ceil(),
+                                                  child: Stack(
+                                                    children: [
+                                                      //Row font and title
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          // fontSizeFocus.unfocus();
+                                                          fontSizeFocus
+                                                              .requestFocus();
+                                                        },
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: 5,
+                                                                  left: 5),
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              Expanded(
+                                                                  flex: 100,
+                                                                  child: Icon(
+                                                                    TablerIcons
+                                                                        .text_size,
+                                                                    size: 18,
+                                                                  )),
+                                                              vDividerPosition >
+                                                                      0.45
+                                                                  ? Expanded(
+                                                                      flex: 700,
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            18,
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .bottomLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          '  Font Size',
+                                                                          style: TextStyle(
+                                                                              fontSize:
+                                                                                  12,
+                                                                              textBaseline:
+                                                                                  TextBaseline.ideographic),
+                                                                        ),
+                                                                      ))
+                                                                  : Container(),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //TextField
+                                                      TextField(
+                                                        onTapOutside: (event) {
+                                                          // fontSizeFocus.unfocus();
+                                                        },
+                                                        onSubmitted: (value) {
+                                                          item.textEditorController
+                                                              .formatSelection(
+                                                            Attribute.clone(
+                                                                Attribute.size,
+                                                                value.toString()),
+                                                          );
+                                                        },
+                                                        focusNode: fontSizeFocus,
+                                                        controller:
+                                                            fontSizeController,
+                                                        inputFormatters: [
+                                                          NumericInputFormatter(
+                                                              maxValue: 100),
+                                                        ],
+                                                        style: GoogleFonts.lexend(
+                                                            color: defaultPalette
+                                                                .black
+                                                                .withOpacity(
+                                                                    fontSizeFocus
+                                                                            .hasFocus
+                                                                        ? 0.5
+                                                                        : 0.1),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: (80 *
+                                                                    vDividerPosition)
+                                                                .clamp(70, 100)),
+                                                        cursorColor:
+                                                            defaultPalette.black,
+                                                        // selectionControls: MaterialTextSelectionControls(),
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        scrollPadding:
+                                                            EdgeInsets.all(0),
+                                                        textAlignVertical:
+                                                            TextAlignVertical.top,
+                                                        decoration:
+                                                            InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.all(0),
+                                    
+                                                          // filled: true,
+                                                          // fillColor: defaultPalette.primary,
+                                                          enabledBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                        ),
+                                                        keyboardType:
+                                                            TextInputType.number,
+                                                      ),
+                                    
+                                                      //Balloon Slider
+                                                      Positioned(
+                                                        bottom: 0,
+                                                        width: width * 0.6,
+                                                        child: BalloonSlider(
+                                                            trackHeight: 15,
+                                                            thumbRadius: 7.5,
+                                                            showRope: true,
+                                                            color: defaultPalette
+                                                                .tertiary,
+                                                            ropeLength: 300 / 8,
+                                                            value: double.parse((item
+                                                                        .textEditorController
+                                                                        .getSelectionStyle()
+                                                                        .attributes[Attribute
+                                                                            .size
+                                                                            .key]
+                                                                        ?.value) ??
+                                                                    20.toString()) /
+                                                                100,
+                                                            onChanged: (val) {
+                                                              setState(() {
+                                                                item.textEditorController
+                                                                    .formatSelection(
+                                                                  Attribute.clone(
+                                                                      Attribute
+                                                                          .size,
+                                                                      (val * 100)
+                                                                          .toStringAsFixed(
+                                                                              0)),
+                                                                );
+                                                              });
+                                                            }),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                //+ -
+                                                Expanded(
+                                                  flex: vDividerPosition > 0.45
+                                                      ? (450 * vDividerPosition)
+                                                          .ceil()
+                                                      : 1,
+                                                  child: Stack(
+                                                    // mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      Positioned(
+                                                        top: -4,
+                                                        right: 4,
+                                                        height: 35,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          // isTapped: false,
+                                                          // toggleOnTap: true,
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = int.parse(
+                                                                      fontSizeController
+                                                                          .text) +
+                                                                  1;
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                Attribute.clone(
+                                                                    Attribute
+                                                                        .size,
+                                                                    val.toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear.add,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Positioned(
+                                                        bottom: 5,
+                                                        right: 4,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          // isTapped: false,
+                                                          // toggleOnTap: true,
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = (int.parse(
+                                                                          fontSizeController
+                                                                              .text) -
+                                                                      1)
+                                                                  .clamp(0, 100);
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                Attribute.clone(
+                                                                    Attribute
+                                                                        .size,
+                                                                    val.toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear
+                                                                .minus,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        //
+                                        //
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        //LetterSpacing Parentt
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: defaultPalette.primary,
+                                                border: Border.all(
+                                                    width: 2,
+                                                    strokeAlign: BorderSide
+                                                        .strokeAlignInside),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            height: 70,
+                                            width: width,
+                                            child: Row(
+                                              children: [
+                                                //LetterSpacing
+                                                //Icon title slider field
+                                                Expanded(
+                                                  flex: (1600 * vDividerPosition)
+                                                      .ceil(),
+                                                  child: Stack(
+                                                    children: [
+                                                      //LetterSpacing
+                                                      //Row font and title
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          letterSpaceFocus
+                                                              .requestFocus();
+                                                        },
+                                                        //LetterSpacing
+                                                        //Row font and title
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: 5,
+                                                                  left: 5),
+                                                          //LetterSpacing
+                                                          //Row font and title
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              //LetterSpacing
+                                                              //icon
+                                                              Expanded(
+                                                                  flex: 100,
+                                                                  child: Icon(
+                                                                    TablerIcons
+                                                                        .letter_spacing,
+                                                                    size: 18,
+                                                                  )),
+                                                              //LetterSpacing
+                                                              //title
+                                                              vDividerPosition >
+                                                                      0.45
+                                                                  ? Expanded(
+                                                                      flex: 700,
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            18,
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .bottomLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          '  Letter Space',
+                                                                          style: TextStyle(
+                                                                              fontSize:
+                                                                                  12,
+                                                                              textBaseline:
+                                                                                  TextBaseline.ideographic),
+                                                                        ),
+                                                                      ))
+                                                                  : Container(),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //LetterSpacing
+                                                      //TextField
+                                                      TextField(
+                                                        onTapOutside: (event) {
+                                                          // fontSizeFocus.unfocus();
+                                                        },
+                                                        onSubmitted: (value) {
+                                                          item.textEditorController
+                                                              .formatSelection(
+                                                            LetterSpacingAttribute(
+                                                                (value)
+                                                                    .toString()),
+                                                          );
+                                                        },
+                                                        focusNode:
+                                                            letterSpaceFocus,
+                                                        controller:
+                                                            letterSpaceController,
+                                                        inputFormatters: [
+                                                          NumericInputFormatter(
+                                                              maxValue: 100),
+                                                        ],
+                                                        style: GoogleFonts.lexend(
+                                                            color: defaultPalette
+                                                                .black
+                                                                .withOpacity(
+                                                                    fontSizeFocus
+                                                                            .hasFocus
+                                                                        ? 0.5
+                                                                        : 0.1),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: (80 *
+                                                                    vDividerPosition)
+                                                                .clamp(70, 100)),
+                                                        cursorColor:
+                                                            defaultPalette.black,
+                                                        // selectionControls: MaterialTextSelectionControls(),
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        scrollPadding:
+                                                            EdgeInsets.all(0),
+                                                        textAlignVertical:
+                                                            TextAlignVertical.top,
+                                                        decoration:
+                                                            InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.all(0),
+                                    
+                                                          // filled: true,
+                                                          // fillColor: defaultPalette.primary,
+                                                          enabledBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                        ),
+                                                        keyboardType:
+                                                            TextInputType.number,
+                                                      ),
+                                                      //LetterSpacing
+                                                      //Balloon Slider
+                                                      Positioned(
+                                                        bottom: 0,
+                                                        width: width * 0.6,
+                                                        child: BalloonSlider(
+                                                            trackHeight: 15,
+                                                            thumbRadius: 7.5,
+                                                            showRope: true,
+                                                            color: defaultPalette
+                                                                .tertiary,
+                                                            ropeLength: 300 / 8,
+                                                            value: double.parse((item
+                                                                        .textEditorController
+                                                                        .getSelectionStyle()
+                                                                        .attributes[
+                                                                            LetterSpacingAttribute
+                                                                                ._key]
+                                                                        ?.value) ??
+                                                                    0.toString()) /
+                                                                100,
+                                                            onChanged: (val) {
+                                                              setState(() {
+                                                                item.textEditorController
+                                                                    .formatSelection(
+                                                                  LetterSpacingAttribute(
+                                                                      (val * 100)
+                                                                          .ceil()
+                                                                          .toString()),
+                                                                );
+                                                              });
+                                                            }),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                //LetterSpacing
+                                                //+ -
+                                                Expanded(
+                                                  flex: vDividerPosition > 0.45
+                                                      ? (450 * vDividerPosition)
+                                                          .ceil()
+                                                      : 1,
+                                                  child: Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        top: -4,
+                                                        right: 4,
+                                                        height: 35,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = int.parse(
+                                                                      letterSpaceController
+                                                                          .text) +
+                                                                  1;
+                                    
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                LetterSpacingAttribute(
+                                                                    (val)
+                                                                        .toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear.add,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Positioned(
+                                                        bottom: 5,
+                                                        right: 4,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          // isTapped: false,
+                                                          // toggleOnTap: true,
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = (int.parse(
+                                                                          letterSpaceController
+                                                                              .text) -
+                                                                      1)
+                                                                  .clamp(0, 100);
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                LetterSpacingAttribute(
+                                                                    (val)
+                                                                        .toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear
+                                                                .minus,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                    
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        //WordSpacing
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: defaultPalette.primary,
+                                                border: Border.all(
+                                                    width: 2,
+                                                    strokeAlign: BorderSide
+                                                        .strokeAlignInside),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            height: 70,
+                                            width: width,
+                                            child: Row(
+                                              children: [
+                                                //WordSpacing
+                                                //Icon title slider field
+                                                Expanded(
+                                                  flex: (1600 * vDividerPosition)
+                                                      .ceil(),
+                                                  child: Stack(
+                                                    children: [
+                                                      //WordSpacing
+                                                      //Row font and title
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          wordSpaceFocus
+                                                              .requestFocus();
+                                                        },
+                                                        //WordSpacing
+                                                        //Row font and title
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: 5,
+                                                                  left: 5),
+                                                          //WordSpacing
+                                                          //Row font and title
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              //WordSpacing
+                                                              //icon
+                                                              Expanded(
+                                                                  flex: 100,
+                                                                  child: Icon(
+                                                                    TablerIcons
+                                                                        .spacing_horizontal,
+                                                                    size: 18,
+                                                                  )),
+                                                              //WordSpacing
+                                                              //title
+                                                              vDividerPosition >
+                                                                      0.45
+                                                                  ? Expanded(
+                                                                      flex: 700,
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            18,
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .bottomLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          '  Word Space',
+                                                                          style: TextStyle(
+                                                                              fontSize:
+                                                                                  12,
+                                                                              textBaseline:
+                                                                                  TextBaseline.ideographic),
+                                                                        ),
+                                                                      ))
+                                                                  : Container(),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //WordSpacing
+                                                      //TextField
+                                                      TextField(
+                                                        onTapOutside: (event) {
+                                                          // fontSizeFocus.unfocus();
+                                                        },
+                                                        onSubmitted: (value) {
+                                                          item.textEditorController
+                                                              .formatSelection(
+                                                            WordSpacingAttribute(
+                                                                (value)
+                                                                    .toString()),
+                                                          );
+                                                        },
+                                                        focusNode: wordSpaceFocus,
+                                                        controller:
+                                                            wordSpaceController,
+                                                        inputFormatters: [
+                                                          NumericInputFormatter(
+                                                              maxValue: 100),
+                                                        ],
+                                                        style: GoogleFonts.lexend(
+                                                            color: defaultPalette
+                                                                .black
+                                                                .withOpacity(
+                                                                    fontSizeFocus
+                                                                            .hasFocus
+                                                                        ? 0.5
+                                                                        : 0.1),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: (80 *
+                                                                    vDividerPosition)
+                                                                .clamp(70, 100)),
+                                                        cursorColor:
+                                                            defaultPalette.black,
+                                                        // selectionControls: MaterialTextSelectionControls(),
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        scrollPadding:
+                                                            EdgeInsets.all(0),
+                                                        textAlignVertical:
+                                                            TextAlignVertical.top,
+                                                        decoration:
+                                                            InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.all(0),
+                                    
+                                                          // filled: true,
+                                                          // fillColor: defaultPalette.primary,
+                                                          enabledBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                        ),
+                                                        keyboardType:
+                                                            TextInputType.number,
+                                                      ),
+                                                      //WordSpacing
+                                                      //Balloon Slider
+                                                      Positioned(
+                                                        bottom: 0,
+                                                        width: width * 0.6,
+                                                        child: BalloonSlider(
+                                                            trackHeight: 15,
+                                                            thumbRadius: 7.5,
+                                                            showRope: true,
+                                                            color: defaultPalette
+                                                                .tertiary,
+                                                            ropeLength: 300 / 8,
+                                                            value: double.parse((item
+                                                                        .textEditorController
+                                                                        .getSelectionStyle()
+                                                                        .attributes[
+                                                                            WordSpacingAttribute
+                                                                                ._key]
+                                                                        ?.value) ??
+                                                                    0.toString()) /
+                                                                100,
+                                                            onChanged: (val) {
+                                                              setState(() {
+                                                                item.textEditorController
+                                                                    .formatSelection(
+                                                                  WordSpacingAttribute(
+                                                                      (val * 100)
+                                                                          .ceil()
+                                                                          .toString()),
+                                                                );
+                                                              });
+                                                            }),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                //WordSpacing
+                                                //+ -
+                                                Expanded(
+                                                  flex: vDividerPosition > 0.45
+                                                      ? (450 * vDividerPosition)
+                                                          .ceil()
+                                                      : 1,
+                                                  child: Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        top: -4,
+                                                        right: 4,
+                                                        height: 35,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = int.parse(
+                                                                      wordSpaceController
+                                                                          .text) +
+                                                                  1;
+                                    
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                WordSpacingAttribute(
+                                                                    (val)
+                                                                        .toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear.add,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Positioned(
+                                                        bottom: 5,
+                                                        right: 4,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          // isTapped: false,
+                                                          // toggleOnTap: true,
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = (int.parse(
+                                                                          wordSpaceController
+                                                                              .text) -
+                                                                      1)
+                                                                  .clamp(0, 100);
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                WordSpacingAttribute(
+                                                                    (val)
+                                                                        .toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear
+                                                                .minus,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        //
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        //LineHeight
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: defaultPalette.primary,
+                                                border: Border.all(
+                                                    width: 2,
+                                                    strokeAlign: BorderSide
+                                                        .strokeAlignInside),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            height: 70,
+                                            width: width,
+                                            child: Row(
+                                              children: [
+                                                //LineHeight
+                                                //Icon title slider field
+                                                Expanded(
+                                                  flex: (1600 * vDividerPosition)
+                                                      .ceil(),
+                                                  child: Stack(
+                                                    children: [
+                                                      //LineHeight
+                                                      //Row font and title
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          lineSpaceFocus
+                                                              .requestFocus();
+                                                        },
+                                                        //LineHeight
+                                                        //Row font and title
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: 5,
+                                                                  left: 5),
+                                                          //LineHeight
+                                                          //Row font and title
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceEvenly,
+                                                            children: [
+                                                              //LineHeight
+                                                              //icon
+                                                              Expanded(
+                                                                  flex: 100,
+                                                                  child: Icon(
+                                                                    TablerIcons
+                                                                        .spacing_vertical,
+                                                                    size: 18,
+                                                                  )),
+                                                              //LineHeight
+                                                              //title
+                                                              vDividerPosition >
+                                                                      0.45
+                                                                  ? Expanded(
+                                                                      flex: 700,
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            18,
+                                                                        alignment:
+                                                                            Alignment
+                                                                                .bottomLeft,
+                                                                        child:
+                                                                            Text(
+                                                                          '  Line Space',
+                                                                          style: TextStyle(
+                                                                              fontSize:
+                                                                                  12,
+                                                                              textBaseline:
+                                                                                  TextBaseline.ideographic),
+                                                                        ),
+                                                                      ))
+                                                                  : Container(),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //LineHeight
+                                                      //TextField
+                                                      TextField(
+                                                        onTapOutside: (event) {
+                                                          // fontSizeFocus.unfocus();
+                                                        },
+                                                        onSubmitted: (value) {
+                                                          item.textEditorController
+                                                              .formatSelection(
+                                                            LineHeightAttribute(
+                                                                (value)
+                                                                    .toString()),
+                                                          );
+                                                        },
+                                                        focusNode: lineSpaceFocus,
+                                                        controller:
+                                                            lineSpaceController,
+                                                        inputFormatters: [
+                                                          NumericInputFormatter(
+                                                              maxValue: 100),
+                                                        ],
+                                                        style: GoogleFonts.lexend(
+                                                            color: defaultPalette
+                                                                .black
+                                                                .withOpacity(
+                                                                    fontSizeFocus
+                                                                            .hasFocus
+                                                                        ? 0.5
+                                                                        : 0.1),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: (80 *
+                                                                    vDividerPosition)
+                                                                .clamp(70, 100)),
+                                                        cursorColor:
+                                                            defaultPalette.black,
+                                                        // selectionControls: MaterialTextSelectionControls(),
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                        scrollPadding:
+                                                            EdgeInsets.all(0),
+                                                        textAlignVertical:
+                                                            TextAlignVertical.top,
+                                                        decoration:
+                                                            InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.all(0),
+                                    
+                                                          // filled: true,
+                                                          // fillColor: defaultPalette.primary,
+                                                          enabledBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 2,
+                                                                color: defaultPalette
+                                                                    .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                    2.0), // Same as border
+                                                          ),
+                                                        ),
+                                                        keyboardType:
+                                                            TextInputType.number,
+                                                      ),
+                                                      //LineHeight
+                                                      //Balloon Slider
+                                                      Positioned(
+                                                        bottom: 0,
+                                                        width: width * 0.6,
+                                                        child: BalloonSlider(
+                                                            trackHeight: 15,
+                                                            thumbRadius: 7.5,
+                                                            showRope: true,
+                                                            color: defaultPalette
+                                                                .tertiary,
+                                                            ropeLength: 300 / 8,
+                                                            value: double.parse((item
+                                                                        .textEditorController
+                                                                        .getSelectionStyle()
+                                                                        .attributes[
+                                                                            LineHeightAttribute
+                                                                                ._key]
+                                                                        ?.value) ??
+                                                                    0.toString()) /
+                                                                100,
+                                                            onChanged: (val) {
+                                                              setState(() {
+                                                                item.textEditorController
+                                                                    .formatSelection(
+                                                                  LineHeightAttribute(
+                                                                      (val * 100)
+                                                                          .ceil()
+                                                                          .toString()),
+                                                                );
+                                                              });
+                                                            }),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                //LineHeight
+                                                //+ -
+                                                Expanded(
+                                                  flex: vDividerPosition > 0.45
+                                                      ? (450 * vDividerPosition)
+                                                          .ceil()
+                                                      : 1,
+                                                  child: Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        top: -4,
+                                                        right: 4,
+                                                        height: 35,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = int.parse(
+                                                                      lineSpaceController
+                                                                          .text) +
+                                                                  1;
+                                    
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                LineHeightAttribute(
+                                                                    (val)
+                                                                        .toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear.add,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Positioned(
+                                                        bottom: 5,
+                                                        right: 4,
+                                                        child:
+                                                            ElevatedLayerButton(
+                                                          // isTapped: false,
+                                                          // toggleOnTap: true,
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var val = (int.parse(
+                                                                          lineSpaceController
+                                                                              .text) -
+                                                                      1)
+                                                                  .clamp(0, 100);
+                                                              item.textEditorController
+                                                                  .formatSelection(
+                                                                LineHeightAttribute(
+                                                                    (val)
+                                                                        .toString()),
+                                                              );
+                                                            });
+                                                          },
+                                                          buttonHeight: 32,
+                                                          buttonWidth: 65 *
+                                                              vDividerPosition,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(100),
+                                                          animationDuration:
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                          animationCurve:
+                                                              Curves.ease,
+                                                          topDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: Icon(
+                                                            IconsaxPlusLinear
+                                                                .minus,
+                                                            size: 20,
+                                                          ),
+                                                          baseDecoration:
+                                                              BoxDecoration(
+                                                            color: Colors.green,
+                                                            border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        //
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                );
               }),
         );
 
-      
       default:
     }
 
@@ -12796,7 +14680,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   ),
                 ),
               ),
-      
+
               Positioned.fill(
                 child: AnimatedOpacity(
                   opacity: currentCardIndex == index
@@ -12821,7 +14705,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   ),
                 ),
               ),
-      
+
               // PROPERTIES Tab Parent
               Positioned(
                 top: 0,
@@ -12841,13 +14725,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       child: ScrollConfiguration(
                         behavior: ScrollBehavior().copyWith(scrollbars: false),
                         child: SingleChildScrollView(
-                          physics: const CustomScrollPhysics(scrollFactor: 0.01),
+                          physics:
+                              const CustomScrollPhysics(scrollFactor: 0.01),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               //MINI PREVIEW AND PAGE NUMBER AND NEXTPREV PARENT PARENT
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   //PAGE PROPERTIES FOR {{{MINI PAGE RENDER}}}
                                   Container(
@@ -12858,7 +14744,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       children: [
                                         //{{{GRAPH}}}
                                         ClipRRect(
-                                          borderRadius: BorderRadius.circular(25),
+                                          borderRadius:
+                                              BorderRadius.circular(25),
                                           child: Container(
                                             height: 120,
                                             // width: ((sWidth * wH2DividerPosition)/2)<150?100:((sWidth * wH2DividerPosition)/2),
@@ -12953,20 +14840,24 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ),
                                   //PAGE NUMBER AND DELETE AND NEXT-PREV
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      if (((sWidth * wH2DividerPosition) - 145) >
+                                      if (((sWidth * wH2DividerPosition) -
+                                              145) >
                                           66)
                                         Container(
                                             height: 90,
-                                            width: (sWidth * wH2DividerPosition) -
+                                            width: (sWidth *
+                                                    wH2DividerPosition) -
                                                 150,
                                             alignment: Alignment.center,
                                             child: CountingAnimation(
-                                                value: documentPropertiesList[ind]
-                                                    .pageNumberController
-                                                    .text,
+                                                value:
+                                                    documentPropertiesList[ind]
+                                                        .pageNumberController
+                                                        .text,
                                                 scrollCount: 3,
                                                 textStyle:
                                                     GoogleFonts.pressStart2p(
@@ -12976,11 +14867,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       Container(
                                         width:
                                             (sWidth * wH2DividerPosition) - 145,
-                                        height:
-                                            (sWidth * wH2DividerPosition) - 145 >
-                                                    66
-                                                ? 20
-                                                : 120,
+                                        height: (sWidth * wH2DividerPosition) -
+                                                    145 >
+                                                66
+                                            ? 20
+                                            : 120,
                                         child: Flex(
                                           direction:
                                               (sWidth * wH2DividerPosition) -
@@ -13023,8 +14914,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                         (1 -
                                                                             vDividerPosition)))) +
                                                                 16),
-                                                        duration: const Duration(
-                                                            milliseconds: 100),
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    100),
                                                         curve: Curves.easeIn);
                                                     return;
                                                   }
@@ -13037,7 +14930,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           duration:
                                                               Durations.short1,
                                                           curve: Curves.linear);
-      
+
                                                   pdfScrollController.animateTo(
                                                       currentPageIndex *
                                                           ((1.41428571429 *
@@ -13086,7 +14979,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   if (pageCount ==
                                                       (currentPageIndex + 1)) {
                                                     _addPdfPage();
-      
+
                                                     currentPageIndex++;
                                                     pdfScrollController.animateTo(
                                                         currentPageIndex *
@@ -13096,15 +14989,17 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                                 vDividerPosition)) -
                                                                         6)) +
                                                                 6),
-                                                        duration: const Duration(
-                                                            milliseconds: 100),
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    100),
                                                         curve: Curves.easeIn);
-      
+
                                                     return;
                                                   }
-      
+
                                                   currentPageIndex++;
-      
+
                                                   pdfScrollController.animateTo(
                                                       currentPageIndex *
                                                           ((1.41428571429 *
@@ -13133,7 +15028,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ],
                               ),
                               //FORMATS TITLE
-      
+
                               Container(
                                 width: sWidth * wH2DividerPosition - 45,
                                 height: 15,
@@ -13148,7 +15043,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   style: GoogleFonts.bungee(fontSize: 10),
                                 ),
                               ),
-      
+
                               //ORIENTATIONS BUTTONS
                               Padding(
                                 padding: const EdgeInsets.only(right: 5.0),
@@ -13161,8 +15056,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       onTap: () {
                                         setState(() {
                                           addToTheLeft = true;
-      
-                                          documentPropertiesList[currentPageIndex]
+
+                                          documentPropertiesList[
+                                                      currentPageIndex]
                                                   .orientationController =
                                               pw.PageOrientation.portrait;
                                         });
@@ -13188,9 +15084,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       child: Stack(
                                         children: [
                                           Container(
-                                            width: (sWidth * wH2DividerPosition -
-                                                    65) /
-                                                2,
+                                            width:
+                                                (sWidth * wH2DividerPosition -
+                                                        65) /
+                                                    2,
                                             height: 30,
                                             alignment: Alignment.topCenter,
                                             margin: EdgeInsets.only(top: 10),
@@ -13207,7 +15104,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             duration: addToTheLeft
                                                 ? Duration.zero
                                                 : Duration.zero,
-                                            width: (sWidth * wH2DividerPosition -
+                                            width: (sWidth *
+                                                        wH2DividerPosition -
                                                     (addToTheLeft ? 65 : 69)) /
                                                 2,
                                             height: addToTheLeft ? 30 : 28,
@@ -13264,8 +15162,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       onTap: () {
                                         setState(() {
                                           addToTheRight = true;
-      
-                                          documentPropertiesList[currentPageIndex]
+
+                                          documentPropertiesList[
+                                                      currentPageIndex]
                                                   .orientationController =
                                               pw.PageOrientation.landscape;
                                         });
@@ -13291,9 +15190,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       child: Stack(
                                         children: [
                                           Container(
-                                            width: (sWidth * wH2DividerPosition -
-                                                    55) /
-                                                2,
+                                            width:
+                                                (sWidth * wH2DividerPosition -
+                                                        55) /
+                                                    2,
                                             height: 30,
                                             alignment: Alignment.topCenter,
                                             margin: EdgeInsets.only(top: 10),
@@ -13308,7 +15208,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           ),
                                           AnimatedContainer(
                                             duration: Duration.zero,
-                                            width: (sWidth * wH2DividerPosition -
+                                            width: (sWidth *
+                                                        wH2DividerPosition -
                                                     (addToTheRight ? 55 : 60)) /
                                                 2,
                                             height: addToTheRight ? 30 : 28,
@@ -13380,7 +15281,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-      
+
                               //
                               //OPERATIONS BUTTONS
                               Padding(
@@ -13391,7 +15292,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   children: [
                                     SizedBox(
                                       width:
-                                          (sWidth * wH2DividerPosition - 65) / 2,
+                                          (sWidth * wH2DividerPosition - 65) /
+                                              2,
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
@@ -13408,8 +15310,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             onToggle: (menuOpen) {
                                               if (!menuOpen) {
                                                 opsAddPieController.closeMenu();
-                                                opsMovePieController.closeMenu();
-                                                opsCopyPieController.closeMenu();
+                                                opsMovePieController
+                                                    .closeMenu();
+                                                opsCopyPieController
+                                                    .closeMenu();
                                                 opsFormatPieController
                                                     .closeMenu();
                                               }
@@ -13431,7 +15335,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 menuAlignment: Alignment.center,
                                                 pointerSize: 20,
                                                 menuDisplacement: Offset(0, 4),
-                                                tooltipPadding: EdgeInsets.all(5),
+                                                tooltipPadding:
+                                                    EdgeInsets.all(5),
                                                 tooltipTextStyle:
                                                     GoogleFonts.bungee(
                                                         fontSize: 20),
@@ -13450,8 +15355,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           .extras[0],
                                                     ))),
                                             child: Container(
-                                              margin:
-                                                  const EdgeInsets.only(top: 8.0),
+                                              margin: const EdgeInsets.only(
+                                                  top: 8.0),
                                               // padding: const EdgeInsets.all(1),
                                               child: IconButton.filled(
                                                   style: IconButton.styleFrom(
@@ -13465,7 +15370,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         vertical: 10.0,
                                                         horizontal:
                                                             2), // Padding around the icon
-                                                    shape: RoundedRectangleBorder(
+                                                    shape:
+                                                        RoundedRectangleBorder(
                                                       // Custom button shape
                                                       borderRadius:
                                                           BorderRadius.circular(
@@ -13501,8 +15407,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             onToggle: (menuOpen) {
                                               if (!menuOpen) {
                                                 opsAddPieController.closeMenu();
-                                                opsMovePieController.closeMenu();
-                                                opsCopyPieController.closeMenu();
+                                                opsMovePieController
+                                                    .closeMenu();
+                                                opsCopyPieController
+                                                    .closeMenu();
                                                 opsFormatPieController
                                                     .closeMenu();
                                               }
@@ -13524,7 +15432,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 menuAlignment: Alignment.center,
                                                 pointerSize: 20,
                                                 menuDisplacement: Offset(0, 4),
-                                                tooltipPadding: EdgeInsets.all(0),
+                                                tooltipPadding:
+                                                    EdgeInsets.all(0),
                                                 tooltipTextStyle:
                                                     GoogleFonts.bungee(
                                                         fontSize: 20),
@@ -13543,8 +15452,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           .extras[0],
                                                     ))),
                                             child: Container(
-                                              margin:
-                                                  const EdgeInsets.only(top: 8.0),
+                                              margin: const EdgeInsets.only(
+                                                  top: 8.0),
                                               // padding: const EdgeInsets.all(1),
                                               child: IconButton.filled(
                                                   style: IconButton.styleFrom(
@@ -13557,7 +15466,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     padding: EdgeInsets.symmetric(
                                                         vertical:
                                                             10.0), // Padding around the icon
-                                                    shape: RoundedRectangleBorder(
+                                                    shape:
+                                                        RoundedRectangleBorder(
                                                       // Custom button shape
                                                       borderRadius:
                                                           BorderRadius.circular(
@@ -13592,8 +15502,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             onToggle: (menuOpen) {
                                               if (!menuOpen) {
                                                 opsAddPieController.closeMenu();
-                                                opsMovePieController.closeMenu();
-                                                opsCopyPieController.closeMenu();
+                                                opsMovePieController
+                                                    .closeMenu();
+                                                opsCopyPieController
+                                                    .closeMenu();
                                                 opsFormatPieController
                                                     .closeMenu();
                                               }
@@ -13615,7 +15527,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 menuAlignment: Alignment.center,
                                                 pointerSize: 20,
                                                 menuDisplacement: Offset(0, 4),
-                                                tooltipPadding: EdgeInsets.all(5),
+                                                tooltipPadding:
+                                                    EdgeInsets.all(5),
                                                 tooltipTextStyle:
                                                     GoogleFonts.bungee(
                                                         fontSize: 20),
@@ -13634,18 +15547,20 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           .extras[0],
                                                     ))),
                                             child: Container(
-                                              margin:
-                                                  const EdgeInsets.only(top: 8.0),
+                                              margin: const EdgeInsets.only(
+                                                  top: 8.0),
                                               child: IconButton.filled(
                                                   style: IconButton.styleFrom(
                                                     backgroundColor:
-                                                        defaultPalette.extras[0],
+                                                        defaultPalette
+                                                            .extras[0],
                                                     foregroundColor:
                                                         defaultPalette.primary,
                                                     padding: const EdgeInsets
                                                         .symmetric(
                                                         vertical: 10.0),
-                                                    shape: RoundedRectangleBorder(
+                                                    shape:
+                                                        RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               5.0),
@@ -13665,8 +15580,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     opsCopyPieController
                                                         .openMenu();
                                                   },
-                                                  icon: const Icon(
-                                                      TablerIcons.dots_vertical)),
+                                                  icon: const Icon(TablerIcons
+                                                      .dots_vertical)),
                                             ),
                                           ),
                                         ],
@@ -13692,10 +15607,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       6)
                                                   .clamp(40, 400),
                                           spacing: 1,
-                                          radius: ((sWidth * wH2DividerPosition -
-                                                      65) /
-                                                  4)
-                                              .clamp(50, 400),
+                                          radius:
+                                              ((sWidth * wH2DividerPosition -
+                                                          65) /
+                                                      4)
+                                                  .clamp(50, 400),
                                           customAngle: -180,
                                           menuAlignment: Alignment.center,
                                           menuDisplacement: Offset(
@@ -13709,7 +15625,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           buttonTheme: PieButtonTheme(
                                               backgroundColor:
                                                   defaultPalette.primary,
-                                              iconColor: defaultPalette.extras[0],
+                                              iconColor:
+                                                  defaultPalette.extras[0],
                                               decoration: BoxDecoration(
                                                 border: Border.all(width: 3),
                                                 borderRadius:
@@ -13717,11 +15634,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 color: defaultPalette.extras[0],
                                               ))),
                                       child: Padding(
-                                        padding: const EdgeInsets.only(top: 8.0),
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
                                         child: IconButton.filled(
                                             style: IconButton.styleFrom(
-                                              backgroundColor: defaultPalette
-                                                  .extras[0], // Background color
+                                              backgroundColor:
+                                                  defaultPalette.extras[
+                                                      0], // Background color
                                               foregroundColor: defaultPalette
                                                   .primary, // Icon color
                                               // Elevation of the button
@@ -13741,7 +15660,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       2,
                                               minHeight: 42,
                                             ), // Reduces the overall size further
-                                            visualDensity: VisualDensity.compact,
+                                            visualDensity:
+                                                VisualDensity.compact,
                                             iconSize: 20,
                                             onPressed: () {
                                               opsFormatPieController.openMenu();
@@ -13753,7 +15673,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       2,
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment.spaceAround,
+                                                    MainAxisAlignment
+                                                        .spaceAround,
                                                 children: [
                                                   Icon(TablerIcons.file_smile),
                                                   Text(
@@ -13773,7 +15694,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-      
+
                               //STYLES TITLE
                               Container(
                                 width: sWidth * wH2DividerPosition - 45,
@@ -13789,11 +15710,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   style: GoogleFonts.bungee(fontSize: 10),
                                 ),
                               ),
-      
+
                               const SizedBox(
                                 height: 10,
                               ),
-      
+
                               // MARGIN Main
                               Column(
                                 children: [
@@ -13805,11 +15726,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         Expanded(
                                           child: Text(
                                             'Margin',
-                                            style:
-                                                GoogleFonts.bungee(fontSize: 13),
+                                            style: GoogleFonts.bungee(
+                                                fontSize: 13),
                                           ),
                                         ),
-      
+
                                         const SizedBox(
                                           width: 5,
                                         ),
@@ -13845,12 +15766,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               labelStyle: GoogleFonts.lexend(
                                                   color: defaultPalette.black),
                                               filled: true,
-                                              fillColor: !documentPropertiesList[
-                                                          currentPageIndex]
-                                                      .useIndividualMargins
-                                                  ? defaultPalette.primary
-                                                  : defaultPalette.primary
-                                                      .withOpacity(0.5),
+                                              fillColor:
+                                                  !documentPropertiesList[
+                                                              currentPageIndex]
+                                                          .useIndividualMargins
+                                                      ? defaultPalette.primary
+                                                      : defaultPalette.primary
+                                                          .withOpacity(0.5),
                                               border: OutlineInputBorder(
                                                 // borderSide: BorderSide(width: 5, color: defaultPalette.black),
                                                 borderRadius: BorderRadius.circular(
@@ -13859,7 +15781,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               enabledBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
                                                     width: 1.2,
-                                                    color: defaultPalette.black),
+                                                    color:
+                                                        defaultPalette.black),
                                                 borderRadius:
                                                     BorderRadius.circular(
                                                         5.0), // Same as border
@@ -13867,8 +15790,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               focusedBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
                                                     width: 1.5,
-                                                    color:
-                                                        defaultPalette.tertiary),
+                                                    color: defaultPalette
+                                                        .tertiary),
                                                 borderRadius:
                                                     BorderRadius.circular(
                                                         5.0), // Same as border
@@ -13881,7 +15804,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 color: defaultPalette.black),
                                             onChanged: (value) {
                                               // setState(() {
-      
+
                                               documentPropertiesList[
                                                       currentPageIndex]
                                                   .marginTopController
@@ -13907,7 +15830,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 .useIndividualMargins,
                                           ),
                                         ),
-      
+
                                         const SizedBox(
                                           width: 5,
                                         ),
@@ -13961,7 +15884,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           .marginAllController
                                                           .text;
                                                 });
-      
+
                                                 // _updatePdfPreview('');
                                               },
                                               child: const Icon(
@@ -14085,7 +16008,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     size: 20,
                                                   )
                                                 : const Icon(
-                                                    IconsaxPlusLinear.maximize_2,
+                                                    IconsaxPlusLinear
+                                                        .maximize_2,
                                                     size: 20,
                                                   ))
                                         // Text(
@@ -14093,7 +16017,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       ],
                                     ),
                                   ),
-      
+
                                   if (documentPropertiesList[currentPageIndex]
                                       .useIndividualMargins)
                                     Column(
@@ -14102,7 +16026,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           height: 10,
                                         ),
                                         //TOP AND BOTTOM Margin TiTle
-      
+
                                         Row(
                                           children: [
                                             //Top Margin text
@@ -14116,11 +16040,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       flex: 1,
                                                       child: Text(
                                                         'Top',
-                                                        style: GoogleFonts.bungee(
-                                                            fontSize: 11),
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14132,11 +16057,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           marginTopFocus
                                                               .unfocus();
                                                         },
-                                                        focusNode: marginTopFocus,
-                                                        controller:
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginTopController,
+                                                        focusNode:
+                                                            marginTopFocus,
+                                                        controller: documentPropertiesList[
+                                                                currentPageIndex]
+                                                            .marginTopController,
                                                         inputFormatters: [
                                                           // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                                                           NumericInputFormatter(
@@ -14156,7 +16081,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         textAlign:
                                                             TextAlign.center,
                                                         textAlignVertical:
-                                                            TextAlignVertical.top,
+                                                            TextAlignVertical
+                                                                .top,
                                                         decoration:
                                                             InputDecoration(
                                                           contentPadding:
@@ -14170,8 +16096,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               OutlineInputBorder(
                                                             // borderSide: BorderSide(width: 5, color: defaultPalette.black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Replace with your desired radius
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Replace with your desired radius
                                                           ),
                                                           enabledBorder:
                                                               OutlineInputBorder(
@@ -14181,28 +16108,32 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     defaultPalette
                                                                         .black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                           focusedBorder:
                                                               OutlineInputBorder(
                                                             borderSide: BorderSide(
                                                                 width: 3,
-                                                                color:
-                                                                    defaultPalette
-                                                                        .tertiary),
+                                                                color: defaultPalette
+                                                                    .tertiary),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                         ),
                                                         keyboardType:
-                                                            TextInputType.number,
-                                                        style: GoogleFonts.bungee(
-                                                            // fontStyle: FontStyle.italic,
-                                                            fontSize: 12,
-                                                            color: defaultPalette
-                                                                .black),
+                                                            TextInputType
+                                                                .number,
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                // fontStyle: FontStyle.italic,
+                                                                fontSize: 12,
+                                                                color:
+                                                                    defaultPalette
+                                                                        .black),
                                                         onChanged: (value) {
                                                           // setState(() {
                                                           if (value.isEmpty) {
@@ -14221,7 +16152,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14243,7 +16174,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14268,7 +16199,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14283,7 +16214,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 ),
                                               ),
                                             ),
-      
+
                                             const SizedBox(
                                               width: 10,
                                             ),
@@ -14298,11 +16229,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       flex: 3,
                                                       child: Text(
                                                         'Bottom',
-                                                        style: GoogleFonts.bungee(
-                                                            fontSize: 11),
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14316,10 +16248,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         },
                                                         focusNode:
                                                             marginBottomFocus,
-                                                        controller:
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginBottomController,
+                                                        controller: documentPropertiesList[
+                                                                currentPageIndex]
+                                                            .marginBottomController,
                                                         inputFormatters: [
                                                           // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                                                           NumericInputFormatter(
@@ -14339,7 +16270,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         textAlign:
                                                             TextAlign.center,
                                                         textAlignVertical:
-                                                            TextAlignVertical.top,
+                                                            TextAlignVertical
+                                                                .top,
                                                         decoration:
                                                             InputDecoration(
                                                           contentPadding:
@@ -14353,8 +16285,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               OutlineInputBorder(
                                                             // borderSide: BorderSide(width: 5, color: defaultPalette.black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Replace with your desired radius
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Replace with your desired radius
                                                           ),
                                                           enabledBorder:
                                                               OutlineInputBorder(
@@ -14364,28 +16297,32 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     defaultPalette
                                                                         .black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                           focusedBorder:
                                                               OutlineInputBorder(
                                                             borderSide: BorderSide(
                                                                 width: 3,
-                                                                color:
-                                                                    defaultPalette
-                                                                        .tertiary),
+                                                                color: defaultPalette
+                                                                    .tertiary),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                         ),
                                                         keyboardType:
-                                                            TextInputType.number,
-                                                        style: GoogleFonts.bungee(
-                                                            // fontStyle: FontStyle.italic,
-                                                            fontSize: 12,
-                                                            color: defaultPalette
-                                                                .black),
+                                                            TextInputType
+                                                                .number,
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                // fontStyle: FontStyle.italic,
+                                                                fontSize: 12,
+                                                                color:
+                                                                    defaultPalette
+                                                                        .black),
                                                         onChanged: (value) {
                                                           // setState(() {
                                                           if (value.isEmpty) {
@@ -14404,7 +16341,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14426,7 +16363,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14451,7 +16388,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14462,7 +16399,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ],
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 10,
                                                     ),
@@ -14488,11 +16425,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     Expanded(
                                                       child: Text(
                                                         'Left',
-                                                        style: GoogleFonts.bungee(
-                                                            fontSize: 11),
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14505,10 +16443,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         },
                                                         focusNode:
                                                             marginLeftFocus,
-                                                        controller:
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginLeftController,
+                                                        controller: documentPropertiesList[
+                                                                currentPageIndex]
+                                                            .marginLeftController,
                                                         inputFormatters: [
                                                           // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                                                           NumericInputFormatter(
@@ -14528,7 +16465,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         textAlign:
                                                             TextAlign.center,
                                                         textAlignVertical:
-                                                            TextAlignVertical.top,
+                                                            TextAlignVertical
+                                                                .top,
                                                         decoration:
                                                             InputDecoration(
                                                           contentPadding:
@@ -14542,8 +16480,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               OutlineInputBorder(
                                                             // borderSide: BorderSide(width: 5, color: defaultPalette.black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Replace with your desired radius
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Replace with your desired radius
                                                           ),
                                                           enabledBorder:
                                                               OutlineInputBorder(
@@ -14553,28 +16492,32 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     defaultPalette
                                                                         .black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                           focusedBorder:
                                                               OutlineInputBorder(
                                                             borderSide: BorderSide(
                                                                 width: 3,
-                                                                color:
-                                                                    defaultPalette
-                                                                        .tertiary),
+                                                                color: defaultPalette
+                                                                    .tertiary),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                         ),
                                                         keyboardType:
-                                                            TextInputType.number,
-                                                        style: GoogleFonts.bungee(
-                                                            // fontStyle: FontStyle.italic,
-                                                            fontSize: 12,
-                                                            color: defaultPalette
-                                                                .black),
+                                                            TextInputType
+                                                                .number,
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                // fontStyle: FontStyle.italic,
+                                                                fontSize: 12,
+                                                                color:
+                                                                    defaultPalette
+                                                                        .black),
                                                         onChanged: (value) {
                                                           // setState(() {
                                                           if (value.isEmpty) {
@@ -14593,7 +16536,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14615,7 +16558,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14640,7 +16583,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14651,7 +16594,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ],
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 10,
                                                     ),
@@ -14673,11 +16616,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       flex: 2,
                                                       child: Text(
                                                         'Right',
-                                                        style: GoogleFonts.bungee(
-                                                            fontSize: 11),
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14690,10 +16634,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         },
                                                         focusNode:
                                                             marginRightFocus,
-                                                        controller:
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginRightController,
+                                                        controller: documentPropertiesList[
+                                                                currentPageIndex]
+                                                            .marginRightController,
                                                         inputFormatters: [
                                                           // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
                                                           NumericInputFormatter(
@@ -14713,7 +16656,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         textAlign:
                                                             TextAlign.center,
                                                         textAlignVertical:
-                                                            TextAlignVertical.top,
+                                                            TextAlignVertical
+                                                                .top,
                                                         decoration:
                                                             InputDecoration(
                                                           contentPadding:
@@ -14727,8 +16671,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               OutlineInputBorder(
                                                             // borderSide: BorderSide(width: 5, color: defaultPalette.black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Replace with your desired radius
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Replace with your desired radius
                                                           ),
                                                           enabledBorder:
                                                               OutlineInputBorder(
@@ -14738,28 +16683,32 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     defaultPalette
                                                                         .black),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                           focusedBorder:
                                                               OutlineInputBorder(
                                                             borderSide: BorderSide(
                                                                 width: 3,
-                                                                color:
-                                                                    defaultPalette
-                                                                        .tertiary),
+                                                                color: defaultPalette
+                                                                    .tertiary),
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                    5.0), // Same as border
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0), // Same as border
                                                           ),
                                                         ),
                                                         keyboardType:
-                                                            TextInputType.number,
-                                                        style: GoogleFonts.bungee(
-                                                            // fontStyle: FontStyle.italic,
-                                                            fontSize: 12,
-                                                            color: defaultPalette
-                                                                .black),
+                                                            TextInputType
+                                                                .number,
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                // fontStyle: FontStyle.italic,
+                                                                fontSize: 12,
+                                                                color:
+                                                                    defaultPalette
+                                                                        .black),
                                                         onChanged: (value) {
                                                           // setState(() {
                                                           if (value.isEmpty) {
@@ -14778,7 +16727,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -14800,7 +16749,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14825,7 +16774,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -14836,7 +16785,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ],
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 10,
                                                     ),
@@ -14897,7 +16846,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         textAlignVertical:
                                             TextAlignVertical.center,
                                         decoration: InputDecoration(
-                                          contentPadding: const EdgeInsets.all(0),
+                                          contentPadding:
+                                              const EdgeInsets.all(0),
                                           border: InputBorder.none,
                                           enabledBorder: OutlineInputBorder(
                                             borderSide: BorderSide(
@@ -14922,7 +16872,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-      
+
                               //COLOR SWATCH And WHEEL FOR PAGE COLOR
                               Stack(
                                 children: [
@@ -14937,7 +16887,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     width: 120,
                                     top: 4,
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       children: [
                                         //COLOR WHEEL FOR PAGE COLOR
                                         SizedBox(
@@ -14965,20 +16916,20 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         SizedBox(
                                           height: 0,
                                         ),
-      
+
                                         //Name of PAGE COLOR
                                         Text(
                                             fl.ColorTools.nameThatColor(
                                               documentPropertiesList[ind]
                                                   .pageColor,
                                             ),
-                                            style:
-                                                GoogleFonts.bungee(fontSize: 12)),
+                                            style: GoogleFonts.bungee(
+                                                fontSize: 12)),
                                       ],
                                     ),
                                   ),
                                   //COLOR SWATCH FOR PAGE COLOR
-      
+
                                   fl.ColorPicker(
                                       color:
                                           documentPropertiesList[ind].pageColor,
@@ -15000,7 +16951,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       // enableOpacity: true,
                                       customColorSwatchesAndNames: {
                                         createSwatch(
-                                            documentPropertiesList[ind].pageColor,
+                                            documentPropertiesList[ind]
+                                                .pageColor,
                                             12): ''
                                       },
                                       colorCodeHasColor: true,
@@ -15046,40 +16998,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       },
                                       onColorChanged: (c) {
                                         setState(() {
-                                          documentPropertiesList[ind].pageColor =
-                                              c;
+                                          documentPropertiesList[ind]
+                                              .pageColor = c;
                                         });
-      
+
                                         // _renderPagePreviewOnProperties();
                                       }),
-                                  // TextButton(
-                                  //     style: TextButton
-                                  //         .styleFrom(
-                                  //       backgroundColor:
-                                  //           documentPropertiesList[
-                                  //             currentPageIndex]
-                                  //         .pageColor,
-                                  //       foregroundColor:
-                                  //           defaultPalette
-                                  //               .extras[0],
-                                  //       minimumSize:
-                                  //           Size(75,
-                                  //               75),
-                                  //       shape:
-                                  //           RoundedRectangleBorder(
-                                  //         borderRadius:
-                                  //             BorderRadius.circular(
-                                  //                 5.0),
-                                  //       ),
-                                  //     ),
-                                  //     onPressed:
-                                  //         () {},
-                                  //     child:
-                                  //         const Text(
-                                  //             '')),
                                 ],
                               ),
-      
+
                               const SizedBox(
                                 height: 30,
                               )

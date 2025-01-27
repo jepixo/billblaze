@@ -64,6 +64,7 @@ dependencies:
   decimal: ^3.0.2
   pie_menu: ^3.2.7
   flutter_context_menu: ^0.2.0 
+  http: ^1.3.0
 
 
 dev_dependencies:
