@@ -77,7 +77,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
       setState(() {
         isDown = !isDown; // Toggle the button state
       });
-      widget.onClick?.call(); // Trigger onClick callback
+      // widget.onClick?.call(); // Trigger onClick callback
     }
   }
 

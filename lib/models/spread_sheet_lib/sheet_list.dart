@@ -201,6 +201,22 @@ class ListDecoration {
     this.widthAdjustment = const EdgeInsets.all(0),
     this.decoration = const BoxDecoration(),
   });
+
+  ListDecoration copyWith({
+    EdgeInsets? padding,
+    MainAxisAlignment? mainAxisAlignment,
+    CrossAxisAlignment? crossAxisAlignment,
+    EdgeInsets? widthAdjustment,
+    BoxDecoration? decoration,
+  }) {
+    return ListDecoration(
+      padding: padding ?? this.padding,
+      mainAxisAlignment: mainAxisAlignment ?? this.mainAxisAlignment,
+      crossAxisAlignment: crossAxisAlignment ?? this.crossAxisAlignment,
+      widthAdjustment: widthAdjustment ?? this.widthAdjustment,
+      decoration: decoration ?? this.decoration,
+    );
+  }
 }
 
 MainAxisAlignment getMainAxisAlignment(String? mainAxisAlignment) {
