@@ -2,7 +2,9 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:billblaze/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
@@ -29,6 +31,14 @@ class SheetListBox extends SheetItem {
   Uint8List? image;
   @HiveField(10)
   String imageFit;
+  @HiveField(11)
+  String color;
+  @HiveField(12)
+  String borderColor;
+  @HiveField(13)
+  List<double> borderWidth;
+  @HiveField(14)
+  List<double> borderRadius;
 
   SheetListBox(
       {required this.sheetList,
@@ -41,7 +51,12 @@ class SheetListBox extends SheetItem {
       this.crossAxisAlignment = 'start',
       this.image,
       this.imageFit = 'fitWidth',
+      this.color = '00000000',
+      this.borderColor = '00000000',
+      this.borderRadius = const [0,0,0,0],
+      this.borderWidth = const [0, 0, 0, 0],
       this.widthAdjustment = const [0, 0, 0, 0]});
+
   SheetList toSheetList() {
     return SheetList(
         sheetList: sheetList,
@@ -58,6 +73,23 @@ class SheetListBox extends SheetItem {
                   : CrossAxisAlignment.start,
           mainAxisAlignment: getMainAxisAlignment(mainAxisAlignment),
           decoration: BoxDecoration(
+              color: hexToColor(color),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(borderRadius[0]),
+                topRight: Radius.circular(borderRadius[1]),
+                bottomLeft: Radius.circular(borderRadius[2]),
+                bottomRight: Radius.circular(borderRadius[3]),
+              ),
+              border: Border(
+                  top: BorderSide(
+                      color: defaultPalette.transparent, width: borderWidth[0]),
+                  bottom: BorderSide(
+                      color: hexToColor(borderColor), width: borderWidth[1]),
+                  left: BorderSide(
+                      color: defaultPalette.transparent, width: borderWidth[2]),
+                  right: BorderSide(
+                      color: defaultPalette.transparent,
+                      width: borderWidth[3])),
               image: image == null
                   ? null
                   : DecorationImage(
