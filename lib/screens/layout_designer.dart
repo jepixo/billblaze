@@ -83,10 +83,12 @@ class PanelIndex {
   PanelIndex copyWith({
     String? id,
     int? panelIndex,
+    String? parentId,
   }) {
     return PanelIndex(
       id: id ?? this.id,
       panelIndex: panelIndex ?? this.panelIndex,
+      parentId: parentId ?? this.parentId
     );
   }
 
@@ -309,7 +311,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   late String initialLayoutName;
   bool nameExists = false;
   final FocusNode layoutNamefocusNode = FocusNode();
-  double whichPropertyTabIsClicked = 1;
+  int whichPropertyTabIsClicked = 1;
   int whichTextPropertyTabIsClicked = 0;
   int whichListPropertyTabIsClicked = 0;
   Uint8List? cachedImageData;
@@ -322,7 +324,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool isListColorExpanded = true;
   bool isListBorderColorExpanded = false;
   late TextEditorItem item;
-  late SheetList sheetListItem;
+  late SheetList sheetListItem; 
+  var dragBackupValue;
   //
   //
   //
@@ -437,6 +440,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         whichPropertyTabIsClicked = 3;
       });
     });
+    // 
   }
 
   @override
@@ -1780,7 +1784,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           padding: sheetList.listDecoration.widthAdjustment,
           decoration: BoxDecoration(
             backgroundBlendMode: sheetList.listDecoration.decoration.backgroundBlendMode,
-            border: null,
+            border: Border(
+              top: BorderSide(width: 1),
+              left: BorderSide(width: 5),
+            ),
             borderRadius: sheetList.listDecoration.decoration.borderRadius,
             boxShadow: sheetList.listDecoration.decoration.boxShadow,
             color: sheetList.listDecoration.decoration.color,
@@ -2830,10 +2837,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           // flex: ((1 - wH1DividerPosition - wH2DividerPosition) *
                           //         10000)
                           //     .round(),
-                          top: Platform.isAndroid ? 35 : 40,
+                          top: Platform.isAndroid ? 35 : 35,
                           height: Platform.isAndroid
                               ? sHeight * 0.85
-                              : sHeight - 50,
+                              : sHeight - 40,
                           child: GestureDetector(
                             onTap: () {
                               _unfocusAll();
@@ -3790,7 +3797,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               Container(
                                 height: (50),
                                 margin: EdgeInsets.only(
-                                    top: 45, left: 15, right: 10),
+                                    top: 29, left: 0, right: 6),
                                 padding: EdgeInsets.only(bottom: 0),
                                 decoration: BoxDecoration(
                                   color: defaultPalette.transparent,
@@ -3801,7 +3808,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     Expanded(
                                         flex: 1,
                                         child: Padding(
-                                          padding: EdgeInsets.only(left: 5),
+                                          padding: EdgeInsets.only(left: 9,top:10),
                                           child: CustomBorder(
                                             color: whichPropertyTabIsClicked ==
                                                     1
@@ -3812,9 +3819,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             animateBorder: true,
                                             radius: const Radius.circular(10),
                                             dashPattern: const [15, 10],
-                                            strokeWidth: 3,
+                                            strokeWidth: 4,
                                             child: SizedBox(
-                                              height: 40,
+                                              height: 45,
                                               width: _getPropertiesButtonWidth(
                                                   'page'),
                                             ),
@@ -3825,7 +3832,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       Expanded(
                                           flex: 2,
                                           child: Padding(
-                                            padding: EdgeInsets.only(left: 5),
+                                            padding: EdgeInsets.only(left: 4,top:8),
                                             child: CustomBorder(
                                               color:
                                                   whichPropertyTabIsClicked == 2
@@ -3839,7 +3846,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               dashPattern: const [15, 10],
                                               strokeWidth: 3,
                                               child: SizedBox(
-                                                height: 40,
+                                                height: 43,
                                                 width: (2 *
                                                     (sWidth *
                                                         (wH2DividerPosition)) /
@@ -3852,7 +3859,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       Expanded(
                                           flex: 2,
                                           child: Padding(
-                                            padding: EdgeInsets.only(left: 5),
+                                            padding: EdgeInsets.only(left: 5,top:8),
                                             child: CustomBorder(
                                               color:
                                                   whichPropertyTabIsClicked == 3
@@ -3866,7 +3873,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               dashPattern: const [15, 10],
                                               strokeWidth: 3,
                                               child: SizedBox(
-                                                height: 40,
+                                                height: 45,
                                                 width: 2 *
                                                     (sWidth *
                                                         (wH2DividerPosition)) /
@@ -3881,7 +3888,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               Container(
                                 height: (50),
                                 margin: EdgeInsets.only(
-                                    top: 40, left: 15, right: 10),
+                                    top: 29, left: 0, right: 6),
                                 padding: EdgeInsets.only(bottom: 0),
                                 decoration: BoxDecoration(
                                   color: defaultPalette.transparent,
@@ -3933,7 +3940,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             //The green panel
                                             Container(
                                               margin: EdgeInsets.only(
-                                                  top: 9, left: 5),
+                                                  top: 10, left: 4),
                                               decoration: BoxDecoration(
                                                 color: defaultPalette.tertiary,
                                                 borderRadius:
@@ -3944,7 +3951,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             // text tabs buttons
                                             Container(
                                               margin: const EdgeInsets.only(
-                                                  top: 9, left: 5, bottom: 0),
+                                                  top: 10, left: 4, ),
                                               decoration: BoxDecoration(
                                                 color: defaultPalette.tertiary,
                                                 borderRadius:
@@ -4133,7 +4140,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               buttonHeight: 30,
                                               buttonWidth:
                                                   _getPropertiesButtonWidth(
-                                                      'text-field'),
+                                                      'text-field')+2,
                                               borderRadius:
                                                   BorderRadius.circular(10),
                                               animationDuration: const Duration(
@@ -4166,6 +4173,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 ],
                                               ),
                                               subfac: 10,
+                                              depth: 3,
                                               baseDecoration: BoxDecoration(
                                                 color: defaultPalette.extras[0]
                                                     .withOpacity(0.3),
@@ -4195,7 +4203,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             //list tabs buttons
                                             Container(
                                               margin: const EdgeInsets.only(
-                                                  top: 9, left: 5, bottom: 0),
+                                                  top: 9, left: 5, ),
                                               decoration: BoxDecoration(
                                                 color:
                                                     defaultPalette.transparent,
@@ -4382,7 +4390,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               ),
                               //Content inside properties CARDS Main Parent
                               Container(
-                                padding: EdgeInsets.only(top: 85),
+                                padding: EdgeInsets.only(top: 73),
                                 child: FadeInLeft(child: _getProperTiesCards()),
                               ),
                             ],
@@ -4529,13 +4537,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             children: [
                               AnimatedPositioned(
                                 right: 0,
+                                top:-2,
                                 duration: Durations.short4,
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
                                   child: AnimatedContainer(
                                     duration: Durations.short4,
                                     padding: const EdgeInsets.only(
-                                        right: 8, bottom: 4),
+                                        right: 8, bottom:4),
                                     margin: const EdgeInsets.only(top: 0),
                                     decoration: const BoxDecoration(
                                         color: Colors.transparent,
@@ -4549,6 +4558,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
+                                          depth:2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
                                                 .then((y) {
@@ -4581,6 +4591,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
+                                          depth:2,
                                           onClick: () {
                                             Future.delayed(Durations.short1)
                                                 .then((y) {
@@ -4612,6 +4623,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
+                                          depth:2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
                                                 .then((y) {
@@ -4746,7 +4758,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   //
                   //Layout Name Rename
                   Positioned(
-                    top: 2,
+                    top: 0,
                     height: Platform.isAndroid ? 30 : 35,
                     width: sWidth / 7,
                     left: Platform.isAndroid ? sWidth / 2.5 : sWidth / 2,
@@ -9030,6 +9042,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             setState(() {
               panelIndex.parentId = sheetList.id;
               _findSheetListItem();
+              whichPropertyTabIsClicked = 3;
             });
           },
           child: Padding(
@@ -9057,11 +9070,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     : findSheetListBuildHeight(sheetList),
                 // height: 300,
                 padding: const EdgeInsets.only(top: 0, left: 1, right: 2),
-                margin: const EdgeInsets.only(
-                    // right: 2,
-                    // bottom: 4,
-                    // left: 2,
-                    ),
+                 
                 // buildlistw
                 decoration: BoxDecoration(
                   border: Border.all(
@@ -9095,65 +9104,25 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   GestureDetector(
                                     onTap: () {
                                       FocusScope.of(context).unfocus();
-                                      var isTrue = false;
-                                      SheetItem? itemE;
-                                      if (panelIndex.id == textEditorItem.id) {
-                                        isTrue = true;
-                                      }
+                                         
+                                       
                                       setState(() {
-                                        itemE = _sheetItemIterator(
-                                            textEditorItem.id,
-                                            spreadSheetList[currentPageIndex]);
-
-                                        if (itemE != null) {
-                                          try {
-                                            index = _sheetListIterator(
-                                                    itemE!.parentId, sheetList)
-                                                .indexOf(itemE!);
-                                          } on Exception catch (e) {
-                                            index = -1;
-                                          }
-                                          panelIndex = PanelIndex(
-                                              id: itemE!.id,
-                                              panelIndex: index,
+                                         
+                                          panelIndex = panelIndex.copyWith(
+                                              id: textEditorItem.id,  
                                               parentId: sheetList.id);
-                                          print(
-                                              'that this id from buildlist function ontap textfield: ${sheetList.id}');
-                                          print(
-                                              'that this id from buildlist function ontap textfield from panelindex: ${panelIndex.parentId}');
-                                        } else {
-                                          panelIndex = PanelIndex(
-                                              id: textEditorItem.id,
-                                              panelIndex: index,
-                                              parentId: sheetList.id);
-                                        }
+                                         
                                         panelIndex.parentId = sheetList.id;
-                                        // index = temp ?? index;
+                                        
                                         _findSheetListItem();
+                                        whichPropertyTabIsClicked=2;
 
                                         if (hDividerPosition > 0.48) {
                                           hDividerPosition = 0.4;
                                         }
                                       });
                                       _findSheetListItem();
-                                      Future.delayed(Durations.short1)
-                                          .then((h) {
-                                        if (!isTrue) {
-                                          textStyleTabControler.animateToPage(0,
-                                              curve: Curves.bounceIn,
-                                              duration: Durations.short1);
-                                          for (var i = 0;
-                                              i < isTapped.length;
-                                              i++) {
-                                            setState(() {
-                                              isTapped[i] = false;
-                                            });
-                                          }
-                                          setState(() {
-                                            isTapped[1] = true;
-                                          });
-                                        }
-                                      });
+                                       
 
                                       print('clicked');
                                       print(sheetListItem.id);
@@ -10397,10 +10366,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       print('this that pID from within the addText: ${itemE.parentId}');
       print(
           'this that id from addtext from panelindex: ${panelIndex.parentId}');
-      _findSheetListItem();
-      if (hDividerPosition > 0.48) {
-        hDividerPosition = 0.4;
-      }
+      _findSheetListItem(); 
+      whichPropertyTabIsClicked =2;
     });
 
     // Future.delayed(Duration.zero).then((_) {
@@ -10408,7 +10375,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     // });
 
     Future.delayed(Durations.short1).then((_) {
-      if (!isTrue) {
+      if (!isTrue && Platform.isAndroid) {
         textStyleTabControler.animateToPage(0,
             curve: Curves.bounceIn, duration: Durations.short1);
       }
@@ -10426,11 +10393,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       case 'page':
         if (panelIndex.id == '') {
           if (panelIndex.parentId == '') {
-            return widthWeHave - 20;
+            return widthWeHave -4;
           }
-          return widthWeHave * (1 / 3) - 5;
+          return widthWeHave * (1 / 3);
         }
-        return widthWeHave * (1 / 5);
+        return widthWeHave *(1/5)  ;
         break;
       case 'text-field':
         if (panelIndex.id == '') {
@@ -10439,15 +10406,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           }
           return widthWeHave * (2 / 3);
         }
-        return widthWeHave * (2 / 5) - 5;
+        return widthWeHave * (2 / 5) +2;
       case 'sheet-list':
         if (panelIndex.id == '') {
           if (panelIndex.parentId == '') {
             return widthWeHave * (2 / 3) - 20;
           }
-          return widthWeHave * (2 / 3) - 12;
+          return widthWeHave * (2 / 3) +2 ;
         }
-        return widthWeHave * (2 / 5) - 5;
+        return widthWeHave * (2 / 5)+3;
 
       default:
     }
@@ -10632,7 +10599,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           duration: Durations.short3,
           child: AppinioSwiper(
               backgroundCardCount: 1,
-              backgroundCardOffset: Offset(5, 5),
+              backgroundCardOffset: Offset(4,4),
               duration: Duration(milliseconds: 150),
               backgroundCardScale: 1,
               loop: true,
@@ -10765,7 +10732,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   );
                 }
           
-                var width = (sWidth * wH2DividerPosition - 45);
+                var width = (sWidth * wH2DividerPosition - 30);
           
                 TextEditingController hexController = TextEditingController()
                   ..text =
@@ -10824,7 +10791,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     Positioned.fill(
                       child: AnimatedContainer(
                         duration: Durations.short3,
-                        margin: EdgeInsets.all(15),
+                        margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: defaultPalette.secondary,
@@ -10844,7 +10811,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         duration: Duration(milliseconds: 300),
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
-                          margin: EdgeInsets.all(15),
+                          margin: EdgeInsets.all(10).copyWith(left: 5, right: 10),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: index == (currentCardIndex + 1) % 10
@@ -10865,8 +10832,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           children: [
                             //GRAPH BEHIND FONT CARD
                             Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 15, right: 15, top: 15, bottom: 15),
+                              padding: const EdgeInsets.all( 10),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(25),
                                 child: Opacity(
@@ -10913,7 +10879,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               height: sHeight * 0.9,
                               width: width + 4,
                               margin: const EdgeInsets.only(
-                                  top: 120, left: 20, bottom: 22, right: 20),
+                                  top: 120, left: 10, bottom: 22, right: 0),
                               child: ClipRRect(
                                 borderRadius: const BorderRadius.only(
                                     bottomLeft: Radius.circular(22),
@@ -11236,11 +11202,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     style: GoogleFonts.bungee(
                                         color: defaultPalette.extras[0],
                                         fontSize: (width / 6).clamp(5, 30)))),
-                            //SELECTED FONT
+                            //SELECTED FONT Green STRIP
                             Positioned(
                                 left: 30,
                                 top: 70,
-                                width: width,
+                                width: width-8,
                                 child: Container(
                                   width: width,
                                   padding: const EdgeInsets.only(
@@ -11343,8 +11309,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     if (index == 1) ...[
                       //GRAPH BEHIND FORMAT CARD
                       Padding(
-                        padding: const EdgeInsets.only(
-                            left: 15, right: 15, top: 15, bottom: 15),
+                        padding: const EdgeInsets.all(10),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(25),
                           child: Opacity(
@@ -11390,8 +11355,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           margin: EdgeInsets.only(
                               top: 20,
                               bottom: index == currentCardIndex ? 20 : 23,
-                              left: 20,
-                              right: 20),
+                              left: 10,
+                              right: 10),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Stack(
@@ -12314,11 +12279,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             Container(
                                               margin: EdgeInsets.only(
                                                   top: 10,
-                                                  bottom: 30,
+                                                  bottom: 20,
                                                   left: 5,
                                                   right: 5),
                                               width: width,
-                                              height: 70 * 6,
+                                              height: 50 * 6,
                                               child: SingleChildScrollView(
                                                 child: Column(
                                                   crossAxisAlignment:
@@ -12637,7 +12602,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     //
                                                     //
                                                     SizedBox(
-                                                      height: 20,
+                                                      height: 5,
                                                     ),
                                                     //LetterSpacing Parentt
                                                     ClipRRect(
@@ -12957,7 +12922,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     ),
           
                                                     SizedBox(
-                                                      height: 20,
+                                                      height: 5,
                                                     ),
                                                     //WordSpacing
                                                     ClipRRect(
@@ -13277,7 +13242,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     ),
                                                     //
                                                     SizedBox(
-                                                      height: 20,
+                                                      height: 5,
                                                     ),
                                                     //LineHeight
                                                     ClipRRect(
@@ -13614,8 +13579,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     if (index == 2) ...[
                       //GRAPH BEHIND COLOR CARD
                       Padding(
-                        padding: const EdgeInsets.only(
-                            left: 15, right: 15, top: 15, bottom: 15),
+                        padding: const EdgeInsets.all(10),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(25),
                           child: Opacity(
@@ -13659,8 +13623,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         child: Container(
                           width: width,
                           height: sHeight * 0.8,
-                          margin: const EdgeInsets.only(
-                              left: 22, top: 22, bottom: 22, right: 22),
+                          margin: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -14211,7 +14174,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           child: AppinioSwiper(
                     controller: listPropertyCardsController,
                     backgroundCardCount: 1,
-                    backgroundCardOffset: Offset(5, 5),
+                    backgroundCardOffset: Offset(3, 3),
                     duration: Duration(milliseconds: 150),
                     backgroundCardScale: 1,
                     loop: true,
@@ -14238,7 +14201,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           onSwipeCancelled: (activity) {},
           cardBuilder: (BuildContext context, int index) {
           int currentCardIndex = whichListPropertyTabIsClicked;
-          var width = (sWidth * wH2DividerPosition - 45);
+          var width = (sWidth * wH2DividerPosition - 25);
           
           bool useIndListPad = (sheetListItem.listDecoration.padding.top ==
                   sheetListItem.listDecoration.padding.bottom &&
@@ -14319,20 +14282,64 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
           return Stack(
             children: [
-              // LIST PROPERTIES Tab Parent
+              if(index==1)
+              ...[
+                Positioned.fill(
+                child: AnimatedContainer(
+                  duration: Durations.short3,
+                  margin: EdgeInsets.all(10).copyWith(left:5, right:8),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(width: 2),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+              ),
+      
+              Positioned.fill(
+                child: AnimatedOpacity(
+                  opacity: currentCardIndex == index
+                      ? 0
+                      : index >= (currentCardIndex + 2) % 10
+                          ? 1
+                          : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                  duration: Duration(milliseconds: 300),
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    margin: EdgeInsets.all(10).copyWith(left:5, right:8),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: index == (currentCardIndex + 1) % 10
+                          ? defaultPalette.extras[0]
+                          : index == (currentCardIndex + 2) % 10
+                              ? defaultPalette.extras[0]
+                              : defaultPalette.extras[0],
+                      border: Border.all(width: 2),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                ),
+              ),
+      
+              ],
+            
+              if(index==0)
+              ...[// LIST PROPERTIES Tab Parent
               Positioned.fill(
                 top: 5,
                 right: -5,
-                left: 5,
+                left: 0,
                 child: AnimatedOpacity(
-                  opacity: index != (currentCardIndex) % 2
-                      ? (0 + (_cardPosition / 200).clamp(0.0, 1.0))
-                      : currentCardIndex == index
-                          ? (1 - (_cardPosition / 200).clamp(0.0, 1.0))
-                          : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                  opacity: 1,
+                  // index != (currentCardIndex) % 2
+                  //     ? (0 + (_cardPosition / 200).clamp(0.0, 1.0))
+                  //     : currentCardIndex == index
+                  //         ? (1 - (_cardPosition / 200).clamp(0.0, 1.0))
+                  //         : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
                   duration: Duration.zero,
                   child: Padding(
-                    padding: EdgeInsets.all(15),
+                    padding: EdgeInsets.all(15).copyWith(left:5, right:10),
                     child: PieCanvas(
                       child: Container(
                         padding: EdgeInsets.only(
@@ -14357,7 +14364,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       children: [
+                                        
                                         SizedBox(height: 50),
+                                        
                                         ////The setup for direction Switching
                                         Container(
                                           width: width,
@@ -14436,15 +14445,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   );
                                                 },
                                                 height: 25,
-                                                spacing: ((sWidth *
-                                                            wH2DividerPosition) -
-                                                        150)
-                                                    .clamp(10, 50000),
+                                                spacing: (width) ,
                                               ),
                                             ],
                                           ),
                                         ),
+                                        
                                         SizedBox(height: 10),
+                                        
                                         //The setup for both cross and main AxisSelectionButtons
                                         Row(
                                           children: [
@@ -14816,6 +14824,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ]),
           
                                         SizedBox(height: 10),
+                                        
                                         // List Padding Main
                                         ...[
                                           buildListDecorationAdjuster(
@@ -14835,6 +14844,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   widthAdjustmentControllers),
                                           
                                         ],
+                                        
                                         SizedBox(height: 10),
                                         // List Decoration COLOR main
                                        ...[
@@ -14989,7 +14999,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ],
                                           ),
                                         ),
-                                        
                                         
                                        ],
           
@@ -15603,8 +15612,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           ),
                                         ),
                                         ],
+                                        
                                         SizedBox(height: 10),
                                         
+                                        //The setup for image background for list
                                         Container(
                                           decoration: BoxDecoration(
                                               color: defaultPalette
@@ -15778,8 +15789,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               Icon(TablerIcons.arrow_autofit_height),
                                                               Icon(TablerIcons.arrow_autofit_width),
                                                               Icon(TablerIcons.arrow_autofit_content_filled),
-                                                              Icon(TablerIcons.arrow_autofit_up),
-                                                              Icon(TablerIcons.arrow_autofit_down),
                                                               Icon(TablerIcons.input_x),
                                                             ],
                                                             height: 30, 
@@ -15787,9 +15796,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   BoxFit.contain,
                                                                   BoxFit.fitHeight,
                                                                   BoxFit.fitWidth,
-                                                                  BoxFit.fill,
-                                                                  BoxFit.cover,
-                                                                  BoxFit.scaleDown,
+                                                                  BoxFit.fill, 
                                                                   BoxFit.none
 
                                                                 ],
@@ -15801,7 +15808,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                            ],
                                           ),
                                         ),
-                                      SizedBox(height:10),
+                                        
+                                        SizedBox(height:10),
 
                                       ],
                                     ),
@@ -15814,14 +15822,1516 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   ),
                 ),
               ),
+              ],
+              // LIST PROPERTIES Tab Parent
+              if(index==1)
+              ...[
+                Positioned.fill(
+                top: 5, 
+                left: 0,
+                child: AnimatedOpacity(
+                  opacity: 1,
+                  // index != (currentCardIndex) % 2
+                  //     ? (0 + (_cardPosition / 200).clamp(0.0, 1.0))
+                  //     : currentCardIndex == index
+                  //         ? (1 - (_cardPosition / 200).clamp(0.0, 1.0))
+                  //         : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                  duration: Duration.zero,
+                  child: Padding(
+                    padding: EdgeInsets.all(15).copyWith(left:5, right:5),
+                    child: PieCanvas(
+                      child: Container(
+                        padding: EdgeInsets.only(
+                            top: 10, left: 8, right: 8, bottom: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(25),
+                          color: defaultPalette.transparent,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: ScrollConfiguration(
+                            behavior:
+                                ScrollBehavior().copyWith(scrollbars: false),
+                            child: DynMouseScroll(
+                                durationMS: 500,
+                                scrollSpeed: 1,
+                                builder: (context, controller, physics) {
+                                  return SingleChildScrollView(
+                                    controller: controller,
+                                    physics: physics,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        
+                                        SizedBox(height: 50),
+                                        
+                                        ////The setup for direction Switching
+                                        Container(
+                                          width: width,
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          padding: EdgeInsets.all(3)
+                                              .copyWith(top: 2),
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                'direction',
+                                                style: GoogleFonts.prompt(
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                              AnimatedToggleSwitch<Axis>.dual(
+                                                current:
+                                                    sheetListItem.direction,
+                                                first: Axis.vertical,
+                                                second: Axis.horizontal,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    sheetListItem.direction =
+                                                        value;
+                                                  });
+                                                },
+                                                animationCurve:
+                                                    Curves.easeInOutExpo,
+                                                animationDuration:
+                                                    Durations.medium4,
+                                                borderWidth:
+                                                    2, // backgroundColor is set independently of the current selection
+                                                styleBuilder: (value) =>
+                                                    ToggleStyle(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                        // indicatorBorder: Border.all(
+                                                        //   width: 1.5,
+                                                        //   color: defaultPalette.extras[0],
+                                                        // ),
+                                                        indicatorBorderRadius:
+                                                            BorderRadius
+                                                                .circular(15),
+                                                        borderColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        backgroundColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        indicatorColor:
+                                                            defaultPalette
+                                                                    .extras[
+                                                                0]), // indicatorColor changes and animates its value with the selection
+                                                iconBuilder: (value) {
+                                                  return Icon(
+                                                      value == Axis.horizontal
+                                                          ? TablerIcons
+                                                              .grip_horizontal
+                                                          : TablerIcons
+                                                              .grip_vertical,
+                                                      size: 12,
+                                                      color: defaultPalette
+                                                          .primary);
+                                                },
+                                                textBuilder: (value) {
+                                                  return Text(
+                                                    value == Axis.horizontal
+                                                        ? 'Horizontal'
+                                                        : 'Vertical',
+                                                    style: GoogleFonts.bungee(
+                                                        fontSize: 12),
+                                                  );
+                                                },
+                                                height: 25,
+                                                spacing: (width) ,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        
+                                        SizedBox(height: 10),
+                                        
+                                        //The setup for both cross and main AxisSelectionButtons
+                                        Row(
+                                          children: [
+                                          //The setup for mainAxisSelectionButton
+                                          Expanded(
+                                              flex: 1,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: defaultPalette
+                                                        .primary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20)),
+                                                padding: EdgeInsets.all(3)
+                                                    .copyWith(top: 2),
+                                                child: Column(
+                                                  children: [
+                                                    Text(
+                                                      'mainAxis',
+                                                      style:
+                                                          GoogleFonts.prompt(
+                                                              fontSize: 10,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500),
+                                                    ),
+                                                    PieMenu(
+                                                      controller:
+                                                          listMainAxisAlignmentPieController,
+                                                      actions: [
+                                                        getPieActionForListAxis(
+                                                            'start'),
+                                                        getPieActionForListAxis(
+                                                            'end'),
+                                                        getPieActionForListAxis(
+                                                            'center'),
+                                                        getPieActionForListAxis(
+                                                            'space between'),
+                                                        getPieActionForListAxis(
+                                                            'space around'),
+                                                        getPieActionForListAxis(
+                                                            'space evenly'),
+                                                      ],
+                                                      onToggle: (menuOpen) {
+                                                        if (!menuOpen) {
+                                                          listDirectionPieController
+                                                              .closeMenu();
+                                                          listCrossAxisAlignmentDirectionPieController
+                                                              .closeMenu();
+                                                          listMainAxisAlignmentPieController
+                                                              .closeMenu();
+                                                        }
+                                                      },
+                                                      theme: PieTheme(
+                                                          rightClickShowsMenu:
+                                                              true,
+                                                          buttonSize:
+                                                              ((sWidth * wH2DividerPosition - 100) / 3)
+                                                                  .clamp(
+                                                                      40, 70),
+                                                          spacing: 5,
+                                                          radius: ((sWidth * wH2DividerPosition - 85) / 2)
+                                                              .clamp(50, 100),
+                                                          customAngle: 0,
+                                                          menuAlignment:
+                                                              Alignment
+                                                                  .center,
+                                                          pointerSize: 20,
+                                                          menuDisplacement:
+                                                              Offset(0, 0),
+                                                          // tooltipPadding: EdgeInsets.all(5),
+                                                          tooltipTextStyle:
+                                                              GoogleFonts.bungee(
+                                                                  fontSize:
+                                                                      20),
+                                                          buttonTheme:
+                                                              PieButtonTheme(
+                                                                  backgroundColor:
+                                                                      defaultPalette
+                                                                          .tertiary,
+                                                                  iconColor:
+                                                                      defaultPalette
+                                                                          .primary,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    border: Border.all(
+                                                                        width:
+                                                                            1),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            200),
+                                                                    color: defaultPalette
+                                                                        .extras[0],
+                                                                  ))),
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          listMainAxisAlignmentPieController
+                                                              .openMenu();
+                                                        }, // Handle tap manually
+                                                        child: Container(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color:
+                                                                defaultPalette
+                                                                    .secondary,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        15.0), // Custom shape
+                                                          ),
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  top: 2.0,
+                                                                  left: 1,
+                                                                  right: 1,
+                                                                  bottom: 0),
+                                                          height: 62,
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  horizontal:
+                                                                      3), // Padding
+                                                          // constraints: BoxConstraints(
+                                                          //   minWidth: (sWidth * wH2DividerPosition - 90) / 2, // Width constraint
+                                                          //   minHeight: 42, // Height constraint
+                                                          // ),
+                                                          child: Center(
+                                                            child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceAround,
+                                                              children: [
+                                                                Container(
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: defaultPalette
+                                                                          .extras[1],
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(15.0), // Custom shape
+                                                                    ),
+                                                                    margin: const EdgeInsets.only(
+                                                                        top:
+                                                                            2.0,
+                                                                        left:
+                                                                            1,
+                                                                        right:
+                                                                            1,
+                                                                        bottom:
+                                                                            0),
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    height:
+                                                                        40,
+                                                                    child: Icon(
+                                                                        TablerIcons
+                                                                            .kerning)),
+                                                                //The text under the mainAxis button that says space between start end or wtever
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          10.0),
+                                                                  child: Text(
+                                                                    sheetListItem
+                                                                        .listDecoration
+                                                                        .mainAxisAlignment
+                                                                        .name,
+                                                                    maxLines:
+                                                                        1,
+                                                                    style: GoogleFonts
+                                                                        .bungee(
+                                                                      fontSize:
+                                                                          10,
+                                                                      color: defaultPalette
+                                                                          .extras[0],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              )),
+                                          SizedBox(width: 5),
+                                          //The setup for crossAxisSelectionButton
+                                          Expanded(
+                                              flex: 1,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: defaultPalette
+                                                        .primary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20)),
+                                                padding:
+                                                    const EdgeInsets.all(3)
+                                                        .copyWith(top: 2),
+                                                child: Column(
+                                                  children: [
+                                                    //THE HEADING "crossAxis"
+                                                    Text(
+                                                      'crossAxis',
+                                                      style:
+                                                          GoogleFonts.prompt(
+                                                              fontSize: 10,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500),
+                                                    ),
+                                                    PieMenu(
+                                                      controller:
+                                                          listDirectionPieController,
+                                                      actions: [
+                                                        getPieActionForListAxis(
+                                                            'start',
+                                                            cross: true),
+                                                        getPieActionForListAxis(
+                                                            'center',
+                                                            cross: true),
+                                                        getPieActionForListAxis(
+                                                            'end',
+                                                            cross: true),
+                                                      ],
+                                                      onToggle: (menuOpen) {
+                                                        if (!menuOpen) {
+                                                          listDirectionPieController
+                                                              .closeMenu();
+                                                          listCrossAxisAlignmentDirectionPieController
+                                                              .closeMenu();
+                                                          listMainAxisAlignmentPieController
+                                                              .closeMenu();
+                                                        }
+                                                      },
+                                                      theme: PieTheme(
+                                                          rightClickShowsMenu:
+                                                              true,
+                                                          buttonSize:
+                                                              ((sWidth * wH2DividerPosition - 65) / 3)
+                                                                  .clamp(
+                                                                      40, 80),
+                                                          spacing: 5,
+                                                          radius: ((sWidth * wH2DividerPosition - 65) / 2)
+                                                              .clamp(50, 100),
+                                                          customAngle: 180,
+                                                          menuAlignment:
+                                                              Alignment
+                                                                  .center,
+                                                          pointerSize: 20,
+                                                          menuDisplacement:
+                                                              Offset(0, 0),
+                                                          // tooltipPadding: EdgeInsets.all(5),
+                                                          tooltipTextStyle:
+                                                              GoogleFonts.bungee(
+                                                                  fontSize:
+                                                                      20),
+                                                          buttonTheme:
+                                                              PieButtonTheme(
+                                                                  backgroundColor:
+                                                                      defaultPalette
+                                                                          .tertiary,
+                                                                  iconColor:
+                                                                      defaultPalette
+                                                                          .primary,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    border: Border.all(
+                                                                        width:
+                                                                            1),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            200),
+                                                                    color: defaultPalette
+                                                                        .extras[0],
+                                                                  ))),
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          listDirectionPieController
+                                                              .openMenu();
+                                                        }, // Handle tap manually
+                                                        child: Container(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color:
+                                                                defaultPalette
+                                                                    .secondary,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        15.0), // Custom shape
+                                                          ),
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  top: 2.0,
+                                                                  left: 1,
+                                                                  right: 1,
+                                                                  bottom: 0),
+                                                          height: 62,
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  horizontal:
+                                                                      3),
+                                                          child: Center(
+                                                            child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceAround,
+                                                              children: [
+                                                                Container(
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: defaultPalette
+                                                                          .extras[1],
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(15.0), // Custom shape
+                                                                    ),
+                                                                    margin: const EdgeInsets.only(
+                                                                        top:
+                                                                            2.0,
+                                                                        left:
+                                                                            1,
+                                                                        right:
+                                                                            1,
+                                                                        bottom:
+                                                                            0),
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    height:
+                                                                        40,
+                                                                    child: Icon(
+                                                                        TablerIcons
+                                                                            .karate)),
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          10.0),
+                                                                  child: Text(
+                                                                    sheetListItem
+                                                                        .listDecoration
+                                                                        .crossAxisAlignment
+                                                                        .name,
+                                                                    maxLines:
+                                                                        1,
+                                                                    style: GoogleFonts
+                                                                        .bungee(
+                                                                      fontSize:
+                                                                          10,
+                                                                      color: defaultPalette
+                                                                          .extras[0],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              )),
+                                        ]),
           
+                                        SizedBox(height: 10),
+                                        
+                                        // List Padding Main
+                                        ...[
+                                          buildListDecorationAdjuster(
+                                              isWidthAdjustment: false,
+                                              sheetListItem: sheetListItem,
+                                              listPaddingControllers:
+                                                  listPaddingControllers,
+                                              widthAdjustmentControllers:
+                                                  widthAdjustmentControllers),
+                                          SizedBox(height: 10),
+                                          buildListDecorationAdjuster(
+                                              isWidthAdjustment: true,
+                                              sheetListItem: sheetListItem,
+                                              listPaddingControllers:
+                                                  listPaddingControllers,
+                                              widthAdjustmentControllers:
+                                                  widthAdjustmentControllers),
+                                          
+                                        ],
+                                        
+                                        SizedBox(height: 10),
+                                        // List Decoration COLOR main
+                                       ...[
+                                        //list COLOR PICKER Main    
+                                        Container(
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette
+                                                  .primary,
+                                              borderRadius:
+                                                  BorderRadius
+                                                      .circular(
+                                                          12)),
+                                          padding: EdgeInsets.all(4).copyWith(top:2),
+                                          child: Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                              isListColorExpanded =
+                                                  !isListColorExpanded;
+                                            });
+                                                },
+                                                child: Text(
+                                                  'color - ${(fl.ColorTools.nameThatColor(sheetListItem
+                                                          .listDecoration
+                                                          .decoration
+                                                          .color ?? defaultPalette
+                                                          .transparent, )).toLowerCase()}',
+                                                  style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
+                                                ),
+                                              ),
+                                               
+                                              Container(
+                                              decoration: BoxDecoration(
+                                                  // color: defaultPalette.secondary,
+                                                  borderRadius: BorderRadius.circular(8)), 
+                                              alignment: Alignment.center,
+                                              padding: EdgeInsets.all(0) ,
+                                              height: 25,
+                                              child: TextField( 
+                                                focusNode: colorHexFocusNodes[0],
+                                                controller: colorHexControllers[0],
+                                                onSubmitted: (value) {
+                                                  setState(() {
+                                                  sheetListItem.listDecoration = sheetListItem
+                                                      .listDecoration
+                                                      .copyWith(
+                                                          decoration: sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .copyWith(color: hexToColor(value)));
+                                                      });
+                                                    },
+                                                textAlignVertical: TextAlignVertical.top,
+                                                textAlign: TextAlign.start,
+                                                decoration: InputDecoration(
+                                                        contentPadding: const EdgeInsets.all(0), 
+                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                        filled: true,
+                                                        fillColor: defaultPalette.secondary,
+                                                        prefixIcon: GestureDetector(
+                                                          onTap: () {
+                                                          setState(() {
+                                                            isListColorExpanded =
+                                                                !isListColorExpanded;
+                                                          });},
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.all(3.0),
+                                                            child: DecoratedBox(
+                                                              decoration: BoxDecoration(
+                                                                shape: BoxShape.circle,
+                                                                border: Border.fromBorderSide(
+                                                                  BorderSide(color: defaultPalette.extras[0], width: 1),
+                                                                ),
+                                                                color: sheetListItem
+                                                            .listDecoration
+                                                            .decoration
+                                                            .color ??
+                                                            defaultPalette
+                                                            .transparent,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        border: InputBorder.none,
+                                                        enabledBorder: OutlineInputBorder(
+                                                          borderSide:
+                                                              BorderSide(width: 1.2, color: defaultPalette.secondary),
+                                                          borderRadius: BorderRadius.circular(5.0),
+                                                        ),
+                                                        focusedBorder: OutlineInputBorder(
+                                                          borderSide:
+                                                              BorderSide(width: 2, color: defaultPalette.secondary),
+                                                          borderRadius: BorderRadius.circular(5.0),
+                                                        ),
+                                                      ), 
+                                                style: GoogleFonts.bungee(
+                                                          fontSize: 12, color: defaultPalette.black),
+                                                      ),
+                                                ),
+                                              
+                                              if(isListColorExpanded)
+                                              ...[ 
+                                                //list COLOR WHEEL picker
+                                                WheelPicker(
+                                                color: HSVColor.fromColor(sheetListItem
+                                                          .listDecoration
+                                                          .decoration
+                                                          .color ?? defaultPalette
+                                                          .transparent,),
+                                                onChanged: (HSVColor value) {
+                                                  setState(() {
+                                                  sheetListItem.listDecoration = sheetListItem
+                                                      .listDecoration
+                                                      .copyWith(
+                                                          decoration: sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .copyWith(color: value.toColor().withAlpha((sheetListItem
+                                                          .listDecoration
+                                                          .decoration
+                                                          .color ?? defaultPalette
+                                                          .transparent).alpha)));
+                                                      });
+                                                },
+                                              ),
+                                                //list Aplha COLOR
+                                                AlphaPicker(
+                                                  alpha: (sheetListItem
+                                                            .listDecoration
+                                                            .decoration
+                                                            .color ?? defaultPalette
+                                                            .transparent).alpha,
+                                                  onChanged: (int value) {
+                                                    setState(() {
+                                                    sheetListItem.listDecoration = sheetListItem
+                                                        .listDecoration
+                                                        .copyWith(
+                                                            decoration: sheetListItem
+                                                                .listDecoration
+                                                                .decoration
+                                                                .copyWith(color: (sheetListItem
+                                                            .listDecoration
+                                                            .decoration
+                                                            .color ?? defaultPalette
+                                                            .transparent).withAlpha(value)));
+                                                        });
+                                                  },
+                                                ),
+                                                
+                                            ]
+                                            ],
+                                          ),
+                                        ),
+                                        
+                                       ],
+          
+                                        SizedBox(height: 10), 
+
+                                        // The setup for all border stuff settings
+                                        ...[
+                                        //Border Width, dashed and dash pattern
+                                        Container(
+                                        decoration: BoxDecoration(
+                                            color: defaultPalette.primary,
+                                            borderRadius: BorderRadius.circular(10)),
+                                        padding: EdgeInsets.all(4).copyWith(top: 2),
+                                        child: Column(
+                                            children: [
+                                              Text(
+                                                'borderWidth',
+                                                style: GoogleFonts.prompt(
+                                                    fontSize: 10, color: defaultPalette.extras[0]),
+                                              ),
+                                              // "borderWidth" field for all sides
+                                              SizedBox(
+                                                height: textFieldHeight / 2,
+                                                child: TextFormField(
+                                                  onTapOutside: (event) => marginAllFocus.unfocus(),
+                                                  focusNode: borderFocusNodes[0],
+                                                  controller: borderControllers[0],
+                                                  inputFormatters: [
+                                                    NumericInputFormatter( 
+                                                    ),
+                                                  ],
+                                                  textAlignVertical: TextAlignVertical.top,
+                                                  textAlign: TextAlign.center,
+                                                  decoration: InputDecoration(
+                                                    contentPadding: const EdgeInsets.all(0),
+                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
+                                                    labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                    filled: true,
+                                                    fillColor: defaultPalette.secondary,
+                                                    border: InputBorder.none,
+                                                    enabledBorder: OutlineInputBorder(
+                                                      borderSide:
+                                                          BorderSide(width: 1.2, color: defaultPalette.secondary),
+                                                      borderRadius: BorderRadius.circular(5.0),
+                                                    ),
+                                                    focusedBorder: OutlineInputBorder(
+                                                      borderSide:
+                                                          BorderSide(width: 2, color: defaultPalette.extras[0]),
+                                                      borderRadius: BorderRadius.circular(5.0),
+                                                    ),
+                                                  ),
+                                                  keyboardType: TextInputType.number,
+                                                  style: GoogleFonts.bungee(
+                                                      fontSize: 12, color: defaultPalette.black),
+                                                  onFieldSubmitted: (value) {
+                                                    setState(() {
+                                                    sheetListItem.listDecoration = sheetListItem
+                                                        .listDecoration
+                                                        .copyWith(
+                                                            decoration: sheetListItem
+                                                                .listDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    border: Border(
+                                                                bottom: BorderSide(
+                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
+                                                                  strokeAlign:  
+                                                                      BorderSide
+                                                                          .strokeAlignCenter,
+                                                                  width: double.parse(value),
+
+                                                                ),
+                                                                right: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
+                                                                ),
+                                                                left: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
+                                                                ),
+                                                                top: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                                ),
+                                                                
+                                                    )));
+                                                  });
+                                                  },
+                                                ),
+                                              ),
+                                                
+                                              BalloonSlider(
+                                                color: defaultPalette.extras[0],
+                                                value: (((sheetListItem.listDecoration.decoration.border?.bottom.width)??1 )/100)
+                                                    .clamp(0, 1),
+                                                showRope: true,
+                                                ropeLength: 50,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    sheetListItem.listDecoration = sheetListItem
+                                                        .listDecoration
+                                                        .copyWith(
+                                                            decoration: sheetListItem
+                                                                .listDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    border: Border(
+                                                                bottom: BorderSide(
+                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
+                                                                  strokeAlign:  
+                                                                      BorderSide
+                                                                          .strokeAlignCenter,
+                                                                  width: double.parse((value*100).toStringAsFixed(2)),
+
+                                                                ),
+                                                                right: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
+                                                                ),
+                                                                left: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
+                                                                ),
+                                                                top: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                                ),
+                                                                
+                                                    )));
+                                                  });
+                                                          },
+                                                        ),
+
+                                              const SizedBox(height: 10),
+                                              // dash pattern adjustments
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                  'dashPattern',
+                                                    style: GoogleFonts.prompt(
+                                                        fontSize: 10, color: defaultPalette.extras[0]),
+                                                  ),
+                                                  
+                                                  const SizedBox(width: 5),
+                                                  // Line - dash
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Column(
+                                                      children: [
+                                                        SizedBox(
+                                                          height: textFieldHeight / 2,
+                                                          child: TextFormField(
+                                                            onTapOutside: (event) => borderFocusNodes[1].unfocus(),
+                                                            focusNode: borderFocusNodes[1],
+                                                            controller: borderControllers[1],
+                                                            inputFormatters: [NumericInputFormatter()],
+                                                            cursorColor: defaultPalette.extras[0],
+                                                            textAlign: TextAlign.center,
+                                                            textAlignVertical: TextAlignVertical.top,
+                                                            decoration: InputDecoration(
+                                                              contentPadding: const EdgeInsets.all(0),
+                                                              filled: true,
+                                                              fillColor: defaultPalette.secondary,
+                                                              border: OutlineInputBorder(
+                                                                borderRadius: BorderRadius.circular(5.0),
+                                                              ),
+                                                              enabledBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    width: 1.2,
+                                                                    color: defaultPalette.secondary),
+                                                                borderRadius: BorderRadius.circular(5.0),
+                                                              ),
+                                                              focusedBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    width: 2,
+                                                                    color: defaultPalette.extras[0]),
+                                                                borderRadius: BorderRadius.circular(5.0),
+                                                              ),
+                                                            ),
+                                                            keyboardType: TextInputType.number,
+                                                            style: GoogleFonts.bungee(
+                                                                fontSize: 12, color: defaultPalette.black),
+                                                            onFieldSubmitted: (value) {
+                                                              setState(() {
+                                                                sheetListItem.listDecoration = sheetListItem
+                                                                    .listDecoration
+                                                                    .copyWith(
+                                                                    decoration: sheetListItem
+                                                                    .listDecoration
+                                                                    .decoration
+                                                                    .copyWith(
+                                                                    border: Border(
+                                                              bottom: BorderSide(
+                                                                color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
+                                                                strokeAlign:  
+                                                                    BorderSide
+                                                                        .strokeAlignCenter,
+                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1,
+                                                                                                                
+                                                              ),
+                                                              left: BorderSide(
+                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
+                                                              ),
+                                                              right: BorderSide(
+                                                                width: double.parse(value)
+                                                              ),
+                                                              top: BorderSide(
+                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                              ),
+                                                              )
+                                                                  ));
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
+                                                        BalloonSlider(
+                                                        color: defaultPalette.extras[0],
+                                                        value: ((sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1)/100)
+                                                            .clamp(0, 1),
+                                                        showRope: true,
+                                                        ropeLength: 50,
+                                                        onChanged: (value) {
+                                                        setState(() {
+                                                          sheetListItem.listDecoration = sheetListItem
+                                                              .listDecoration
+                                                              .copyWith(
+                                                                  decoration: sheetListItem
+                                                                .listDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    border: Border(
+                                                                bottom: BorderSide(
+                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
+                                                                  strokeAlign:  
+                                                                      BorderSide
+                                                                          .strokeAlignCenter,
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
+                                                               
+                                                                  
+
+                                                                ),
+                                                                right: BorderSide(
+                                                                  width: double.parse((value*100).toStringAsFixed(2)),
+                                                                   ),
+                                                                left: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
+                                                                ),
+                                                                top: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                                ),
+                                                                
+                                                            )));
+                                                          });
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 5),
+                                                  // Gap - dash
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Column(
+                                                      children: [
+                                                        SizedBox(
+                                                          height: textFieldHeight / 2,
+                                                          child: TextFormField(
+                                                            onTapOutside: (event) =>
+                                                                borderFocusNodes[2].unfocus(),
+                                                            focusNode: borderFocusNodes[2],
+                                                            controller: borderControllers[2],
+                                                            inputFormatters: [NumericInputFormatter()],
+                                                            cursorColor: defaultPalette.secondary,
+                                                            textAlign: TextAlign.center,
+                                                            textAlignVertical: TextAlignVertical.top,
+                                                            decoration: InputDecoration(
+                                                              contentPadding: const EdgeInsets.all(0),
+                                                              filled: true,
+                                                              fillColor: defaultPalette.secondary,
+                                                              border: OutlineInputBorder(
+                                                                borderRadius: BorderRadius.circular(5.0),
+                                                              ),
+                                                              enabledBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    width: 1.2,
+                                                                    color: defaultPalette.secondary),
+                                                                borderRadius: BorderRadius.circular(5.0),
+                                                              ),
+                                                              focusedBorder: OutlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    width: 2,
+                                                                    color: defaultPalette.extras[0]),
+                                                                borderRadius: BorderRadius.circular(5.0),
+                                                              ),
+                                                            ),
+                                                            keyboardType: TextInputType.number,
+                                                            style: GoogleFonts.bungee(
+                                                                fontSize: 12, color: defaultPalette.black),
+                                                            onFieldSubmitted: (value) {
+                                                               setState(() {
+                                                                sheetListItem.listDecoration = sheetListItem
+                                                                    .listDecoration
+                                                                    .copyWith(
+                                                                    decoration: sheetListItem
+                                                                    .listDecoration
+                                                                    .decoration
+                                                                    .copyWith(
+                                                                    border: Border(
+                                                              bottom: BorderSide(
+                                                                color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
+                                                                strokeAlign:  
+                                                                    BorderSide
+                                                                        .strokeAlignCenter,
+                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1,
+                                                          
+                                                              ),
+                                                              right: BorderSide(
+                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
+                                                              ),
+                                                              left: BorderSide(
+                                                                width: double.parse(value)
+                                                              ),
+                                                              top: BorderSide(
+                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                              ),
+                                                              
+                                                                                                              )
+                                                                  ));
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
+                                                        BalloonSlider(
+                                                        color: defaultPalette.extras[0],
+                                                        value: ((sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1)/100)
+                                                            .clamp(0, 1),
+                                                        showRope: true,
+                                                        ropeLength: 50,
+                                                        onChanged: (value) {
+                                                        setState(() {
+                                                          sheetListItem.listDecoration = sheetListItem
+                                                              .listDecoration
+                                                              .copyWith(
+                                                                  decoration: sheetListItem
+                                                                .listDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    border: Border(
+                                                                bottom: BorderSide(
+                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
+                                                                  strokeAlign:  
+                                                                      BorderSide
+                                                                          .strokeAlignCenter,
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
+                                                               
+                                                                  
+
+                                                                ),
+                                                                right: BorderSide(
+                                                                  
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
+                                                               
+                                                                   ),
+                                                                left: BorderSide(
+                                                                  width: double.parse((value*100).toStringAsFixed(2)),
+                                                                  ),
+                                                                top: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                                ),
+                                                                
+                                                            )));
+                                                          });
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        
+                                        SizedBox(height: 10),
+
+                                        buildListDecorationAdjuster(isWidthAdjustment: false, sheetListItem: sheetListItem, listPaddingControllers: listPaddingControllers, widthAdjustmentControllers: widthAdjustmentControllers, borderRadiusControllers: borderRadiusControllers, isBorderRadius: true),
+                                        
+                                        SizedBox(width: 5, height: 10),
+                                        //borderCOLOR PICKER Main
+                                        Container(
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette
+                                                  .primary,
+                                              borderRadius:
+                                                  BorderRadius
+                                                      .circular(
+                                                          12)),
+                                          padding: EdgeInsets.all(4).copyWith(top:2),
+                                          child: Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                              isListBorderColorExpanded =
+                                                      !isListBorderColorExpanded;
+                                            });
+                                                },
+                                                child: Text(
+                                                  'borderColor - ${(fl.ColorTools.nameThatColor(sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .border
+                                                              ?.bottom
+                                                              .color ??
+                                                          defaultPalette
+                                                              .transparent,)).toLowerCase()}',
+                                                  style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
+                                                ),
+                                              ),
+                                               
+                                              Container(
+                                              decoration: BoxDecoration(
+                                                  // color: defaultPalette.secondary,
+                                                  borderRadius: BorderRadius.circular(8)), 
+                                              alignment: Alignment.center,
+                                              padding: EdgeInsets.all(0) ,
+                                              height: 25,
+                                              child: TextField( 
+                                                focusNode: colorHexFocusNodes[1],
+                                                controller: colorHexControllers[1],
+                                                onSubmitted: (value) {
+                                                  setState(() {
+                                                     sheetListItem.listDecoration = sheetListItem
+                                                              .listDecoration
+                                                              .copyWith(
+                                                                  decoration: sheetListItem
+                                                                      .listDecoration
+                                                                      .decoration
+                                                                      .copyWith(
+                                                                          border: Border.all(
+                                                            color: hexToColor(value),
+                                                            strokeAlign: sheetListItem
+                                                                    .listDecoration
+                                                                    .decoration
+                                                                    .border
+                                                                    ?.bottom
+                                                                    .strokeAlign ??
+                                                                BorderSide
+                                                                    .strokeAlignInside,
+                                                            width: sheetListItem
+                                                                    .listDecoration
+                                                                    .decoration
+                                                                    .border
+                                                                    ?.bottom
+                                                                    .width ??
+                                                                1,
+                                                          ))); 
+                                                      });
+                                                    },
+                                                textAlignVertical: TextAlignVertical.top,
+                                                textAlign: TextAlign.start,
+                                                decoration: InputDecoration(
+                                                        contentPadding: const EdgeInsets.all(0), 
+                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                        filled: true,
+                                                        fillColor: defaultPalette.secondary,
+                                                        prefixIcon: GestureDetector(
+                                                          onTap: () {
+                                                          setState(() {
+                                                            isListBorderColorExpanded =
+                                                                    !isListBorderColorExpanded;
+                                                          });},
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.all(3.0),
+                                                            child: DecoratedBox(
+                                                              decoration: BoxDecoration(
+                                                                shape: BoxShape.circle,
+                                                                border: Border.fromBorderSide(
+                                                                  BorderSide(color: defaultPalette.extras[0], width: 1),
+                                                                ),
+                                                                color: sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .border
+                                                              ?.bottom
+                                                              .color ??
+                                                          defaultPalette
+                                                              .transparent
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        border: InputBorder.none,
+                                                        enabledBorder: OutlineInputBorder(
+                                                          borderSide:
+                                                              BorderSide(width: 1.2, color: defaultPalette.secondary),
+                                                          borderRadius: BorderRadius.circular(5.0),
+                                                        ),
+                                                        focusedBorder: OutlineInputBorder(
+                                                          borderSide:
+                                                              BorderSide(width: 2, color: defaultPalette.secondary),
+                                                          borderRadius: BorderRadius.circular(5.0),
+                                                        ),
+                                                      ), 
+                                                style: GoogleFonts.bungee(
+                                                          fontSize: 12, color: defaultPalette.black),
+                                                      ),
+                                                ),
+                                              
+                                              if(isListBorderColorExpanded)
+                                              ...[
+                                              //borderColor WheelPicker
+                                                WheelPicker(
+                                                color: HSVColor.fromColor(sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .border
+                                                              ?.bottom
+                                                              .color ??
+                                                          defaultPalette
+                                                              .transparent,),
+                                                onChanged: (HSVColor value) {
+                                                  setState(() {
+                                                    sheetListItem.listDecoration = sheetListItem
+                                                        .listDecoration
+                                                        .copyWith(
+                                                            decoration: sheetListItem
+                                                                .listDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    border: Border(
+                                                                bottom: BorderSide(
+                                                                  color:  value.toColor().withAlpha((sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .border
+                                                              ?.bottom
+                                                              .color ??
+                                                          defaultPalette
+                                                              .transparent).alpha),
+                                                              strokeAlign:  
+                                                                      BorderSide
+                                                                          .strokeAlignCenter,
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
+                                                                ),
+                                                                right: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
+                                                                ),
+                                                                left: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
+                                                                ),
+                                                                top: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                                ),
+                                                                
+                                                    )));
+                                                  });
+                                                },
+                                              ),
+                                              //borderColor APLHA PICKER
+                                              AlphaPicker(
+                                                alpha: (sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .border
+                                                              ?.bottom
+                                                              .color ??
+                                                          defaultPalette
+                                                              .transparent).alpha,
+                                                onChanged: (int value) {
+                                                  setState(() {
+
+                                                     sheetListItem.listDecoration = sheetListItem
+                                                              .listDecoration
+                                                              .copyWith(
+                                                                  decoration: sheetListItem
+                                                                      .listDecoration
+                                                                      .decoration
+                                                                      .copyWith(
+                                                                        border: Border(
+                                                                bottom: BorderSide(
+                                                                  color:  (sheetListItem
+                                                              .listDecoration
+                                                              .decoration
+                                                              .border
+                                                              ?.bottom
+                                                              .color ??
+                                                          defaultPalette
+                                                              .transparent).withAlpha(value),
+                                                              strokeAlign:  
+                                                                      BorderSide
+                                                                          .strokeAlignCenter,
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
+                                                                ),
+                                                                right: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
+                                                                ),
+                                                                left: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
+                                                                ),
+                                                                top: BorderSide(
+                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
+                                                                ),
+                                                                
+                                                    )
+                                                                         
+                                                          ));
+
+
+
+                                                   
+                                                      });
+                                                },
+                                              ),
+                                            ]
+                                            ],
+                                          ),
+                                        ),
+                                        ],
+                                        
+                                        SizedBox(height: 10),
+                                        
+                                        //The setup for image background for list
+                                        Container(
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette
+                                                  .primary,
+                                              borderRadius:
+                                                  BorderRadius
+                                                      .circular(
+                                                          12)),
+                                          padding: EdgeInsets.all(4).copyWith(top:2),
+                                          child: Column(
+                                           children: [
+                                            Text(
+                                              'image',
+                                              style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
+                                            ),
+                                            
+                                            GestureDetector(
+                                              onTap: () async{
+                                                if (sheetListItem.listDecoration.decoration.image ==null) {
+                                                  FilePickerResult? result = await FilePicker.platform.pickFiles( 
+                                                    type: FileType.custom,
+                                                    allowedExtensions: ['jpg', 'png',],
+                                                    withData: true
+                                                  );
+                                                  print(result);
+                                                  if (result !=null) {
+                                                    setState(() {
+                                                      sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
+                                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                                          image: DecorationImage(image: MemoryImage(result.files[0].bytes!), fit:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image?.fit:BoxFit.fitWidth  )
+                                                        )
+                                                      );
+                                                    });
+                                                  }
+                                                }
+                                              },
+                                              child: Container(
+                                                 decoration: BoxDecoration( 
+                                                  color: defaultPalette
+                                                      .secondary,
+                                                  borderRadius:
+                                                      BorderRadius
+                                                          .circular(
+                                                              12)),
+                                                  padding: EdgeInsets.all(2),
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      width: sWidth,
+                                                      height:50,
+                                                      decoration: BoxDecoration(
+                                                      image: sheetListItem.listDecoration.decoration.image??null,
+                                                      color: defaultPalette
+                                                          .secondary,
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(
+                                                                  12)),
+                                                      padding: EdgeInsets.all(5),
+                                                      child:sheetListItem.listDecoration.decoration.image !=null?null: Icon(TablerIcons.photo_plus),
+                                                    ),
+                                                     if(sheetListItem.listDecoration.decoration.image !=null)
+                                                     Padding(
+                                                       padding: const EdgeInsets.symmetric(vertical:2.0),
+                                                       child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                         children: [
+                                                            GestureDetector(
+                                                              onTap:() async{
+                                                                FilePickerResult? result = await FilePicker.platform.pickFiles( 
+                                                                  type: FileType.custom,
+                                                                  allowedExtensions: ['jpg', 'png',],
+                                                                  withData: true
+                                                                );
+                                                                print(result);
+                                                                if (result !=null) {
+                                                                  setState(() {
+                                                                    sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
+                                                                      decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                                                        image: DecorationImage(image: MemoryImage(result.files[0].bytes!), fit:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image?.fit:BoxFit.fitWidth  )
+                                                                      )
+                                                                    );
+                                                                  });
+                                                                }
+                                                              },
+                                                              child: Icon(TablerIcons.photo_plus, size:15)
+                                                              ),
+                                                            GestureDetector(
+                                                              onTap: () {
+                                                                  setState(() {
+                                                                    sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
+                                                                      decoration: BoxDecoration(
+                                                                          color: sheetListItem.listDecoration.decoration.color,
+                                                                          borderRadius: sheetListItem.listDecoration.decoration.borderRadius,
+                                                                          border: sheetListItem.listDecoration.decoration.border,
+                                                                          boxShadow: sheetListItem.listDecoration.decoration.boxShadow,
+                                                                          image: null, // Set to null directly
+                                                                        ),
+                                                                    );
+                                                                  }); 
+                                                              },
+                                                              child: Icon(TablerIcons.trash, size:15)),
+                                                         ],
+                                                       ),
+                                                     ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+
+                                            SizedBox(height:10),
+                                               
+                                            ////The setup for BoxFit Change
+                                            Container(
+                                              width: width,
+                                              decoration: BoxDecoration(
+                                                  color: defaultPalette.primary,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10)),
+                                              padding: EdgeInsets.all(3)
+                                                  .copyWith(top: 2),
+                                              child: Column(
+                                                children: [
+                                                  Text(
+                                                    'contentFit - ${sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image!.fit!.name:BoxFit.fitWidth.name }',
+                                                    style: GoogleFonts.prompt(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w500),
+                                                  ),
+                                                  AnimatedToggleSwitch<BoxFit>.rolling(
+                                                    current:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image!.fit!:BoxFit.fitWidth , 
+                                                    onChanged: (value) {
+                                                      if (sheetListItem.listDecoration.decoration.image !=null) {
+                                                      setState(() {
+                                                        sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
+                                                      decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                                        image: DecorationImage(image: MemoryImage((sheetListItem.listDecoration.decoration.image?.image as MemoryImage).bytes  ), fit:value)
+                                                        )
+                                                      );
+                                                      });
+                                                    }
+                                                    },
+                                                    animationCurve:
+                                                        Curves.easeInOutExpo,
+                                                    animationDuration:
+                                                        Durations.medium4,
+                                                    borderWidth:
+                                                        2, // backgroundColor is set independently of the current selection
+                                                    styleBuilder: (value) =>
+                                                        ToggleStyle(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(10), 
+                                                            indicatorBorderRadius:
+                                                                BorderRadius
+                                                                    .circular(15),
+                                                            borderColor:
+                                                                defaultPalette
+                                                                    .secondary,
+                                                            backgroundColor:
+                                                                defaultPalette
+                                                                    .secondary,
+                                                            indicatorColor:
+                                                                defaultPalette
+                                                                        .extras[
+                                                                    1]), // indicatorColor changes and animates its value with the selection
+                                                     
+                                                            iconList: [
+                                                              Icon(TablerIcons.arrow_autofit_content),
+                                                              Icon(TablerIcons.arrow_autofit_height),
+                                                              Icon(TablerIcons.arrow_autofit_width),
+                                                              Icon(TablerIcons.arrow_autofit_content_filled),
+                                                              Icon(TablerIcons.input_x),
+                                                            ],
+                                                            height: 30, 
+                                                                values: [
+                                                                  BoxFit.contain,
+                                                                  BoxFit.fitHeight,
+                                                                  BoxFit.fitWidth,
+                                                                  BoxFit.fill, 
+                                                                  BoxFit.none
+
+                                                                ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                         
+                                           ],
+                                          ),
+                                        ),
+                                        
+                                        SizedBox(height:10),
+
+                                      ],
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+
+              if(index!=1)
               // Top ROUNDED CARDS AS TITLES in LIST PROPERTIES
-              Positioned(
+              ...[
+                Positioned(
                 width: sWidth * wH2DividerPosition,
                 height: 80,
                 child: AnimatedContainer(
                   duration: Durations.short3,
-                  margin: EdgeInsets.all(15),
+                  margin: EdgeInsets.all(10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                       color: defaultPalette.primary,
@@ -15865,6 +17375,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   ),
                 ),
               ),
+            ]
+              ,
             ],
           );
                     },
@@ -15879,7 +17391,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       duration: Durations.short3,
       child: AppinioSwiper(
         backgroundCardCount: 1,
-        backgroundCardOffset: Offset(5, 5),
+        backgroundCardOffset: Offset(4, 4),
         duration: Duration(milliseconds: 150),
         backgroundCardScale: 1,
         loop: true,
@@ -15916,7 +17428,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               Positioned.fill(
                 child: AnimatedContainer(
                   duration: Durations.short3,
-                  margin: EdgeInsets.all(15),
+                  margin: EdgeInsets.all(10).copyWith(left:5, right:8),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -15936,7 +17448,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   duration: Duration(milliseconds: 300),
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 300),
-                    margin: EdgeInsets.all(15),
+                    margin: EdgeInsets.all(10).copyWith(left:5, right:8),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: index == (currentCardIndex + 1) % 10
@@ -15958,7 +17470,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 width: sWidth * wH2DividerPosition,
                 child: Container(
                   padding:
-                      EdgeInsets.only(top: 10, left: 10, right: 5, bottom: 75),
+                      EdgeInsets.only(top: 5, left: 0, right: 0, bottom: 70),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
                     color: defaultPalette.transparent,
@@ -18333,55 +19845,69 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   fontSize: 10, color: defaultPalette.extras[0]),
             ),
             // "Pad" field for all sides
-            SizedBox(
-              height: textFieldHeight / 2,
-              child: TextFormField(
-                onTapOutside: (event) => focusNodes[0].unfocus(),
-                focusNode: focusNodes[0],
-                controller: controllers[0],
-                inputFormatters: [
-                  NumericInputFormatter(
-                    maxValue: documentPropertiesList[currentPageIndex]
-                            .pageFormatController
-                            .width /
-                        2.001,
-                  ),
-                ],
-                textAlignVertical: TextAlignVertical.top,
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(0),
-                  floatingLabelAlignment: FloatingLabelAlignment.center,
-                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                  filled: true,
-                  fillColor: defaultPalette.secondary,
-                  border: InputBorder.none,
-                  enabledBorder: OutlineInputBorder(
-                    borderSide:
-                        BorderSide(width: 1.2, color: defaultPalette.secondary),
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide:
-                        BorderSide(width: 2, color: defaultPalette.extras[0]),
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.bungee(
-                    fontSize: 12, color: defaultPalette.black),
-                onFieldSubmitted: (value) {
+            Listener(
+              onPointerDown: (event) {
+                if (event.kind == PointerDeviceKind.mouse &&
+                event.buttons == kSecondaryMouseButton) { 
+                  if (dragBackupValue != null) {
+                  double parsedValue = double.parse(dragBackupValue.toStringAsFixed(2));
+              
                   setState(() {
-                    double parsedValue = double.parse(value);
-                    if(isBorderRadius) {
+                    if (isBorderRadius) {
                       sheetListItem.listDecoration =
                           sheetListItem.listDecoration.copyWith(
-                            decoration: sheetListItem.listDecoration.decoration.copyWith(
-                              borderRadius: setBorderRadius('all', parsedValue)
-                            ), 
+                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                          borderRadius: setBorderRadius('all', parsedValue),
+                        ),
+                      );
+                    } else if (isWidthAdjustment) {
+                      sheetListItem.listDecoration =
+                          sheetListItem.listDecoration.copyWith(
+                        widthAdjustment: EdgeInsets.all(parsedValue),
+                      );
+                    } else {
+                      sheetListItem.listDecoration =
+                          sheetListItem.listDecoration.copyWith(
+                        padding: EdgeInsets.all(parsedValue),
                       );
                     }
-                    else if (isWidthAdjustment) {
+
+                    dragBackupValue = null;
+                    focusNodes[0].unfocus(); 
+                  });
+                  
+                }
+                }
+              },
+              child: GestureDetector(
+              onHorizontalDragCancel: () {
+                focusNodes[0].requestFocus();
+              },
+              onHorizontalDragStart: (details) {
+                dragBackupValue = double.parse(controllers[0].text);
+              },  
+              onHorizontalDragUpdate: (details) {
+                var multiplier = HardwareKeyboard.instance.isControlPressed
+                ? 10
+                : HardwareKeyboard.instance.isShiftPressed
+                ? 0.1
+                : 1;
+                  setState(() {
+                    double currentValue = double.tryParse(controllers[0].text) ?? 0.0;
+                    double newValue = (currentValue + details.delta.dx *multiplier ).clamp(0, double.infinity); // Adjust sensitivity here
+              
+                    // controllers[0].text = newValue.toStringAsFixed(2);
+              
+                    double parsedValue = double.parse(newValue.toStringAsFixed(2));
+              
+                    if (isBorderRadius) {
+                      sheetListItem.listDecoration =
+                          sheetListItem.listDecoration.copyWith(
+                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                          borderRadius: setBorderRadius('all', parsedValue),
+                        ),
+                      );
+                    } else if (isWidthAdjustment) {
                       sheetListItem.listDecoration =
                           sheetListItem.listDecoration.copyWith(
                         widthAdjustment: EdgeInsets.all(parsedValue),
@@ -18394,8 +19920,72 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     }
                   });
                 },
+                child: SizedBox(
+                  height: textFieldHeight / 2,
+                  child: TextFormField(
+                    onTapOutside: (event) => focusNodes[0].unfocus(),
+                    focusNode: focusNodes[0],
+                    controller: controllers[0],
+                    inputFormatters: [
+                      NumericInputFormatter(
+                        maxValue: documentPropertiesList[currentPageIndex]
+                                .pageFormatController
+                                .width /
+                            2.001,
+                      ),
+                    ],
+                    textAlignVertical: TextAlignVertical.top,
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(0),
+                      floatingLabelAlignment: FloatingLabelAlignment.center,
+                      labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                      filled: true,
+                      fillColor: defaultPalette.secondary,
+                      border: InputBorder.none,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(width: 1.2, color: defaultPalette.secondary),
+                        borderRadius: BorderRadius.circular(5.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(width: 2, color: defaultPalette.extras[0]),
+                        borderRadius: BorderRadius.circular(5.0),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.bungee(
+                        fontSize: 12, color: defaultPalette.black),
+                    onFieldSubmitted: (value) {
+                      setState(() {
+                        double parsedValue = double.parse(value);
+                        if(isBorderRadius) {
+                          sheetListItem.listDecoration =
+                              sheetListItem.listDecoration.copyWith(
+                                decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                  borderRadius: setBorderRadius('all', parsedValue)
+                                ), 
+                          );
+                        }
+                        else if (isWidthAdjustment) {
+                          sheetListItem.listDecoration =
+                              sheetListItem.listDecoration.copyWith(
+                            widthAdjustment: EdgeInsets.all(parsedValue),
+                          );
+                        } else {
+                          sheetListItem.listDecoration =
+                              sheetListItem.listDecoration.copyWith(
+                            padding: EdgeInsets.all(parsedValue),
+                          );
+                        }
+                      });
+                    },
+                  ),
+                ),
               ),
             ),
+            
             // "Pad" field SLIDER for all sides
             BalloonSlider(
               color: defaultPalette.extras[0],
@@ -18455,66 +20045,153 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           const SizedBox(width: 5),
                           Expanded(
                             flex: 5,
-                            child: TextFormField(
-                              onTapOutside: (event) => focusNodes[1].unfocus(),
-                              focusNode: focusNodes[1],
-                              controller: controllers[1],
-                              inputFormatters: [NumericInputFormatter()],
-                              cursorColor: defaultPalette.extras[0],
-                              textAlign: TextAlign.center,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(0),
-                                filled: true,
-                                fillColor: defaultPalette.secondary,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 1.2,
-                                      color: defaultPalette.secondary),
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 2,
-                                      color: defaultPalette.extras[0]),
-                                  borderRadius: BorderRadius.circular(5.0),
+                            child: Listener(
+                              onPointerDown: (event) {
+                                if (event.kind == PointerDeviceKind.mouse &&
+                                event.buttons == kSecondaryMouseButton) { 
+                                  if (dragBackupValue != null) {
+                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
+                              
+                                  setState(() {
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('topLeft', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment:
+                                            sheetListItem.listDecoration.widthAdjustment.copyWith(
+                                          top: val,
+                                        ),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem.listDecoration.padding.copyWith(
+                                          top: val,
+                                        ),
+                                      );
+                                    }
+
+                                    dragBackupValue = null;
+                                  });
+                                  
+                                }
+                                }
+                              },
+                              child: GestureDetector(
+                                onHorizontalDragCancel: () {
+                                  focusNodes[1].requestFocus();
+                                },
+                                onHorizontalDragStart: (details) {
+                                  dragBackupValue = double.parse(controllers[1].text);
+                                },  
+                
+                                onHorizontalDragUpdate: (details) {
+                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                  ? 10
+                                  : HardwareKeyboard.instance.isShiftPressed
+                                  ? 0.1
+                                  : 1;
+                                  setState(() {
+                                    double currentValue = double.tryParse(controllers[1].text) ?? 0.0;
+                                    double newValue = (currentValue + (details.delta.dx * multiplier)).clamp(0, double.infinity);
+                               
+                              
+                                    double val = double.parse(newValue.toStringAsFixed(2));
+                              
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('topLeft', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment:
+                                            sheetListItem.listDecoration.widthAdjustment.copyWith(
+                                          top: val,
+                                        ),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem.listDecoration.padding.copyWith(
+                                          top: val,
+                                        ),
+                                      );
+                                    }
+                                  });
+                                },
+                                child: TextFormField(
+                                  onTapOutside: (event) => focusNodes[1].unfocus(),
+                                  focusNode: focusNodes[1],
+                                  controller: controllers[1],
+                                  inputFormatters: [NumericInputFormatter()],
+                                  cursorColor: defaultPalette.extras[0], 
+                                  selectionControls: NoMenuTextSelectionControls(),
+                                  textAlign: TextAlign.center,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.all(0),
+                                    filled: true,
+                                    fillColor: defaultPalette.secondary,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 1.2,
+                                          color: defaultPalette.secondary),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 2,
+                                          color: defaultPalette.extras[0]),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  style: GoogleFonts.bungee(
+                                      fontSize: 12, color: defaultPalette.black),
+                                  onFieldSubmitted: (value) {
+                                    setState(() {
+                                      double val =
+                                          value.isEmpty ? 0 : double.parse(value);
+                                      if(isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                              borderRadius: setBorderRadius('topLeft', val)
+                                          ), 
+                                        );
+                                      }
+                                      else if (isWidthAdjustment) {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          widthAdjustment: sheetListItem
+                                              .listDecoration.widthAdjustment
+                                              .copyWith(top: val),
+                                        );
+                                      } else {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          padding: sheetListItem
+                                              .listDecoration.padding
+                                              .copyWith(top: val),
+                                        );
+                                      }
+                                    });
+                                  },
                                 ),
                               ),
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.bungee(
-                                  fontSize: 12, color: defaultPalette.black),
-                              onFieldSubmitted: (value) {
-                                setState(() {
-                                  double val =
-                                      value.isEmpty ? 0 : double.parse(value);
-                                  if(isBorderRadius) {
-                                  sheetListItem.listDecoration =
-                                      sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('topLeft', val)
-                                      ), 
-                                    );
-                                  }
-                                  else if (isWidthAdjustment) {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      widthAdjustment: sheetListItem
-                                          .listDecoration.widthAdjustment
-                                          .copyWith(top: val),
-                                    );
-                                  } else {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      padding: sheetListItem
-                                          .listDecoration.padding
-                                          .copyWith(top: val),
-                                    );
-                                  }
-                                });
-                              },
                             ),
                           ),
                           const SizedBox(width: 5),
@@ -18540,67 +20217,152 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           const SizedBox(width: 5),
                           Expanded(
                             flex: 5,
-                            child: TextFormField(
-                              onTapOutside: (event) =>
-                                  focusNodes[2].unfocus(),
-                              focusNode: focusNodes[2],
-                              controller: controllers[2],
-                              inputFormatters: [NumericInputFormatter()],
-                              cursorColor: defaultPalette.secondary,
-                              textAlign: TextAlign.center,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(0),
-                                filled: true,
-                                fillColor: defaultPalette.secondary,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 1.2,
-                                      color: defaultPalette.secondary),
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 2,
-                                      color: defaultPalette.extras[0]),
-                                  borderRadius: BorderRadius.circular(5.0),
+                            child: Listener(
+                              onPointerDown: (event) {
+                                if (event.kind == PointerDeviceKind.mouse &&
+                                event.buttons == kSecondaryMouseButton) { 
+                                  if (dragBackupValue != null) {
+                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
+                              
+                                  setState(() { 
+                              
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('topRight', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment: sheetListItem
+                                            .listDecoration.widthAdjustment
+                                            .copyWith(bottom: val),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem
+                                            .listDecoration.padding
+                                            .copyWith(bottom: val),
+                                      );
+                                    }
+
+                                    dragBackupValue = null;
+                                  });
+                                  
+                                }
+                                }
+                              },
+                              child: GestureDetector(
+                                onHorizontalDragCancel: () {
+                                  focusNodes[2].requestFocus();
+                                },
+                                onHorizontalDragStart: (details) {
+                                  dragBackupValue = double.parse(controllers[2].text);
+                                }, 
+                                onHorizontalDragUpdate: (details) {
+                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                      ? 10
+                                      : HardwareKeyboard.instance.isShiftPressed
+                                          ? 0.06
+                                          : 1;
+                                  setState(() {
+                                    double currentValue = double.tryParse(controllers[2].text) ?? 0.0;
+                                    double newValue = (currentValue + (details.delta.dx * multiplier))
+                                        .clamp(0, double.infinity);
+                              
+                                    double val = double.parse(newValue.toStringAsFixed(2)); 
+                              
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('topRight', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment: sheetListItem
+                                            .listDecoration.widthAdjustment
+                                            .copyWith(bottom: val),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem
+                                            .listDecoration.padding
+                                            .copyWith(bottom: val),
+                                      );
+                                    }
+                                  });
+                                },
+                                child: TextFormField(
+                                  onTapOutside: (event) =>
+                                      focusNodes[2].unfocus(),
+                                  focusNode: focusNodes[2],
+                                  controller: controllers[2],
+                                  inputFormatters: [NumericInputFormatter()], 
+                                  selectionControls: NoMenuTextSelectionControls(),
+                                  cursorColor: defaultPalette.secondary,
+                                  textAlign: TextAlign.center,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.all(0),
+                                    filled: true,
+                                    fillColor: defaultPalette.secondary,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 1.2,
+                                          color: defaultPalette.secondary),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 2,
+                                          color: defaultPalette.extras[0]),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  style: GoogleFonts.bungee(
+                                      fontSize: 12, color: defaultPalette.black),
+                                  onFieldSubmitted: (value) {
+                                    setState(() {
+                                      double val =
+                                          value.isEmpty ? 0 : double.parse(value);
+                                      if(isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                              borderRadius: setBorderRadius('topRight', val)
+                                          ), 
+                                        );
+                                      }
+                                      else if (isWidthAdjustment) {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          widthAdjustment: sheetListItem
+                                              .listDecoration.widthAdjustment
+                                              .copyWith(bottom: val),
+                                        );
+                                      } else {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          padding: sheetListItem
+                                              .listDecoration.padding
+                                              .copyWith(bottom: val),
+                                        );
+                                      }
+                                    });
+                                  },
                                 ),
                               ),
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.bungee(
-                                  fontSize: 12, color: defaultPalette.black),
-                              onFieldSubmitted: (value) {
-                                setState(() {
-                                  double val =
-                                      value.isEmpty ? 0 : double.parse(value);
-                                  if(isBorderRadius) {
-                                  sheetListItem.listDecoration =
-                                      sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('topRight', val)
-                                      ), 
-                                    );
-                                  }
-                                  else if (isWidthAdjustment) {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      widthAdjustment: sheetListItem
-                                          .listDecoration.widthAdjustment
-                                          .copyWith(bottom: val),
-                                    );
-                                  } else {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      padding: sheetListItem
-                                          .listDecoration.padding
-                                          .copyWith(bottom: val),
-                                    );
-                                  }
-                                });
-                              },
                             ),
                           ),
                           const SizedBox(width: 5),
@@ -18631,67 +20393,151 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           const SizedBox(width: 5),
                           Expanded(
                             flex: 5,
-                            child: TextFormField(
-                              onTapOutside: (event) =>
-                                  focusNodes[3].unfocus(),
-                              focusNode: focusNodes[3],
-                              controller: controllers[3],
-                              inputFormatters: [NumericInputFormatter()],
-                              cursorColor: defaultPalette.secondary,
-                              textAlign: TextAlign.center,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(0),
-                                filled: true,
-                                fillColor: defaultPalette.secondary,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 1.2,
-                                      color: defaultPalette.secondary),
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 2,
-                                      color: defaultPalette.extras[0]),
-                                  borderRadius: BorderRadius.circular(5.0),
+                            child: Listener(
+                              onPointerDown: (event) {
+                                if (event.kind == PointerDeviceKind.mouse &&
+                                event.buttons == kSecondaryMouseButton) { 
+                                  if (dragBackupValue != null) {
+                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
+                              
+                                  setState(() {
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('bottomLeft', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment: sheetListItem
+                                            .listDecoration.widthAdjustment
+                                            .copyWith(left: val),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem
+                                            .listDecoration.padding
+                                            .copyWith(left: val),
+                                      );
+                                    }
+
+                                    dragBackupValue = null;
+                                  });
+                                  
+                                }
+                                }
+                              },
+                              child: GestureDetector(
+                                onHorizontalDragCancel: () {
+                                  focusNodes[3].requestFocus();
+                                },
+                                onHorizontalDragStart: (details) {
+                                  dragBackupValue = double.parse(controllers[3].text);
+                                }, 
+                                onHorizontalDragUpdate: (details) {
+                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                      ? 10
+                                      : HardwareKeyboard.instance.isShiftPressed
+                                          ? 0.1
+                                          : 1;
+                                  setState(() {
+                                    double currentValue = double.tryParse(controllers[3].text) ?? 0.0;
+                                    double newValue = (currentValue + (details.delta.dx * multiplier))
+                                        .clamp(0, double.infinity);
+                              
+                                    double val = double.parse(newValue.toStringAsFixed(2)); 
+                              
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('bottomLeft', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment: sheetListItem
+                                            .listDecoration.widthAdjustment
+                                            .copyWith(left: val),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem
+                                            .listDecoration.padding
+                                            .copyWith(left: val),
+                                      );
+                                    }
+                                  });
+                                },
+                                child: TextFormField(
+                                  onTapOutside: (event) =>
+                                      focusNodes[3].unfocus(),
+                                  focusNode: focusNodes[3],
+                                  controller: controllers[3],
+                                  inputFormatters: [NumericInputFormatter()], 
+                                  selectionControls: NoMenuTextSelectionControls(),
+                                  cursorColor: defaultPalette.secondary,
+                                  textAlign: TextAlign.center,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.all(0),
+                                    filled: true,
+                                    fillColor: defaultPalette.secondary,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 1.2,
+                                          color: defaultPalette.secondary),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 2,
+                                          color: defaultPalette.extras[0]),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  style: GoogleFonts.bungee(
+                                      fontSize: 12, color: defaultPalette.black),
+                                  onFieldSubmitted: (value) {
+                                    setState(() {
+                                      double val =
+                                          value.isEmpty ? 0 : double.parse(value);
+                                      if(isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                              borderRadius: setBorderRadius('bottomLeft', val)
+                                          ), 
+                                        );
+                                      }
+                                      else if (isWidthAdjustment) {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          widthAdjustment: sheetListItem
+                                              .listDecoration.widthAdjustment
+                                              .copyWith(left: val),
+                                        );
+                                      } else {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          padding: sheetListItem
+                                              .listDecoration.padding
+                                              .copyWith(left: val),
+                                        );
+                                      }
+                                    });
+                                  },
                                 ),
                               ),
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.bungee(
-                                  fontSize: 12, color: defaultPalette.black),
-                              onFieldSubmitted: (value) {
-                                setState(() {
-                                  double val =
-                                      value.isEmpty ? 0 : double.parse(value);
-                                  if(isBorderRadius) {
-                                  sheetListItem.listDecoration =
-                                      sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('bottomLeft', val)
-                                      ), 
-                                    );
-                                  }
-                                  else if (isWidthAdjustment) {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      widthAdjustment: sheetListItem
-                                          .listDecoration.widthAdjustment
-                                          .copyWith(left: val),
-                                    );
-                                  } else {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      padding: sheetListItem
-                                          .listDecoration.padding
-                                          .copyWith(left: val),
-                                    );
-                                  }
-                                });
-                              },
                             ),
                           ),
                           const SizedBox(width: 5),
@@ -18717,67 +20563,151 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           const SizedBox(width: 5),
                           Expanded(
                             flex: 5,
-                            child: TextFormField(
-                              onTapOutside: (event) =>
-                                  focusNodes[4].unfocus(),
-                              focusNode: focusNodes[4],
-                              controller: controllers[4],
-                              inputFormatters: [NumericInputFormatter()],
-                              cursorColor: defaultPalette.secondary,
-                              textAlign: TextAlign.center,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(0),
-                                filled: true,
-                                fillColor: defaultPalette.secondary,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 1.2,
-                                      color: defaultPalette.secondary),
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      width: 2,
-                                      color: defaultPalette.extras[0]),
-                                  borderRadius: BorderRadius.circular(5.0),
+                            child: Listener(
+                              onPointerDown: (event) {
+                                if (event.kind == PointerDeviceKind.mouse &&
+                                event.buttons == kSecondaryMouseButton) { 
+                                  if (dragBackupValue != null) {
+                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
+                              
+                                  setState(() {
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('bottomRight', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment: sheetListItem
+                                            .listDecoration.widthAdjustment
+                                            .copyWith(right: val),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem
+                                            .listDecoration.padding
+                                            .copyWith(right: val),
+                                      );
+                                    }
+
+                                    dragBackupValue = null;
+                                  });
+                                  
+                                }
+                                }
+                              },
+                              child: GestureDetector(
+                                onHorizontalDragCancel: () {
+                                  focusNodes[4].requestFocus();
+                                },
+                                onHorizontalDragStart: (details) {
+                                  dragBackupValue = double.parse(controllers[4].text);
+                                }, 
+                                onHorizontalDragUpdate: (details) {
+                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                      ? 10
+                                      : HardwareKeyboard.instance.isShiftPressed
+                                          ? 0.08
+                                          : 1;
+                                  setState(() {
+                                    double currentValue = double.tryParse(controllers[4].text) ?? 0.0;
+                                    double newValue = (currentValue + (details.delta.dx * multiplier))
+                                        .clamp(0, double.infinity);
+                              
+                                    double val = double.parse(newValue.toStringAsFixed(2));
+                              
+                                    if (isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius('bottomRight', val),
+                                        ),
+                                      );
+                                    } else if (isWidthAdjustment) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        widthAdjustment: sheetListItem
+                                            .listDecoration.widthAdjustment
+                                            .copyWith(right: val),
+                                      );
+                                    } else {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                        padding: sheetListItem
+                                            .listDecoration.padding
+                                            .copyWith(right: val),
+                                      );
+                                    }
+                                  });
+                                },
+                                child: TextFormField(
+                                  onTapOutside: (event) =>
+                                      focusNodes[4].unfocus(),
+                                  focusNode: focusNodes[4],
+                                  controller: controllers[4],
+                                  inputFormatters: [NumericInputFormatter()],
+                                  cursorColor: defaultPalette.secondary,
+                                  textAlign: TextAlign.center,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  selectionControls: NoMenuTextSelectionControls(),
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.all(0),
+                                    filled: true,
+                                    fillColor: defaultPalette.secondary,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 1.2,
+                                          color: defaultPalette.secondary),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          width: 2,
+                                          color: defaultPalette.extras[0]),
+                                      borderRadius: BorderRadius.circular(5.0),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  style: GoogleFonts.bungee(
+                                      fontSize: 12, color: defaultPalette.black),
+                                  onFieldSubmitted: (value) {
+                                    setState(() {
+                                      double val =
+                                          value.isEmpty ? 0 : double.parse(value);
+                                      if(isBorderRadius) {
+                                      sheetListItem.listDecoration =
+                                          sheetListItem.listDecoration.copyWith(
+                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
+                                              borderRadius: setBorderRadius('bottomRight', val)
+                                          ), 
+                                        );
+                                      }
+                                      else if (isWidthAdjustment) {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          widthAdjustment: sheetListItem
+                                              .listDecoration.widthAdjustment
+                                              .copyWith(right: val),
+                                        );
+                                      } else {
+                                        sheetListItem.listDecoration =
+                                            sheetListItem.listDecoration.copyWith(
+                                          padding: sheetListItem
+                                              .listDecoration.padding
+                                              .copyWith(right: val),
+                                        );
+                                      }
+                                    });
+                                  },
                                 ),
                               ),
-                              keyboardType: TextInputType.number,
-                              style: GoogleFonts.bungee(
-                                  fontSize: 12, color: defaultPalette.black),
-                              onFieldSubmitted: (value) {
-                                setState(() {
-                                  double val =
-                                      value.isEmpty ? 0 : double.parse(value);
-                                  if(isBorderRadius) {
-                                  sheetListItem.listDecoration =
-                                      sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('bottomRight', val)
-                                      ), 
-                                    );
-                                  }
-                                  else if (isWidthAdjustment) {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      widthAdjustment: sheetListItem
-                                          .listDecoration.widthAdjustment
-                                          .copyWith(right: val),
-                                    );
-                                  } else {
-                                    sheetListItem.listDecoration =
-                                        sheetListItem.listDecoration.copyWith(
-                                      padding: sheetListItem
-                                          .listDecoration.padding
-                                          .copyWith(right: val),
-                                    );
-                                  }
-                                });
-                              },
                             ),
                           ),
                           const SizedBox(width: 5),
