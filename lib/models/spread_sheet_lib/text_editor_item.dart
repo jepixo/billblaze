@@ -17,15 +17,16 @@ part 'text_editor_item.g.dart';
 // import 'package:parchment_delta/parchment_delta.dart';
 @HiveType(typeId: 3)
 class TextEditorItemBox extends SheetItem {
-  @HiveField(2)
+  @HiveField(5)
   final List<Map<String, dynamic>> textEditorController;
-  @HiveField(3)
+  @HiveField(6)
   final List<String>? linkedTextEditors;
   TextEditorItemBox({
     this.linkedTextEditors = null,
     required this.textEditorController,
     required super.id,
     required super.parentId,
+    super.itemDecoration = const [], required super.decorationId
   });
 }
 
@@ -35,14 +36,16 @@ class TextEditorItem extends SheetItem {
   final FocusNode focusNode;
   final ScrollController scrollController;
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
-  List<String>? linkedTextEditors;
+  List<String>? linkedTextEditors; 
   //
   TextEditorItem._({
     required super.id,
     required super.parentId,
+    required super.decorationId,
     required this.textEditorController,
     required this.textEditorConfigurations,
     this.linkedTextEditors,
+    super.itemDecoration = const []
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -55,6 +58,7 @@ class TextEditorItem extends SheetItem {
     String? initialValue,
     required String id,
     required String parentId,
+    required String decorationId,
     FocusNode? focusNode,
     ScrollController? scrollController,
     QuillSimpleToolbar? toolBarConfigurations,
@@ -80,7 +84,7 @@ class TextEditorItem extends SheetItem {
         id: id,
         parentId: parentId,
         textEditorConfigurations: configurations,
-        linkedTextEditors: linkedTextEditors);
+        linkedTextEditors: linkedTextEditors, decorationId: decorationId);
   }
 
   Delta getTextEditorDocumentAsDelta() {
@@ -103,6 +107,7 @@ class TextEditorItem extends SheetItem {
     QuillSimpleToolbarConfigurations? toolBarConfigurations,
     String? id,
     String? parentId,
+    String? decorationId,
     List<String>? linkedTextEditors,
   }) {
     return TextEditorItem._(
@@ -111,6 +116,7 @@ class TextEditorItem extends SheetItem {
           textEditorConfigurations ?? this.textEditorConfigurations,
       id: id ?? this.id,
       parentId: parentId ?? this.parentId,
+      decorationId: decorationId?? this.decorationId,
       linkedTextEditors: linkedTextEditors ?? this.linkedTextEditors,
     );
   }
@@ -123,6 +129,6 @@ class TextEditorItem extends SheetItem {
             textEditorController.document.toDelta().toJson(),
         id: item.id,
         parentId: item.parentId,
-        linkedTextEditors: item.linkedTextEditors);
+        linkedTextEditors: item.linkedTextEditors, decorationId: item.decorationId);
   }
 }

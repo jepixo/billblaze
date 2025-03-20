@@ -19,17 +19,26 @@ class SheetItemAdapter extends TypeAdapter<SheetItem> {
     return SheetItem(
       id: fields[0] as String,
       parentId: fields[1] as String,
+      itemDecoration: (fields[2] as List).cast<dynamic>(),
+      decorationId: fields[3] as String,
+      decorationName: fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetItem obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.parentId);
+      ..write(obj.parentId)
+      ..writeByte(2)
+      ..write(obj.itemDecoration)
+      ..writeByte(3)
+      ..write(obj.decorationId)
+      ..writeByte(4)
+      ..write(obj.decorationName);
   }
 
   @override

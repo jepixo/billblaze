@@ -30,9 +30,9 @@ Future<void> main() async {
   Hive.registerAdapter(SheetListBoxAdapter());
   Hive.registerAdapter(TextEditorItemBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
-  // await Hive.deleteBoxFromDisk('layouts');
+  await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
-  // await Hive.box<LayoutModel>('layouts').clear();
+  await Hive.box<LayoutModel>('layouts').clear();
   debugPaintSizeEnabled = false; // Disable size debug outlines.
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;

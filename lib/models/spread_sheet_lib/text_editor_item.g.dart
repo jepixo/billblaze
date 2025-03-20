@@ -17,27 +17,35 @@ class TextEditorItemBoxAdapter extends TypeAdapter<TextEditorItemBox> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return TextEditorItemBox(
-      linkedTextEditors: (fields[3] as List?)?.cast<String>(),
-      textEditorController: (fields[2] as List)
+      linkedTextEditors: (fields[6] as List?)?.cast<String>(),
+      textEditorController: (fields[5] as List)
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
       id: fields[0] as String,
       parentId: fields[1] as String,
-    );
+      itemDecoration: (fields[2] as List).cast<dynamic>(),
+      decorationId: fields[3] as String,
+    )..decorationName = fields[4] as String;
   }
 
   @override
   void write(BinaryWriter writer, TextEditorItemBox obj) {
     writer
-      ..writeByte(4)
-      ..writeByte(2)
+      ..writeByte(7)
+      ..writeByte(5)
       ..write(obj.textEditorController)
-      ..writeByte(3)
+      ..writeByte(6)
       ..write(obj.linkedTextEditors)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.parentId);
+      ..write(obj.parentId)
+      ..writeByte(2)
+      ..write(obj.itemDecoration)
+      ..writeByte(3)
+      ..write(obj.decorationId)
+      ..writeByte(4)
+      ..write(obj.decorationName);
   }
 
   @override

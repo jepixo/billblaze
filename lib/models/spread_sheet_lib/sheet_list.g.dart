@@ -17,58 +17,42 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return SheetListBox(
-      sheetList: (fields[2] as List).cast<SheetItem>(),
-      direction: fields[3] as bool,
+      sheetList: (fields[5] as List).cast<SheetItem>(),
+      direction: fields[6] as bool,
       id: fields[0] as String,
       parentId: fields[1] as String,
-      size: (fields[4] as List).cast<dynamic>(),
-      padding: (fields[5] as List).cast<double>(),
-      mainAxisAlignment: fields[6] as String,
-      crossAxisAlignment: fields[7] as String,
-      image: fields[9] as Uint8List?,
-      imageFit: fields[10] as String,
-      color: fields[11] as String,
-      borderColor: fields[12] as String,
-      borderRadius: (fields[14] as List).cast<double>(),
-      borderWidth: (fields[13] as List).cast<double>(),
-      widthAdjustment: (fields[8] as List).cast<double>(),
-    );
+      decorationId: fields[3] as String,
+      itemDecoration: (fields[2] as List).cast<dynamic>(),
+      size: (fields[7] as List).cast<dynamic>(),
+      mainAxisAlignment: fields[8] as int,
+      crossAxisAlignment: fields[9] as int,
+    )..decorationName = fields[4] as String;
   }
 
   @override
   void write(BinaryWriter writer, SheetListBox obj) {
     writer
-      ..writeByte(15)
-      ..writeByte(2)
-      ..write(obj.sheetList)
-      ..writeByte(3)
-      ..write(obj.direction)
-      ..writeByte(4)
-      ..write(obj.size)
-      ..writeByte(5)
-      ..write(obj.padding)
-      ..writeByte(6)
-      ..write(obj.mainAxisAlignment)
-      ..writeByte(7)
-      ..write(obj.crossAxisAlignment)
-      ..writeByte(8)
-      ..write(obj.widthAdjustment)
-      ..writeByte(9)
-      ..write(obj.image)
       ..writeByte(10)
-      ..write(obj.imageFit)
-      ..writeByte(11)
-      ..write(obj.color)
-      ..writeByte(12)
-      ..write(obj.borderColor)
-      ..writeByte(13)
-      ..write(obj.borderWidth)
-      ..writeByte(14)
-      ..write(obj.borderRadius)
+      ..writeByte(5)
+      ..write(obj.sheetList)
+      ..writeByte(6)
+      ..write(obj.direction)
+      ..writeByte(7)
+      ..write(obj.size)
+      ..writeByte(8)
+      ..write(obj.mainAxisAlignment)
+      ..writeByte(9)
+      ..write(obj.crossAxisAlignment)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.parentId);
+      ..write(obj.parentId)
+      ..writeByte(2)
+      ..write(obj.itemDecoration)
+      ..writeByte(3)
+      ..write(obj.decorationId)
+      ..writeByte(4)
+      ..write(obj.decorationName);
   }
 
   @override
