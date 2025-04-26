@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:billblaze/Home.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
@@ -30,9 +31,15 @@ Future<void> main() async {
   Hive.registerAdapter(SheetListBoxAdapter());
   Hive.registerAdapter(TextEditorItemBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
-  // await Hive.deleteBoxFromDisk('layouts');
+  Hive.registerAdapter(SheetDecorationAdapter());
+  Hive.registerAdapter(SuperDecorationBoxAdapter());
+  Hive.registerAdapter(AccessAdapter());
+  Hive.registerAdapter(ItemDecorationBoxAdapter());
+  await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
-  // await Hive.box<LayoutModel>('layouts').clear();
+  await Hive.openBox<SheetDecoration>('decorations');
+
+  await Hive.box<LayoutModel>('layouts').clear();
   debugPaintSizeEnabled = false; // Disable size debug outlines.
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;

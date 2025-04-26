@@ -21,50 +21,26 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       direction: fields[3] as bool,
       id: fields[0] as String,
       parentId: fields[1] as String,
-      size: (fields[4] as List).cast<dynamic>(),
-      padding: (fields[5] as List).cast<double>(),
-      mainAxisAlignment: fields[6] as String,
-      crossAxisAlignment: fields[7] as String,
-      image: fields[9] as Uint8List?,
-      imageFit: fields[10] as String,
-      color: fields[11] as String,
-      borderColor: fields[12] as String,
-      borderRadius: (fields[14] as List).cast<double>(),
-      borderWidth: (fields[13] as List).cast<double>(),
-      widthAdjustment: (fields[8] as List).cast<double>(),
+      mainAxisAlignment: fields[4] as int,
+      crossAxisAlignment: fields[5] as int,
+      decorationId: fields[6] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetListBox obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(7)
       ..writeByte(2)
       ..write(obj.sheetList)
       ..writeByte(3)
       ..write(obj.direction)
       ..writeByte(4)
-      ..write(obj.size)
-      ..writeByte(5)
-      ..write(obj.padding)
-      ..writeByte(6)
       ..write(obj.mainAxisAlignment)
-      ..writeByte(7)
+      ..writeByte(5)
       ..write(obj.crossAxisAlignment)
-      ..writeByte(8)
-      ..write(obj.widthAdjustment)
-      ..writeByte(9)
-      ..write(obj.image)
-      ..writeByte(10)
-      ..write(obj.imageFit)
-      ..writeByte(11)
-      ..write(obj.color)
-      ..writeByte(12)
-      ..write(obj.borderColor)
-      ..writeByte(13)
-      ..write(obj.borderWidth)
-      ..writeByte(14)
-      ..write(obj.borderRadius)
+      ..writeByte(6)
+      ..write(obj.decorationId)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

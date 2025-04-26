@@ -981,6 +981,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  mobkit_dashed_border:
+    dependency: "direct main"
+    description:
+      name: mobkit_dashed_border
+      sha256: d1bce2af4c19c6702b5981d8b4d1e09654fff6939f1e328b689fe37ab3499283
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.8"
   nested:
     dependency: transitive
     description:

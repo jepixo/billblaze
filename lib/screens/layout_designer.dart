@@ -12,6 +12,7 @@ import 'package:billblaze/components/pickers/wheel_picker.dart';
 import 'package:billblaze/components/switcher_button.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
 import 'package:billblaze/components/widgets/hex_picker.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
@@ -25,6 +26,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:number_counting_animation/number_counting_animation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -86,10 +88,9 @@ class PanelIndex {
     String? parentId,
   }) {
     return PanelIndex(
-      id: id ?? this.id,
-      panelIndex: panelIndex ?? this.panelIndex,
-      parentId: parentId ?? this.parentId
-    );
+        id: id ?? this.id,
+        panelIndex: panelIndex ?? this.panelIndex,
+        parentId: parentId ?? this.parentId);
   }
 
   @override
@@ -217,7 +218,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   FocusNode letterSpaceFocus = FocusNode();
   FocusNode wordSpaceFocus = FocusNode();
   FocusNode lineSpaceFocus = FocusNode();
-  List<FocusNode> widthAdjustmentFocusNodes = [
+  List<FocusNode> marginFocusNodes = [
     FocusNode(),
     FocusNode(),
     FocusNode(),
@@ -231,18 +232,21 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     FocusNode(),
     FocusNode()
   ];
-  List<FocusNode> colorHexFocusNodes=[
+  List<FocusNode> colorHexFocusNodes = [
     FocusNode(),
     FocusNode(),
   ];
-  List<FocusNode> borderFocusNodes=[
+  List<FocusNode> borderFocusNodes = [
     FocusNode(),
     FocusNode(),
     FocusNode(),
   ];
-  List<FocusNode> borderRadiusFocusNodes = List.generate(5, (index) {
-    return FocusNode();
-  },);
+  List<FocusNode> borderRadiusFocusNodes = List.generate(
+    5,
+    (index) {
+      return FocusNode();
+    },
+  );
 
   zz.TransformationController transformationcontroller =
       zz.TransformationController();
@@ -324,7 +328,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool isListColorExpanded = true;
   bool isListBorderColorExpanded = false;
   late TextEditorItem item;
-  late SheetList sheetListItem; 
+  late SheetList sheetListItem;
   var dragBackupValue;
   //
   //
@@ -413,7 +417,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         whichTextPropertyTabIsClicked =
             textPropertyTabContainerController.index;
         whichPropertyTabIsClicked = 2;
-        
       });
     });
     textPropertyTabContainerController.addListener(() {
@@ -440,7 +443,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         whichPropertyTabIsClicked = 3;
       });
     });
-    // 
+    //
   }
 
   @override
@@ -495,39 +498,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   List<SheetListBox> spreadSheetToBox(spreadSheetList) {
     List<SheetListBox> listbox = [];
     for (SheetList sheetlist in spreadSheetList) {
-      SheetListBox sheetListBox = SheetListBox(
-          sheetList: [],
-          direction: sheetlist.direction == Axis.vertical ? true : false,
-          id: sheetlist.id,
-          mainAxisAlignment: getStringFromMainAxisAlignment(
-              sheetlist.listDecoration.mainAxisAlignment),
-          crossAxisAlignment: getStringFromCrossAxisAlignment(
-              sheetlist.listDecoration.crossAxisAlignment),
-          image: sheetlist.listDecoration.decoration.image == null
-              ? null
-              : (sheetlist.listDecoration.decoration.image?.image
-                      as MemoryImage)
-                  .bytes,
-          imageFit: getStringFromBoxFit(
-              sheetlist.listDecoration.decoration.image?.fit),
-          color: colorToHex(sheetlist.listDecoration.decoration.color?? defaultPalette.transparent),
-          borderColor: colorToHex(sheetlist.listDecoration.decoration.border?.bottom.color?? defaultPalette.transparent),
-          borderWidth: sheetlist.listDecoration.decoration.border != null?[
-          (sheetlist.listDecoration.decoration.border as Border).bottom.width, 
-          (sheetlist.listDecoration.decoration.border as Border).right.width, 
-          (sheetlist.listDecoration.decoration.border as Border).left.width, 
-          (sheetlist.listDecoration.decoration.border as Border).top.width, 
-        ]: [0,0,0,0],
-        borderRadius: sheetlist.listDecoration.decoration.borderRadius != null?[
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topLeft.x, 
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topRight.x, 
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft.x, 
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomRight.x, 
-        ]: [0,0,0,0],
-          padding: getPaddingFromEdgeInsets(sheetlist.listDecoration.padding),
-          widthAdjustment: getPaddingFromEdgeInsets(
-              sheetlist.listDecoration.widthAdjustment),
-          parentId: sheetlist.parentId);
+      SheetListBox sheetListBox = sheetlist.toSheetListBox();
       for (var i = 0; i < sheetlist.length; i++) {
         if (sheetlist[i] is TextEditorItem) {
           sheetListBox.sheetList.add((sheetlist[i] as TextEditorItem)
@@ -542,46 +513,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   SheetListBox sheetListtoBox(SheetList sheetlist) {
-    print( sheetlist.listDecoration.decoration.border != null);
     // print([
-    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topLeft.x, 
-    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topRight.x, 
-    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft.x, 
-    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomRight.x, 
+    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topLeft.x,
+    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topRight.x,
+    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft.x,
+    //       (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomRight.x,
     //     ]);
-    SheetListBox sheetListBox = SheetListBox(
-        sheetList: [],
-        direction: sheetlist.direction == Axis.vertical ? true : false,
-        size: [sheetlist.size.width, sheetlist.size.height],
-        mainAxisAlignment: getStringFromMainAxisAlignment(
-            sheetlist.listDecoration.mainAxisAlignment),
-        crossAxisAlignment: getStringFromCrossAxisAlignment(
-            sheetlist.listDecoration.crossAxisAlignment),
-        image: sheetlist.listDecoration.decoration.image == null
-            ? null
-            : (sheetlist.listDecoration.decoration.image?.image as MemoryImage)
-                .bytes,
-        imageFit:
-            getStringFromBoxFit(sheetlist.listDecoration.decoration.image?.fit),
-        color: colorToHex(sheetlist.listDecoration.decoration.color?? defaultPalette.transparent),
-        borderColor: colorToHex(sheetlist.listDecoration.decoration.border?.bottom.color?? defaultPalette.transparent),
-        borderWidth: sheetlist.listDecoration.decoration.border != null?[
-          (sheetlist.listDecoration.decoration.border as Border).bottom.width, 
-          (sheetlist.listDecoration.decoration.border as Border).right.width, 
-          (sheetlist.listDecoration.decoration.border as Border).left.width, 
-          (sheetlist.listDecoration.decoration.border as Border).top.width, 
-        ]: [0,0,0,0],
-        borderRadius: sheetlist.listDecoration.decoration.borderRadius != null?[
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topLeft.x, 
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).topRight.x, 
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft.x, 
-          (sheetlist.listDecoration.decoration.borderRadius as BorderRadius).bottomRight.x, 
-        ]: [0,0,0,0],
-        padding: getPaddingFromEdgeInsets(sheetlist.listDecoration.padding),
-        widthAdjustment:
-            getPaddingFromEdgeInsets(sheetlist.listDecoration.widthAdjustment),
-        id: sheetlist.id,
-        parentId: sheetlist.parentId);
+    SheetListBox sheetListBox = sheetlist.toSheetListBox();
     for (var i = 0; i < sheetlist.length; i++) {
       if (sheetlist[i] is TextEditorItem) {
         sheetListBox.sheetList.add((sheetlist[i] as TextEditorItem)
@@ -597,53 +535,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     List<SheetList> listbox = [];
     List<Map<String, List<dynamic>>> listOfIdsNControllers = [];
     for (SheetListBox e in spreadsheetlist) {
-      SheetList sheetList =
-          SheetList(
-            direction: e.direction ? Axis.vertical : Axis.horizontal,
-            id: e.id, 
-            parentId: 
-            e.parentId, 
-            // size: Size(e.size[0], e.size[1]),
-        listDecoration: ListDecoration(
-            crossAxisAlignment:
-                getCrossAxisAlignment(e.crossAxisAlignment),
-            mainAxisAlignment:
-                getMainAxisAlignment(e.mainAxisAlignment),
-            
-            padding: getEdgeInsets(e.padding),
-            widthAdjustment: getEdgeInsets(e.widthAdjustment),
-            decoration: BoxDecoration(
-                color: hexToColor(e.color),
-                borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(e.borderRadius[0]),
-                topRight: Radius.circular(e.borderRadius[1]),
-                bottomLeft: Radius.circular(e.borderRadius[2]),
-                bottomRight: Radius.circular(e.borderRadius[3]),
-              ),
-                border: Border(
-                  top: BorderSide(
-                  color: defaultPalette.transparent,
-                  width: e.borderWidth[3]
-                ),
-                  bottom: BorderSide(
-                  color: hexToColor(e.borderColor),
-                  width: e.borderWidth[0]
-                ),
-                  left: BorderSide(
-                  color: defaultPalette.transparent,
-                  width: e.borderWidth[2]
-                ),
-                  right: BorderSide(
-                  color: defaultPalette.transparent,
-                  width: e.borderWidth[1]
-                )
-                ),
-                image: e.image != null
-                    ? DecorationImage(
-                        image: MemoryImage(e.image!),
-                        fit: getBoxFit(e.imageFit))
-                    : null)),
-            sheetList: []);
+      SheetList sheetList = e.toSheetList();
       for (var item in e.sheetList) {
         if (item is TextEditorItemBox) {
           print('There is a TextEditorItemBox');
@@ -759,105 +651,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       listbox.add(sheetList);
     }
 
-    // void link(SheetList sheetList) {
-    //   for (var i = 0; i < sheetList.sheetList.length; i++) {
-    //     if (sheetList.sheetList[i] is TextEditorItem &&
-    //         ((sheetList.sheetList[i] as TextEditorItem).linkedTextEditors !=
-    //                 null ||
-    //             (sheetList.sheetList[i] as TextEditorItem).linkedTextEditors ==
-    //                 [])) {
-    //       TextEditorItem textEditorItem =
-    //           sheetList.sheetList[i] as TextEditorItem;
-    //       for (var j = 0; j < textEditorItem.linkedTextEditors!.length; j++) {
-    //         TextEditorItem target = _sheetItemIterator(
-    //                 textEditorItem.linkedTextEditors![j], sheetList)
-    //             as TextEditorItem;
-    //         target = target.copyWith(
-    //             textEditorConfigurations: QuillEditorConfigurations(
-    //           customStyleBuilder: (attribute) {
-    //             return customStyleBuilder(attribute);
-    //           },
-    //           disableClipboard: false,
-    //           onTapDown: target.textEditorConfigurations.onTapDown,
-    //           builder: target.textEditorConfigurations.builder,
-    //           controller: QuillController(
-    //             document:
-    //                 textEditorItem.textEditorConfigurations.controller.document,
-    //             selection: textEditorItem
-    //                 .textEditorConfigurations.controller.selection,
-    //             readOnly: false,
-    //             onSelectionChanged: (textSelection) {
-    //               setState(() {});
-    //             },
-    //             onSelectionCompleted: () {
-    //               setState(() {});
-    //             },
-    //             onDelete: (cursorPosition, forward) {
-    //               setState(() {});
-    //             },
-    //           ),
-    //         ));
-    //       }
-    //     } else if (sheetList.sheetList[i] is SheetList) {
-    //       link(sheetList.sheetList[i] as SheetList);
-    //     }
-    //   }
-    // }
-
-    // for (var i = 0; i < listbox.length; i++) {
-    //   link(listbox[i]);
-    // }
-
     return listbox;
   }
 
   SheetList boxToSheetList(SheetListBox sheetListBox,
       List<Map<String, List<dynamic>>> listOfIdsNControllers) {
-    SheetList sheetList = SheetList(
-        direction: sheetListBox.direction ? Axis.vertical : Axis.horizontal,
-        id: sheetListBox.id,
-        parentId: sheetListBox.parentId,
-        // size: Size(sheetListBox.size[0], sheetListBox.size[1]),
-        listDecoration: ListDecoration(
-            crossAxisAlignment:
-                getCrossAxisAlignment(sheetListBox.crossAxisAlignment),
-            mainAxisAlignment:
-                getMainAxisAlignment(sheetListBox.mainAxisAlignment),
-            
-            padding: getEdgeInsets(sheetListBox.padding),
-            widthAdjustment: getEdgeInsets(sheetListBox.widthAdjustment),
-            decoration: BoxDecoration(
-                color: hexToColor(sheetListBox.color),
-                borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(sheetListBox.borderRadius[0]),
-                topRight: Radius.circular(sheetListBox.borderRadius[1]),
-                bottomLeft: Radius.circular(sheetListBox.borderRadius[2]),
-                bottomRight: Radius.circular(sheetListBox.borderRadius[3]),
-              ),
-                border: Border(
-                  top: BorderSide(
-                  color: defaultPalette.transparent,
-                  width: sheetListBox.borderWidth[3]
-                ),
-                  bottom: BorderSide(
-                  color: hexToColor(sheetListBox.borderColor),
-                  width: sheetListBox.borderWidth[0]
-                ),
-                  left: BorderSide(
-                  color: defaultPalette.transparent,
-                  width: sheetListBox.borderWidth[2]
-                ),
-                  right: BorderSide(
-                  color: defaultPalette.transparent,
-                  width: sheetListBox.borderWidth[1]
-                )
-                ),
-                image: sheetListBox.image != null
-                    ? DecorationImage(
-                        image: MemoryImage(sheetListBox.image!),
-                        fit: getBoxFit(sheetListBox.imageFit))
-                    : null)),
-        sheetList: []);
+    SheetList sheetList = sheetListBox.toSheetList();
     for (var item in sheetListBox.sheetList) {
       if (item is TextEditorItemBox) {
         print('TextEditor Id: ' + item.id);
@@ -1762,265 +1561,229 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
   Widget _buildSheetListWidget(SheetList sheetList, double width,
       {double? docWidth = null, double? docHeight = null}) {
-    return Padding(
-      padding: sheetList.listDecoration.padding,
-      child: CustomBorder(
-        color: sheetList.listDecoration.decoration.border != null && (sheetList.listDecoration.decoration.border as Border).bottom.width !=0
-        ?(sheetList.listDecoration.decoration.border as Border).bottom.color
-        :defaultPalette.transparent ,
+    return buildDecoratedContainer(
+        sheetList.listDecoration,
+        IntrinsicHeight(
+          child: sheetList.direction == Axis.vertical
+              //For Columns in the pdf side of things
+              ? IntrinsicWidth(
+                  child: Flex(
+                    direction: Axis.vertical,
+                    mainAxisAlignment: sheetList.mainAxisAlignment,
+                    crossAxisAlignment: sheetList.crossAxisAlignment,
+                    children:
+                        List.generate(sheetList.sheetList.length, (index) {
+                      final item = sheetList.sheetList[index];
 
-        strokeWidth: sheetList.listDecoration.decoration.border != null
-        ?(sheetList.listDecoration.decoration.border as Border).bottom.width
-        :0 ,
-        radius: sheetList.listDecoration.decoration.borderRadius !=null? (sheetList.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft: Radius.circular(0),
-        dashPattern: sheetList.listDecoration.decoration.border != null 
-         ?(sheetList.listDecoration.decoration.border as Border).right.width!=0 && (sheetList.listDecoration.decoration.border as Border).left.width !=0
-         ?[ (sheetList.listDecoration.decoration.border as Border).right.width
-         , (sheetList.listDecoration.decoration.border as Border).left.width]
-         :null:null,
-        strokeCap: StrokeCap.square,
-        strokeJoin: StrokeJoin.miter,
-        child: Container(
-          padding: sheetList.listDecoration.widthAdjustment,
-          decoration: BoxDecoration(
-            backgroundBlendMode: sheetList.listDecoration.decoration.backgroundBlendMode,
-            border: Border(
-              top: BorderSide(width: 1),
-              left: BorderSide(width: 5),
-            ),
-            borderRadius: sheetList.listDecoration.decoration.borderRadius,
-            boxShadow: sheetList.listDecoration.decoration.boxShadow,
-            color: sheetList.listDecoration.decoration.color,
-            image:sheetList.listDecoration.decoration.image,
-          ) ,
-          child: IntrinsicHeight(
-            child: sheetList.direction == Axis.vertical
-                //For Columns in the pdf side of things
-                ? IntrinsicWidth(
-                    child: Flex(
-                      direction: sheetList.direction,
-                      mainAxisAlignment:
-                          sheetList.listDecoration.mainAxisAlignment,
-                      crossAxisAlignment:
-                          sheetList.listDecoration.crossAxisAlignment,
-                      children:
-                          List.generate(sheetList.sheetList.length, (index) {
-                        final item = sheetList.sheetList[index];
+                      if (item is TextEditorItem) {
+                        // print('in buildSheetListWidget item is: $item');
+                        Alignment containerAlignment = Alignment.topLeft;
 
-                        if (item is TextEditorItem) {
-                          // print('in buildSheetListWidget item is: $item');
-                          Alignment containerAlignment = Alignment.topLeft;
+                        // Get alignment based on current attributes
+                        final currentAttributes = item.textEditorController
+                            .getSelectionStyle()
+                            .attributes;
 
-                          // Get alignment based on current attributes
-                          final currentAttributes = item.textEditorController
-                              .getSelectionStyle()
-                              .attributes;
+                        // Determine alignment from `attributes`
+                        if (_getIsToggled(
+                            currentAttributes, Attribute.centerAlignment)) {
+                          containerAlignment = Alignment.center;
+                        } else if (_getIsToggled(
+                            currentAttributes, Attribute.rightAlignment)) {
+                          containerAlignment = Alignment.topRight;
+                        } else if (_getIsToggled(
+                            currentAttributes, Attribute.justifyAlignment)) {
+                          containerAlignment = Alignment
+                              .topLeft; // Adjust if you have other logic
+                        } else if (_getIsToggled(
+                            currentAttributes, Attribute.leftAlignment)) {
+                          containerAlignment = Alignment.topLeft;
+                        }
+                        // print('in buildSheetListWidget item is: $item');
+                        return IgnorePointer(
+                          key: ValueKey(item),
+                          child: Container(
+                            // width: docWidth,
+                            alignment: containerAlignment,
+                            // alignment: Alignment.center,
+                            // decoration: BoxDecoration(
+                            //   image: DecorationImage(
+                            //     image: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStND_j06Kvfw2Y-eBSOlOC060f8DIL5-gs8w&s',),fit: BoxFit.fitWidth)
+                            //   ,
+                            // ),
 
-                          // Determine alignment from `attributes`
-                          if (_getIsToggled(
-                              currentAttributes, Attribute.centerAlignment)) {
-                            containerAlignment = Alignment.center;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.rightAlignment)) {
-                            containerAlignment = Alignment.topRight;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.justifyAlignment)) {
-                            containerAlignment = Alignment
-                                .topLeft; // Adjust if you have other logic
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.leftAlignment)) {
-                            containerAlignment = Alignment.topLeft;
-                          }
-                          // print('in buildSheetListWidget item is: $item');
-                          return IgnorePointer(
-                            key: ValueKey(item),
+                            child: IntrinsicWidth(
+                              child: QuillEditor(
+                                key: ValueKey(item.id),
+                                configurations: QuillEditorConfigurations(
+                                  scrollable: false,
+                                  showCursor: false,
+                                  enableInteractiveSelection: false,
+                                  enableSelectionToolbar: false,
+                                  requestKeyboardFocusOnCheckListChanged: false,
+                                  customStyleBuilder: (attribute) {
+                                    return customStyleBuilder(attribute);
+                                  },
+                                  disableClipboard: true,
+                                  controller: QuillController(
+                                    document:
+                                        item.textEditorController.document,
+                                    selection:
+                                        item.textEditorController.selection,
+                                    readOnly: true,
+                                    onSelectionChanged: (textSelection) {
+                                      setState(() {});
+                                    },
+                                    onReplaceText: (index, len, data) {
+                                      setState(() {});
+                                      return false;
+                                    },
+                                    onSelectionCompleted: () {
+                                      setState(() {});
+                                    },
+                                    onDelete: (cursorPosition, forward) {
+                                      setState(() {});
+                                    },
+                                  ),
+                                ),
+                                focusNode: FocusNode(),
+                                scrollController: ScrollController(),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (item is SheetList) {
+                        // print('in buildSheetListWidget item is: $item');
+                        return _buildSheetListWidget(item, width);
+                      }
+                      return const SizedBox();
+                    }),
+                  ),
+                )
+              //For Rows in the pdf side of things
+              : SizedBox(
+                  width: docWidth,
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    mainAxisAlignment: sheetList.mainAxisAlignment,
+                    crossAxisAlignment: sheetList.crossAxisAlignment,
+                    children:
+                        List.generate(sheetList.sheetList.length, (index) {
+                      final item = sheetList.sheetList[index];
+
+                      if (item is TextEditorItem) {
+                        Alignment containerAlignment = Alignment.topLeft;
+
+                        final currentAttributes = item.textEditorController
+                            .getSelectionStyle()
+                            .attributes;
+                        if (_getIsToggled(
+                            currentAttributes, Attribute.centerAlignment)) {
+                          containerAlignment = Alignment.center;
+                        } else if (_getIsToggled(
+                            currentAttributes, Attribute.rightAlignment)) {
+                          containerAlignment = Alignment.topRight;
+                        } else if (_getIsToggled(
+                            currentAttributes, Attribute.justifyAlignment)) {
+                          containerAlignment = Alignment
+                              .topLeft; // Adjust if you have other logic
+                        } else if (_getIsToggled(
+                            currentAttributes, Attribute.leftAlignment)) {
+                          containerAlignment = Alignment.topLeft;
+                        }
+                        // print('in buildSheetListWidget item is: $item');
+                        return IgnorePointer(
+                          key: ValueKey(item),
+                          child: CustomBorder(
+                            gradientBuilder: (progress) => LinearGradient(
+                              colors: const [
+                                Colors.transparent,
+                                Colors.transparent,
+                                Colors.transparent
+                              ],
+                              transform: GradientRotation(progress * 6),
+                            ),
+                            // animateBorder: true,
+                            // animateDuration: Durations.short1,
+                            // color: Colors.green,
+                            // size: const Size(100, 100),
+                            // radius: Radius.circular(50),
+                            // dashPattern: [5.6,1],
+                            // dashRadius: Radius.circular(2),
+                            strokeCap: StrokeCap.round,
+                            // style: PaintingStyle.stroke,
+                            // pathStrategy: PathStrategy.aroundLine,
+                            size: Size(1, 1),
+                            dashPattern: [10, 15],
+                            // dashRadius: Radius.circular(20),
+                            // pathStrategy: PathStrategy.horizontalLine, // or PathStrategy.horizontalLine
+                            strokeWidth: 3,
+
                             child: Container(
-                              // width: docWidth,
+                              width: docWidth,
                               alignment: containerAlignment,
                               // alignment: Alignment.center,
                               // decoration: BoxDecoration(
                               //   image: DecorationImage(
                               //     image: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStND_j06Kvfw2Y-eBSOlOC060f8DIL5-gs8w&s',),fit: BoxFit.fitWidth)
                               //   ,
-                              // ),
+                              //  ),
 
-                              child: IntrinsicWidth(
-                                child: QuillEditor(
-                                  key: ValueKey(item.id),
-                                  configurations: QuillEditorConfigurations(
-                                    scrollable: false,
-                                    showCursor: false,
-                                    enableInteractiveSelection: false,
-                                    enableSelectionToolbar: false,
-                                    requestKeyboardFocusOnCheckListChanged:
-                                        false,
-                                    customStyleBuilder: (attribute) {
-                                      return customStyleBuilder(attribute);
-                                    },
-                                    disableClipboard: true,
-                                    controller: QuillController(
-                                      document:
-                                          item.textEditorController.document,
-                                      selection:
-                                          item.textEditorController.selection,
-                                      readOnly: true,
-                                      onSelectionChanged: (textSelection) {
-                                        setState(() {});
+                              child: Padding(
+                                padding: EdgeInsets.only(right: 20),
+                                child: IntrinsicWidth(
+                                  child: QuillEditor(
+                                    key: ValueKey(item.id),
+                                    configurations: QuillEditorConfigurations(
+                                      scrollable: false,
+                                      showCursor: false,
+                                      enableInteractiveSelection: false,
+                                      enableSelectionToolbar: false,
+                                      requestKeyboardFocusOnCheckListChanged:
+                                          false,
+                                      customStyleBuilder: (attribute) {
+                                        return customStyleBuilder(attribute);
                                       },
-                                      onReplaceText: (index, len, data) {
-                                        setState(() {});
-                                        return false;
-                                      },
-                                      onSelectionCompleted: () {
-                                        setState(() {});
-                                      },
-                                      onDelete: (cursorPosition, forward) {
-                                        setState(() {});
-                                      },
-                                    ),
-                                  ),
-                                  focusNode: FocusNode(),
-                                  scrollController: ScrollController(),
-                                ),
-                              ),
-                            ),
-                          );
-                        } else if (item is SheetList) {
-                          // print('in buildSheetListWidget item is: $item');
-                          return _buildSheetListWidget(item, width);
-                        }
-                        return const SizedBox();
-                      }),
-                    ),
-                  )
-                //For Rows in the pdf side of things
-                : SizedBox(
-                    width: docWidth,
-                    child: Flex(
-                      direction: sheetList.direction,
-                      mainAxisAlignment:
-                          sheetList.listDecoration.mainAxisAlignment,
-                      crossAxisAlignment:
-                          sheetList.listDecoration.crossAxisAlignment,
-                      children:
-                          List.generate(sheetList.sheetList.length, (index) {
-                        final item = sheetList.sheetList[index];
-
-                        if (item is TextEditorItem) {
-                          Alignment containerAlignment = Alignment.topLeft;
-
-                          final currentAttributes = item.textEditorController
-                              .getSelectionStyle()
-                              .attributes;
-                          if (_getIsToggled(
-                              currentAttributes, Attribute.centerAlignment)) {
-                            containerAlignment = Alignment.center;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.rightAlignment)) {
-                            containerAlignment = Alignment.topRight;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.justifyAlignment)) {
-                            containerAlignment = Alignment
-                                .topLeft; // Adjust if you have other logic
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.leftAlignment)) {
-                            containerAlignment = Alignment.topLeft;
-                          }
-                          // print('in buildSheetListWidget item is: $item');
-                          return IgnorePointer(
-                            key: ValueKey(item),
-                            child: CustomBorder(
-                              gradientBuilder: (progress) => LinearGradient(
-                                colors: const [
-                                  Colors.transparent,
-                                  Colors.transparent,
-                                  Colors.transparent
-                                ],
-                                transform: GradientRotation(progress * 6),
-                              ),
-                              // animateBorder: true,
-                              // animateDuration: Durations.short1,
-                              // color: Colors.green,
-                              // size: const Size(100, 100),
-                              // radius: Radius.circular(50),
-                              // dashPattern: [5.6,1],
-                              // dashRadius: Radius.circular(2),
-                              strokeCap: StrokeCap.round,
-                              // style: PaintingStyle.stroke,
-                              // pathStrategy: PathStrategy.aroundLine,
-                              size: Size(1, 1),
-                              dashPattern: [10, 15],
-                              // dashRadius: Radius.circular(20),
-                              // pathStrategy: PathStrategy.horizontalLine, // or PathStrategy.horizontalLine
-                              strokeWidth: 3,
-
-                              child: Container(
-                                width: docWidth,
-                                alignment: containerAlignment,
-                                // alignment: Alignment.center,
-                                // decoration: BoxDecoration(
-                                //   image: DecorationImage(
-                                //     image: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStND_j06Kvfw2Y-eBSOlOC060f8DIL5-gs8w&s',),fit: BoxFit.fitWidth)
-                                //   ,
-                                //  ),
-
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 20),
-                                  child: IntrinsicWidth(
-                                    child: QuillEditor(
-                                      key: ValueKey(item.id),
-                                      configurations: QuillEditorConfigurations(
-                                        scrollable: false,
-                                        showCursor: false,
-                                        enableInteractiveSelection: false,
-                                        enableSelectionToolbar: false,
-                                        requestKeyboardFocusOnCheckListChanged:
-                                            false,
-                                        customStyleBuilder: (attribute) {
-                                          return customStyleBuilder(attribute);
+                                      disableClipboard: true,
+                                      controller: QuillController(
+                                        document:
+                                            item.textEditorController.document,
+                                        selection:
+                                            item.textEditorController.selection,
+                                        readOnly: true,
+                                        onSelectionChanged: (textSelection) {
+                                          setState(() {});
                                         },
-                                        disableClipboard: true,
-                                        controller: QuillController(
-                                          document: item
-                                              .textEditorController.document,
-                                          selection: item
-                                              .textEditorController.selection,
-                                          readOnly: true,
-                                          onSelectionChanged: (textSelection) {
-                                            setState(() {});
-                                          },
-                                          onReplaceText: (index, len, data) {
-                                            setState(() {});
-                                            return false;
-                                          },
-                                          onSelectionCompleted: () {
-                                            setState(() {});
-                                          },
-                                          onDelete: (cursorPosition, forward) {
-                                            setState(() {});
-                                          },
-                                        ),
+                                        onReplaceText: (index, len, data) {
+                                          setState(() {});
+                                          return false;
+                                        },
+                                        onSelectionCompleted: () {
+                                          setState(() {});
+                                        },
+                                        onDelete: (cursorPosition, forward) {
+                                          setState(() {});
+                                        },
                                       ),
-                                      focusNode: FocusNode(),
-                                      scrollController: ScrollController(),
                                     ),
+                                    focusNode: FocusNode(),
+                                    scrollController: ScrollController(),
                                   ),
                                 ),
                               ),
                             ),
-                          );
-                        } else if (item is SheetList) {
-                          // print('in buildSheetListWidget item is: $item');
-                          return _buildSheetListWidget(item, width);
-                        }
-                        return const SizedBox();
-                      }),
-                    ),
+                          ),
+                        );
+                      } else if (item is SheetList) {
+                        // print('in buildSheetListWidget item is: $item');
+                        return _buildSheetListWidget(item, width);
+                      }
+                      return const SizedBox();
+                    }),
                   ),
-          ),
+                ),
         ),
-      ),
-    );
+        false);
   }
 
   double _getPageWidth(
@@ -2106,7 +1869,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   void _addPdfPage() {
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
     var id = const Uuid().v4();
-
+    var decoId = const Uuid().v4();
+    var newSuperDecoration = SuperDecoration(id: decoId);
     print('pageCount in addpage: $pageCount');
     DocumentProperties newdoc = DocumentProperties(
       pageNumberController:
@@ -2126,8 +1890,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
     lm[keyIndex].save();
     print('inaddpage after addinbox docprop: ${lm[keyIndex].docPropsList}');
-    SheetList newsheetlist =
-        SheetList(id: id, parentId: parentId, sheetList: []);
+    SheetList newsheetlist = SheetList(
+        id: id,
+        parentId: parentId,
+        sheetList: [],
+        listDecoration: newSuperDecoration);
 
     setState(() {
       spreadSheetList.add(newsheetlist);
@@ -2135,6 +1902,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
     lm[keyIndex]
         .save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
+    Boxes.saveSuperDecoration(newSuperDecoration);
     setState(() {
       print('pageCount in addpage after: $pageCount');
       selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
@@ -2147,6 +1915,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   void _addPdfPageAtIndex(int index) {
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
     var id = const Uuid().v4();
+    var decoId = const Uuid().v4();
 
     print('pageCount in addPage: $pageCount');
 
@@ -2183,10 +1952,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     // Create a new SheetList instance
     SheetList newSheetList = SheetList(
-      id: id,
-      parentId: parentId,
-      sheetList: [],
-    );
+        id: id,
+        parentId: parentId,
+        sheetList: [],
+        listDecoration: SuperDecoration(id: decoId));
 
     // Add the new SheetList at the specified index
     setState(() {
@@ -2274,10 +2043,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
       // Duplicate spreadSheet data
       SheetList duplicatedSheetList = SheetList(
-        id: const Uuid().v4(), // Assign a new unique ID
-        parentId: spreadSheetList[sourceIndex].parentId,
-        sheetList: List.from(spreadSheetList[sourceIndex].sheetList),
-      );
+          id: const Uuid().v4(), // Assign a new unique ID
+          parentId: spreadSheetList[sourceIndex].parentId,
+          sheetList: List.from(spreadSheetList[sourceIndex].sheetList),
+          listDecoration: SuperDecoration.fromJson(
+              spreadSheetList[sourceIndex].listDecoration.toJson()));
 
       // Insert the duplicated sheet at the target index
       spreadSheetList.insert(targetIndex, duplicatedSheetList);
@@ -2492,7 +2262,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       sheetListItem = _sheetListIterator(
           panelIndex.parentId, spreadSheetList[currentPageIndex]);
     } on Exception catch (e) {
-      sheetListItem = SheetList(id: '', parentId: '', sheetList: []);
+      sheetListItem = SheetList(
+          id: '',
+          parentId: '',
+          sheetList: [],
+          listDecoration: SuperDecoration(id: ''));
     }
   }
 
@@ -3347,11 +3121,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           () {
                                                                         var newId =
                                                                             Uuid().v4();
+                                                                        var decoId =
+                                                                            const Uuid().v4();
                                                                         var item =
                                                                             spreadSheetList[currentPageIndex].removeAt(index);
                                                                         spreadSheetList[currentPageIndex].insert(
                                                                             index,
-                                                                            SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                            SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, listDecoration: SuperDecoration(id: decoId), sheetList: [
                                                                               _addTextField(shouldReturn: true),
                                                                               item
                                                                             ]));
@@ -3369,11 +3145,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           () {
                                                                         var newId =
                                                                             Uuid().v4();
+                                                                        var decoId =
+                                                                            const Uuid().v4();
                                                                         var item =
                                                                             spreadSheetList[currentPageIndex].removeAt(index);
                                                                         spreadSheetList[currentPageIndex].insert(
                                                                             index,
-                                                                            SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, sheetList: [
+                                                                            SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, listDecoration: SuperDecoration(id: decoId), sheetList: [
                                                                               item,
                                                                               _addTextField(shouldReturn: true),
                                                                             ]));
@@ -3796,8 +3574,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               //Properties page, text, list tab animatedborders on the top right
                               Container(
                                 height: (50),
-                                margin: EdgeInsets.only(
-                                    top: 29, left: 0, right: 6),
+                                margin:
+                                    EdgeInsets.only(top: 29, left: 0, right: 6),
                                 padding: EdgeInsets.only(bottom: 0),
                                 decoration: BoxDecoration(
                                   color: defaultPalette.transparent,
@@ -3808,7 +3586,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     Expanded(
                                         flex: 1,
                                         child: Padding(
-                                          padding: EdgeInsets.only(left: 9,top:10),
+                                          padding:
+                                              EdgeInsets.only(left: 9, top: 10),
                                           child: CustomBorder(
                                             color: whichPropertyTabIsClicked ==
                                                     1
@@ -3832,7 +3611,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       Expanded(
                                           flex: 2,
                                           child: Padding(
-                                            padding: EdgeInsets.only(left: 4,top:8),
+                                            padding: EdgeInsets.only(
+                                                left: 4, top: 8),
                                             child: CustomBorder(
                                               color:
                                                   whichPropertyTabIsClicked == 2
@@ -3859,7 +3639,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       Expanded(
                                           flex: 2,
                                           child: Padding(
-                                            padding: EdgeInsets.only(left: 5,top:8),
+                                            padding: EdgeInsets.only(
+                                                left: 5, top: 8),
                                             child: CustomBorder(
                                               color:
                                                   whichPropertyTabIsClicked == 3
@@ -3887,8 +3668,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               //Properties page, text, list tab browser buttons on the top right
                               Container(
                                 height: (50),
-                                margin: EdgeInsets.only(
-                                    top: 29, left: 0, right: 6),
+                                margin:
+                                    EdgeInsets.only(top: 29, left: 0, right: 6),
                                 padding: EdgeInsets.only(bottom: 0),
                                 decoration: BoxDecoration(
                                   color: defaultPalette.transparent,
@@ -3905,7 +3686,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         onClick: () {
                                           setState(() {
                                             whichPropertyTabIsClicked = 1;
-                                            propertyCardsController.animateTo(Offset(1,1), duration: Duration.zero, curve: Curves.linear);
+                                            propertyCardsController.animateTo(
+                                                Offset(1, 1),
+                                                duration: Duration.zero,
+                                                curve: Curves.linear);
                                           });
                                         },
                                         buttonHeight: 50,
@@ -3951,7 +3735,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             // text tabs buttons
                                             Container(
                                               margin: const EdgeInsets.only(
-                                                  top: 10, left: 4, ),
+                                                top: 10,
+                                                left: 4,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color: defaultPalette.tertiary,
                                                 borderRadius:
@@ -4134,13 +3920,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               onClick: () {
                                                 setState(() {
                                                   whichPropertyTabIsClicked = 2;
-                                                  textPropertyCardsController.animateTo(Offset(1,1), duration: Duration.zero, curve: Curves.linear);
+                                                  textPropertyCardsController
+                                                      .animateTo(Offset(1, 1),
+                                                          duration:
+                                                              Duration.zero,
+                                                          curve: Curves.linear);
                                                 });
                                               },
                                               buttonHeight: 30,
                                               buttonWidth:
                                                   _getPropertiesButtonWidth(
-                                                      'text-field')+2,
+                                                          'text-field') +
+                                                      2,
                                               borderRadius:
                                                   BorderRadius.circular(10),
                                               animationDuration: const Duration(
@@ -4173,7 +3964,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 ],
                                               ),
                                               subfac: 10,
-                                              depth: 3,
+                                              depth: 4,
                                               baseDecoration: BoxDecoration(
                                                 color: defaultPalette.extras[0]
                                                     .withOpacity(0.3),
@@ -4203,7 +3994,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             //list tabs buttons
                                             Container(
                                               margin: const EdgeInsets.only(
-                                                  top: 9, left: 5, ),
+                                                top: 9,
+                                                left: 5,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color:
                                                     defaultPalette.transparent,
@@ -4537,14 +4330,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             children: [
                               AnimatedPositioned(
                                 right: 0,
-                                top:-2,
+                                top: -2,
                                 duration: Durations.short4,
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
                                   child: AnimatedContainer(
                                     duration: Durations.short4,
                                     padding: const EdgeInsets.only(
-                                        right: 8, bottom:4),
+                                        right: 8, bottom: 4),
                                     margin: const EdgeInsets.only(top: 0),
                                     decoration: const BoxDecoration(
                                         color: Colors.transparent,
@@ -4558,7 +4351,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
-                                          depth:2,
+                                          depth: 2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
                                                 .then((y) {
@@ -4591,7 +4384,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
-                                          depth:2,
+                                          depth: 2,
                                           onClick: () {
                                             Future.delayed(Durations.short1)
                                                 .then((y) {
@@ -4623,7 +4416,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
-                                          depth:2,
+                                          depth: 2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
                                                 .then((y) {
@@ -8993,45 +8786,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     }
   }
 
-  MainAxisAlignment getMainAxisAlignmentFromString(String alignment) {
-    switch (alignment.toLowerCase()) {
-      case 'start':
-        return MainAxisAlignment.start;
-      case 'center':
-        return MainAxisAlignment.center;
-      case 'end':
-        return MainAxisAlignment.end;
-      case 'space between':
-      case 'space_between':
-        return MainAxisAlignment.spaceBetween;
-      case 'space around':
-      case 'space_around':
-        return MainAxisAlignment.spaceAround;
-      case 'space evenly':
-      case 'space_evenly':
-        return MainAxisAlignment.spaceEvenly;
-      default:
-        return MainAxisAlignment.start;
-    }
-  }
-
-  CrossAxisAlignment getCrossAxisAlignmentFromString(String alignment) {
-    switch (alignment.toLowerCase()) {
-      case 'start':
-        return CrossAxisAlignment.start;
-      case 'center':
-        return CrossAxisAlignment.center;
-      case 'end':
-        return CrossAxisAlignment.end;
-      case 'stretch':
-        return CrossAxisAlignment.stretch;
-      case 'baseline':
-        return CrossAxisAlignment.baseline;
-      default:
-        return CrossAxisAlignment.start;
-    }
-  }
-
   Widget _buildListWidget(SheetList sheetList) {
     // sheetList = sheetList as SheetList;
     return Stack(
@@ -9070,11 +8824,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     : findSheetListBuildHeight(sheetList),
                 // height: 300,
                 padding: const EdgeInsets.only(top: 0, left: 1, right: 2),
-                 
+
                 // buildlistw
                 decoration: BoxDecoration(
                   border: Border.all(
-                      width: panelIndex.parentId == sheetList.id ? 2 : 1.2,
+                      width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
                       color: panelIndex.parentId == sheetList.id
                           ? defaultPalette.extras[1]
                           : ui.Color(0xFFFFFFFF)),
@@ -9104,25 +8858,22 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   GestureDetector(
                                     onTap: () {
                                       FocusScope.of(context).unfocus();
-                                         
-                                       
+
                                       setState(() {
-                                         
-                                          panelIndex = panelIndex.copyWith(
-                                              id: textEditorItem.id,  
-                                              parentId: sheetList.id);
-                                         
+                                        panelIndex = panelIndex.copyWith(
+                                            id: textEditorItem.id,
+                                            parentId: sheetList.id);
+
                                         panelIndex.parentId = sheetList.id;
-                                        
+
                                         _findSheetListItem();
-                                        whichPropertyTabIsClicked=2;
+                                        whichPropertyTabIsClicked = 2;
 
                                         if (hDividerPosition > 0.48) {
                                           hDividerPosition = 0.4;
                                         }
                                       });
                                       _findSheetListItem();
-                                       
 
                                       print('clicked');
                                       print(sheetListItem.id);
@@ -9336,6 +9087,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 var newId =
                                                                     const Uuid()
                                                                         .v4();
+                                                                var decoId =
+                                                                    const Uuid()
+                                                                        .v4();
                                                                 var item = sheetList
                                                                     .removeAt(
                                                                         index);
@@ -9346,6 +9100,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                             Axis.vertical,
                                                                         id: newId,
                                                                         parentId: sheetList.id,
+                                                                        listDecoration: SuperDecoration(id: decoId),
                                                                         sheetList: [
                                                                           _addTextField(
                                                                               shouldReturn: true),
@@ -9377,6 +9132,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 var newId =
                                                                     const Uuid()
                                                                         .v4();
+                                                                var decoId =
+                                                                    const Uuid()
+                                                                        .v4();
                                                                 var item = sheetList
                                                                     .removeAt(
                                                                         index);
@@ -9388,6 +9146,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                                 Axis.vertical,
                                                                             id: newId,
                                                                             parentId: sheetList.id,
+                                                                            listDecoration: SuperDecoration(id: decoId),
                                                                             sheetList: [
                                                                               item,
                                                                               _addTextField(shouldReturn: true),
@@ -9409,6 +9168,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               var newId =
                                                                   const Uuid()
                                                                       .v4();
+                                                              var decoId =
+                                                                  const Uuid()
+                                                                      .v4();
                                                               var item =
                                                                   sheetList
                                                                       .removeAt(
@@ -9420,6 +9182,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           Axis.horizontal,
                                                                       id: newId,
                                                                       parentId: sheetList.id,
+                                                                      listDecoration: SuperDecoration(id: decoId),
                                                                       sheetList: [
                                                                         _addTextField(
                                                                             shouldReturn:
@@ -9450,6 +9213,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               var newId =
                                                                   const Uuid()
                                                                       .v4();
+                                                              var decoId =
+                                                                  const Uuid()
+                                                                      .v4();
                                                               var item =
                                                                   sheetList
                                                                       .removeAt(
@@ -9461,6 +9227,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           Axis.horizontal,
                                                                       id: newId,
                                                                       parentId: sheetList.id,
+                                                                      listDecoration: SuperDecoration(id: decoId),
                                                                       sheetList: [
                                                                         _addTextField(
                                                                             shouldReturn:
@@ -9692,7 +9459,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         dashPattern: [10, 3],
                                         strokeWidth:
                                             panelIndex.id == textEditorItem.id
-                                                ? 2
+                                                ? 1.5
                                                 : 1.2,
                                         strokeCap: StrokeCap.square,
                                         child: Container(
@@ -9819,10 +9586,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         return newTextField;
                       } else if (item is SheetList) {
                         var newid = Uuid().v4();
+                        var decoId = const Uuid().v4();
                         return SheetList(
                           direction: item.direction,
                           id: newid,
                           parentId: parentId,
+                          listDecoration: SuperDecoration(id: decoId),
                           sheetList: transformData(item.sheetList, newid),
                         );
                       } else {
@@ -9890,10 +9659,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         return newTextField;
                       } else if (item is SheetList) {
                         var newid = Uuid().v4();
+                        var decoId = const Uuid().v4();
                         return SheetList(
                           direction: item.direction,
                           id: newid,
                           parentId: parentId,
+                          listDecoration: SuperDecoration(id: decoId),
                           sheetList: transformLinkedData(item.sheetList, newid),
                         );
                       } else {
@@ -9967,6 +9738,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 id: item.id,
                                 parentId: item.parentId,
                                 direction: item.direction,
+                                listDecoration: item.listDecoration,
                                 sheetList: deepCopySheetList(
                                     item.sheetList), // Recursive copy
                               );
@@ -10020,6 +9792,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       onSelected: () {
                         var data = sheetListClipboard.data;
                         var newSheetListId = Uuid().v4();
+                        var decoId = const Uuid().v4();
                         var newData = transformData(
                             data as List<SheetItem>, newSheetListId);
 
@@ -10030,6 +9803,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             direction: sheetListClipboard.direction,
                             parentId:
                                 sheetList.id, // Parent id of the main list
+                            listDecoration: SuperDecoration.fromJson(
+                                sheetList.listDecoration.toJson()),
                             sheetList: newData,
                           ),
                         );
@@ -10260,12 +10035,42 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     double width = 0;
 
     Map<String, double> charWidthMap = {
-      '.': 5.0, ',': 5.0, ';': 5.0, ':': 5.0, '!': 5.0, '?': 7.0,
-      'a': 8.0, 'b': 8.5, 'c': 7.5, 'd': 8.5, 'e': 8.0, 'f': 7.0,
-      'g': 9, 'h': 8.5, 'i': 7.0, 'j': 7.0, 'k': 9, 'l': 7.5,
-      'm': 11.0, 'n': 8.5, 'o': 8.5, 'p': 8.5, 'q': 8.5, 'r': 8.5,
-      's': 8.0, 't': 7.0, 'u': 8.5, 'v': 8.5, 'w': 15.0, 'x': 9.0,
-      'y': 9.0, 'z': 8.0, ' ': 9.0, '@': 12.0, '#': 10.0, '\$': 10.0
+      '.': 5.0,
+      ',': 5.0,
+      ';': 5.0,
+      ':': 5.0,
+      '!': 5.0,
+      '?': 7.0,
+      'a': 8.0,
+      'b': 8.5,
+      'c': 7.5,
+      'd': 8.5,
+      'e': 8.0,
+      'f': 7.0,
+      'g': 9,
+      'h': 8.5,
+      'i': 7.0,
+      'j': 7.0,
+      'k': 9,
+      'l': 7.5,
+      'm': 11.0,
+      'n': 8.5,
+      'o': 8.5,
+      'p': 8.5,
+      'q': 8.5,
+      'r': 8.5,
+      's': 8.0,
+      't': 7.0,
+      'u': 8.5,
+      'v': 8.5,
+      'w': 15.0,
+      'x': 9.0,
+      'y': 9.0,
+      'z': 8.0,
+      ' ': 9.0,
+      '@': 12.0,
+      '#': 10.0,
+      '\$': 10.0
     };
 
     const double fallbackWidth = 8.0;
@@ -10283,7 +10088,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           TextEditorItem textEditor = sheetList[i] as TextEditorItem;
           double maxFontSize = getMaxFontSize(textEditor.textEditorController);
 
-          String content = textEditor.textEditorController.document.toPlainText();
+          String content =
+              textEditor.textEditorController.document.toPlainText();
           if (content.trim().isEmpty) {
             width += 180;
           } else {
@@ -10305,7 +10111,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           TextEditorItem textEditor = sheetList[i] as TextEditorItem;
           double maxFontSize = getMaxFontSize(textEditor.textEditorController);
 
-          String content = textEditor.textEditorController.document.toPlainText();
+          String content =
+              textEditor.textEditorController.document.toPlainText();
           if (content.trim().isEmpty) {
             width = width > 180 ? width : 180;
           } else {
@@ -10333,7 +10140,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     // Iterate through each operation in the document's delta
     for (var operation in controller.document.toDelta().operations) {
-      if (operation.attributes != null && operation.attributes!.containsKey('size')) {
+      if (operation.attributes != null &&
+          operation.attributes!.containsKey('size')) {
         final String fontSizeString = operation.attributes?['size'];
         final double fontSize = double.tryParse(fontSizeString) ?? 20.0;
         if (fontSize > maxFontSize) {
@@ -10341,7 +10149,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         }
       }
     }
- 
+
     return maxFontSize;
   }
 
@@ -10366,8 +10174,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       print('this that pID from within the addText: ${itemE.parentId}');
       print(
           'this that id from addtext from panelindex: ${panelIndex.parentId}');
-      _findSheetListItem(); 
-      whichPropertyTabIsClicked =2;
+      _findSheetListItem();
+      whichPropertyTabIsClicked = 2;
     });
 
     // Future.delayed(Duration.zero).then((_) {
@@ -10393,11 +10201,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       case 'page':
         if (panelIndex.id == '') {
           if (panelIndex.parentId == '') {
-            return widthWeHave -4;
+            return widthWeHave - 4;
           }
           return widthWeHave * (1 / 3);
         }
-        return widthWeHave *(1/5)  ;
+        return widthWeHave * (1 / 5);
         break;
       case 'text-field':
         if (panelIndex.id == '') {
@@ -10406,15 +10214,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           }
           return widthWeHave * (2 / 3);
         }
-        return widthWeHave * (2 / 5) +2;
+        return widthWeHave * (2 / 5) + 2;
       case 'sheet-list':
         if (panelIndex.id == '') {
           if (panelIndex.parentId == '') {
             return widthWeHave * (2 / 3) - 20;
           }
-          return widthWeHave * (2 / 3) +2 ;
+          return widthWeHave * (2 / 3) + 2;
         }
-        return widthWeHave * (2 / 5)+3;
+        return widthWeHave * (2 / 5) + 3;
 
       default:
     }
@@ -10526,30 +10334,31 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         ));
   }
 
-  PieAction getPieActionForListAxis(String s, {bool cross = false}) {
+  PieAction getPieActionForListAxis(int s, {bool cross = false}) {
     return PieAction(
         tooltip: Text(
-          s,
+          !cross
+              ? MainAxisAlignment.values[s].name
+              : CrossAxisAlignment.values[s].name,
           style: GoogleFonts.bungee(
             fontSize: 10,
           ),
         ), // Icon inside TextButton
 
         child: Text(
-          s,
+          !cross
+              ? MainAxisAlignment.values[s].name
+              : CrossAxisAlignment.values[s].name,
           style:
               GoogleFonts.bungee(fontSize: 10, color: defaultPalette.primary),
         ),
         onSelect: () {
           setState(() {
             if (!cross) {
-              sheetListItem.listDecoration = sheetListItem.listDecoration
-                  .copyWith(
-                      mainAxisAlignment: getMainAxisAlignmentFromString(s));
+              sheetListItem.mainAxisAlignment = MainAxisAlignment.values[s];
+              print('Axis change clicked to: ${MainAxisAlignment.values[s]}');
             } else {
-              sheetListItem.listDecoration = sheetListItem.listDecoration
-                  .copyWith(
-                      crossAxisAlignment: getCrossAxisAlignmentFromString(s));
+              sheetListItem.crossAxisAlignment = CrossAxisAlignment.values[s];
             }
           });
         });
@@ -10599,7 +10408,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           duration: Durations.short3,
           child: AppinioSwiper(
               backgroundCardCount: 1,
-              backgroundCardOffset: Offset(4,4),
+              backgroundCardOffset: Offset(4, 4),
               duration: Duration(milliseconds: 150),
               backgroundCardScale: 1,
               loop: true,
@@ -10636,7 +10445,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               },
               cardBuilder: (BuildContext context, int index) {
                 int currentCardIndex = whichTextPropertyTabIsClicked;
-          
+
                 bool _getIsToggled(
                     Map<String, Attribute> attrs, Attribute attribute) {
                   if (attribute.key == Attribute.list.key ||
@@ -10655,7 +10464,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   // print('returning ${attrs.containsKey(attribute.key)}');
                   return attrs.containsKey(attribute.key);
                 }
-          
+
                 Widget buildElevatedLayerButton(
                     {required double buttonHeight,
                     required double buttonWidth,
@@ -10672,13 +10481,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   var down = isTapped;
                   void _handleTapDown(TapDownDetails details) {
                     onClick();
-          
+
                     setState(() {
                       down = true;
                       print(down);
                     });
                   }
-          
+
                   void _handleTapUp(TapUpDetails details) {
                     if (!toggleOnTap && down) {
                       setState(() {
@@ -10686,9 +10495,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       });
                     }
                   }
-          
+
                   void _handleTapCancel() {}
-          
+
                   return GestureDetector(
                     onTap: () {},
                     onTapDown: _handleTapDown,
@@ -10731,9 +10540,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     ),
                   );
                 }
-          
+
                 var width = (sWidth * wH2DividerPosition - 30);
-          
+
                 TextEditingController hexController = TextEditingController()
                   ..text =
                       '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
@@ -10743,7 +10552,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 TextEditingController strokeHexController = TextEditingController()
                   ..text =
                       '${(item.textEditorController.getSelectionStyle().attributes['stroke']?.value?.split(',')[0] ?? '#000000')}';
-          
+
                 TextEditingController fontSizeController = TextEditingController()
                   ..text =
                       '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
@@ -10811,7 +10620,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         duration: Duration(milliseconds: 300),
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
-                          margin: EdgeInsets.all(10).copyWith(left: 5, right: 10),
+                          margin:
+                              EdgeInsets.all(10).copyWith(left: 5, right: 10),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: index == (currentCardIndex + 1) % 10
@@ -10832,7 +10642,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           children: [
                             //GRAPH BEHIND FONT CARD
                             Padding(
-                              padding: const EdgeInsets.all( 10),
+                              padding: const EdgeInsets.all(10),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(25),
                                 child: Opacity(
@@ -10873,7 +10683,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ),
                               ),
                             ),
-          
+
                             //FONT CARD
                             Container(
                               height: sHeight * 0.9,
@@ -10982,7 +10792,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           itemBuilder: (context, index) {
                                             final fontName =
                                                 filteredFonts[index];
-          
+
                                             return Padding(
                                               padding: const EdgeInsets.only(
                                                   bottom: 5),
@@ -11067,7 +10877,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   GoogleFonts.asMap()
                                                       .containsKey(font))
                                               .toList();
-          
+
                                       if (fontsInCategory.isEmpty) {
                                         return Center(
                                           child: Text(
@@ -11121,7 +10931,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       (context, index) {
                                                     final fontName =
                                                         fontsInCategory[index];
-          
+
                                                     return Padding(
                                                       padding:
                                                           const EdgeInsets.only(
@@ -11191,7 +11001,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ),
                               ),
                             ),
-          
+
                             //FONT TITLE TEXT
                             Positioned(
                                 left: 30,
@@ -11206,7 +11016,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             Positioned(
                                 left: 30,
                                 top: 70,
-                                width: width-8,
+                                width: width - 8,
                                 child: Container(
                                   width: width,
                                   padding: const EdgeInsets.only(
@@ -11296,7 +11106,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               GoogleFonts.asMap().containsKey(
                                                   font)) // Check validity
                                           .toList();
-          
+
                                       print(filteredFonts); // Debugging output
                                     });
                                   },
@@ -11305,7 +11115,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           ],
                         ),
                       ),
-          
+
                     if (index == 1) ...[
                       //GRAPH BEHIND FORMAT CARD
                       Padding(
@@ -11393,7 +11203,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       fontSize: (width / 6)
                                                           .clamp(15, 30))),
                                             ),
-          
+
                                             // BOLD ITALIC UNDERLINE STRIKETHRU // LEFT RIGHT CENTER JUSTIFY
                                             SizedBox(
                                               width: width,
@@ -11997,7 +11807,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             BorderRadius
                                                                 .circular(10),
                                                       );
-          
+
                                                     default:
                                                       return Container();
                                                   }
@@ -12274,7 +12084,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       fontSize: (width / 20)
                                                           .clamp(12, 15))),
                                             ),
-          
+
                                             // FONT SIZE LETTER SPACING ALLAT
                                             Container(
                                               margin: EdgeInsets.only(
@@ -12412,7 +12222,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                       contentPadding:
                                                                           EdgeInsets.all(
                                                                               0),
-          
+
                                                                       // filled: true,
                                                                       // fillColor: defaultPalette.primary,
                                                                       enabledBorder:
@@ -12440,7 +12250,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                         TextInputType
                                                                             .number,
                                                                   ),
-          
+
                                                                   //Balloon Slider
                                                                   Positioned(
                                                                     bottom: 0,
@@ -12736,7 +12546,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                       contentPadding:
                                                                           EdgeInsets.all(
                                                                               0),
-          
+
                                                                       // filled: true,
                                                                       // fillColor: defaultPalette.primary,
                                                                       enabledBorder:
@@ -12811,7 +12621,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                             () {
                                                                           var val =
                                                                               int.parse(letterSpaceController.text) + 1;
-          
+
                                                                           item.textEditorController
                                                                               .formatSelection(
                                                                             LetterSpacingAttribute((val).toString()),
@@ -12920,7 +12730,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ),
                                                     ),
-          
+
                                                     SizedBox(
                                                       height: 5,
                                                     ),
@@ -13056,7 +12866,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                       contentPadding:
                                                                           EdgeInsets.all(
                                                                               0),
-          
+
                                                                       // filled: true,
                                                                       // fillColor: defaultPalette.primary,
                                                                       enabledBorder:
@@ -13131,7 +12941,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                             () {
                                                                           var val =
                                                                               int.parse(wordSpaceController.text) + 1;
-          
+
                                                                           item.textEditorController
                                                                               .formatSelection(
                                                                             WordSpacingAttribute((val).toString()),
@@ -13376,7 +13186,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                       contentPadding:
                                                                           EdgeInsets.all(
                                                                               0),
-          
+
                                                                       // filled: true,
                                                                       // fillColor: defaultPalette.primary,
                                                                       enabledBorder:
@@ -13451,7 +13261,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                             () {
                                                                           var val =
                                                                               int.parse(lineSpaceController.text) + 1;
-          
+
                                                                           item.textEditorController
                                                                               .formatSelection(
                                                                             LineHeightAttribute((val).toString()),
@@ -13575,7 +13385,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         ),
                       ),
                     ],
-          
+
                     if (index == 2) ...[
                       //GRAPH BEHIND COLOR CARD
                       Padding(
@@ -13618,7 +13428,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           ),
                         ),
                       ),
-          
+
                       Positioned.fill(
                         child: Container(
                           width: width,
@@ -13726,7 +13536,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ],
                                           ),
                                         ),
-          
+
                                         //FontColor SWATCH And WHEEL FOR FONT COLOR
                                         Stack(
                                           children: [
@@ -13779,7 +13589,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   SizedBox(
                                                     height: 0,
                                                   ),
-          
+
                                                   //Name of FONT COLOR
                                                   Text(
                                                       fl.ColorTools
@@ -13797,7 +13607,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               ),
                                             ),
                                             //COLOR SWATCH FOR PAGE COLOR
-          
+
                                             fl.ColorPicker(
                                               color: hexToColor(item
                                                   .textEditorController
@@ -13901,7 +13711,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 color: defaultPalette.extras[0],
                                                 fontSize:
                                                     (width / 6).clamp(5, 25))),
-          
+
                                         //FontBGColor HEX TITLE
                                         Container(
                                           width:
@@ -13984,7 +13794,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ],
                                           ),
                                         ),
-          
+
                                         //FontBGColor SWATCH And WHEEL FOR PAGE COLOR
                                         Stack(
                                           children: [
@@ -14038,7 +13848,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   SizedBox(
                                                     height: 0,
                                                   ),
-          
+
                                                   //Name of PAGE COLOR
                                                   Text(
                                                       fl.ColorTools
@@ -14057,7 +13867,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               ),
                                             ),
                                             //COLOR SWATCH FOR PAGE COLOR
-          
+
                                             fl.ColorPicker(
                                               color: hexToColor(item
                                                   .textEditorController
@@ -14172,3215 +13982,961 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           from: 3,
           duration: Durations.short3,
           child: AppinioSwiper(
-                    controller: listPropertyCardsController,
-                    backgroundCardCount: 1,
-                    backgroundCardOffset: Offset(3, 3),
-                    duration: Duration(milliseconds: 150),
-                    backgroundCardScale: 1,
-                    loop: true,
-                    cardCount: 2,
-                    allowUnSwipe: true,
-                    allowUnlimitedUnSwipe: true,
-                    initialIndex: 0,
-                    onCardPositionChanged: (position) {
-          setState(() {
-            _cardPosition =
-                position.offset.dx.abs() + position.offset.dy.abs();
-          });
-          },
-          onSwipeEnd: (a, b, direction) {
-            // print(direction.toString());
-            setState(() {
-              // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
-              whichListPropertyTabIsClicked = b;
-              listPropertyTabContainerController.index =
-                  whichListPropertyTabIsClicked;
-              _cardPosition = 0;
-            });
-          },
-          onSwipeCancelled: (activity) {},
-          cardBuilder: (BuildContext context, int index) {
-          int currentCardIndex = whichListPropertyTabIsClicked;
-          var width = (sWidth * wH2DividerPosition - 25);
-          
-          bool useIndListPad = (sheetListItem.listDecoration.padding.top ==
-                  sheetListItem.listDecoration.padding.bottom &&
-              sheetListItem.listDecoration.padding.bottom ==
-                  sheetListItem.listDecoration.padding.left &&
-              sheetListItem.listDecoration.padding.left ==
-                  sheetListItem.listDecoration.padding.right);
-          bool useIndWidthAdj =
-              (sheetListItem.listDecoration.widthAdjustment.top ==
-                      sheetListItem.listDecoration.widthAdjustment.bottom &&
-                  sheetListItem.listDecoration.widthAdjustment.bottom ==
-                      sheetListItem.listDecoration.widthAdjustment.left &&
-                  sheetListItem.listDecoration.widthAdjustment.left ==
-                      sheetListItem.listDecoration.widthAdjustment.right);
-          var listPaddingControllers = [
-            TextEditingController(
-                text: !useIndListPad
-                    ? '.'
-                    : sheetListItem.listDecoration.padding.top.toString()),
-            TextEditingController(
-                text: (sheetListItem.listDecoration.padding.top).toString()),
-            TextEditingController(
-                text:
-                    (sheetListItem.listDecoration.padding.bottom).toString()),
-            TextEditingController(
-                text: (sheetListItem.listDecoration.padding.left).toString()),
-            TextEditingController(
-                text:
-                    (sheetListItem.listDecoration.padding.right).toString()),
-          ];
-          
-          var widthAdjustmentControllers = [
-            TextEditingController(
-                text: !useIndWidthAdj
-                    ? '.'
-                    : sheetListItem.listDecoration.widthAdjustment.top
-                        .toString()),
-            TextEditingController(
-                text: (sheetListItem.listDecoration.widthAdjustment.top)
-                    .toString()),
-            TextEditingController(
-                text: (sheetListItem.listDecoration.widthAdjustment.bottom)
-                    .toString()),
-            TextEditingController(
-                text: (sheetListItem.listDecoration.widthAdjustment.left)
-                    .toString()),
-            TextEditingController(
-                text: (sheetListItem.listDecoration.widthAdjustment.right)
-                    .toString()),
-          ];
-          
-          var colorHexControllers =[
-            TextEditingController(
-              text: colorToHex(sheetListItem.listDecoration.decoration.color ?? defaultPalette.transparent),
-            ),
-            TextEditingController(
-              text: colorToHex(sheetListItem .listDecoration .decoration .border ?.bottom
-                .color ?? defaultPalette .transparent),
-            )
-          ];
-          
-          var borderControllers =[
-            TextEditingController(text:((sheetListItem.listDecoration.decoration.border?.bottom.width)??1 ).toString(), ),
-            TextEditingController(text:(sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1 ).toString(), ),
-            TextEditingController(text:(sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1 ).toString(), ),
+            controller: listPropertyCardsController,
+            backgroundCardCount: 1,
+            backgroundCardOffset: Offset(3, 3),
+            duration: Duration(milliseconds: 150),
+            backgroundCardScale: 1,
+            loop: true,
+            cardCount: 2,
+            allowUnSwipe: true,
+            allowUnlimitedUnSwipe: true,
+            initialIndex: 1,
+            onCardPositionChanged: (position) {
+              setState(() {
+                _cardPosition =
+                    position.offset.dx.abs() + position.offset.dy.abs();
+              });
+            },
+            onSwipeEnd: (a, b, direction) {
+              // print(direction.toString());
+              setState(() {
+                // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
+                whichListPropertyTabIsClicked = b;
+                listPropertyTabContainerController.index =
+                    whichListPropertyTabIsClicked;
+                _cardPosition = 0;
+              });
+            },
+            onSwipeCancelled: (activity) {},
+            cardBuilder: (BuildContext context, int index) {
+              int currentCardIndex = whichListPropertyTabIsClicked;
+              var width = (sWidth * wH2DividerPosition - 25);
 
-          ];
+              // bool useIndListPad = (sheetListItem.listDecoration.padding.top ==
+              //         sheetListItem.listDecoration.padding.bottom &&
+              //     sheetListItem.listDecoration.padding.bottom ==
+              //         sheetListItem.listDecoration.padding.left &&
+              //     sheetListItem.listDecoration.padding.left ==
+              //         sheetListItem.listDecoration.padding.right);
+              // bool useIndWidthAdj =
+              //     (sheetListItem.listDecoration.widthAdjustment.top ==
+              //             sheetListItem.listDecoration.widthAdjustment.bottom &&
+              //         sheetListItem.listDecoration.widthAdjustment.bottom ==
+              //             sheetListItem.listDecoration.widthAdjustment.left &&
+              //         sheetListItem.listDecoration.widthAdjustment.left ==
+              //             sheetListItem.listDecoration.widthAdjustment.right);
+              // var listPaddingControllers = [
+              //   TextEditingController(
+              //       text: !useIndListPad
+              //           ? '.'
+              //           : sheetListItem.listDecoration.padding.top.toString()),
+              //   TextEditingController(
+              //       text:
+              //           (sheetListItem.listDecoration.padding.top).toString()),
+              //   TextEditingController(
+              //       text: (sheetListItem.listDecoration.padding.bottom)
+              //           .toString()),
+              //   TextEditingController(
+              //       text:
+              //           (sheetListItem.listDecoration.padding.left).toString()),
+              //   TextEditingController(
+              //       text: (sheetListItem.listDecoration.padding.right)
+              //           .toString()),
+              // ];
+//
+              // var widthAdjustmentControllers = [
+              //   TextEditingController(
+              //       text: !useIndWidthAdj
+              //           ? '.'
+              //           : sheetListItem.listDecoration.widthAdjustment.top
+              //               .toString()),
+              //   TextEditingController(
+              //       text: (sheetListItem.listDecoration.widthAdjustment.top)
+              //           .toString()),
+              //   TextEditingController(
+              //       text: (sheetListItem.listDecoration.widthAdjustment.bottom)
+              //           .toString()),
+              //   TextEditingController(
+              //       text: (sheetListItem.listDecoration.widthAdjustment.left)
+              //           .toString()),
+              //   TextEditingController(
+              //       text: (sheetListItem.listDecoration.widthAdjustment.right)
+              //           .toString()),
+              // ];
+//
+              // var colorHexControllers = [
+              //   TextEditingController(
+              //     text: colorToHex(
+              //         sheetListItem.listDecoration.decoration.color ??
+              //             defaultPalette.transparent),
+              //   ),
+              //   TextEditingController(
+              //     text: colorToHex(sheetListItem
+              //             .listDecoration.decoration.border?.bottom.color ??
+              //         defaultPalette.transparent),
+              //   )
+              // ];
+//
+              // var borderControllers = [
+              //   TextEditingController(
+              //     text: ((sheetListItem.listDecoration.decoration.border?.bottom
+              //                 .width) ??
+              //             1)
+              //         .toString(),
+              //   ),
+              //   TextEditingController(
+              //     text: (sheetListItem.listDecoration.decoration.border != null
+              //             ? (sheetListItem.listDecoration.decoration.border
+              //                     as Border)
+              //                 .right
+              //                 .width
+              //             : 1)
+              //         .toString(),
+              //   ),
+              //   TextEditingController(
+              //     text: (sheetListItem.listDecoration.decoration.border != null
+              //             ? (sheetListItem.listDecoration.decoration.border
+              //                     as Border)
+              //                 .left
+              //                 .width
+              //             : 1)
+              //         .toString(),
+              //   ),
+              // ];
+//
+              // var borderRadiusControllers = [
+              //   TextEditingController(
+              //       text: sheetListItem
+              //                   .listDecoration.decoration.borderRadius !=
+              //               null
+              //           ? (sheetListItem.listDecoration.decoration.borderRadius
+              //                   as BorderRadius)
+              //               .topLeft
+              //               .x
+              //               .toString()
+              //           : '0'),
+              //   TextEditingController(
+              //       text: sheetListItem
+              //                   .listDecoration.decoration.borderRadius !=
+              //               null
+              //           ? (sheetListItem.listDecoration.decoration.borderRadius
+              //                   as BorderRadius)
+              //               .topLeft
+              //               .x
+              //               .toString()
+              //           : '0'),
+              //   TextEditingController(
+              //       text: sheetListItem
+              //                   .listDecoration.decoration.borderRadius !=
+              //               null
+              //           ? (sheetListItem.listDecoration.decoration.borderRadius
+              //                   as BorderRadius)
+              //               .topRight
+              //               .x
+              //               .toString()
+              //           : '0'),
+              //   TextEditingController(
+              //       text: sheetListItem
+              //                   .listDecoration.decoration.borderRadius !=
+              //               null
+              //           ? (sheetListItem.listDecoration.decoration.borderRadius
+              //                   as BorderRadius)
+              //               .bottomLeft
+              //               .x
+              //               .toString()
+              //           : '0'),
+              //   TextEditingController(
+              //       text: sheetListItem
+              //                   .listDecoration.decoration.borderRadius !=
+              //               null
+              //           ? (sheetListItem.listDecoration.decoration.borderRadius
+              //                   as BorderRadius)
+              //               .bottomRight
+              //               .x
+              //               .toString()
+              //           : '0'),
+              // ];
 
-          var borderRadiusControllers = [
-            TextEditingController(text:sheetListItem.listDecoration.decoration.borderRadius!=null?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topLeft.x.toString():'0'),
-            TextEditingController(text:sheetListItem.listDecoration.decoration.borderRadius!=null?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topLeft.x.toString():'0'),
-            TextEditingController(text:sheetListItem.listDecoration.decoration.borderRadius!=null?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topRight.x.toString():'0'),
-            TextEditingController(text:sheetListItem.listDecoration.decoration.borderRadius!=null?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft.x.toString():'0'),
-            TextEditingController(text:sheetListItem.listDecoration.decoration.borderRadius!=null?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomRight.x.toString():'0'),
-          
-          ];
-
-
-          return Stack(
-            children: [
-              if(index==1)
-              ...[
-                Positioned.fill(
-                child: AnimatedContainer(
-                  duration: Durations.short3,
-                  margin: EdgeInsets.all(10).copyWith(left:5, right:8),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(width: 2),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-              ),
-      
-              Positioned.fill(
-                child: AnimatedOpacity(
-                  opacity: currentCardIndex == index
-                      ? 0
-                      : index >= (currentCardIndex + 2) % 10
-                          ? 1
-                          : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
-                  duration: Duration(milliseconds: 300),
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    margin: EdgeInsets.all(10).copyWith(left:5, right:8),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: index == (currentCardIndex + 1) % 10
-                          ? defaultPalette.extras[0]
-                          : index == (currentCardIndex + 2) % 10
-                              ? defaultPalette.extras[0]
-                              : defaultPalette.extras[0],
-                      border: Border.all(width: 2),
-                      borderRadius: BorderRadius.circular(25),
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: AnimatedContainer(
+                      duration: Durations.short3,
+                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(width: 2),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
                     ),
                   ),
-                ),
-              ),
-      
-              ],
-            
-              if(index==0)
-              ...[// LIST PROPERTIES Tab Parent
-              Positioned.fill(
-                top: 5,
-                right: -5,
-                left: 0,
-                child: AnimatedOpacity(
-                  opacity: 1,
-                  // index != (currentCardIndex) % 2
-                  //     ? (0 + (_cardPosition / 200).clamp(0.0, 1.0))
-                  //     : currentCardIndex == index
-                  //         ? (1 - (_cardPosition / 200).clamp(0.0, 1.0))
-                  //         : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
-                  duration: Duration.zero,
-                  child: Padding(
-                    padding: EdgeInsets.all(15).copyWith(left:5, right:10),
-                    child: PieCanvas(
-                      child: Container(
-                        padding: EdgeInsets.only(
-                            top: 10, left: 8, right: 8, bottom: 10),
+                  Positioned.fill(
+                    child: AnimatedOpacity(
+                      opacity: currentCardIndex == index
+                          ? 0
+                          : index >= (currentCardIndex + 2) % 10
+                              ? 1
+                              : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                      duration: Duration(milliseconds: 300),
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
+                          color: index == (currentCardIndex + 1) % 10
+                              ? defaultPalette.extras[0]
+                              : index == (currentCardIndex + 2) % 10
+                                  ? defaultPalette.extras[0]
+                                  : defaultPalette.extras[0],
+                          border: Border.all(width: 2),
                           borderRadius: BorderRadius.circular(25),
-                          color: defaultPalette.extras[0],
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: ScrollConfiguration(
-                            behavior:
-                                ScrollBehavior().copyWith(scrollbars: false),
-                            child: DynMouseScroll(
-                                durationMS: 500,
-                                scrollSpeed: 1,
-                                builder: (context, controller, physics) {
-                                  return SingleChildScrollView(
-                                    controller: controller,
-                                    physics: physics,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        
-                                        SizedBox(height: 50),
-                                        
-                                        ////The setup for direction Switching
-                                        Container(
-                                          width: width,
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                          padding: EdgeInsets.all(3)
-                                              .copyWith(top: 2),
+                      ),
+                    ),
+                  ),
+
+                  // LIST PROPERTIES Tab Parent
+                  if (index == 2) ...[
+                    Positioned.fill(
+                      top: 5,
+                      left: 0,
+                      child: AnimatedOpacity(
+                        opacity: 1,
+                        duration: Duration.zero,
+                        child: Padding(
+                          padding:
+                              EdgeInsets.all(15).copyWith(left: 5, right: 5),
+                          child: PieCanvas(
+                            child: Container(
+                              padding: EdgeInsets.only(
+                                  top: 10, left: 8, right: 8, bottom: 10),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                color: defaultPalette.transparent,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: ScrollConfiguration(
+                                  behavior: ScrollBehavior()
+                                      .copyWith(scrollbars: false),
+                                  child: DynMouseScroll(
+                                      durationMS: 500,
+                                      scrollSpeed: 1,
+                                      builder: (context, controller, physics) {
+                                        return SingleChildScrollView(
+                                          controller: controller,
+                                          physics: physics,
                                           child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
                                             children: [
-                                              Text(
-                                                'direction',
-                                                style: GoogleFonts.prompt(
-                                                    fontSize: 10,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              AnimatedToggleSwitch<Axis>.dual(
-                                                current:
-                                                    sheetListItem.direction,
-                                                first: Axis.vertical,
-                                                second: Axis.horizontal,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    sheetListItem.direction =
-                                                        value;
-                                                  });
-                                                },
-                                                animationCurve:
-                                                    Curves.easeInOutExpo,
-                                                animationDuration:
-                                                    Durations.medium4,
-                                                borderWidth:
-                                                    2, // backgroundColor is set independently of the current selection
-                                                styleBuilder: (value) =>
-                                                    ToggleStyle(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10),
-                                                        // indicatorBorder: Border.all(
-                                                        //   width: 1.5,
-                                                        //   color: defaultPalette.extras[0],
-                                                        // ),
-                                                        indicatorBorderRadius:
-                                                            BorderRadius
-                                                                .circular(15),
-                                                        borderColor:
-                                                            defaultPalette
-                                                                .secondary,
-                                                        backgroundColor:
-                                                            defaultPalette
-                                                                .secondary,
-                                                        indicatorColor:
-                                                            defaultPalette
-                                                                    .extras[
-                                                                0]), // indicatorColor changes and animates its value with the selection
-                                                iconBuilder: (value) {
-                                                  return Icon(
-                                                      value == Axis.horizontal
-                                                          ? TablerIcons
-                                                              .grip_horizontal
-                                                          : TablerIcons
-                                                              .grip_vertical,
-                                                      size: 12,
-                                                      color: defaultPalette
-                                                          .primary);
-                                                },
-                                                textBuilder: (value) {
-                                                  return Text(
-                                                    value == Axis.horizontal
-                                                        ? 'Horizontal'
-                                                        : 'Vertical',
-                                                    style: GoogleFonts.bungee(
-                                                        fontSize: 12),
-                                                  );
-                                                },
-                                                height: 25,
-                                                spacing: (width) ,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        
-                                        SizedBox(height: 10),
-                                        
-                                        //The setup for both cross and main AxisSelectionButtons
-                                        Row(
-                                          children: [
-                                          //The setup for mainAxisSelectionButton
-                                          Expanded(
-                                              flex: 1,
-                                              child: Container(
+                                              SizedBox(height: 50),
+
+                                              ////The setup for direction Switching
+                                              Container(
+                                                width: width,
                                                 decoration: BoxDecoration(
-                                                    color: defaultPalette
-                                                        .primary,
+                                                    color:
+                                                        defaultPalette.primary,
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            20)),
+                                                            10)),
                                                 padding: EdgeInsets.all(3)
                                                     .copyWith(top: 2),
                                                 child: Column(
                                                   children: [
                                                     Text(
-                                                      'mainAxis',
-                                                      style:
-                                                          GoogleFonts.prompt(
-                                                              fontSize: 10,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
+                                                      'direction',
+                                                      style: GoogleFonts.prompt(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.w500),
                                                     ),
-                                                    PieMenu(
-                                                      controller:
-                                                          listMainAxisAlignmentPieController,
-                                                      actions: [
-                                                        getPieActionForListAxis(
-                                                            'start'),
-                                                        getPieActionForListAxis(
-                                                            'end'),
-                                                        getPieActionForListAxis(
-                                                            'center'),
-                                                        getPieActionForListAxis(
-                                                            'space between'),
-                                                        getPieActionForListAxis(
-                                                            'space around'),
-                                                        getPieActionForListAxis(
-                                                            'space evenly'),
-                                                      ],
-                                                      onToggle: (menuOpen) {
-                                                        if (!menuOpen) {
-                                                          listDirectionPieController
-                                                              .closeMenu();
-                                                          listCrossAxisAlignmentDirectionPieController
-                                                              .closeMenu();
-                                                          listMainAxisAlignmentPieController
-                                                              .closeMenu();
-                                                        }
-                                                      },
-                                                      theme: PieTheme(
-                                                          rightClickShowsMenu:
-                                                              true,
-                                                          buttonSize:
-                                                              ((sWidth * wH2DividerPosition - 100) / 3)
-                                                                  .clamp(
-                                                                      40, 70),
-                                                          spacing: 5,
-                                                          radius: ((sWidth * wH2DividerPosition - 85) / 2)
-                                                              .clamp(50, 100),
-                                                          customAngle: 0,
-                                                          menuAlignment:
-                                                              Alignment
-                                                                  .center,
-                                                          pointerSize: 20,
-                                                          menuDisplacement:
-                                                              Offset(0, 0),
-                                                          // tooltipPadding: EdgeInsets.all(5),
-                                                          tooltipTextStyle:
-                                                              GoogleFonts.bungee(
-                                                                  fontSize:
-                                                                      20),
-                                                          buttonTheme:
-                                                              PieButtonTheme(
-                                                                  backgroundColor:
-                                                                      defaultPalette
-                                                                          .tertiary,
-                                                                  iconColor:
-                                                                      defaultPalette
-                                                                          .primary,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        width:
-                                                                            1),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            200),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                  ))),
-                                                      child: GestureDetector(
-                                                        onTap: () {
-                                                          listMainAxisAlignmentPieController
-                                                              .openMenu();
-                                                        }, // Handle tap manually
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0), // Custom shape
-                                                          ),
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 2.0,
-                                                                  left: 1,
-                                                                  right: 1,
-                                                                  bottom: 0),
-                                                          height: 62,
-                                                          padding: EdgeInsets
-                                                              .symmetric(
-                                                                  horizontal:
-                                                                      3), // Padding
-                                                          // constraints: BoxConstraints(
-                                                          //   minWidth: (sWidth * wH2DividerPosition - 90) / 2, // Width constraint
-                                                          //   minHeight: 42, // Height constraint
-                                                          // ),
-                                                          child: Center(
-                                                            child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceAround,
-                                                              children: [
-                                                                Container(
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: defaultPalette
-                                                                          .extras[1],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(15.0), // Custom shape
-                                                                    ),
-                                                                    margin: const EdgeInsets.only(
-                                                                        top:
-                                                                            2.0,
-                                                                        left:
-                                                                            1,
-                                                                        right:
-                                                                            1,
-                                                                        bottom:
-                                                                            0),
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    height:
-                                                                        40,
-                                                                    child: Icon(
-                                                                        TablerIcons
-                                                                            .kerning)),
-                                                                //The text under the mainAxis button that says space between start end or wtever
-                                                                Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          10.0),
-                                                                  child: Text(
-                                                                    sheetListItem
-                                                                        .listDecoration
-                                                                        .mainAxisAlignment
-                                                                        .name,
-                                                                    maxLines:
-                                                                        1,
-                                                                    style: GoogleFonts
-                                                                        .bungee(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )),
-                                          SizedBox(width: 5),
-                                          //The setup for crossAxisSelectionButton
-                                          Expanded(
-                                              flex: 1,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: defaultPalette
-                                                        .primary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20)),
-                                                padding:
-                                                    const EdgeInsets.all(3)
-                                                        .copyWith(top: 2),
-                                                child: Column(
-                                                  children: [
-                                                    //THE HEADING "crossAxis"
-                                                    Text(
-                                                      'crossAxis',
-                                                      style:
-                                                          GoogleFonts.prompt(
-                                                              fontSize: 10,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
-                                                    ),
-                                                    PieMenu(
-                                                      controller:
-                                                          listDirectionPieController,
-                                                      actions: [
-                                                        getPieActionForListAxis(
-                                                            'start',
-                                                            cross: true),
-                                                        getPieActionForListAxis(
-                                                            'center',
-                                                            cross: true),
-                                                        getPieActionForListAxis(
-                                                            'end',
-                                                            cross: true),
-                                                      ],
-                                                      onToggle: (menuOpen) {
-                                                        if (!menuOpen) {
-                                                          listDirectionPieController
-                                                              .closeMenu();
-                                                          listCrossAxisAlignmentDirectionPieController
-                                                              .closeMenu();
-                                                          listMainAxisAlignmentPieController
-                                                              .closeMenu();
-                                                        }
-                                                      },
-                                                      theme: PieTheme(
-                                                          rightClickShowsMenu:
-                                                              true,
-                                                          buttonSize:
-                                                              ((sWidth * wH2DividerPosition - 65) / 3)
-                                                                  .clamp(
-                                                                      40, 80),
-                                                          spacing: 5,
-                                                          radius: ((sWidth * wH2DividerPosition - 65) / 2)
-                                                              .clamp(50, 100),
-                                                          customAngle: 180,
-                                                          menuAlignment:
-                                                              Alignment
-                                                                  .center,
-                                                          pointerSize: 20,
-                                                          menuDisplacement:
-                                                              Offset(0, 0),
-                                                          // tooltipPadding: EdgeInsets.all(5),
-                                                          tooltipTextStyle:
-                                                              GoogleFonts.bungee(
-                                                                  fontSize:
-                                                                      20),
-                                                          buttonTheme:
-                                                              PieButtonTheme(
-                                                                  backgroundColor:
-                                                                      defaultPalette
-                                                                          .tertiary,
-                                                                  iconColor:
-                                                                      defaultPalette
-                                                                          .primary,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        width:
-                                                                            1),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            200),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                  ))),
-                                                      child: GestureDetector(
-                                                        onTap: () {
-                                                          listDirectionPieController
-                                                              .openMenu();
-                                                        }, // Handle tap manually
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0), // Custom shape
-                                                          ),
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 2.0,
-                                                                  left: 1,
-                                                                  right: 1,
-                                                                  bottom: 0),
-                                                          height: 62,
-                                                          padding: EdgeInsets
-                                                              .symmetric(
-                                                                  horizontal:
-                                                                      3),
-                                                          child: Center(
-                                                            child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceAround,
-                                                              children: [
-                                                                Container(
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: defaultPalette
-                                                                          .extras[1],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(15.0), // Custom shape
-                                                                    ),
-                                                                    margin: const EdgeInsets.only(
-                                                                        top:
-                                                                            2.0,
-                                                                        left:
-                                                                            1,
-                                                                        right:
-                                                                            1,
-                                                                        bottom:
-                                                                            0),
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    height:
-                                                                        40,
-                                                                    child: Icon(
-                                                                        TablerIcons
-                                                                            .karate)),
-                                                                Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          10.0),
-                                                                  child: Text(
-                                                                    sheetListItem
-                                                                        .listDecoration
-                                                                        .crossAxisAlignment
-                                                                        .name,
-                                                                    maxLines:
-                                                                        1,
-                                                                    style: GoogleFonts
-                                                                        .bungee(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )),
-                                        ]),
-          
-                                        SizedBox(height: 10),
-                                        
-                                        // List Padding Main
-                                        ...[
-                                          buildListDecorationAdjuster(
-                                              isWidthAdjustment: false,
-                                              sheetListItem: sheetListItem,
-                                              listPaddingControllers:
-                                                  listPaddingControllers,
-                                              widthAdjustmentControllers:
-                                                  widthAdjustmentControllers),
-                                          SizedBox(height: 10),
-                                          buildListDecorationAdjuster(
-                                              isWidthAdjustment: true,
-                                              sheetListItem: sheetListItem,
-                                              listPaddingControllers:
-                                                  listPaddingControllers,
-                                              widthAdjustmentControllers:
-                                                  widthAdjustmentControllers),
-                                          
-                                        ],
-                                        
-                                        SizedBox(height: 10),
-                                        // List Decoration COLOR main
-                                       ...[
-                                        //list COLOR PICKER Main    
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                          12)),
-                                          padding: EdgeInsets.all(4).copyWith(top:2),
-                                          child: Column(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                              isListColorExpanded =
-                                                  !isListColorExpanded;
-                                            });
-                                                },
-                                                child: Text(
-                                                  'color - ${(fl.ColorTools.nameThatColor(sheetListItem
-                                                          .listDecoration
-                                                          .decoration
-                                                          .color ?? defaultPalette
-                                                          .transparent, )).toLowerCase()}',
-                                                  style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
-                                                ),
-                                              ),
-                                               
-                                              Container(
-                                              decoration: BoxDecoration(
-                                                  // color: defaultPalette.secondary,
-                                                  borderRadius: BorderRadius.circular(8)), 
-                                              alignment: Alignment.center,
-                                              padding: EdgeInsets.all(0) ,
-                                              height: 25,
-                                              child: TextField( 
-                                                focusNode: colorHexFocusNodes[0],
-                                                controller: colorHexControllers[0],
-                                                onSubmitted: (value) {
-                                                  setState(() {
-                                                  sheetListItem.listDecoration = sheetListItem
-                                                      .listDecoration
-                                                      .copyWith(
-                                                          decoration: sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .copyWith(color: hexToColor(value)));
-                                                      });
-                                                    },
-                                                textAlignVertical: TextAlignVertical.top,
-                                                textAlign: TextAlign.start,
-                                                decoration: InputDecoration(
-                                                        contentPadding: const EdgeInsets.all(0), 
-                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                        filled: true,
-                                                        fillColor: defaultPalette.secondary,
-                                                        prefixIcon: GestureDetector(
-                                                          onTap: () {
-                                                          setState(() {
-                                                            isListColorExpanded =
-                                                                !isListColorExpanded;
-                                                          });},
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.all(3.0),
-                                                            child: DecoratedBox(
-                                                              decoration: BoxDecoration(
-                                                                shape: BoxShape.circle,
-                                                                border: Border.fromBorderSide(
-                                                                  BorderSide(color: defaultPalette.extras[0], width: 1),
-                                                                ),
-                                                                color: sheetListItem
-                                                            .listDecoration
-                                                            .decoration
-                                                            .color ??
-                                                            defaultPalette
-                                                            .transparent,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        border: InputBorder.none,
-                                                        enabledBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 1.2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                        focusedBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                      ), 
-                                                style: GoogleFonts.bungee(
-                                                          fontSize: 12, color: defaultPalette.black),
-                                                      ),
-                                                ),
-                                              
-                                              if(isListColorExpanded)
-                                              ...[ 
-                                                //list COLOR WHEEL picker
-                                                WheelPicker(
-                                                color: HSVColor.fromColor(sheetListItem
-                                                          .listDecoration
-                                                          .decoration
-                                                          .color ?? defaultPalette
-                                                          .transparent,),
-                                                onChanged: (HSVColor value) {
-                                                  setState(() {
-                                                  sheetListItem.listDecoration = sheetListItem
-                                                      .listDecoration
-                                                      .copyWith(
-                                                          decoration: sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .copyWith(color: value.toColor().withAlpha((sheetListItem
-                                                          .listDecoration
-                                                          .decoration
-                                                          .color ?? defaultPalette
-                                                          .transparent).alpha)));
-                                                      });
-                                                },
-                                              ),
-                                                //list Aplha COLOR
-                                                AlphaPicker(
-                                                  alpha: (sheetListItem
-                                                            .listDecoration
-                                                            .decoration
-                                                            .color ?? defaultPalette
-                                                            .transparent).alpha,
-                                                  onChanged: (int value) {
-                                                    setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(color: (sheetListItem
-                                                            .listDecoration
-                                                            .decoration
-                                                            .color ?? defaultPalette
-                                                            .transparent).withAlpha(value)));
+                                                    AnimatedToggleSwitch<
+                                                        Axis>.dual(
+                                                      current: sheetListItem
+                                                          .direction,
+                                                      first: Axis.vertical,
+                                                      second: Axis.horizontal,
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          sheetListItem
+                                                                  .direction =
+                                                              value;
                                                         });
-                                                  },
-                                                ),
-                                                
-                                            ]
-                                            ],
-                                          ),
-                                        ),
-                                        
-                                       ],
-          
-                                        SizedBox(height: 10), 
-
-                                        // The setup for all border stuff settings
-                                        ...[
-                                        //Border Width, dashed and dash pattern
-                                        Container(
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.primary,
-                                            borderRadius: BorderRadius.circular(10)),
-                                        padding: EdgeInsets.all(4).copyWith(top: 2),
-                                        child: Column(
-                                            children: [
-                                              Text(
-                                                'borderWidth',
-                                                style: GoogleFonts.prompt(
-                                                    fontSize: 10, color: defaultPalette.extras[0]),
-                                              ),
-                                              // "borderWidth" field for all sides
-                                              SizedBox(
-                                                height: textFieldHeight / 2,
-                                                child: TextFormField(
-                                                  onTapOutside: (event) => marginAllFocus.unfocus(),
-                                                  focusNode: borderFocusNodes[0],
-                                                  controller: borderControllers[0],
-                                                  inputFormatters: [
-                                                    NumericInputFormatter( 
+                                                      },
+                                                      animationCurve:
+                                                          Curves.easeInOutExpo,
+                                                      animationDuration:
+                                                          Durations.medium4,
+                                                      borderWidth:
+                                                          2, // backgroundColor is set independently of the current selection
+                                                      styleBuilder: (value) =>
+                                                          ToggleStyle(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10),
+                                                              // indicatorBorder: Border.all(
+                                                              //   width: 1.5,
+                                                              //   color: defaultPalette.extras[0],
+                                                              // ),
+                                                              indicatorBorderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          15),
+                                                              borderColor:
+                                                                  defaultPalette
+                                                                      .secondary,
+                                                              backgroundColor:
+                                                                  defaultPalette
+                                                                      .secondary,
+                                                              indicatorColor:
+                                                                  defaultPalette
+                                                                          .extras[
+                                                                      0]), // indicatorColor changes and animates its value with the selection
+                                                      iconBuilder: (value) {
+                                                        return Icon(
+                                                            value ==
+                                                                    Axis
+                                                                        .horizontal
+                                                                ? TablerIcons
+                                                                    .grip_horizontal
+                                                                : TablerIcons
+                                                                    .grip_vertical,
+                                                            size: 12,
+                                                            color:
+                                                                defaultPalette
+                                                                    .primary);
+                                                      },
+                                                      textBuilder: (value) {
+                                                        return Text(
+                                                          value ==
+                                                                  Axis.horizontal
+                                                              ? 'Horizontal'
+                                                              : 'Vertical',
+                                                          style: GoogleFonts
+                                                              .bungee(
+                                                                  fontSize: 12),
+                                                        );
+                                                      },
+                                                      height: 25,
+                                                      spacing: (width),
                                                     ),
                                                   ],
-                                                  textAlignVertical: TextAlignVertical.top,
-                                                  textAlign: TextAlign.center,
-                                                  decoration: InputDecoration(
-                                                    contentPadding: const EdgeInsets.all(0),
-                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                    labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                    filled: true,
-                                                    fillColor: defaultPalette.secondary,
-                                                    border: InputBorder.none,
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderSide:
-                                                          BorderSide(width: 1.2, color: defaultPalette.secondary),
-                                                      borderRadius: BorderRadius.circular(5.0),
-                                                    ),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderSide:
-                                                          BorderSide(width: 2, color: defaultPalette.extras[0]),
-                                                      borderRadius: BorderRadius.circular(5.0),
-                                                    ),
-                                                  ),
-                                                  keyboardType: TextInputType.number,
-                                                  style: GoogleFonts.bungee(
-                                                      fontSize: 12, color: defaultPalette.black),
-                                                  onFieldSubmitted: (value) {
-                                                    setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: double.parse(value),
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )));
-                                                  });
-                                                  },
                                                 ),
                                               ),
-                                                
-                                              BalloonSlider(
-                                                color: defaultPalette.extras[0],
-                                                value: (((sheetListItem.listDecoration.decoration.border?.bottom.width)??1 )/100)
-                                                    .clamp(0, 1),
-                                                showRope: true,
-                                                ropeLength: 50,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: double.parse((value*100).toStringAsFixed(2)),
 
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )));
-                                                  });
-                                                          },
-                                                        ),
+                                              SizedBox(height: 10),
 
-                                              const SizedBox(height: 10),
-                                              // dash pattern adjustments
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                  'dashPattern',
-                                                    style: GoogleFonts.prompt(
-                                                        fontSize: 10, color: defaultPalette.extras[0]),
-                                                  ),
-                                                  
-                                                  const SizedBox(width: 5),
-                                                  // Line - dash
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: Column(
-                                                      children: [
-                                                        SizedBox(
-                                                          height: textFieldHeight / 2,
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) => borderFocusNodes[1].unfocus(),
-                                                            focusNode: borderFocusNodes[1],
-                                                            controller: borderControllers[1],
-                                                            inputFormatters: [NumericInputFormatter()],
-                                                            cursorColor: defaultPalette.extras[0],
-                                                            textAlign: TextAlign.center,
-                                                            textAlignVertical: TextAlignVertical.top,
-                                                            decoration: InputDecoration(
-                                                              contentPadding: const EdgeInsets.all(0),
-                                                              filled: true,
-                                                              fillColor: defaultPalette.secondary,
-                                                              border: OutlineInputBorder(
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              enabledBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color: defaultPalette.secondary),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              focusedBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 2,
-                                                                    color: defaultPalette.extras[0]),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                            ),
-                                                            keyboardType: TextInputType.number,
-                                                            style: GoogleFonts.bungee(
-                                                                fontSize: 12, color: defaultPalette.black),
-                                                            onFieldSubmitted: (value) {
-                                                              setState(() {
-                                                                sheetListItem.listDecoration = sheetListItem
-                                                                    .listDecoration
-                                                                    .copyWith(
-                                                                    decoration: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .copyWith(
-                                                                    border: Border(
-                                                              bottom: BorderSide(
-                                                                color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                strokeAlign:  
-                                                                    BorderSide
-                                                                        .strokeAlignCenter,
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1,
-                                                                                                                
-                                                              ),
-                                                              left: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                              ),
-                                                              right: BorderSide(
-                                                                width: double.parse(value)
-                                                              ),
-                                                              top: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                              ),
-                                                              )
-                                                                  ));
-                                                              });
-                                                            },
-                                                          ),
-                                                        ),
-                                                        BalloonSlider(
-                                                        color: defaultPalette.extras[0],
-                                                        value: ((sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1)/100)
-                                                            .clamp(0, 1),
-                                                        showRope: true,
-                                                        ropeLength: 50,
-                                                        onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                               
-                                                                  
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: double.parse((value*100).toStringAsFixed(2)),
-                                                                   ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                            )));
-                                                          });
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 5),
-                                                  // Gap - dash
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: Column(
-                                                      children: [
-                                                        SizedBox(
-                                                          height: textFieldHeight / 2,
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) =>
-                                                                borderFocusNodes[2].unfocus(),
-                                                            focusNode: borderFocusNodes[2],
-                                                            controller: borderControllers[2],
-                                                            inputFormatters: [NumericInputFormatter()],
-                                                            cursorColor: defaultPalette.secondary,
-                                                            textAlign: TextAlign.center,
-                                                            textAlignVertical: TextAlignVertical.top,
-                                                            decoration: InputDecoration(
-                                                              contentPadding: const EdgeInsets.all(0),
-                                                              filled: true,
-                                                              fillColor: defaultPalette.secondary,
-                                                              border: OutlineInputBorder(
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              enabledBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color: defaultPalette.secondary),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              focusedBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 2,
-                                                                    color: defaultPalette.extras[0]),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                            ),
-                                                            keyboardType: TextInputType.number,
-                                                            style: GoogleFonts.bungee(
-                                                                fontSize: 12, color: defaultPalette.black),
-                                                            onFieldSubmitted: (value) {
-                                                               setState(() {
-                                                                sheetListItem.listDecoration = sheetListItem
-                                                                    .listDecoration
-                                                                    .copyWith(
-                                                                    decoration: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .copyWith(
-                                                                    border: Border(
-                                                              bottom: BorderSide(
-                                                                color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                strokeAlign:  
-                                                                    BorderSide
-                                                                        .strokeAlignCenter,
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1,
-                                                          
-                                                              ),
-                                                              right: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                              ),
-                                                              left: BorderSide(
-                                                                width: double.parse(value)
-                                                              ),
-                                                              top: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                              ),
-                                                              
-                                                                                                              )
-                                                                  ));
-                                                              });
-                                                            },
-                                                          ),
-                                                        ),
-                                                        BalloonSlider(
-                                                        color: defaultPalette.extras[0],
-                                                        value: ((sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1)/100)
-                                                            .clamp(0, 1),
-                                                        showRope: true,
-                                                        ropeLength: 50,
-                                                        onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                               
-                                                                  
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                               
-                                                                   ),
-                                                                left: BorderSide(
-                                                                  width: double.parse((value*100).toStringAsFixed(2)),
-                                                                  ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                            )));
-                                                          });
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        
-                                        SizedBox(height: 10),
-
-                                        buildListDecorationAdjuster(isWidthAdjustment: false, sheetListItem: sheetListItem, listPaddingControllers: listPaddingControllers, widthAdjustmentControllers: widthAdjustmentControllers, borderRadiusControllers: borderRadiusControllers, isBorderRadius: true),
-                                        
-                                        SizedBox(width: 5, height: 10),
-                                        //borderCOLOR PICKER Main
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                          12)),
-                                          padding: EdgeInsets.all(4).copyWith(top:2),
-                                          child: Column(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                              isListBorderColorExpanded =
-                                                      !isListBorderColorExpanded;
-                                            });
-                                                },
-                                                child: Text(
-                                                  'borderColor - ${(fl.ColorTools.nameThatColor(sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent,)).toLowerCase()}',
-                                                  style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
-                                                ),
-                                              ),
-                                               
-                                              Container(
-                                              decoration: BoxDecoration(
-                                                  // color: defaultPalette.secondary,
-                                                  borderRadius: BorderRadius.circular(8)), 
-                                              alignment: Alignment.center,
-                                              padding: EdgeInsets.all(0) ,
-                                              height: 25,
-                                              child: TextField( 
-                                                focusNode: colorHexFocusNodes[1],
-                                                controller: colorHexControllers[1],
-                                                onSubmitted: (value) {
-                                                  setState(() {
-                                                     sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                      .listDecoration
-                                                                      .decoration
-                                                                      .copyWith(
-                                                                          border: Border.all(
-                                                            color: hexToColor(value),
-                                                            strokeAlign: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .border
-                                                                    ?.bottom
-                                                                    .strokeAlign ??
-                                                                BorderSide
-                                                                    .strokeAlignInside,
-                                                            width: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .border
-                                                                    ?.bottom
-                                                                    .width ??
-                                                                1,
-                                                          ))); 
-                                                      });
-                                                    },
-                                                textAlignVertical: TextAlignVertical.top,
-                                                textAlign: TextAlign.start,
-                                                decoration: InputDecoration(
-                                                        contentPadding: const EdgeInsets.all(0), 
-                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                        filled: true,
-                                                        fillColor: defaultPalette.secondary,
-                                                        prefixIcon: GestureDetector(
-                                                          onTap: () {
-                                                          setState(() {
-                                                            isListBorderColorExpanded =
-                                                                    !isListBorderColorExpanded;
-                                                          });},
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.all(3.0),
-                                                            child: DecoratedBox(
-                                                              decoration: BoxDecoration(
-                                                                shape: BoxShape.circle,
-                                                                border: Border.fromBorderSide(
-                                                                  BorderSide(color: defaultPalette.extras[0], width: 1),
-                                                                ),
-                                                                color: sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        border: InputBorder.none,
-                                                        enabledBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 1.2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                        focusedBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                      ), 
-                                                style: GoogleFonts.bungee(
-                                                          fontSize: 12, color: defaultPalette.black),
-                                                      ),
-                                                ),
-                                              
-                                              if(isListBorderColorExpanded)
-                                              ...[
-                                              //borderColor WheelPicker
-                                                WheelPicker(
-                                                color: HSVColor.fromColor(sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent,),
-                                                onChanged: (HSVColor value) {
-                                                  setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color:  value.toColor().withAlpha((sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent).alpha),
-                                                              strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )));
-                                                  });
-                                                },
-                                              ),
-                                              //borderColor APLHA PICKER
-                                              AlphaPicker(
-                                                alpha: (sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent).alpha,
-                                                onChanged: (int value) {
-                                                  setState(() {
-
-                                                     sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                      .listDecoration
-                                                                      .decoration
-                                                                      .copyWith(
-                                                                        border: Border(
-                                                                bottom: BorderSide(
-                                                                  color:  (sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent).withAlpha(value),
-                                                              strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )
-                                                                         
-                                                          ));
-
-
-
-                                                   
-                                                      });
-                                                },
-                                              ),
-                                            ]
-                                            ],
-                                          ),
-                                        ),
-                                        ],
-                                        
-                                        SizedBox(height: 10),
-                                        
-                                        //The setup for image background for list
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                          12)),
-                                          padding: EdgeInsets.all(4).copyWith(top:2),
-                                          child: Column(
-                                           children: [
-                                            Text(
-                                              'image',
-                                              style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
-                                            ),
-                                            
-                                            GestureDetector(
-                                              onTap: () async{
-                                                if (sheetListItem.listDecoration.decoration.image ==null) {
-                                                  FilePickerResult? result = await FilePicker.platform.pickFiles( 
-                                                    type: FileType.custom,
-                                                    allowedExtensions: ['jpg', 'png',],
-                                                    withData: true
-                                                  );
-                                                  print(result);
-                                                  if (result !=null) {
-                                                    setState(() {
-                                                      sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                                          image: DecorationImage(image: MemoryImage(result.files[0].bytes!), fit:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image?.fit:BoxFit.fitWidth  )
-                                                        )
-                                                      );
-                                                    });
-                                                  }
-                                                }
-                                              },
-                                              child: Container(
-                                                 decoration: BoxDecoration( 
-                                                  color: defaultPalette
-                                                      .secondary,
-                                                  borderRadius:
-                                                      BorderRadius
-                                                          .circular(
-                                                              12)),
-                                                  padding: EdgeInsets.all(2),
-                                                child: Column(
-                                                  children: [
-                                                    Container(
-                                                      width: sWidth,
-                                                      height:50,
+                                              //The setup for both cross and main AxisSelectionButtons
+                                              Row(children: [
+                                                //The setup for mainAxisSelectionButton
+                                                Expanded(
+                                                    flex: 1,
+                                                    child: Container(
                                                       decoration: BoxDecoration(
-                                                      image: sheetListItem.listDecoration.decoration.image??null,
-                                                      color: defaultPalette
-                                                          .secondary,
-                                                      borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                                  12)),
-                                                      padding: EdgeInsets.all(5),
-                                                      child:sheetListItem.listDecoration.decoration.image !=null?null: Icon(TablerIcons.photo_plus),
-                                                    ),
-                                                     if(sheetListItem.listDecoration.decoration.image !=null)
-                                                     Padding(
-                                                       padding: const EdgeInsets.symmetric(vertical:2.0),
-                                                       child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                                         children: [
-                                                            GestureDetector(
-                                                              onTap:() async{
-                                                                FilePickerResult? result = await FilePicker.platform.pickFiles( 
-                                                                  type: FileType.custom,
-                                                                  allowedExtensions: ['jpg', 'png',],
-                                                                  withData: true
-                                                                );
-                                                                print(result);
-                                                                if (result !=null) {
-                                                                  setState(() {
-                                                                    sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                                      decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                                                        image: DecorationImage(image: MemoryImage(result.files[0].bytes!), fit:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image?.fit:BoxFit.fitWidth  )
-                                                                      )
-                                                                    );
-                                                                  });
-                                                                }
-                                                              },
-                                                              child: Icon(TablerIcons.photo_plus, size:15)
-                                                              ),
-                                                            GestureDetector(
-                                                              onTap: () {
-                                                                  setState(() {
-                                                                    sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                                      decoration: BoxDecoration(
-                                                                          color: sheetListItem.listDecoration.decoration.color,
-                                                                          borderRadius: sheetListItem.listDecoration.decoration.borderRadius,
-                                                                          border: sheetListItem.listDecoration.decoration.border,
-                                                                          boxShadow: sheetListItem.listDecoration.decoration.boxShadow,
-                                                                          image: null, // Set to null directly
-                                                                        ),
-                                                                    );
-                                                                  }); 
-                                                              },
-                                                              child: Icon(TablerIcons.trash, size:15)),
-                                                         ],
-                                                       ),
-                                                     ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-
-                                            SizedBox(height:10),
-                                               
-                                            ////The setup for BoxFit Change
-                                            Container(
-                                              width: width,
-                                              decoration: BoxDecoration(
-                                                  color: defaultPalette.primary,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                              padding: EdgeInsets.all(3)
-                                                  .copyWith(top: 2),
-                                              child: Column(
-                                                children: [
-                                                  Text(
-                                                    'contentFit - ${sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image!.fit!.name:BoxFit.fitWidth.name }',
-                                                    style: GoogleFonts.prompt(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.w500),
-                                                  ),
-                                                  AnimatedToggleSwitch<BoxFit>.rolling(
-                                                    current:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image!.fit!:BoxFit.fitWidth , 
-                                                    onChanged: (value) {
-                                                      if (sheetListItem.listDecoration.decoration.image !=null) {
-                                                      setState(() {
-                                                        sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                      decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                                        image: DecorationImage(image: MemoryImage((sheetListItem.listDecoration.decoration.image?.image as MemoryImage).bytes  ), fit:value)
-                                                        )
-                                                      );
-                                                      });
-                                                    }
-                                                    },
-                                                    animationCurve:
-                                                        Curves.easeInOutExpo,
-                                                    animationDuration:
-                                                        Durations.medium4,
-                                                    borderWidth:
-                                                        2, // backgroundColor is set independently of the current selection
-                                                    styleBuilder: (value) =>
-                                                        ToggleStyle(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(10), 
-                                                            indicatorBorderRadius:
-                                                                BorderRadius
-                                                                    .circular(15),
-                                                            borderColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            backgroundColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            indicatorColor:
-                                                                defaultPalette
-                                                                        .extras[
-                                                                    1]), // indicatorColor changes and animates its value with the selection
-                                                     
-                                                            iconList: [
-                                                              Icon(TablerIcons.arrow_autofit_content),
-                                                              Icon(TablerIcons.arrow_autofit_height),
-                                                              Icon(TablerIcons.arrow_autofit_width),
-                                                              Icon(TablerIcons.arrow_autofit_content_filled),
-                                                              Icon(TablerIcons.input_x),
+                                                          color: defaultPalette
+                                                              .primary,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      20)),
+                                                      padding: EdgeInsets.all(3)
+                                                          .copyWith(top: 2),
+                                                      child: Column(
+                                                        children: [
+                                                          Text(
+                                                            'mainAxis',
+                                                            style: GoogleFonts
+                                                                .prompt(
+                                                                    fontSize:
+                                                                        10,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                          ),
+                                                          PieMenu(
+                                                            controller:
+                                                                listMainAxisAlignmentPieController,
+                                                            actions: [
+                                                              getPieActionForListAxis(
+                                                                  0),
+                                                              getPieActionForListAxis(
+                                                                  1),
+                                                              getPieActionForListAxis(
+                                                                  2),
+                                                              getPieActionForListAxis(
+                                                                  3),
+                                                              getPieActionForListAxis(
+                                                                  4),
+                                                              getPieActionForListAxis(
+                                                                  5),
                                                             ],
-                                                            height: 30, 
-                                                                values: [
-                                                                  BoxFit.contain,
-                                                                  BoxFit.fitHeight,
-                                                                  BoxFit.fitWidth,
-                                                                  BoxFit.fill, 
-                                                                  BoxFit.none
+                                                            onToggle:
+                                                                (menuOpen) {
+                                                              if (!menuOpen) {
+                                                                listDirectionPieController
+                                                                    .closeMenu();
+                                                                listCrossAxisAlignmentDirectionPieController
+                                                                    .closeMenu();
+                                                                listMainAxisAlignmentPieController
+                                                                    .closeMenu();
+                                                              }
+                                                            },
+                                                            theme: PieTheme(
+                                                                rightClickShowsMenu:
+                                                                    true,
+                                                                buttonSize:
+                                                                    ((sWidth * wH2DividerPosition - 100) / 3)
+                                                                        .clamp(
+                                                                            40, 70),
+                                                                spacing: 5,
+                                                                radius: ((sWidth * wH2DividerPosition - 85) /
+                                                                        2)
+                                                                    .clamp(
+                                                                        50, 100),
+                                                                customAngle: 0,
+                                                                menuAlignment:
+                                                                    Alignment
+                                                                        .center,
+                                                                pointerSize: 20,
+                                                                menuDisplacement:
+                                                                    Offset(
+                                                                        0, 0),
+                                                                // tooltipPadding: EdgeInsets.all(5),
+                                                                tooltipTextStyle:
+                                                                    GoogleFonts.bungee(
+                                                                        fontSize:
+                                                                            20),
+                                                                buttonTheme:
+                                                                    PieButtonTheme(
+                                                                        backgroundColor: defaultPalette
+                                                                            .tertiary,
+                                                                        iconColor:
+                                                                            defaultPalette
+                                                                                .primary,
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          border:
+                                                                              Border.all(width: 1),
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(200),
+                                                                          color:
+                                                                              defaultPalette.extras[0],
+                                                                        ))),
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                listMainAxisAlignmentPieController
+                                                                    .openMenu();
+                                                              }, // Handle tap manually
+                                                              child: Container(
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: defaultPalette
+                                                                      .secondary,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              15.0), // Custom shape
+                                                                ),
+                                                                margin:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top:
+                                                                            2.0,
+                                                                        left: 1,
+                                                                        right:
+                                                                            1,
+                                                                        bottom:
+                                                                            0),
+                                                                height: 62,
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        horizontal:
+                                                                            3), // Padding
+                                                                // constraints: BoxConstraints(
+                                                                //   minWidth: (sWidth * wH2DividerPosition - 90) / 2, // Width constraint
+                                                                //   minHeight: 42, // Height constraint
+                                                                // ),
+                                                                child: Center(
+                                                                  child: Column(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceAround,
+                                                                    children: [
+                                                                      Container(
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            color:
+                                                                                defaultPalette.extras[1],
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(15.0), // Custom shape
+                                                                          ),
+                                                                          margin: const EdgeInsets
+                                                                              .only(
+                                                                              top:
+                                                                                  2.0,
+                                                                              left:
+                                                                                  1,
+                                                                              right:
+                                                                                  1,
+                                                                              bottom:
+                                                                                  0),
+                                                                          alignment: Alignment
+                                                                              .center,
+                                                                          height:
+                                                                              40,
+                                                                          child:
+                                                                              Icon(TablerIcons.kerning)),
+                                                                      //The text under the mainAxis button that says space between start end or wtever
+                                                                      Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .symmetric(
+                                                                            horizontal:
+                                                                                10.0),
+                                                                        child:
+                                                                            Text(
+                                                                          sheetListItem
+                                                                              .mainAxisAlignment
+                                                                              .name,
+                                                                          maxLines:
+                                                                              1,
+                                                                          style:
+                                                                              GoogleFonts.bungee(
+                                                                            fontSize:
+                                                                                10,
+                                                                            color:
+                                                                                defaultPalette.extras[0],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )),
+                                                SizedBox(width: 5),
+                                                //The setup for crossAxisSelectionButton
+                                                Expanded(
+                                                    flex: 1,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                          color: defaultPalette
+                                                              .primary,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      20)),
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                                  3)
+                                                              .copyWith(top: 2),
+                                                      child: Column(
+                                                        children: [
+                                                          //THE HEADING "crossAxis"
+                                                          Text(
+                                                            'crossAxis',
+                                                            style: GoogleFonts
+                                                                .prompt(
+                                                                    fontSize:
+                                                                        10,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500),
+                                                          ),
+                                                          PieMenu(
+                                                            controller:
+                                                                listDirectionPieController,
+                                                            actions: [
+                                                              getPieActionForListAxis(
+                                                                  0,
+                                                                  cross: true),
+                                                              getPieActionForListAxis(
+                                                                  1,
+                                                                  cross: true),
+                                                              getPieActionForListAxis(
+                                                                  2,
+                                                                  cross: true),
+                                                            ],
+                                                            onToggle:
+                                                                (menuOpen) {
+                                                              if (!menuOpen) {
+                                                                listDirectionPieController
+                                                                    .closeMenu();
+                                                                listCrossAxisAlignmentDirectionPieController
+                                                                    .closeMenu();
+                                                                listMainAxisAlignmentPieController
+                                                                    .closeMenu();
+                                                              }
+                                                            },
+                                                            theme: PieTheme(
+                                                                rightClickShowsMenu:
+                                                                    true,
+                                                                buttonSize:
+                                                                    ((sWidth * wH2DividerPosition - 65) / 3).clamp(
+                                                                        40, 80),
+                                                                spacing: 5,
+                                                                radius: ((sWidth * wH2DividerPosition - 65) /
+                                                                        2)
+                                                                    .clamp(
+                                                                        50, 100),
+                                                                customAngle:
+                                                                    180,
+                                                                menuAlignment:
+                                                                    Alignment
+                                                                        .center,
+                                                                pointerSize: 20,
+                                                                menuDisplacement:
+                                                                    Offset(
+                                                                        0, 0),
+                                                                // tooltipPadding: EdgeInsets.all(5),
+                                                                tooltipTextStyle:
+                                                                    GoogleFonts.bungee(
+                                                                        fontSize:
+                                                                            20),
+                                                                buttonTheme:
+                                                                    PieButtonTheme(
+                                                                        backgroundColor:
+                                                                            defaultPalette
+                                                                                .tertiary,
+                                                                        iconColor:
+                                                                            defaultPalette
+                                                                                .primary,
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          border:
+                                                                              Border.all(width: 1),
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(200),
+                                                                          color:
+                                                                              defaultPalette.extras[0],
+                                                                        ))),
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                listDirectionPieController
+                                                                    .openMenu();
+                                                              }, // Handle tap manually
+                                                              child: Container(
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: defaultPalette
+                                                                      .secondary,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              15.0), // Custom shape
+                                                                ),
+                                                                margin:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top:
+                                                                            2.0,
+                                                                        left: 1,
+                                                                        right:
+                                                                            1,
+                                                                        bottom:
+                                                                            0),
+                                                                height: 62,
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        horizontal:
+                                                                            3),
+                                                                child: Center(
+                                                                  child: Column(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceAround,
+                                                                    children: [
+                                                                      Container(
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            color:
+                                                                                defaultPalette.extras[1],
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(15.0), // Custom shape
+                                                                          ),
+                                                                          margin: const EdgeInsets
+                                                                              .only(
+                                                                              top:
+                                                                                  2.0,
+                                                                              left:
+                                                                                  1,
+                                                                              right:
+                                                                                  1,
+                                                                              bottom:
+                                                                                  0),
+                                                                          alignment: Alignment
+                                                                              .center,
+                                                                          height:
+                                                                              40,
+                                                                          child:
+                                                                              Icon(TablerIcons.karate)),
+                                                                      Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .symmetric(
+                                                                            horizontal:
+                                                                                10.0),
+                                                                        child:
+                                                                            Text(
+                                                                          sheetListItem
+                                                                              .crossAxisAlignment
+                                                                              .name,
+                                                                          maxLines:
+                                                                              1,
+                                                                          style:
+                                                                              GoogleFonts.bungee(
+                                                                            fontSize:
+                                                                                10,
+                                                                            color:
+                                                                                defaultPalette.extras[0],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )),
+                                              ]),
+                                              SizedBox(height: 10),
 
-                                                                ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                         
-                                           ],
+                                              SizedBox(height: 10),
+                                            ],
                                           ),
-                                        ),
-                                        
-                                        SizedBox(height:10),
-
-                                      ],
-                                    ),
-                                  );
-                                }),
+                                        );
+                                      }),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              ],
-              // LIST PROPERTIES Tab Parent
-              if(index==1)
-              ...[
-                Positioned.fill(
-                top: 5, 
-                left: 0,
-                child: AnimatedOpacity(
-                  opacity: 1,
-                  // index != (currentCardIndex) % 2
-                  //     ? (0 + (_cardPosition / 200).clamp(0.0, 1.0))
-                  //     : currentCardIndex == index
-                  //         ? (1 - (_cardPosition / 200).clamp(0.0, 1.0))
-                  //         : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
-                  duration: Duration.zero,
-                  child: Padding(
-                    padding: EdgeInsets.all(15).copyWith(left:5, right:5),
-                    child: PieCanvas(
-                      child: Container(
-                        padding: EdgeInsets.only(
-                            top: 10, left: 8, right: 8, bottom: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(25),
-                          color: defaultPalette.transparent,
-                        ),
+                  ],
+
+                  if (index == 1) ...[
+                    Positioned.fill(
+                      child: Padding(
+                        padding:
+                            EdgeInsets.all(17).copyWith(right: 15, left: 12),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: ScrollConfiguration(
-                            behavior:
-                                ScrollBehavior().copyWith(scrollbars: false),
-                            child: DynMouseScroll(
-                                durationMS: 500,
-                                scrollSpeed: 1,
-                                builder: (context, controller, physics) {
-                                  return SingleChildScrollView(
-                                    controller: controller,
-                                    physics: physics,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        
-                                        SizedBox(height: 50),
-                                        
-                                        ////The setup for direction Switching
-                                        Container(
-                                          width: width,
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                          padding: EdgeInsets.all(3)
-                                              .copyWith(top: 2),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                'direction',
-                                                style: GoogleFonts.prompt(
-                                                    fontSize: 10,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              AnimatedToggleSwitch<Axis>.dual(
-                                                current:
-                                                    sheetListItem.direction,
-                                                first: Axis.vertical,
-                                                second: Axis.horizontal,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    sheetListItem.direction =
-                                                        value;
-                                                  });
-                                                },
-                                                animationCurve:
-                                                    Curves.easeInOutExpo,
-                                                animationDuration:
-                                                    Durations.medium4,
-                                                borderWidth:
-                                                    2, // backgroundColor is set independently of the current selection
-                                                styleBuilder: (value) =>
-                                                    ToggleStyle(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10),
-                                                        // indicatorBorder: Border.all(
-                                                        //   width: 1.5,
-                                                        //   color: defaultPalette.extras[0],
-                                                        // ),
-                                                        indicatorBorderRadius:
-                                                            BorderRadius
-                                                                .circular(15),
-                                                        borderColor:
-                                                            defaultPalette
-                                                                .secondary,
-                                                        backgroundColor:
-                                                            defaultPalette
-                                                                .secondary,
-                                                        indicatorColor:
-                                                            defaultPalette
-                                                                    .extras[
-                                                                0]), // indicatorColor changes and animates its value with the selection
-                                                iconBuilder: (value) {
-                                                  return Icon(
-                                                      value == Axis.horizontal
-                                                          ? TablerIcons
-                                                              .grip_horizontal
-                                                          : TablerIcons
-                                                              .grip_vertical,
-                                                      size: 12,
-                                                      color: defaultPalette
-                                                          .primary);
-                                                },
-                                                textBuilder: (value) {
-                                                  return Text(
-                                                    value == Axis.horizontal
-                                                        ? 'Horizontal'
-                                                        : 'Vertical',
-                                                    style: GoogleFonts.bungee(
-                                                        fontSize: 12),
-                                                  );
-                                                },
-                                                height: 25,
-                                                spacing: (width) ,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        
-                                        SizedBox(height: 10),
-                                        
-                                        //The setup for both cross and main AxisSelectionButtons
-                                        Row(
-                                          children: [
-                                          //The setup for mainAxisSelectionButton
-                                          Expanded(
-                                              flex: 1,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: defaultPalette
-                                                        .primary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20)),
-                                                padding: EdgeInsets.all(3)
-                                                    .copyWith(top: 2),
-                                                child: Column(
+                            borderRadius: BorderRadius.circular(20),
+                            child: ScrollConfiguration(
+                                behavior: ScrollBehavior()
+                                    .copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                    durationMS: 500,
+                                    scrollSpeed: 1,
+                                    builder: (context, controller, physics) {
+                                      return PieCanvas(
+                                        child: SingleChildScrollView(
+                                            controller: controller,
+                                            physics: physics,
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceAround,
                                                   children: [
+                                                    Icon(TablerIcons.sparkles),
                                                     Text(
-                                                      'mainAxis',
-                                                      style:
-                                                          GoogleFonts.prompt(
-                                                              fontSize: 10,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
+                                                      " Decor",
+                                                      style: GoogleFonts.bungee(
+                                                        fontSize: 20,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.start,
                                                     ),
-                                                    PieMenu(
-                                                      controller:
-                                                          listMainAxisAlignmentPieController,
-                                                      actions: [
-                                                        getPieActionForListAxis(
-                                                            'start'),
-                                                        getPieActionForListAxis(
-                                                            'end'),
-                                                        getPieActionForListAxis(
-                                                            'center'),
-                                                        getPieActionForListAxis(
-                                                            'space between'),
-                                                        getPieActionForListAxis(
-                                                            'space around'),
-                                                        getPieActionForListAxis(
-                                                            'space evenly'),
-                                                      ],
-                                                      onToggle: (menuOpen) {
-                                                        if (!menuOpen) {
-                                                          listDirectionPieController
-                                                              .closeMenu();
-                                                          listCrossAxisAlignmentDirectionPieController
-                                                              .closeMenu();
-                                                          listMainAxisAlignmentPieController
-                                                              .closeMenu();
-                                                        }
-                                                      },
-                                                      theme: PieTheme(
-                                                          rightClickShowsMenu:
-                                                              true,
-                                                          buttonSize:
-                                                              ((sWidth * wH2DividerPosition - 100) / 3)
-                                                                  .clamp(
-                                                                      40, 70),
-                                                          spacing: 5,
-                                                          radius: ((sWidth * wH2DividerPosition - 85) / 2)
-                                                              .clamp(50, 100),
-                                                          customAngle: 0,
-                                                          menuAlignment:
-                                                              Alignment
-                                                                  .center,
-                                                          pointerSize: 20,
-                                                          menuDisplacement:
-                                                              Offset(0, 0),
-                                                          // tooltipPadding: EdgeInsets.all(5),
-                                                          tooltipTextStyle:
-                                                              GoogleFonts.bungee(
-                                                                  fontSize:
-                                                                      20),
-                                                          buttonTheme:
-                                                              PieButtonTheme(
-                                                                  backgroundColor:
-                                                                      defaultPalette
-                                                                          .tertiary,
-                                                                  iconColor:
-                                                                      defaultPalette
-                                                                          .primary,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        width:
-                                                                            1),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            200),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                  ))),
-                                                      child: GestureDetector(
+                                                    GestureDetector(
                                                         onTap: () {
-                                                          listMainAxisAlignmentPieController
-                                                              .openMenu();
-                                                        }, // Handle tap manually
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0), // Custom shape
-                                                          ),
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 2.0,
-                                                                  left: 1,
-                                                                  right: 1,
-                                                                  bottom: 0),
-                                                          height: 62,
-                                                          padding: EdgeInsets
-                                                              .symmetric(
-                                                                  horizontal:
-                                                                      3), // Padding
-                                                          // constraints: BoxConstraints(
-                                                          //   minWidth: (sWidth * wH2DividerPosition - 90) / 2, // Width constraint
-                                                          //   minHeight: 42, // Height constraint
-                                                          // ),
-                                                          child: Center(
-                                                            child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceAround,
-                                                              children: [
-                                                                Container(
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: defaultPalette
-                                                                          .extras[1],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(15.0), // Custom shape
-                                                                    ),
-                                                                    margin: const EdgeInsets.only(
-                                                                        top:
-                                                                            2.0,
-                                                                        left:
-                                                                            1,
-                                                                        right:
-                                                                            1,
-                                                                        bottom:
-                                                                            0),
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    height:
-                                                                        40,
-                                                                    child: Icon(
-                                                                        TablerIcons
-                                                                            .kerning)),
-                                                                //The text under the mainAxis button that says space between start end or wtever
-                                                                Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          10.0),
-                                                                  child: Text(
-                                                                    sheetListItem
-                                                                        .listDecoration
-                                                                        .mainAxisAlignment
-                                                                        .name,
-                                                                    maxLines:
-                                                                        1,
-                                                                    style: GoogleFonts
-                                                                        .bungee(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )),
-                                          SizedBox(width: 5),
-                                          //The setup for crossAxisSelectionButton
-                                          Expanded(
-                                              flex: 1,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: defaultPalette
-                                                        .primary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20)),
-                                                padding:
-                                                    const EdgeInsets.all(3)
-                                                        .copyWith(top: 2),
-                                                child: Column(
-                                                  children: [
-                                                    //THE HEADING "crossAxis"
-                                                    Text(
-                                                      'crossAxis',
-                                                      style:
-                                                          GoogleFonts.prompt(
-                                                              fontSize: 10,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
-                                                    ),
-                                                    PieMenu(
-                                                      controller:
-                                                          listDirectionPieController,
-                                                      actions: [
-                                                        getPieActionForListAxis(
-                                                            'start',
-                                                            cross: true),
-                                                        getPieActionForListAxis(
-                                                            'center',
-                                                            cross: true),
-                                                        getPieActionForListAxis(
-                                                            'end',
-                                                            cross: true),
-                                                      ],
-                                                      onToggle: (menuOpen) {
-                                                        if (!menuOpen) {
-                                                          listDirectionPieController
-                                                              .closeMenu();
-                                                          listCrossAxisAlignmentDirectionPieController
-                                                              .closeMenu();
-                                                          listMainAxisAlignmentPieController
-                                                              .closeMenu();
-                                                        }
-                                                      },
-                                                      theme: PieTheme(
-                                                          rightClickShowsMenu:
-                                                              true,
-                                                          buttonSize:
-                                                              ((sWidth * wH2DividerPosition - 65) / 3)
-                                                                  .clamp(
-                                                                      40, 80),
-                                                          spacing: 5,
-                                                          radius: ((sWidth * wH2DividerPosition - 65) / 2)
-                                                              .clamp(50, 100),
-                                                          customAngle: 180,
-                                                          menuAlignment:
-                                                              Alignment
-                                                                  .center,
-                                                          pointerSize: 20,
-                                                          menuDisplacement:
-                                                              Offset(0, 0),
-                                                          // tooltipPadding: EdgeInsets.all(5),
-                                                          tooltipTextStyle:
-                                                              GoogleFonts.bungee(
-                                                                  fontSize:
-                                                                      20),
-                                                          buttonTheme:
-                                                              PieButtonTheme(
-                                                                  backgroundColor:
-                                                                      defaultPalette
-                                                                          .tertiary,
-                                                                  iconColor:
-                                                                      defaultPalette
-                                                                          .primary,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        width:
-                                                                            1),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            200),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                  ))),
-                                                      child: GestureDetector(
-                                                        onTap: () {
-                                                          listDirectionPieController
-                                                              .openMenu();
-                                                        }, // Handle tap manually
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0), // Custom shape
-                                                          ),
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 2.0,
-                                                                  left: 1,
-                                                                  right: 1,
-                                                                  bottom: 0),
-                                                          height: 62,
-                                                          padding: EdgeInsets
-                                                              .symmetric(
-                                                                  horizontal:
-                                                                      3),
-                                                          child: Center(
-                                                            child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceAround,
-                                                              children: [
-                                                                Container(
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: defaultPalette
-                                                                          .extras[1],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(15.0), // Custom shape
-                                                                    ),
-                                                                    margin: const EdgeInsets.only(
-                                                                        top:
-                                                                            2.0,
-                                                                        left:
-                                                                            1,
-                                                                        right:
-                                                                            1,
-                                                                        bottom:
-                                                                            0),
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    height:
-                                                                        40,
-                                                                    child: Icon(
-                                                                        TablerIcons
-                                                                            .karate)),
-                                                                Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          10.0),
-                                                                  child: Text(
-                                                                    sheetListItem
-                                                                        .listDecoration
-                                                                        .crossAxisAlignment
-                                                                        .name,
-                                                                    maxLines:
-                                                                        1,
-                                                                    style: GoogleFonts
-                                                                        .bungee(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )),
-                                        ]),
-          
-                                        SizedBox(height: 10),
-                                        
-                                        // List Padding Main
-                                        ...[
-                                          buildListDecorationAdjuster(
-                                              isWidthAdjustment: false,
-                                              sheetListItem: sheetListItem,
-                                              listPaddingControllers:
-                                                  listPaddingControllers,
-                                              widthAdjustmentControllers:
-                                                  widthAdjustmentControllers),
-                                          SizedBox(height: 10),
-                                          buildListDecorationAdjuster(
-                                              isWidthAdjustment: true,
-                                              sheetListItem: sheetListItem,
-                                              listPaddingControllers:
-                                                  listPaddingControllers,
-                                              widthAdjustmentControllers:
-                                                  widthAdjustmentControllers),
-                                          
-                                        ],
-                                        
-                                        SizedBox(height: 10),
-                                        // List Decoration COLOR main
-                                       ...[
-                                        //list COLOR PICKER Main    
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                          12)),
-                                          padding: EdgeInsets.all(4).copyWith(top:2),
-                                          child: Column(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                              isListColorExpanded =
-                                                  !isListColorExpanded;
-                                            });
-                                                },
-                                                child: Text(
-                                                  'color - ${(fl.ColorTools.nameThatColor(sheetListItem
-                                                          .listDecoration
-                                                          .decoration
-                                                          .color ?? defaultPalette
-                                                          .transparent, )).toLowerCase()}',
-                                                  style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
-                                                ),
-                                              ),
-                                               
-                                              Container(
-                                              decoration: BoxDecoration(
-                                                  // color: defaultPalette.secondary,
-                                                  borderRadius: BorderRadius.circular(8)), 
-                                              alignment: Alignment.center,
-                                              padding: EdgeInsets.all(0) ,
-                                              height: 25,
-                                              child: TextField( 
-                                                focusNode: colorHexFocusNodes[0],
-                                                controller: colorHexControllers[0],
-                                                onSubmitted: (value) {
-                                                  setState(() {
-                                                  sheetListItem.listDecoration = sheetListItem
-                                                      .listDecoration
-                                                      .copyWith(
-                                                          decoration: sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .copyWith(color: hexToColor(value)));
-                                                      });
-                                                    },
-                                                textAlignVertical: TextAlignVertical.top,
-                                                textAlign: TextAlign.start,
-                                                decoration: InputDecoration(
-                                                        contentPadding: const EdgeInsets.all(0), 
-                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                        filled: true,
-                                                        fillColor: defaultPalette.secondary,
-                                                        prefixIcon: GestureDetector(
-                                                          onTap: () {
+                                                          print(
+                                                              'tapped to add new decoration ');
                                                           setState(() {
-                                                            isListColorExpanded =
-                                                                !isListColorExpanded;
-                                                          });},
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.all(3.0),
-                                                            child: DecoratedBox(
-                                                              decoration: BoxDecoration(
-                                                                shape: BoxShape.circle,
-                                                                border: Border.fromBorderSide(
-                                                                  BorderSide(color: defaultPalette.extras[0], width: 1),
-                                                                ),
-                                                                color: sheetListItem
-                                                            .listDecoration
-                                                            .decoration
-                                                            .color ??
-                                                            defaultPalette
-                                                            .transparent,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        border: InputBorder.none,
-                                                        enabledBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 1.2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                        focusedBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                      ), 
-                                                style: GoogleFonts.bungee(
-                                                          fontSize: 12, color: defaultPalette.black),
-                                                      ),
-                                                ),
-                                              
-                                              if(isListColorExpanded)
-                                              ...[ 
-                                                //list COLOR WHEEL picker
-                                                WheelPicker(
-                                                color: HSVColor.fromColor(sheetListItem
-                                                          .listDecoration
-                                                          .decoration
-                                                          .color ?? defaultPalette
-                                                          .transparent,),
-                                                onChanged: (HSVColor value) {
-                                                  setState(() {
-                                                  sheetListItem.listDecoration = sheetListItem
-                                                      .listDecoration
-                                                      .copyWith(
-                                                          decoration: sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .copyWith(color: value.toColor().withAlpha((sheetListItem
-                                                          .listDecoration
-                                                          .decoration
-                                                          .color ?? defaultPalette
-                                                          .transparent).alpha)));
-                                                      });
-                                                },
-                                              ),
-                                                //list Aplha COLOR
-                                                AlphaPicker(
-                                                  alpha: (sheetListItem
-                                                            .listDecoration
-                                                            .decoration
-                                                            .color ?? defaultPalette
-                                                            .transparent).alpha,
-                                                  onChanged: (int value) {
-                                                    setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(color: (sheetListItem
-                                                            .listDecoration
-                                                            .decoration
-                                                            .color ?? defaultPalette
-                                                            .transparent).withAlpha(value)));
-                                                        });
-                                                  },
-                                                ),
-                                                
-                                            ]
-                                            ],
-                                          ),
-                                        ),
-                                        
-                                       ],
-          
-                                        SizedBox(height: 10), 
-
-                                        // The setup for all border stuff settings
-                                        ...[
-                                        //Border Width, dashed and dash pattern
-                                        Container(
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.primary,
-                                            borderRadius: BorderRadius.circular(10)),
-                                        padding: EdgeInsets.all(4).copyWith(top: 2),
-                                        child: Column(
-                                            children: [
-                                              Text(
-                                                'borderWidth',
-                                                style: GoogleFonts.prompt(
-                                                    fontSize: 10, color: defaultPalette.extras[0]),
-                                              ),
-                                              // "borderWidth" field for all sides
-                                              SizedBox(
-                                                height: textFieldHeight / 2,
-                                                child: TextFormField(
-                                                  onTapOutside: (event) => marginAllFocus.unfocus(),
-                                                  focusNode: borderFocusNodes[0],
-                                                  controller: borderControllers[0],
-                                                  inputFormatters: [
-                                                    NumericInputFormatter( 
-                                                    ),
-                                                  ],
-                                                  textAlignVertical: TextAlignVertical.top,
-                                                  textAlign: TextAlign.center,
-                                                  decoration: InputDecoration(
-                                                    contentPadding: const EdgeInsets.all(0),
-                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                    labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                    filled: true,
-                                                    fillColor: defaultPalette.secondary,
-                                                    border: InputBorder.none,
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderSide:
-                                                          BorderSide(width: 1.2, color: defaultPalette.secondary),
-                                                      borderRadius: BorderRadius.circular(5.0),
-                                                    ),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderSide:
-                                                          BorderSide(width: 2, color: defaultPalette.extras[0]),
-                                                      borderRadius: BorderRadius.circular(5.0),
-                                                    ),
-                                                  ),
-                                                  keyboardType: TextInputType.number,
-                                                  style: GoogleFonts.bungee(
-                                                      fontSize: 12, color: defaultPalette.black),
-                                                  onFieldSubmitted: (value) {
-                                                    setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: double.parse(value),
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )));
-                                                  });
-                                                  },
-                                                ),
-                                              ),
-                                                
-                                              BalloonSlider(
-                                                color: defaultPalette.extras[0],
-                                                value: (((sheetListItem.listDecoration.decoration.border?.bottom.width)??1 )/100)
-                                                    .clamp(0, 1),
-                                                showRope: true,
-                                                ropeLength: 50,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: double.parse((value*100).toStringAsFixed(2)),
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )));
-                                                  });
-                                                          },
-                                                        ),
-
-                                              const SizedBox(height: 10),
-                                              // dash pattern adjustments
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                  'dashPattern',
-                                                    style: GoogleFonts.prompt(
-                                                        fontSize: 10, color: defaultPalette.extras[0]),
-                                                  ),
-                                                  
-                                                  const SizedBox(width: 5),
-                                                  // Line - dash
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: Column(
-                                                      children: [
-                                                        SizedBox(
-                                                          height: textFieldHeight / 2,
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) => borderFocusNodes[1].unfocus(),
-                                                            focusNode: borderFocusNodes[1],
-                                                            controller: borderControllers[1],
-                                                            inputFormatters: [NumericInputFormatter()],
-                                                            cursorColor: defaultPalette.extras[0],
-                                                            textAlign: TextAlign.center,
-                                                            textAlignVertical: TextAlignVertical.top,
-                                                            decoration: InputDecoration(
-                                                              contentPadding: const EdgeInsets.all(0),
-                                                              filled: true,
-                                                              fillColor: defaultPalette.secondary,
-                                                              border: OutlineInputBorder(
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              enabledBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color: defaultPalette.secondary),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              focusedBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 2,
-                                                                    color: defaultPalette.extras[0]),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                            ),
-                                                            keyboardType: TextInputType.number,
-                                                            style: GoogleFonts.bungee(
-                                                                fontSize: 12, color: defaultPalette.black),
-                                                            onFieldSubmitted: (value) {
-                                                              setState(() {
-                                                                sheetListItem.listDecoration = sheetListItem
+                                                            sheetListItem
+                                                                    .listDecoration =
+                                                                sheetListItem
                                                                     .listDecoration
                                                                     .copyWith(
-                                                                    decoration: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .copyWith(
-                                                                    border: Border(
-                                                              bottom: BorderSide(
-                                                                color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                strokeAlign:  
-                                                                    BorderSide
-                                                                        .strokeAlignCenter,
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1,
-                                                                                                                
-                                                              ),
-                                                              left: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                              ),
-                                                              right: BorderSide(
-                                                                width: double.parse(value)
-                                                              ),
-                                                              top: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                              ),
-                                                              )
-                                                                  ));
-                                                              });
-                                                            },
-                                                          ),
-                                                        ),
-                                                        BalloonSlider(
-                                                        color: defaultPalette.extras[0],
-                                                        value: ((sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1)/100)
-                                                            .clamp(0, 1),
-                                                        showRope: true,
-                                                        ropeLength: 50,
-                                                        onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                               
-                                                                  
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: double.parse((value*100).toStringAsFixed(2)),
-                                                                   ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                            )));
-                                                          });
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 5),
-                                                  // Gap - dash
-                                                  Expanded(
-                                                    flex: 3,
-                                                    child: Column(
-                                                      children: [
-                                                        SizedBox(
-                                                          height: textFieldHeight / 2,
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) =>
-                                                                borderFocusNodes[2].unfocus(),
-                                                            focusNode: borderFocusNodes[2],
-                                                            controller: borderControllers[2],
-                                                            inputFormatters: [NumericInputFormatter()],
-                                                            cursorColor: defaultPalette.secondary,
-                                                            textAlign: TextAlign.center,
-                                                            textAlignVertical: TextAlignVertical.top,
-                                                            decoration: InputDecoration(
-                                                              contentPadding: const EdgeInsets.all(0),
-                                                              filled: true,
-                                                              fillColor: defaultPalette.secondary,
-                                                              border: OutlineInputBorder(
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              enabledBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color: defaultPalette.secondary),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                              focusedBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 2,
-                                                                    color: defaultPalette.extras[0]),
-                                                                borderRadius: BorderRadius.circular(5.0),
-                                                              ),
-                                                            ),
-                                                            keyboardType: TextInputType.number,
-                                                            style: GoogleFonts.bungee(
-                                                                fontSize: 12, color: defaultPalette.black),
-                                                            onFieldSubmitted: (value) {
-                                                               setState(() {
-                                                                sheetListItem.listDecoration = sheetListItem
-                                                                    .listDecoration
-                                                                    .copyWith(
-                                                                    decoration: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .copyWith(
-                                                                    border: Border(
-                                                              bottom: BorderSide(
-                                                                color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                strokeAlign:  
-                                                                    BorderSide
-                                                                        .strokeAlignCenter,
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1,
-                                                          
-                                                              ),
-                                                              right: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                              ),
-                                                              left: BorderSide(
-                                                                width: double.parse(value)
-                                                              ),
-                                                              top: BorderSide(
-                                                                width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                              ),
-                                                              
-                                                                                                              )
-                                                                  ));
-                                                              });
-                                                            },
-                                                          ),
-                                                        ),
-                                                        BalloonSlider(
-                                                        color: defaultPalette.extras[0],
-                                                        value: ((sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1)/100)
-                                                            .clamp(0, 1),
-                                                        showRope: true,
-                                                        ropeLength: 50,
-                                                        onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color: sheetListItem.listDecoration.decoration.border?.bottom.color??defaultPalette.transparent ,
-                                                                  strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                               
-                                                                  
-
-                                                                ),
-                                                                right: BorderSide(
-                                                                  
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                               
-                                                                   ),
-                                                                left: BorderSide(
-                                                                  width: double.parse((value*100).toStringAsFixed(2)),
-                                                                  ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                            )));
-                                                          });
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        
-                                        SizedBox(height: 10),
-
-                                        buildListDecorationAdjuster(isWidthAdjustment: false, sheetListItem: sheetListItem, listPaddingControllers: listPaddingControllers, widthAdjustmentControllers: widthAdjustmentControllers, borderRadiusControllers: borderRadiusControllers, isBorderRadius: true),
-                                        
-                                        SizedBox(width: 5, height: 10),
-                                        //borderCOLOR PICKER Main
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                          12)),
-                                          padding: EdgeInsets.all(4).copyWith(top:2),
-                                          child: Column(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                              isListBorderColorExpanded =
-                                                      !isListBorderColorExpanded;
-                                            });
-                                                },
-                                                child: Text(
-                                                  'borderColor - ${(fl.ColorTools.nameThatColor(sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent,)).toLowerCase()}',
-                                                  style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
-                                                ),
-                                              ),
-                                               
-                                              Container(
-                                              decoration: BoxDecoration(
-                                                  // color: defaultPalette.secondary,
-                                                  borderRadius: BorderRadius.circular(8)), 
-                                              alignment: Alignment.center,
-                                              padding: EdgeInsets.all(0) ,
-                                              height: 25,
-                                              child: TextField( 
-                                                focusNode: colorHexFocusNodes[1],
-                                                controller: colorHexControllers[1],
-                                                onSubmitted: (value) {
-                                                  setState(() {
-                                                     sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
+                                                                        itemDecorationList: [
+                                                                  ...sheetListItem
                                                                       .listDecoration
-                                                                      .decoration
-                                                                      .copyWith(
-                                                                          border: Border.all(
-                                                            color: hexToColor(value),
-                                                            strokeAlign: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .border
-                                                                    ?.bottom
-                                                                    .strokeAlign ??
-                                                                BorderSide
-                                                                    .strokeAlignInside,
-                                                            width: sheetListItem
-                                                                    .listDecoration
-                                                                    .decoration
-                                                                    .border
-                                                                    ?.bottom
-                                                                    .width ??
-                                                                1,
-                                                          ))); 
-                                                      });
-                                                    },
-                                                textAlignVertical: TextAlignVertical.top,
-                                                textAlign: TextAlign.start,
-                                                decoration: InputDecoration(
-                                                        contentPadding: const EdgeInsets.all(0), 
-                                                        labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                        filled: true,
-                                                        fillColor: defaultPalette.secondary,
-                                                        prefixIcon: GestureDetector(
-                                                          onTap: () {
-                                                          setState(() {
-                                                            isListBorderColorExpanded =
-                                                                    !isListBorderColorExpanded;
-                                                          });},
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.all(3.0),
-                                                            child: DecoratedBox(
-                                                              decoration: BoxDecoration(
-                                                                shape: BoxShape.circle,
-                                                                border: Border.fromBorderSide(
-                                                                  BorderSide(color: defaultPalette.extras[0], width: 1),
-                                                                ),
-                                                                color: sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        border: InputBorder.none,
-                                                        enabledBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 1.2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                        focusedBorder: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide(width: 2, color: defaultPalette.secondary),
-                                                          borderRadius: BorderRadius.circular(5.0),
-                                                        ),
-                                                      ), 
-                                                style: GoogleFonts.bungee(
-                                                          fontSize: 12, color: defaultPalette.black),
-                                                      ),
-                                                ),
-                                              
-                                              if(isListBorderColorExpanded)
-                                              ...[
-                                              //borderColor WheelPicker
-                                                WheelPicker(
-                                                color: HSVColor.fromColor(sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent,),
-                                                onChanged: (HSVColor value) {
-                                                  setState(() {
-                                                    sheetListItem.listDecoration = sheetListItem
-                                                        .listDecoration
-                                                        .copyWith(
-                                                            decoration: sheetListItem
-                                                                .listDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    border: Border(
-                                                                bottom: BorderSide(
-                                                                  color:  value.toColor().withAlpha((sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent).alpha),
-                                                              strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )));
-                                                  });
-                                                },
-                                              ),
-                                              //borderColor APLHA PICKER
-                                              AlphaPicker(
-                                                alpha: (sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent).alpha,
-                                                onChanged: (int value) {
-                                                  setState(() {
-
-                                                     sheetListItem.listDecoration = sheetListItem
-                                                              .listDecoration
-                                                              .copyWith(
-                                                                  decoration: sheetListItem
-                                                                      .listDecoration
-                                                                      .decoration
-                                                                      .copyWith(
-                                                                        border: Border(
-                                                                bottom: BorderSide(
-                                                                  color:  (sheetListItem
-                                                              .listDecoration
-                                                              .decoration
-                                                              .border
-                                                              ?.bottom
-                                                              .color ??
-                                                          defaultPalette
-                                                              .transparent).withAlpha(value),
-                                                              strokeAlign:  
-                                                                      BorderSide
-                                                                          .strokeAlignCenter,
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).bottom.width:1
-                                                                ),
-                                                                right: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).right.width:1
-                                                                ),
-                                                                left: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).left.width:1
-                                                                ),
-                                                                top: BorderSide(
-                                                                  width: sheetListItem.listDecoration.decoration.border != null ? (sheetListItem.listDecoration.decoration.border as Border).top.width:1
-                                                                ),
-                                                                
-                                                    )
-                                                                         
-                                                          ));
-
-
-
-                                                   
-                                                      });
-                                                },
-                                              ),
-                                            ]
-                                            ],
-                                          ),
-                                        ),
-                                        ],
-                                        
-                                        SizedBox(height: 10),
-                                        
-                                        //The setup for image background for list
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette
-                                                  .primary,
-                                              borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                          12)),
-                                          padding: EdgeInsets.all(4).copyWith(top:2),
-                                          child: Column(
-                                           children: [
-                                            Text(
-                                              'image',
-                                              style: GoogleFonts.prompt(fontSize: 10,fontWeight: FontWeight.w500),
-                                            ),
-                                            
-                                            GestureDetector(
-                                              onTap: () async{
-                                                if (sheetListItem.listDecoration.decoration.image ==null) {
-                                                  FilePickerResult? result = await FilePicker.platform.pickFiles( 
-                                                    type: FileType.custom,
-                                                    allowedExtensions: ['jpg', 'png',],
-                                                    withData: true
-                                                  );
-                                                  print(result);
-                                                  if (result !=null) {
-                                                    setState(() {
-                                                      sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                                          image: DecorationImage(image: MemoryImage(result.files[0].bytes!), fit:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image?.fit:BoxFit.fitWidth  )
-                                                        )
-                                                      );
-                                                    });
-                                                  }
-                                                }
-                                              },
-                                              child: Container(
-                                                 decoration: BoxDecoration( 
-                                                  color: defaultPalette
-                                                      .secondary,
-                                                  borderRadius:
-                                                      BorderRadius
-                                                          .circular(
-                                                              12)),
-                                                  padding: EdgeInsets.all(2),
-                                                child: Column(
-                                                  children: [
-                                                    Container(
-                                                      width: sWidth,
-                                                      height:50,
-                                                      decoration: BoxDecoration(
-                                                      image: sheetListItem.listDecoration.decoration.image??null,
-                                                      color: defaultPalette
-                                                          .secondary,
-                                                      borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                                  12)),
-                                                      padding: EdgeInsets.all(5),
-                                                      child:sheetListItem.listDecoration.decoration.image !=null?null: Icon(TablerIcons.photo_plus),
-                                                    ),
-                                                     if(sheetListItem.listDecoration.decoration.image !=null)
-                                                     Padding(
-                                                       padding: const EdgeInsets.symmetric(vertical:2.0),
-                                                       child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                                         children: [
-                                                            GestureDetector(
-                                                              onTap:() async{
-                                                                FilePickerResult? result = await FilePicker.platform.pickFiles( 
-                                                                  type: FileType.custom,
-                                                                  allowedExtensions: ['jpg', 'png',],
-                                                                  withData: true
-                                                                );
-                                                                print(result);
-                                                                if (result !=null) {
-                                                                  setState(() {
-                                                                    sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                                      decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                                                        image: DecorationImage(image: MemoryImage(result.files[0].bytes!), fit:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image?.fit:BoxFit.fitWidth  )
-                                                                      )
-                                                                    );
-                                                                  });
-                                                                }
-                                                              },
-                                                              child: Icon(TablerIcons.photo_plus, size:15)
-                                                              ),
-                                                            GestureDetector(
-                                                              onTap: () {
-                                                                  setState(() {
-                                                                    sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
+                                                                      .itemDecorationList,
+                                                                  ItemDecoration(
+                                                                      id: Uuid()
+                                                                          .v4(),
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
                                                                       decoration: BoxDecoration(
-                                                                          color: sheetListItem.listDecoration.decoration.color,
-                                                                          borderRadius: sheetListItem.listDecoration.decoration.borderRadius,
-                                                                          border: sheetListItem.listDecoration.decoration.border,
-                                                                          boxShadow: sheetListItem.listDecoration.decoration.boxShadow,
-                                                                          image: null, // Set to null directly
-                                                                        ),
-                                                                    );
-                                                                  }); 
-                                                              },
-                                                              child: Icon(TablerIcons.trash, size:15)),
-                                                         ],
-                                                       ),
-                                                     ),
+                                                                          color: defaultPalette
+                                                                              .tertiary,
+                                                                          border:
+                                                                              Border.all())),
+                                                                ]);
+                                                          });
+                                                          print(
+                                                              'new decoration added');
+                                                        },
+                                                        child: Icon(TablerIcons
+                                                            .sparkles)),
                                                   ],
                                                 ),
-                                              ),
-                                            ),
 
-                                            SizedBox(height:10),
-                                               
-                                            ////The setup for BoxFit Change
-                                            Container(
-                                              width: width,
-                                              decoration: BoxDecoration(
-                                                  color: defaultPalette.primary,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                              padding: EdgeInsets.all(3)
-                                                  .copyWith(top: 2),
-                                              child: Column(
-                                                children: [
-                                                  Text(
-                                                    'contentFit - ${sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image!.fit!.name:BoxFit.fitWidth.name }',
-                                                    style: GoogleFonts.prompt(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.w500),
+                                                //{{MINI PREVIEW OF DECORATION}}
+                                                Container(
+                                                  padding: EdgeInsets.all(3),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        defaultPalette.tertiary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
                                                   ),
-                                                  AnimatedToggleSwitch<BoxFit>.rolling(
-                                                    current:sheetListItem.listDecoration.decoration.image !=null?sheetListItem.listDecoration.decoration.image!.fit!:BoxFit.fitWidth , 
-                                                    onChanged: (value) {
-                                                      if (sheetListItem.listDecoration.decoration.image !=null) {
-                                                      setState(() {
-                                                        sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                      decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                                        image: DecorationImage(image: MemoryImage((sheetListItem.listDecoration.decoration.image?.image as MemoryImage).bytes  ), fit:value)
-                                                        )
-                                                      );
-                                                      });
-                                                    }
-                                                    },
-                                                    animationCurve:
-                                                        Curves.easeInOutExpo,
-                                                    animationDuration:
-                                                        Durations.medium4,
-                                                    borderWidth:
-                                                        2, // backgroundColor is set independently of the current selection
-                                                    styleBuilder: (value) =>
-                                                        ToggleStyle(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(10), 
-                                                            indicatorBorderRadius:
-                                                                BorderRadius
-                                                                    .circular(15),
-                                                            borderColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            backgroundColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            indicatorColor:
-                                                                defaultPalette
-                                                                        .extras[
-                                                                    1]), // indicatorColor changes and animates its value with the selection
-                                                     
-                                                            iconList: [
-                                                              Icon(TablerIcons.arrow_autofit_content),
-                                                              Icon(TablerIcons.arrow_autofit_height),
-                                                              Icon(TablerIcons.arrow_autofit_width),
-                                                              Icon(TablerIcons.arrow_autofit_content_filled),
-                                                              Icon(TablerIcons.input_x),
-                                                            ],
-                                                            height: 30, 
-                                                                values: [
-                                                                  BoxFit.contain,
-                                                                  BoxFit.fitHeight,
-                                                                  BoxFit.fitWidth,
-                                                                  BoxFit.fill, 
-                                                                  BoxFit.none
-
-                                                                ],
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .all(3.0)
+                                                                .copyWith(
+                                                                    left: 8),
+                                                        child: Text(
+                                                          sheetListItem
+                                                              .listDecoration
+                                                              .name,
+                                                          style: GoogleFonts
+                                                              .bungee(),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        height: 80,
+                                                        width: width,
+                                                        alignment:
+                                                            Alignment.center,
+                                                        child: Stack(
+                                                          children: [
+                                                            //{{{GRAPH}}}
+                                                            ClipRRect(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          20),
+                                                              child: Container(
+                                                                width: width,
+                                                                height: 80,
+                                                                decoration: BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            20),
+                                                                    border: Border
+                                                                        .all(),
+                                                                    color: defaultPalette
+                                                                        .secondary
+                                                                        .withOpacity(
+                                                                            1)),
+                                                                child: Opacity(
+                                                                  opacity: 1,
+                                                                  child: LineChart(LineChartData(
+                                                                      lineBarsData: [
+                                                                        LineChartBarData()
+                                                                      ],
+                                                                      titlesData: const FlTitlesData(
+                                                                          show:
+                                                                              false),
+                                                                      gridData: FlGridData(
+                                                                          getDrawingVerticalLine: (value) => FlLine(
+                                                                              color: defaultPalette.extras[0].withOpacity(
+                                                                                  0.3),
+                                                                              dashArray: [
+                                                                                5,
+                                                                                5
+                                                                              ],
+                                                                              strokeWidth:
+                                                                                  1),
+                                                                          getDrawingHorizontalLine: (value) => FlLine(
+                                                                              color: defaultPalette.extras[0].withOpacity(
+                                                                                  0.3),
+                                                                              dashArray: [
+                                                                                5,
+                                                                                5
+                                                                              ],
+                                                                              strokeWidth:
+                                                                                  1),
+                                                                          show:
+                                                                              true,
+                                                                          horizontalInterval: 10,
+                                                                          verticalInterval: 40),
+                                                                      borderData: FlBorderData(show: false),
+                                                                      minY: 0,
+                                                                      maxY: 50,
+                                                                      maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500 + 250,
+                                                                      minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            //{{{MINI PREVIEW DECORATION}}}
+                                                            Container(
+                                                              margin: EdgeInsets
+                                                                  .all(10),
+                                                              decoration: BoxDecoration(
+                                                                  border: Border
+                                                                      .all(
+                                                                          width:
+                                                                              1)),
+                                                              child:
+                                                                  buildDecoratedContainer(
+                                                                      sheetListItem
+                                                                          .listDecoration,
+                                                                      Container(
+                                                                        width:
+                                                                            width,
+                                                                        // height:20
+                                                                      ),
+                                                                      true),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ],
-                                              ),
-                                            ),
-                                         
-                                           ],
-                                          ),
-                                        ),
-                                        
-                                        SizedBox(height:10),
+                                                ),
 
-                                      ],
-                                    ),
-                                  );
-                                }),
-                          ),
-                        ),
+                                                SizedBox(
+                                                  height: 10,
+                                                ),
+
+                                                ...buildDecorationEditor(
+                                                    sheetListItem.listDecoration)
+                                              ],
+                                            )),
+                                      );
+                                    }))),
                       ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-
-              if(index!=1)
-              // Top ROUNDED CARDS AS TITLES in LIST PROPERTIES
-              ...[
-                Positioned(
-                width: sWidth * wH2DividerPosition,
-                height: 80,
-                child: AnimatedContainer(
-                  duration: Durations.short3,
-                  margin: EdgeInsets.all(10),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      color: defaultPalette.primary,
-                      // border: Border.all(width: 2,
-                      //  color:defaultPalette.extras[0],
-                      // ),
-                      borderRadius: BorderRadius.circular(25).copyWith(
-                        bottomRight: Radius.circular(5),
-                      )),
-                  child: Text(
-                    'Decoration',
-                    style: GoogleFonts.bungee(fontSize: 20),
-                    textAlign: TextAlign.justify,
-                  ),
-                ),
-              ),
-              Positioned(
-                width: sWidth * wH2DividerPosition,
-                height: 80,
-                child: AnimatedOpacity(
-                  opacity: currentCardIndex == index
-                      ? 0
-                      : currentCardIndex + 2 == index
-                          ? 1
-                          : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
-                  duration: Duration(milliseconds: 300),
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    margin: EdgeInsets.all(15),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: index == (currentCardIndex + 1) % 10
-                          ? defaultPalette.extras[0]
-                          : index == (currentCardIndex + 2) % 10
-                              ? defaultPalette.extras[0]
-                              : defaultPalette.extras[0],
-                      border: Border.all(width: 2),
-                      borderRadius: BorderRadius.circular(25)
-                          .copyWith(bottomRight: Radius.circular(5)),
-                    ),
-                  ),
-                ),
-              ),
-            ]
-              ,
-            ],
-          );
-                    },
-                  ),
+                    )
+                  ],
+                  // Positioned.fill(child: Center(child: Text(sheetListItem.id))),
+                  // Left and Right adjustments
+                ],
+              );
+            },
+          ),
         );
 
       default:
@@ -17395,7 +14951,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         duration: Duration(milliseconds: 150),
         backgroundCardScale: 1,
         loop: true,
-        cardCount: pageCount < 2 ? 2 : pageCount,
+        cardCount: spreadSheetList.length < 2 ? 2 : spreadSheetList.length,
         allowUnSwipe: true,
         allowUnlimitedUnSwipe: true,
         initialIndex: currentPageIndex,
@@ -17420,7 +14976,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         onSwipeCancelled: (activity) {},
         cardBuilder: (BuildContext context, int index) {
           int currentCardIndex = ref.watch(propertyCardIndexProvider);
-          int ind = pageCount == 1 ? 0 : index;
+          int ind = pageCount <= 1 ? 0 : index;
           TextEditingController pgHexController = TextEditingController(
               text: '#${colorToHex(documentPropertiesList[ind].pageColor)}');
           return Stack(
@@ -17428,7 +14984,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               Positioned.fill(
                 child: AnimatedContainer(
                   duration: Durations.short3,
-                  margin: EdgeInsets.all(10).copyWith(left:5, right:8),
+                  margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -17437,7 +14993,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   ),
                 ),
               ),
-      
+
               Positioned.fill(
                 child: AnimatedOpacity(
                   opacity: currentCardIndex == index
@@ -17448,7 +15004,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   duration: Duration(milliseconds: 300),
                   child: AnimatedContainer(
                     duration: Duration(milliseconds: 300),
-                    margin: EdgeInsets.all(10).copyWith(left:5, right:8),
+                    margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: index == (currentCardIndex + 1) % 10
@@ -17462,7 +15018,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   ),
                 ),
               ),
-      
+
               // PROPERTIES Tab Parent
               Positioned(
                 top: 0,
@@ -17681,13 +15237,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   propertyCardsController
                                                       .setCardIndex(
                                                           currentPageIndex);
-      
+
                                                   propertyCardsController
                                                       .animateTo(Offset(1, 1),
                                                           duration:
                                                               Durations.short1,
                                                           curve: Curves.linear);
-      
+
                                                   // pdfScrollController.animateTo(
                                                   //     currentPageIndex *
                                                   //         ((1.41428571429 *
@@ -17747,7 +15303,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 .short1,
                                                             curve:
                                                                 Curves.linear);
-      
+
                                                     // pdfScrollController.animateTo(
                                                     //     currentPageIndex *
                                                     //         ((1.41428571429 *
@@ -17773,7 +15329,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           duration:
                                                               Durations.short1,
                                                           curve: Curves.linear);
-      
+
                                                   // pdfScrollController.animateTo(
                                                   //     currentPageIndex *
                                                   //         ((1.41428571429 *
@@ -17803,7 +15359,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ],
                               ),
                               //FORMATS TITLE
-      
+
                               Container(
                                 width: sWidth * wH2DividerPosition - 45,
                                 height: 15,
@@ -17818,7 +15374,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   style: GoogleFonts.bungee(fontSize: 10),
                                 ),
                               ),
-      
+
                               //ORIENTATIONS BUTTONS
                               Padding(
                                 padding: const EdgeInsets.only(right: 5.0),
@@ -17831,7 +15387,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       onTap: () {
                                         setState(() {
                                           addToTheLeft = true;
-      
+
                                           documentPropertiesList[
                                                       currentPageIndex]
                                                   .orientationController =
@@ -17937,7 +15493,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       onTap: () {
                                         setState(() {
                                           addToTheRight = true;
-      
+
                                           documentPropertiesList[
                                                       currentPageIndex]
                                                   .orientationController =
@@ -18056,7 +15612,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-      
+
                               //
                               //OPERATIONS BUTTONS
                               Padding(
@@ -18469,7 +16025,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-      
+
                               //STYLES TITLE
                               Container(
                                 width: sWidth * wH2DividerPosition - 45,
@@ -18485,11 +16041,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   style: GoogleFonts.bungee(fontSize: 10),
                                 ),
                               ),
-      
+
                               const SizedBox(
                                 height: 10,
                               ),
-      
+
                               // MARGIN Main
                               Column(
                                 children: [
@@ -18505,7 +16061,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 fontSize: 13),
                                           ),
                                         ),
-      
+
                                         const SizedBox(
                                           width: 5,
                                         ),
@@ -18579,7 +16135,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 color: defaultPalette.black),
                                             onChanged: (value) {
                                               // setState(() {
-      
+
                                               documentPropertiesList[
                                                       currentPageIndex]
                                                   .marginTopController
@@ -18605,7 +16161,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 .useIndividualMargins,
                                           ),
                                         ),
-      
+
                                         const SizedBox(
                                           width: 5,
                                         ),
@@ -18659,7 +16215,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           .marginAllController
                                                           .text;
                                                 });
-      
+
                                                 // _updatePdfPreview('');
                                               },
                                               child: const Icon(
@@ -18792,7 +16348,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       ],
                                     ),
                                   ),
-      
+
                                   if (documentPropertiesList[currentPageIndex]
                                       .useIndividualMargins)
                                     Column(
@@ -18801,7 +16357,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           height: 10,
                                         ),
                                         //TOP AND BOTTOM Margin TiTle
-      
+
                                         Row(
                                           children: [
                                             //Top Margin text
@@ -18820,7 +16376,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -18927,7 +16483,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -18949,7 +16505,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -18974,7 +16530,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -18989,7 +16545,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 ),
                                               ),
                                             ),
-      
+
                                             const SizedBox(
                                               width: 10,
                                             ),
@@ -19009,7 +16565,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -19116,7 +16672,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -19138,7 +16694,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -19163,7 +16719,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -19174,7 +16730,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ],
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 10,
                                                     ),
@@ -19205,7 +16761,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -19311,7 +16867,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -19333,7 +16889,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -19358,7 +16914,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -19369,7 +16925,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ],
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 10,
                                                     ),
@@ -19396,7 +16952,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 fontSize: 11),
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -19502,7 +17058,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             .useIndividualMargins,
                                                       ),
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 5,
                                                     ),
@@ -19524,7 +17080,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -19549,7 +17105,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .toInt()
                                                                   .toString();
                                                             });
-      
+
                                                             // _updatePdfPreview('');
                                                           },
                                                           child: const Icon(
@@ -19560,7 +17116,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                       ],
                                                     ),
-      
+
                                                     const SizedBox(
                                                       width: 10,
                                                     ),
@@ -19647,7 +17203,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-      
+
                               //COLOR SWATCH And WHEEL FOR PAGE COLOR
                               Stack(
                                 children: [
@@ -19691,7 +17247,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         SizedBox(
                                           height: 0,
                                         ),
-      
+
                                         //Name of PAGE COLOR
                                         Text(
                                             fl.ColorTools.nameThatColor(
@@ -19704,7 +17260,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     ),
                                   ),
                                   //COLOR SWATCH FOR PAGE COLOR
-      
+
                                   fl.ColorPicker(
                                       color:
                                           documentPropertiesList[ind].pageColor,
@@ -19776,12 +17332,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           documentPropertiesList[ind]
                                               .pageColor = c;
                                         });
-      
+
                                         // _renderPagePreviewOnProperties();
                                       }),
                                 ],
                               ),
-      
+
                               const SizedBox(
                                 height: 30,
                               )
@@ -19800,34 +17356,1299 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
-  Widget buildListDecorationAdjuster(
-      {required bool isWidthAdjustment,
-      required SheetList sheetListItem,
-      required List<TextEditingController> listPaddingControllers,
-      required List<TextEditingController> widthAdjustmentControllers,
-      List<TextEditingController> borderRadiusControllers = const [],
-      bool isBorderRadius = false,
-      }) {
+  // Widget buildListDecorationAdjuster({
+  //   required bool isWidthAdjustment,
+  //   required SheetList sheetListItem,
+  //   required List<TextEditingController> listPaddingControllers,
+  //   required List<TextEditingController> widthAdjustmentControllers,
+  //   List<TextEditingController> borderRadiusControllers = const [],
+  //   bool isBorderRadius = false,
+  // }) {
+  //   // Choose the proper controller list based on the flag.
+  //   var isExpanded = isBorderRadius
+  //       ? isListBorderRadiusExpanded
+  //       : isWidthAdjustment
+  //           ? isListMarginExpanded
+  //           : isListPaddingExpanded;
+  //   final controllers = isBorderRadius
+  //       ? borderRadiusControllers
+  //       : isWidthAdjustment
+  //           ? widthAdjustmentControllers
+  //           : listPaddingControllers;
+  //   final focusNodes = isBorderRadius
+  //       ? borderRadiusFocusNodes
+  //       : isWidthAdjustment
+  //           ? widthAdjustmentFocusNodes
+  //           : listPaddingFocusNodes;
+  //   return GestureDetector(
+  //     onTap: () {
+  //       setState(() {
+  //         if (isBorderRadius) {
+  //           isListBorderRadiusExpanded = !isListBorderRadiusExpanded;
+  //         } else if (isWidthAdjustment) {
+  //           isListMarginExpanded = !isListMarginExpanded;
+  //         } else {
+  //           isListPaddingExpanded = !isListPaddingExpanded;
+  //         }
+  //         isExpanded = isBorderRadius
+  //             ? isListBorderRadiusExpanded
+  //             : isWidthAdjustment
+  //                 ? isListMarginExpanded
+  //                 : isListPaddingExpanded;
+  //         print(isExpanded);
+  //       });
+  //     },
+  //     child: Container(
+  //       decoration: BoxDecoration(
+  //           color: defaultPalette.primary,
+  //           borderRadius: BorderRadius.circular(10)),
+  //       padding: EdgeInsets.all(4).copyWith(top: 2),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.center,
+  //         children: [
+  //           Text(
+  //             isBorderRadius
+  //                 ? 'borderRadius'
+  //                 : !isWidthAdjustment
+  //                     ? 'margin'
+  //                     : 'padding',
+  //             style: GoogleFonts.prompt(
+  //                 fontSize: 10, color: defaultPalette.extras[0]),
+  //           ),
+  //           // "Pad" field for all sides
+  //           Listener(
+  //             onPointerDown: (event) {
+  //               if (event.kind == PointerDeviceKind.mouse &&
+  //                   event.buttons == kSecondaryMouseButton) {
+  //                 if (dragBackupValue != null) {
+  //                   double parsedValue =
+  //                       double.parse(dragBackupValue.toStringAsFixed(2));
+
+  //                   setState(() {
+  //                     if (isBorderRadius) {
+  //                       sheetListItem.listDecoration =
+  //                           sheetListItem.listDecoration.copyWith(
+  //                         decoration:
+  //                             sheetListItem.listDecoration.decoration.copyWith(
+  //                           borderRadius: setBorderRadius('all', parsedValue),
+  //                         ),
+  //                       );
+  //                     } else if (isWidthAdjustment) {
+  //                       sheetListItem.listDecoration =
+  //                           sheetListItem.listDecoration.copyWith(
+  //                         widthAdjustment: EdgeInsets.all(parsedValue),
+  //                       );
+  //                     } else {
+  //                       sheetListItem.listDecoration =
+  //                           sheetListItem.listDecoration.copyWith(
+  //                         padding: EdgeInsets.all(parsedValue),
+  //                       );
+  //                     }
+
+  //                     dragBackupValue = null;
+  //                     focusNodes[0].unfocus();
+  //                   });
+  //                 }
+  //               }
+  //             },
+  //             child: GestureDetector(
+  //               onHorizontalDragCancel: () {
+  //                 focusNodes[0].requestFocus();
+  //               },
+  //               onHorizontalDragStart: (details) {
+  //                 dragBackupValue = double.parse(controllers[0].text);
+  //               },
+  //               onHorizontalDragUpdate: (details) {
+  //                 var multiplier = HardwareKeyboard.instance.isControlPressed
+  //                     ? 10
+  //                     : HardwareKeyboard.instance.isShiftPressed
+  //                         ? 0.1
+  //                         : 1;
+  //                 setState(() {
+  //                   double currentValue =
+  //                       double.tryParse(controllers[0].text) ?? 0.0;
+  //                   double newValue = (currentValue +
+  //                           details.delta.dx * multiplier)
+  //                       .clamp(0, double.infinity); // Adjust sensitivity here
+
+  //                   double parsedValue =
+  //                       double.parse(newValue.toStringAsFixed(2));
+  //                   if (isBorderRadius) {
+  //                     sheetListItem.listDecoration =
+  //                         sheetListItem.listDecoration.copyWith(
+  //                       decoration:
+  //                           sheetListItem.listDecoration.decoration.copyWith(
+  //                         borderRadius: setBorderRadius('all', parsedValue),
+  //                       ),
+  //                     );
+  //                   } else if (isWidthAdjustment) {
+  //                     sheetListItem.listDecoration =
+  //                         sheetListItem.listDecoration.copyWith(
+  //                       widthAdjustment: EdgeInsets.all(parsedValue),
+  //                     );
+  //                   } else {
+  //                     sheetListItem.listDecoration =
+  //                         sheetListItem.listDecoration.copyWith(
+  //                       padding: EdgeInsets.all(parsedValue),
+  //                     );
+  //                   }
+  //                 });
+  //               },
+  //               child: SizedBox(
+  //                 height: textFieldHeight / 2,
+  //                 child: TextFormField(
+  //                   onTapOutside: (event) => focusNodes[0].unfocus(),
+  //                   focusNode: focusNodes[0],
+  //                   controller: controllers[0],
+  //                   inputFormatters: [
+  //                     NumericInputFormatter(
+  //                       maxValue: documentPropertiesList[currentPageIndex]
+  //                               .pageFormatController
+  //                               .width /
+  //                           2.001,
+  //                     ),
+  //                   ],
+  //                   textAlignVertical: TextAlignVertical.top,
+  //                   textAlign: TextAlign.center,
+  //                   decoration: InputDecoration(
+  //                     contentPadding: const EdgeInsets.all(0),
+  //                     floatingLabelAlignment: FloatingLabelAlignment.center,
+  //                     labelStyle:
+  //                         GoogleFonts.lexend(color: defaultPalette.black),
+  //                     filled: true,
+  //                     fillColor: defaultPalette.secondary,
+  //                     border: InputBorder.none,
+  //                     enabledBorder: OutlineInputBorder(
+  //                       borderSide: BorderSide(
+  //                           width: 1.2, color: defaultPalette.secondary),
+  //                       borderRadius: BorderRadius.circular(5.0),
+  //                     ),
+  //                     focusedBorder: OutlineInputBorder(
+  //                       borderSide: BorderSide(
+  //                           width: 2, color: defaultPalette.extras[0]),
+  //                       borderRadius: BorderRadius.circular(5.0),
+  //                     ),
+  //                   ),
+  //                   keyboardType: TextInputType.number,
+  //                   style: GoogleFonts.bungee(
+  //                       fontSize: 12, color: defaultPalette.black),
+  //                   onFieldSubmitted: (value) {
+  //                     setState(() {
+  //                       double parsedValue = double.parse(value);
+  //                       if (isBorderRadius) {
+  //                         sheetListItem.listDecoration =
+  //                             sheetListItem.listDecoration.copyWith(
+  //                           decoration: sheetListItem.listDecoration.decoration
+  //                               .copyWith(
+  //                                   borderRadius:
+  //                                       setBorderRadius('all', parsedValue)),
+  //                         );
+  //                       } else if (isWidthAdjustment) {
+  //                         sheetListItem.listDecoration =
+  //                             sheetListItem.listDecoration.copyWith(
+  //                           widthAdjustment: EdgeInsets.all(parsedValue),
+  //                         );
+  //                       } else {
+  //                         sheetListItem.listDecoration =
+  //                             sheetListItem.listDecoration.copyWith(
+  //                           padding: EdgeInsets.all(parsedValue),
+  //                         );
+  //                       }
+  //                     });
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           // "Pad" field SLIDER for all sides
+  //           BalloonSlider(
+  //             color: defaultPalette.extras[0],
+  //             value: (isBorderRadius
+  //                     ? double.parse(controllers[0].text) / 100
+  //                     : isWidthAdjustment
+  //                         ? sheetListItem.listDecoration.widthAdjustment.top /
+  //                             100
+  //                         : sheetListItem.listDecoration.padding.top / 100)
+  //                 .clamp(0, 1),
+  //             showRope: true,
+  //             ropeLength: 50,
+  //             onChanged: (value) {
+  //               setState(() {
+  //                 double parsedValue =
+  //                     double.parse((value * 100).toStringAsFixed(2));
+  //                 if (isBorderRadius) {
+  //                   sheetListItem.listDecoration =
+  //                       sheetListItem.listDecoration.copyWith(
+  //                     decoration: sheetListItem.listDecoration.decoration
+  //                         .copyWith(
+  //                             borderRadius:
+  //                                 setBorderRadius('all', parsedValue)),
+  //                   );
+  //                 } else if (isWidthAdjustment) {
+  //                   sheetListItem.listDecoration =
+  //                       sheetListItem.listDecoration.copyWith(
+  //                     widthAdjustment: EdgeInsets.all(parsedValue),
+  //                   );
+  //                 } else {
+  //                   sheetListItem.listDecoration =
+  //                       sheetListItem.listDecoration.copyWith(
+  //                     padding: EdgeInsets.all(parsedValue),
+  //                   );
+  //                 }
+  //               });
+  //             },
+  //           ),
+  //           if (!isExpanded) ...[
+  //             const SizedBox(height: 10),
+  //             // Top and Bottom adjustments
+  //             Row(
+  //               children: [
+  //                 // Top
+  //                 Expanded(
+  //                   flex: 3,
+  //                   child: SizedBox(
+  //                     height: textFieldHeight / 2,
+  //                     child: Row(
+  //                       children: [
+  //                         Expanded(
+  //                             flex: 1,
+  //                             child: Transform.rotate(
+  //                                 angle: isBorderRadius ? 0 : pi / 2,
+  //                                 child: Icon(
+  //                                     isBorderRadius
+  //                                         ? TablerIcons.border_corner_pill
+  //                                         : TablerIcons.layout_sidebar_inactive,
+  //                                     size: 15))),
+  //                         const SizedBox(width: 5),
+  //                         Expanded(
+  //                           flex: 5,
+  //                           child: Listener(
+  //                             onPointerDown: (event) {
+  //                               if (event.kind == PointerDeviceKind.mouse &&
+  //                                   event.buttons == kSecondaryMouseButton) {
+  //                                 if (dragBackupValue != null) {
+  //                                   double val = double.parse(
+  //                                       dragBackupValue.toStringAsFixed(2));
+  //                                   setState(() {
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                           borderRadius:
+  //                                               setBorderRadius('topLeft', val),
+  //                                         ),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(
+  //                                           top: val,
+  //                                         ),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(
+  //                                           top: val,
+  //                                         ),
+  //                                       );
+  //                                     }
+  //                                     dragBackupValue = null;
+  //                                   });
+  //                                 }
+  //                               }
+  //                             },
+  //                             child: GestureDetector(
+  //                               onHorizontalDragCancel: () {
+  //                                 focusNodes[1].requestFocus();
+  //                               },
+  //                               onHorizontalDragStart: (details) {
+  //                                 dragBackupValue =
+  //                                     double.parse(controllers[1].text);
+  //                               },
+  //                               onHorizontalDragUpdate: (details) {
+  //                                 var multiplier = HardwareKeyboard
+  //                                         .instance.isControlPressed
+  //                                     ? 10
+  //                                     : HardwareKeyboard.instance.isShiftPressed
+  //                                         ? 0.1
+  //                                         : 1;
+  //                                 setState(() {
+  //                                   double currentValue =
+  //                                       double.tryParse(controllers[1].text) ??
+  //                                           0.0;
+  //                                   double newValue = (currentValue +
+  //                                           (details.delta.dx * multiplier))
+  //                                       .clamp(0, double.infinity);
+  //                                   double val = double.parse(
+  //                                       newValue.toStringAsFixed(2));
+  //                                   if (isBorderRadius) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       decoration: sheetListItem
+  //                                           .listDecoration.decoration
+  //                                           .copyWith(
+  //                                         borderRadius:
+  //                                             setBorderRadius('topLeft', val),
+  //                                       ),
+  //                                     );
+  //                                   } else if (isWidthAdjustment) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       widthAdjustment: sheetListItem
+  //                                           .listDecoration.widthAdjustment
+  //                                           .copyWith(
+  //                                         top: val,
+  //                                       ),
+  //                                     );
+  //                                   } else {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       padding: sheetListItem
+  //                                           .listDecoration.padding
+  //                                           .copyWith(
+  //                                         top: val,
+  //                                       ),
+  //                                     );
+  //                                   }
+  //                                 });
+  //                               },
+  //                               child: TextFormField(
+  //                                 onTapOutside: (event) =>
+  //                                     focusNodes[1].unfocus(),
+  //                                 focusNode: focusNodes[1],
+  //                                 controller: controllers[1],
+  //                                 inputFormatters: [NumericInputFormatter()],
+  //                                 cursorColor: defaultPalette.extras[0],
+  //                                 selectionControls:
+  //                                     NoMenuTextSelectionControls(),
+  //                                 textAlign: TextAlign.center,
+  //                                 textAlignVertical: TextAlignVertical.top,
+  //                                 decoration: InputDecoration(
+  //                                   contentPadding: const EdgeInsets.all(0),
+  //                                   filled: true,
+  //                                   fillColor: defaultPalette.secondary,
+  //                                   border: OutlineInputBorder(
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   enabledBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 1.2,
+  //                                         color: defaultPalette.secondary),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   focusedBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 2,
+  //                                         color: defaultPalette.extras[0]),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                 ),
+  //                                 keyboardType: TextInputType.number,
+  //                                 style: GoogleFonts.bungee(
+  //                                     fontSize: 12,
+  //                                     color: defaultPalette.black),
+  //                                 onFieldSubmitted: (value) {
+  //                                   setState(() {
+  //                                     double val = value.isEmpty
+  //                                         ? 0
+  //                                         : double.parse(value);
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                                 borderRadius: setBorderRadius(
+  //                                                     'topLeft', val)),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(top: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(top: val),
+  //                                       );
+  //                                     }
+  //                                   });
+  //                                 },
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const SizedBox(width: 5),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 // Bottom
+  //                 Expanded(
+  //                   flex: 3,
+  //                   child: SizedBox(
+  //                     height: textFieldHeight / 2,
+  //                     child: Row(
+  //                       children: [
+  //                         Expanded(
+  //                             flex: 1,
+  //                             child: Transform.rotate(
+  //                                 angle: isBorderRadius ? pi / 2 : -pi / 2,
+  //                                 child: Icon(
+  //                                     isBorderRadius
+  //                                         ? TablerIcons.border_corner_pill
+  //                                         : TablerIcons.layout_sidebar_inactive,
+  //                                     size: 15))),
+  //                         const SizedBox(width: 5),
+  //                         Expanded(
+  //                           flex: 5,
+  //                           child: Listener(
+  //                             onPointerDown: (event) {
+  //                               if (event.kind == PointerDeviceKind.mouse &&
+  //                                   event.buttons == kSecondaryMouseButton) {
+  //                                 if (dragBackupValue != null) {
+  //                                   double val = double.parse(
+  //                                       dragBackupValue.toStringAsFixed(2));
+  //                                   setState(() {
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                           borderRadius: setBorderRadius(
+  //                                               'topRight', val),
+  //                                         ),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(bottom: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(bottom: val),
+  //                                       );
+  //                                     }
+  //                                     dragBackupValue = null;
+  //                                   });
+  //                                 }
+  //                               }
+  //                             },
+  //                             child: GestureDetector(
+  //                               onHorizontalDragCancel: () {
+  //                                 focusNodes[2].requestFocus();
+  //                               },
+  //                               onHorizontalDragStart: (details) {
+  //                                 dragBackupValue =
+  //                                     double.parse(controllers[2].text);
+  //                               },
+  //                               onHorizontalDragUpdate: (details) {
+  //                                 var multiplier = HardwareKeyboard
+  //                                         .instance.isControlPressed
+  //                                     ? 10
+  //                                     : HardwareKeyboard.instance.isShiftPressed
+  //                                         ? 0.06
+  //                                         : 1;
+  //                                 setState(() {
+  //                                   double currentValue =
+  //                                       double.tryParse(controllers[2].text) ??
+  //                                           0.0;
+  //                                   double newValue = (currentValue +
+  //                                           (details.delta.dx * multiplier))
+  //                                       .clamp(0, double.infinity);
+  //                                   double val = double.parse(
+  //                                       newValue.toStringAsFixed(2));
+  //                                   if (isBorderRadius) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       decoration: sheetListItem
+  //                                           .listDecoration.decoration
+  //                                           .copyWith(
+  //                                         borderRadius:
+  //                                             setBorderRadius('topRight', val),
+  //                                       ),
+  //                                     );
+  //                                   } else if (isWidthAdjustment) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       widthAdjustment: sheetListItem
+  //                                           .listDecoration.widthAdjustment
+  //                                           .copyWith(bottom: val),
+  //                                     );
+  //                                   } else {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       padding: sheetListItem
+  //                                           .listDecoration.padding
+  //                                           .copyWith(bottom: val),
+  //                                     );
+  //                                   }
+  //                                 });
+  //                               },
+  //                               child: TextFormField(
+  //                                 onTapOutside: (event) =>
+  //                                     focusNodes[2].unfocus(),
+  //                                 focusNode: focusNodes[2],
+  //                                 controller: controllers[2],
+  //                                 inputFormatters: [NumericInputFormatter()],
+  //                                 selectionControls:
+  //                                     NoMenuTextSelectionControls(),
+  //                                 cursorColor: defaultPalette.secondary,
+  //                                 textAlign: TextAlign.center,
+  //                                 textAlignVertical: TextAlignVertical.top,
+  //                                 decoration: InputDecoration(
+  //                                   contentPadding: const EdgeInsets.all(0),
+  //                                   filled: true,
+  //                                   fillColor: defaultPalette.secondary,
+  //                                   border: OutlineInputBorder(
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   enabledBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 1.2,
+  //                                         color: defaultPalette.secondary),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   focusedBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 2,
+  //                                         color: defaultPalette.extras[0]),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                 ),
+  //                                 keyboardType: TextInputType.number,
+  //                                 style: GoogleFonts.bungee(
+  //                                     fontSize: 12,
+  //                                     color: defaultPalette.black),
+  //                                 onFieldSubmitted: (value) {
+  //                                   setState(() {
+  //                                     double val = value.isEmpty
+  //                                         ? 0
+  //                                         : double.parse(value);
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                                 borderRadius: setBorderRadius(
+  //                                                     'topRight', val)),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(bottom: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(bottom: val),
+  //                                       );
+  //                                     }
+  //                                   });
+  //                                 },
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const SizedBox(width: 5),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //             const SizedBox(height: 10),
+  //             // Left and Right adjustments
+  //             Row(
+  //               children: [
+  //                 // Left
+  //                 Expanded(
+  //                   flex: 3,
+  //                   child: SizedBox(
+  //                     height: textFieldHeight / 2,
+  //                     child: Row(
+  //                       children: [
+  //                         Expanded(
+  //                             flex: 1,
+  //                             child: Transform.rotate(
+  //                                 angle: isBorderRadius ? -pi / 2 : 0,
+  //                                 child: Icon(
+  //                                     isBorderRadius
+  //                                         ? TablerIcons.border_corner_pill
+  //                                         : TablerIcons.layout_sidebar_inactive,
+  //                                     size: 15))),
+  //                         const SizedBox(width: 5),
+  //                         Expanded(
+  //                           flex: 5,
+  //                           child: Listener(
+  //                             onPointerDown: (event) {
+  //                               if (event.kind == PointerDeviceKind.mouse &&
+  //                                   event.buttons == kSecondaryMouseButton) {
+  //                                 if (dragBackupValue != null) {
+  //                                   double val = double.parse(
+  //                                       dragBackupValue.toStringAsFixed(2));
+  //                                   setState(() {
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                           borderRadius: setBorderRadius(
+  //                                               'bottomLeft', val),
+  //                                         ),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(left: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(left: val),
+  //                                       );
+  //                                     }
+  //                                     dragBackupValue = null;
+  //                                   });
+  //                                 }
+  //                               }
+  //                             },
+  //                             child: GestureDetector(
+  //                               onHorizontalDragCancel: () {
+  //                                 focusNodes[3].requestFocus();
+  //                               },
+  //                               onHorizontalDragStart: (details) {
+  //                                 dragBackupValue =
+  //                                     double.parse(controllers[3].text);
+  //                               },
+  //                               onHorizontalDragUpdate: (details) {
+  //                                 var multiplier = HardwareKeyboard
+  //                                         .instance.isControlPressed
+  //                                     ? 10
+  //                                     : HardwareKeyboard.instance.isShiftPressed
+  //                                         ? 0.1
+  //                                         : 1;
+  //                                 setState(() {
+  //                                   double currentValue =
+  //                                       double.tryParse(controllers[3].text) ??
+  //                                           0.0;
+  //                                   double newValue = (currentValue +
+  //                                           (details.delta.dx * multiplier))
+  //                                       .clamp(0, double.infinity);
+  //                                   double val = double.parse(
+  //                                       newValue.toStringAsFixed(2));
+  //                                   if (isBorderRadius) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       decoration: sheetListItem
+  //                                           .listDecoration.decoration
+  //                                           .copyWith(
+  //                                         borderRadius: setBorderRadius(
+  //                                             'bottomLeft', val),
+  //                                       ),
+  //                                     );
+  //                                   } else if (isWidthAdjustment) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       widthAdjustment: sheetListItem
+  //                                           .listDecoration.widthAdjustment
+  //                                           .copyWith(left: val),
+  //                                     );
+  //                                   } else {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       padding: sheetListItem
+  //                                           .listDecoration.padding
+  //                                           .copyWith(left: val),
+  //                                     );
+  //                                   }
+  //                                 });
+  //                               },
+  //                               child: TextFormField(
+  //                                 onTapOutside: (event) =>
+  //                                     focusNodes[3].unfocus(),
+  //                                 focusNode: focusNodes[3],
+  //                                 controller: controllers[3],
+  //                                 inputFormatters: [NumericInputFormatter()],
+  //                                 selectionControls:
+  //                                     NoMenuTextSelectionControls(),
+  //                                 cursorColor: defaultPalette.secondary,
+  //                                 textAlign: TextAlign.center,
+  //                                 textAlignVertical: TextAlignVertical.top,
+  //                                 decoration: InputDecoration(
+  //                                   contentPadding: const EdgeInsets.all(0),
+  //                                   filled: true,
+  //                                   fillColor: defaultPalette.secondary,
+  //                                   border: OutlineInputBorder(
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   enabledBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 1.2,
+  //                                         color: defaultPalette.secondary),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   focusedBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 2,
+  //                                         color: defaultPalette.extras[0]),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                 ),
+  //                                 keyboardType: TextInputType.number,
+  //                                 style: GoogleFonts.bungee(
+  //                                     fontSize: 12,
+  //                                     color: defaultPalette.black),
+  //                                 onFieldSubmitted: (value) {
+  //                                   setState(() {
+  //                                     double val = value.isEmpty
+  //                                         ? 0
+  //                                         : double.parse(value);
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                                 borderRadius: setBorderRadius(
+  //                                                     'bottomLeft', val)),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(left: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(left: val),
+  //                                       );
+  //                                     }
+  //                                   });
+  //                                 },
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const SizedBox(width: 5),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 // Right
+  //                 Expanded(
+  //                   flex: 3,
+  //                   child: SizedBox(
+  //                     height: textFieldHeight / 2,
+  //                     child: Row(
+  //                       children: [
+  //                         Expanded(
+  //                             flex: 1,
+  //                             child: Transform.rotate(
+  //                                 angle: isBorderRadius ? pi : 0,
+  //                                 child: Icon(
+  //                                     isBorderRadius
+  //                                         ? TablerIcons.border_corner_pill
+  //                                         : TablerIcons
+  //                                             .layout_sidebar_right_inactive,
+  //                                     size: 15))),
+  //                         const SizedBox(width: 5),
+  //                         Expanded(
+  //                           flex: 5,
+  //                           child: Listener(
+  //                             onPointerDown: (event) {
+  //                               if (event.kind == PointerDeviceKind.mouse &&
+  //                                   event.buttons == kSecondaryMouseButton) {
+  //                                 if (dragBackupValue != null) {
+  //                                   double val = double.parse(
+  //                                       dragBackupValue.toStringAsFixed(2));
+  //                                   setState(() {
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                           borderRadius: setBorderRadius(
+  //                                               'bottomRight', val),
+  //                                         ),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(right: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(right: val),
+  //                                       );
+  //                                     }
+  //                                     dragBackupValue = null;
+  //                                   });
+  //                                 }
+  //                               }
+  //                             },
+  //                             child: GestureDetector(
+  //                               onHorizontalDragCancel: () {
+  //                                 focusNodes[4].requestFocus();
+  //                               },
+  //                               onHorizontalDragStart: (details) {
+  //                                 dragBackupValue =
+  //                                     double.parse(controllers[4].text);
+  //                               },
+  //                               onHorizontalDragUpdate: (details) {
+  //                                 var multiplier = HardwareKeyboard
+  //                                         .instance.isControlPressed
+  //                                     ? 10
+  //                                     : HardwareKeyboard.instance.isShiftPressed
+  //                                         ? 0.08
+  //                                         : 1;
+  //                                 setState(() {
+  //                                   double currentValue =
+  //                                       double.tryParse(controllers[4].text) ??
+  //                                           0.0;
+  //                                   double newValue = (currentValue +
+  //                                           (details.delta.dx * multiplier))
+  //                                       .clamp(0, double.infinity);
+  //                                   double val = double.parse(
+  //                                       newValue.toStringAsFixed(2));
+  //                                   if (isBorderRadius) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       decoration: sheetListItem
+  //                                           .listDecoration.decoration
+  //                                           .copyWith(
+  //                                         borderRadius: setBorderRadius(
+  //                                             'bottomRight', val),
+  //                                       ),
+  //                                     );
+  //                                   } else if (isWidthAdjustment) {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       widthAdjustment: sheetListItem
+  //                                           .listDecoration.widthAdjustment
+  //                                           .copyWith(right: val),
+  //                                     );
+  //                                   } else {
+  //                                     sheetListItem.listDecoration =
+  //                                         sheetListItem.listDecoration.copyWith(
+  //                                       padding: sheetListItem
+  //                                           .listDecoration.padding
+  //                                           .copyWith(right: val),
+  //                                     );
+  //                                   }
+  //                                 });
+  //                               },
+  //                               child: TextFormField(
+  //                                 onTapOutside: (event) =>
+  //                                     focusNodes[4].unfocus(),
+  //                                 focusNode: focusNodes[4],
+  //                                 controller: controllers[4],
+  //                                 inputFormatters: [NumericInputFormatter()],
+  //                                 cursorColor: defaultPalette.secondary,
+  //                                 textAlign: TextAlign.center,
+  //                                 textAlignVertical: TextAlignVertical.top,
+  //                                 selectionControls:
+  //                                     NoMenuTextSelectionControls(),
+  //                                 decoration: InputDecoration(
+  //                                   contentPadding: const EdgeInsets.all(0),
+  //                                   filled: true,
+  //                                   fillColor: defaultPalette.secondary,
+  //                                   border: OutlineInputBorder(
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   enabledBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 1.2,
+  //                                         color: defaultPalette.secondary),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                   focusedBorder: OutlineInputBorder(
+  //                                     borderSide: BorderSide(
+  //                                         width: 2,
+  //                                         color: defaultPalette.extras[0]),
+  //                                     borderRadius: BorderRadius.circular(5.0),
+  //                                   ),
+  //                                 ),
+  //                                 keyboardType: TextInputType.number,
+  //                                 style: GoogleFonts.bungee(
+  //                                     fontSize: 12,
+  //                                     color: defaultPalette.black),
+  //                                 onFieldSubmitted: (value) {
+  //                                   setState(() {
+  //                                     double val = value.isEmpty
+  //                                         ? 0
+  //                                         : double.parse(value);
+  //                                     if (isBorderRadius) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         decoration: sheetListItem
+  //                                             .listDecoration.decoration
+  //                                             .copyWith(
+  //                                                 borderRadius: setBorderRadius(
+  //                                                     'bottomRight', val)),
+  //                                       );
+  //                                     } else if (isWidthAdjustment) {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         widthAdjustment: sheetListItem
+  //                                             .listDecoration.widthAdjustment
+  //                                             .copyWith(right: val),
+  //                                       );
+  //                                     } else {
+  //                                       sheetListItem.listDecoration =
+  //                                           sheetListItem.listDecoration
+  //                                               .copyWith(
+  //                                         padding: sheetListItem
+  //                                             .listDecoration.padding
+  //                                             .copyWith(right: val),
+  //                                       );
+  //                                     }
+  //                                   });
+  //                                 },
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const SizedBox(width: 5),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //             const SizedBox(height: 10),
+  //           ]
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+  // BorderRadius setBorderRadius(
+  //   String s,
+  //   double value,
+  // ) {
+  //   bool isNotNull =
+  //       sheetListItem.listDecoration.decoration.borderRadius != null;
+  //   switch (s) {
+  //     case 'topLeft':
+  //       return BorderRadius.only(
+  //         topLeft: Radius.circular(value),
+  //         topRight: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .topRight
+  //             : Radius.circular(0),
+  //         bottomLeft: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .bottomLeft
+  //             : Radius.circular(0),
+  //         bottomRight: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .bottomRight
+  //             : Radius.circular(0),
+  //       );
+  //     case 'topRight':
+  //       return BorderRadius.only(
+  //         topLeft: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .topLeft
+  //             : Radius.circular(0),
+  //         topRight: Radius.circular(value),
+  //         bottomLeft: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .bottomLeft
+  //             : Radius.circular(0),
+  //         bottomRight: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .bottomRight
+  //             : Radius.circular(0),
+  //       );
+  //     case 'bottomLeft':
+  //       return BorderRadius.only(
+  //         topLeft: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .topLeft
+  //             : Radius.circular(0),
+  //         topRight: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .topRight
+  //             : Radius.circular(0),
+  //         bottomLeft: Radius.circular(value),
+  //         bottomRight: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .bottomRight
+  //             : Radius.circular(0),
+  //       );
+  //     case 'bottomRight':
+  //       return BorderRadius.only(
+  //         topLeft: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .topLeft
+  //             : Radius.circular(0),
+  //         topRight: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .topRight
+  //             : Radius.circular(0),
+  //         bottomLeft: isNotNull
+  //             ? (sheetListItem.listDecoration.decoration.borderRadius
+  //                     as BorderRadius)
+  //                 .bottomLeft
+  //             : Radius.circular(0),
+  //         bottomRight: Radius.circular(value),
+  //       );
+  //     case 'all':
+  //       return BorderRadius.all(Radius.circular(value));
+  //     default:
+  //       return BorderRadius.all(Radius.circular(value));
+  //   }
+  // }
+
+  Container buildDecoratedContainer(
+    SuperDecoration superDecoration,
+    Widget child,
+    bool isPreview,
+  ) {
+    Widget current = child;
+
+    List<SheetDecoration> stack = superDecoration.itemDecorationList;
+
+    for (int i = stack.length - 1; i >= 0; i--) {
+      final deco = stack[i];
+
+      if (deco is ItemDecoration) {
+        BoxDecoration boxDecoration = deco.decoration;
+
+        // If dashLength > 0, apply dashed border
+        if (deco.dashLength > 0) {
+          boxDecoration = boxDecoration.copyWith(
+            border: DashedBorder.fromBorderSide(
+              side: deco.decoration.border?.top ?? BorderSide(),
+              dashLength: deco.dashLength,
+            ),
+          );
+        }
+
+        current = Container(
+          padding: deco.padding,
+          margin: deco.margin,
+          alignment: deco.alignment,
+          decoration: boxDecoration,
+          foregroundDecoration: deco.foregroundDecoration,
+          transform: deco.transform,
+          child: current,
+        );
+      } else if (deco is SuperDecoration) {
+        current = buildDecoratedContainer(deco, current, isPreview);
+      }
+    }
+
+    return Container(child: current);
+  }
+
+List<Widget> buildDecorationEditor(
+  SuperDecoration listDecoration,
+) {
+  return listDecoration.itemDecorationList.asMap().entries.map((entry) {
+    final i = entry.key;
+    final e = entry.value;
+
+    if (e is ItemDecoration) {
+      final verticalAlignments = [-1.0, 0.0, 1.0];
+      final horizontalAlignments = [-1.0, 0.0, 1.0];
+
+      final currentX = e.alignment.x;
+      final currentY = e.alignment.y;
+
+      return Row(
+        children: [
+          Expanded(
+            flex:10,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top / Center / Bottom (Y axis)
+                AnimatedToggleSwitch<double>.rolling(
+                  current: currentY,
+                  values: verticalAlignments,
+                  iconList: [
+                    Icon(TablerIcons.layout_align_top),
+                    Icon(TablerIcons.layout_align_center),
+                    Icon(TablerIcons.layout_align_bottom),
+                  ],
+                  styleBuilder: (value) {
+                    return ToggleStyle(
+                      indicatorColor: defaultPalette.tertiary,
+                      indicatorBorderRadius: BorderRadius.circular(500),
+                      borderColor:  defaultPalette.tertiary,
+                      backgroundColor: defaultPalette.primary
+                    );
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      listDecoration.itemDecorationList[i] =
+                          e.copyWith(alignment: Alignment(currentX, value));
+                    });
+                  },
+                  borderWidth: 2,
+                  fittingMode: FittingMode.preventHorizontalOverlapping,
+                  height: 30,
+                ),
+                SizedBox(height: 0),
+            
+                // Left / Center / Right (X axis)
+                AnimatedToggleSwitch<double>.rolling(
+                  current: currentX,
+                  values: horizontalAlignments,
+                  indicatorIconScale: 1, 
+                  iconList: [
+                    Icon(TablerIcons.layout_align_left),
+                    Icon(TablerIcons.layout_align_middle),
+                    Icon(TablerIcons.layout_align_right),
+                  ],
+                  styleBuilder: (value) {
+                    return ToggleStyle(
+                      indicatorColor: defaultPalette.tertiary ,
+                      indicatorBorderRadius: BorderRadius.circular(500),
+                      borderColor:  defaultPalette.tertiary,
+                      backgroundColor: defaultPalette.primary,
+                      
+                    );
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      listDecoration.itemDecorationList[i] =
+                          e.copyWith(alignment: Alignment(value, currentY));
+                    });
+                  },
+                  borderWidth: 2,
+                  fittingMode: FittingMode.preventHorizontalOverlapping,
+                  height: 30,
+                ),
+                SizedBox(height: 12),
+              ],
+            ),
+          ),
+          Expanded(flex:12,child: SizedBox())
+        ],
+      );
+    }
+
+    return Container();
+  }).toList();
+}
+
+
+  Widget buildListDecorationAdjuster({
+    required bool isMargin,
+    required ItemDecoration itemDecoration,
+    required List<TextEditingController> listPaddingControllers,
+    required List<TextEditingController> marginControllers,
+    List<TextEditingController> borderRadiusControllers = const [],
+    bool isBorderRadius = false,
+  }) {
     // Choose the proper controller list based on the flag.
-    var isExpanded = isBorderRadius? isListBorderRadiusExpanded:
-        isWidthAdjustment ? isListMarginExpanded : isListPaddingExpanded;
-    final controllers = isBorderRadius? borderRadiusControllers:
-        isWidthAdjustment ? widthAdjustmentControllers : listPaddingControllers;
-    final focusNodes = isBorderRadius? borderRadiusFocusNodes:
-        isWidthAdjustment ? widthAdjustmentFocusNodes : listPaddingFocusNodes;
+    var isExpanded = isBorderRadius
+        ? isListBorderRadiusExpanded
+        : isMargin
+            ? isListMarginExpanded
+            : isListPaddingExpanded;
+    final controllers = isBorderRadius
+        ? borderRadiusControllers
+        : isMargin
+            ? marginControllers
+            : listPaddingControllers;
+    final focusNodes = isBorderRadius
+        ? borderRadiusFocusNodes
+        : isMargin
+            ? marginFocusNodes
+            : listPaddingFocusNodes;
     return GestureDetector(
       onTap: () {
         setState(() {
-          if(isBorderRadius) {
+          if (isBorderRadius) {
             isListBorderRadiusExpanded = !isListBorderRadiusExpanded;
-          }
-          else if (isWidthAdjustment) {
+          } else if (isMargin) {
             isListMarginExpanded = !isListMarginExpanded;
           } else {
             isListPaddingExpanded = !isListPaddingExpanded;
           }
-          isExpanded = isBorderRadius? isListBorderRadiusExpanded:
-              isWidthAdjustment ? isListMarginExpanded : isListPaddingExpanded;
+          isExpanded = isBorderRadius
+              ? isListBorderRadiusExpanded
+              : isMargin
+                  ? isListMarginExpanded
+                  : isListPaddingExpanded;
           print(isExpanded);
         });
       },
@@ -19839,8 +18660,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text( isBorderRadius? 'borderRadius':
-              !isWidthAdjustment ? 'margin' : 'padding',
+            Text(
+              isBorderRadius
+                  ? 'borderRadius'
+                  : !isMargin
+                      ? 'margin'
+                      : 'padding',
               style: GoogleFonts.prompt(
                   fontSize: 10, color: defaultPalette.extras[0]),
             ),
@@ -19848,73 +18673,74 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             Listener(
               onPointerDown: (event) {
                 if (event.kind == PointerDeviceKind.mouse &&
-                event.buttons == kSecondaryMouseButton) { 
+                    event.buttons == kSecondaryMouseButton) {
                   if (dragBackupValue != null) {
-                  double parsedValue = double.parse(dragBackupValue.toStringAsFixed(2));
-              
-                  setState(() {
-                    if (isBorderRadius) {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
-                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                          borderRadius: setBorderRadius('all', parsedValue),
-                        ),
-                      );
-                    } else if (isWidthAdjustment) {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
-                        widthAdjustment: EdgeInsets.all(parsedValue),
-                      );
-                    } else {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
-                        padding: EdgeInsets.all(parsedValue),
-                      );
-                    }
+                    double parsedValue =
+                        double.parse(dragBackupValue.toStringAsFixed(2));
+                    print('sliding values to increase decrease');
+                    setState(() {
+                      if (isBorderRadius) {
+                        itemDecoration = itemDecoration.copyWith(
+                          decoration: itemDecoration.decoration.copyWith(
+                            borderRadius: setBorderRadius(
+                                'all', parsedValue, itemDecoration),
+                          ),
+                        );
+                      } else if (isMargin) {
+                        itemDecoration = itemDecoration.copyWith(
+                          margin: EdgeInsets.all(parsedValue),
+                        );
+                      } else {
+                        print('sliding values to increase decrease');
+                        itemDecoration = itemDecoration.copyWith(
+                          padding: EdgeInsets.all(parsedValue),
+                        );
+                      }
 
-                    dragBackupValue = null;
-                    focusNodes[0].unfocus(); 
-                  });
-                  
-                }
+                      dragBackupValue = null;
+                      focusNodes[0].unfocus();
+                    });
+                  }
                 }
               },
               child: GestureDetector(
-              onHorizontalDragCancel: () {
-                focusNodes[0].requestFocus();
-              },
-              onHorizontalDragStart: (details) {
-                dragBackupValue = double.parse(controllers[0].text);
-              },  
-              onHorizontalDragUpdate: (details) {
-                var multiplier = HardwareKeyboard.instance.isControlPressed
-                ? 10
-                : HardwareKeyboard.instance.isShiftPressed
-                ? 0.1
-                : 1;
+                onHorizontalDragCancel: () {
+                  focusNodes[0].requestFocus();
+                },
+                onHorizontalDragStart: (details) {
+                  dragBackupValue = double.parse(controllers[0].text);
+                },
+                onHorizontalDragUpdate: (details) {
+                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                      ? 10
+                      : HardwareKeyboard.instance.isShiftPressed
+                          ? 0.1
+                          : 1;
                   setState(() {
-                    double currentValue = double.tryParse(controllers[0].text) ?? 0.0;
-                    double newValue = (currentValue + details.delta.dx *multiplier ).clamp(0, double.infinity); // Adjust sensitivity here
-              
+                    double currentValue =
+                        double.tryParse(controllers[0].text) ?? 0.0;
+                    double newValue = (currentValue +
+                            details.delta.dx * multiplier)
+                        .clamp(0, double.infinity); // Adjust sensitivity here
+
                     // controllers[0].text = newValue.toStringAsFixed(2);
-              
-                    double parsedValue = double.parse(newValue.toStringAsFixed(2));
-              
+
+                    double parsedValue =
+                        double.parse(newValue.toStringAsFixed(2));
+
                     if (isBorderRadius) {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
-                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                          borderRadius: setBorderRadius('all', parsedValue),
+                      itemDecoration = itemDecoration.copyWith(
+                        decoration: itemDecoration.decoration.copyWith(
+                          borderRadius: setBorderRadius(
+                              'all', parsedValue, itemDecoration),
                         ),
                       );
-                    } else if (isWidthAdjustment) {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
-                        widthAdjustment: EdgeInsets.all(parsedValue),
+                    } else if (isMargin) {
+                      itemDecoration = itemDecoration.copyWith(
+                        margin: EdgeInsets.all(parsedValue),
                       );
                     } else {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
+                      itemDecoration = itemDecoration.copyWith(
                         padding: EdgeInsets.all(parsedValue),
                       );
                     }
@@ -19939,18 +18765,19 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.all(0),
                       floatingLabelAlignment: FloatingLabelAlignment.center,
-                      labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                      labelStyle:
+                          GoogleFonts.lexend(color: defaultPalette.black),
                       filled: true,
                       fillColor: defaultPalette.secondary,
                       border: InputBorder.none,
                       enabledBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(width: 1.2, color: defaultPalette.secondary),
+                        borderSide: BorderSide(
+                            width: 1.2, color: defaultPalette.secondary),
                         borderRadius: BorderRadius.circular(5.0),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(width: 2, color: defaultPalette.extras[0]),
+                        borderSide: BorderSide(
+                            width: 2, color: defaultPalette.extras[0]),
                         borderRadius: BorderRadius.circular(5.0),
                       ),
                     ),
@@ -19960,22 +18787,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     onFieldSubmitted: (value) {
                       setState(() {
                         double parsedValue = double.parse(value);
-                        if(isBorderRadius) {
-                          sheetListItem.listDecoration =
-                              sheetListItem.listDecoration.copyWith(
-                                decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                  borderRadius: setBorderRadius('all', parsedValue)
-                                ), 
+                        if (isBorderRadius) {
+                          itemDecoration = itemDecoration.copyWith(
+                            decoration: itemDecoration.decoration.copyWith(
+                                borderRadius: setBorderRadius(
+                                    'all', parsedValue, itemDecoration)),
                           );
-                        }
-                        else if (isWidthAdjustment) {
-                          sheetListItem.listDecoration =
-                              sheetListItem.listDecoration.copyWith(
-                            widthAdjustment: EdgeInsets.all(parsedValue),
+                        } else if (isMargin) {
+                          itemDecoration = itemDecoration.copyWith(
+                            margin: EdgeInsets.all(parsedValue),
                           );
                         } else {
-                          sheetListItem.listDecoration =
-                              sheetListItem.listDecoration.copyWith(
+                          itemDecoration = itemDecoration.copyWith(
                             padding: EdgeInsets.all(parsedValue),
                           );
                         }
@@ -19985,14 +18808,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 ),
               ),
             ),
-            
+
             // "Pad" field SLIDER for all sides
             BalloonSlider(
               color: defaultPalette.extras[0],
-              value: (isBorderRadius? double.parse(controllers[0].text)/100:
-                isWidthAdjustment
-                      ? sheetListItem.listDecoration.widthAdjustment.top / 100
-                      : sheetListItem.listDecoration.padding.top / 100)
+              value: (isBorderRadius
+                      ? double.parse(controllers[0].text) / 100
+                      : isMargin
+                          ? itemDecoration.margin.top / 100
+                          : itemDecoration.padding.top / 100)
                   .clamp(0, 1),
               showRope: true,
               ropeLength: 50,
@@ -20000,22 +18824,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 setState(() {
                   double parsedValue =
                       double.parse((value * 100).toStringAsFixed(2));
-                  if(isBorderRadius) {
-                      sheetListItem.listDecoration =
-                          sheetListItem.listDecoration.copyWith(
-                            decoration: sheetListItem.listDecoration.decoration.copyWith(
-                              borderRadius: setBorderRadius('all', parsedValue)
-                            ), 
-                      );
-                    }
-                    else if (isWidthAdjustment) {
-                    sheetListItem.listDecoration =
-                        sheetListItem.listDecoration.copyWith(
-                      widthAdjustment: EdgeInsets.all(parsedValue),
+                  if (isBorderRadius) {
+                    itemDecoration = itemDecoration.copyWith(
+                      decoration: itemDecoration.decoration.copyWith(
+                          borderRadius: setBorderRadius(
+                              'all', parsedValue, itemDecoration)),
+                    );
+                  } else if (isMargin) {
+                    itemDecoration = itemDecoration.copyWith(
+                      margin: EdgeInsets.all(parsedValue),
                     );
                   } else {
-                    sheetListItem.listDecoration =
-                        sheetListItem.listDecoration.copyWith(
+                    itemDecoration = itemDecoration.copyWith(
                       padding: EdgeInsets.all(parsedValue),
                     );
                   }
@@ -20038,9 +18858,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           Expanded(
                               flex: 1,
                               child: Transform.rotate(
-                                  angle:isBorderRadius?0: pi / 2,
-                                  child: Icon( isBorderRadius? TablerIcons.border_corner_pill:
-                                      TablerIcons.layout_sidebar_inactive,
+                                  angle: isBorderRadius ? 0 : pi / 2,
+                                  child: Icon(
+                                      isBorderRadius
+                                          ? TablerIcons.border_corner_pill
+                                          : TablerIcons.layout_sidebar_inactive,
                                       size: 15))),
                           const SizedBox(width: 5),
                           Expanded(
@@ -20048,39 +18870,42 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             child: Listener(
                               onPointerDown: (event) {
                                 if (event.kind == PointerDeviceKind.mouse &&
-                                event.buttons == kSecondaryMouseButton) { 
+                                    event.buttons == kSecondaryMouseButton) {
                                   if (dragBackupValue != null) {
-                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
-                              
-                                  setState(() {
-                                    if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('topLeft', val),
-                                        ),
-                                      );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment:
-                                            sheetListItem.listDecoration.widthAdjustment.copyWith(
-                                          top: val,
-                                        ),
-                                      );
-                                    } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem.listDecoration.padding.copyWith(
-                                          top: val,
-                                        ),
-                                      );
-                                    }
+                                    double val = double.parse(
+                                        dragBackupValue.toStringAsFixed(2));
 
-                                    dragBackupValue = null;
-                                  });
-                                  
-                                }
+                                    setState(() {
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'topLeft', val, itemDecoration),
+                                          ),
+                                        );
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin:
+                                              itemDecoration.margin.copyWith(
+                                            top: val,
+                                          ),
+                                        );
+                                      } else {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding:
+                                              itemDecoration.padding.copyWith(
+                                            top: val,
+                                          ),
+                                        );
+                                      }
+
+                                      dragBackupValue = null;
+                                    });
+                                  }
                                 }
                               },
                               child: GestureDetector(
@@ -20088,41 +18913,45 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   focusNodes[1].requestFocus();
                                 },
                                 onHorizontalDragStart: (details) {
-                                  dragBackupValue = double.parse(controllers[1].text);
-                                },  
-                
+                                  dragBackupValue =
+                                      double.parse(controllers[1].text);
+                                },
                                 onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard.instance.isControlPressed
-                                  ? 10
-                                  : HardwareKeyboard.instance.isShiftPressed
-                                  ? 0.1
-                                  : 1;
+                                  var multiplier = HardwareKeyboard
+                                          .instance.isControlPressed
+                                      ? 10
+                                      : HardwareKeyboard.instance.isShiftPressed
+                                          ? 0.1
+                                          : 1;
                                   setState(() {
-                                    double currentValue = double.tryParse(controllers[1].text) ?? 0.0;
-                                    double newValue = (currentValue + (details.delta.dx * multiplier)).clamp(0, double.infinity);
-                               
-                              
-                                    double val = double.parse(newValue.toStringAsFixed(2));
-                              
+                                    double currentValue =
+                                        double.tryParse(controllers[1].text) ??
+                                            0.0;
+                                    double newValue = (currentValue +
+                                            (details.delta.dx * multiplier))
+                                        .clamp(0, double.infinity);
+
+                                    double val = double.parse(
+                                        newValue.toStringAsFixed(2));
+
                                     if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('topLeft', val),
+                                      itemDecoration = itemDecoration.copyWith(
+                                        decoration:
+                                            itemDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius(
+                                              'topLeft', val, itemDecoration),
                                         ),
                                       );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment:
-                                            sheetListItem.listDecoration.widthAdjustment.copyWith(
+                                    } else if (isMargin) {
+                                      itemDecoration = itemDecoration.copyWith(
+                                        margin: itemDecoration.margin.copyWith(
                                           top: val,
                                         ),
                                       );
                                     } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem.listDecoration.padding.copyWith(
+                                      itemDecoration = itemDecoration.copyWith(
+                                        padding:
+                                            itemDecoration.padding.copyWith(
                                           top: val,
                                         ),
                                       );
@@ -20130,12 +18959,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   });
                                 },
                                 child: TextFormField(
-                                  onTapOutside: (event) => focusNodes[1].unfocus(),
+                                  onTapOutside: (event) =>
+                                      focusNodes[1].unfocus(),
                                   focusNode: focusNodes[1],
                                   controller: controllers[1],
                                   inputFormatters: [NumericInputFormatter()],
-                                  cursorColor: defaultPalette.extras[0], 
-                                  selectionControls: NoMenuTextSelectionControls(),
+                                  cursorColor: defaultPalette.extras[0],
+                                  selectionControls:
+                                      NoMenuTextSelectionControls(),
                                   textAlign: TextAlign.center,
                                   textAlignVertical: TextAlignVertical.top,
                                   decoration: InputDecoration(
@@ -20160,31 +18991,33 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ),
                                   keyboardType: TextInputType.number,
                                   style: GoogleFonts.bungee(
-                                      fontSize: 12, color: defaultPalette.black),
+                                      fontSize: 12,
+                                      color: defaultPalette.black),
                                   onFieldSubmitted: (value) {
                                     setState(() {
-                                      double val =
-                                          value.isEmpty ? 0 : double.parse(value);
-                                      if(isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                              borderRadius: setBorderRadius('topLeft', val)
-                                          ), 
+                                      double val = value.isEmpty
+                                          ? 0
+                                          : double.parse(value);
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                                  borderRadius: setBorderRadius(
+                                                      'topLeft',
+                                                      val,
+                                                      itemDecoration)),
                                         );
-                                      }
-                                      else if (isWidthAdjustment) {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          widthAdjustment: sheetListItem
-                                              .listDecoration.widthAdjustment
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
                                               .copyWith(top: val),
                                         );
                                       } else {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          padding: sheetListItem
-                                              .listDecoration.padding
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
                                               .copyWith(top: val),
                                         );
                                       }
@@ -20210,9 +19043,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           Expanded(
                               flex: 1,
                               child: Transform.rotate(
-                                  angle:isBorderRadius? pi/2: -pi / 2,
-                                  child: Icon(isBorderRadius? TablerIcons.border_corner_pill:
-                                      TablerIcons.layout_sidebar_inactive,
+                                  angle: isBorderRadius ? pi / 2 : -pi / 2,
+                                  child: Icon(
+                                      isBorderRadius
+                                          ? TablerIcons.border_corner_pill
+                                          : TablerIcons.layout_sidebar_inactive,
                                       size: 15))),
                           const SizedBox(width: 5),
                           Expanded(
@@ -20220,39 +19055,40 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             child: Listener(
                               onPointerDown: (event) {
                                 if (event.kind == PointerDeviceKind.mouse &&
-                                event.buttons == kSecondaryMouseButton) { 
+                                    event.buttons == kSecondaryMouseButton) {
                                   if (dragBackupValue != null) {
-                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
-                              
-                                  setState(() { 
-                              
-                                    if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('topRight', val),
-                                        ),
-                                      );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment: sheetListItem
-                                            .listDecoration.widthAdjustment
-                                            .copyWith(bottom: val),
-                                      );
-                                    } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem
-                                            .listDecoration.padding
-                                            .copyWith(bottom: val),
-                                      );
-                                    }
+                                    double val = double.parse(
+                                        dragBackupValue.toStringAsFixed(2));
 
-                                    dragBackupValue = null;
-                                  });
-                                  
-                                }
+                                    setState(() {
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'topRight',
+                                                val,
+                                                itemDecoration),
+                                          ),
+                                        );
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
+                                              .copyWith(bottom: val),
+                                        );
+                                      } else {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
+                                              .copyWith(bottom: val),
+                                        );
+                                      }
+
+                                      dragBackupValue = null;
+                                    });
+                                  }
                                 }
                               },
                               child: GestureDetector(
@@ -20260,40 +19096,43 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   focusNodes[2].requestFocus();
                                 },
                                 onHorizontalDragStart: (details) {
-                                  dragBackupValue = double.parse(controllers[2].text);
-                                }, 
+                                  dragBackupValue =
+                                      double.parse(controllers[2].text);
+                                },
                                 onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                  var multiplier = HardwareKeyboard
+                                          .instance.isControlPressed
                                       ? 10
                                       : HardwareKeyboard.instance.isShiftPressed
                                           ? 0.06
                                           : 1;
                                   setState(() {
-                                    double currentValue = double.tryParse(controllers[2].text) ?? 0.0;
-                                    double newValue = (currentValue + (details.delta.dx * multiplier))
+                                    double currentValue =
+                                        double.tryParse(controllers[2].text) ??
+                                            0.0;
+                                    double newValue = (currentValue +
+                                            (details.delta.dx * multiplier))
                                         .clamp(0, double.infinity);
-                              
-                                    double val = double.parse(newValue.toStringAsFixed(2)); 
-                              
+
+                                    double val = double.parse(
+                                        newValue.toStringAsFixed(2));
+
                                     if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('topRight', val),
+                                      itemDecoration = itemDecoration.copyWith(
+                                        decoration:
+                                            itemDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius(
+                                              'topRight', val, itemDecoration),
                                         ),
                                       );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment: sheetListItem
-                                            .listDecoration.widthAdjustment
+                                    } else if (isMargin) {
+                                      itemDecoration = itemDecoration.copyWith(
+                                        margin: itemDecoration.margin
                                             .copyWith(bottom: val),
                                       );
                                     } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem
-                                            .listDecoration.padding
+                                      itemDecoration = itemDecoration.copyWith(
+                                        padding: itemDecoration.padding
                                             .copyWith(bottom: val),
                                       );
                                     }
@@ -20304,8 +19143,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       focusNodes[2].unfocus(),
                                   focusNode: focusNodes[2],
                                   controller: controllers[2],
-                                  inputFormatters: [NumericInputFormatter()], 
-                                  selectionControls: NoMenuTextSelectionControls(),
+                                  inputFormatters: [NumericInputFormatter()],
+                                  selectionControls:
+                                      NoMenuTextSelectionControls(),
                                   cursorColor: defaultPalette.secondary,
                                   textAlign: TextAlign.center,
                                   textAlignVertical: TextAlignVertical.top,
@@ -20331,31 +19171,33 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ),
                                   keyboardType: TextInputType.number,
                                   style: GoogleFonts.bungee(
-                                      fontSize: 12, color: defaultPalette.black),
+                                      fontSize: 12,
+                                      color: defaultPalette.black),
                                   onFieldSubmitted: (value) {
                                     setState(() {
-                                      double val =
-                                          value.isEmpty ? 0 : double.parse(value);
-                                      if(isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                              borderRadius: setBorderRadius('topRight', val)
-                                          ), 
+                                      double val = value.isEmpty
+                                          ? 0
+                                          : double.parse(value);
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                                  borderRadius: setBorderRadius(
+                                                      'topRight',
+                                                      val,
+                                                      itemDecoration)),
                                         );
-                                      }
-                                      else if (isWidthAdjustment) {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          widthAdjustment: sheetListItem
-                                              .listDecoration.widthAdjustment
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
                                               .copyWith(bottom: val),
                                         );
                                       } else {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          padding: sheetListItem
-                                              .listDecoration.padding
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
                                               .copyWith(bottom: val),
                                         );
                                       }
@@ -20386,9 +19228,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           Expanded(
                               flex: 1,
                               child: Transform.rotate(
-                                  angle:isBorderRadius? -pi/2: 0,
-                                  child: Icon( isBorderRadius? TablerIcons.border_corner_pill:
-                                      TablerIcons.layout_sidebar_inactive,
+                                  angle: isBorderRadius ? -pi / 2 : 0,
+                                  child: Icon(
+                                      isBorderRadius
+                                          ? TablerIcons.border_corner_pill
+                                          : TablerIcons.layout_sidebar_inactive,
                                       size: 15))),
                           const SizedBox(width: 5),
                           Expanded(
@@ -20396,38 +19240,40 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             child: Listener(
                               onPointerDown: (event) {
                                 if (event.kind == PointerDeviceKind.mouse &&
-                                event.buttons == kSecondaryMouseButton) { 
+                                    event.buttons == kSecondaryMouseButton) {
                                   if (dragBackupValue != null) {
-                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
-                              
-                                  setState(() {
-                                    if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('bottomLeft', val),
-                                        ),
-                                      );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment: sheetListItem
-                                            .listDecoration.widthAdjustment
-                                            .copyWith(left: val),
-                                      );
-                                    } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem
-                                            .listDecoration.padding
-                                            .copyWith(left: val),
-                                      );
-                                    }
+                                    double val = double.parse(
+                                        dragBackupValue.toStringAsFixed(2));
 
-                                    dragBackupValue = null;
-                                  });
-                                  
-                                }
+                                    setState(() {
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'bottomLeft',
+                                                val,
+                                                itemDecoration),
+                                          ),
+                                        );
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
+                                              .copyWith(left: val),
+                                        );
+                                      } else {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
+                                              .copyWith(left: val),
+                                        );
+                                      }
+
+                                      dragBackupValue = null;
+                                    });
+                                  }
                                 }
                               },
                               child: GestureDetector(
@@ -20435,40 +19281,45 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   focusNodes[3].requestFocus();
                                 },
                                 onHorizontalDragStart: (details) {
-                                  dragBackupValue = double.parse(controllers[3].text);
-                                }, 
+                                  dragBackupValue =
+                                      double.parse(controllers[3].text);
+                                },
                                 onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                  var multiplier = HardwareKeyboard
+                                          .instance.isControlPressed
                                       ? 10
                                       : HardwareKeyboard.instance.isShiftPressed
                                           ? 0.1
                                           : 1;
                                   setState(() {
-                                    double currentValue = double.tryParse(controllers[3].text) ?? 0.0;
-                                    double newValue = (currentValue + (details.delta.dx * multiplier))
+                                    double currentValue =
+                                        double.tryParse(controllers[3].text) ??
+                                            0.0;
+                                    double newValue = (currentValue +
+                                            (details.delta.dx * multiplier))
                                         .clamp(0, double.infinity);
-                              
-                                    double val = double.parse(newValue.toStringAsFixed(2)); 
-                              
+
+                                    double val = double.parse(
+                                        newValue.toStringAsFixed(2));
+
                                     if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('bottomLeft', val),
+                                      itemDecoration = itemDecoration.copyWith(
+                                        decoration:
+                                            itemDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius(
+                                              'bottomLeft',
+                                              val,
+                                              itemDecoration),
                                         ),
                                       );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment: sheetListItem
-                                            .listDecoration.widthAdjustment
+                                    } else if (isMargin) {
+                                      itemDecoration = itemDecoration.copyWith(
+                                        margin: itemDecoration.margin
                                             .copyWith(left: val),
                                       );
                                     } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem
-                                            .listDecoration.padding
+                                      itemDecoration = itemDecoration.copyWith(
+                                        padding: itemDecoration.padding
                                             .copyWith(left: val),
                                       );
                                     }
@@ -20479,8 +19330,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       focusNodes[3].unfocus(),
                                   focusNode: focusNodes[3],
                                   controller: controllers[3],
-                                  inputFormatters: [NumericInputFormatter()], 
-                                  selectionControls: NoMenuTextSelectionControls(),
+                                  inputFormatters: [NumericInputFormatter()],
+                                  selectionControls:
+                                      NoMenuTextSelectionControls(),
                                   cursorColor: defaultPalette.secondary,
                                   textAlign: TextAlign.center,
                                   textAlignVertical: TextAlignVertical.top,
@@ -20506,31 +19358,33 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ),
                                   keyboardType: TextInputType.number,
                                   style: GoogleFonts.bungee(
-                                      fontSize: 12, color: defaultPalette.black),
+                                      fontSize: 12,
+                                      color: defaultPalette.black),
                                   onFieldSubmitted: (value) {
                                     setState(() {
-                                      double val =
-                                          value.isEmpty ? 0 : double.parse(value);
-                                      if(isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                              borderRadius: setBorderRadius('bottomLeft', val)
-                                          ), 
+                                      double val = value.isEmpty
+                                          ? 0
+                                          : double.parse(value);
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                                  borderRadius: setBorderRadius(
+                                                      'bottomLeft',
+                                                      val,
+                                                      itemDecoration)),
                                         );
-                                      }
-                                      else if (isWidthAdjustment) {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          widthAdjustment: sheetListItem
-                                              .listDecoration.widthAdjustment
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
                                               .copyWith(left: val),
                                         );
                                       } else {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          padding: sheetListItem
-                                              .listDecoration.padding
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
                                               .copyWith(left: val),
                                         );
                                       }
@@ -20556,9 +19410,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           Expanded(
                               flex: 1,
                               child: Transform.rotate(
-                                  angle:isBorderRadius? pi: 0,
-                                  child: Icon( isBorderRadius? TablerIcons.border_corner_pill:
-                                      TablerIcons.layout_sidebar_right_inactive,
+                                  angle: isBorderRadius ? pi : 0,
+                                  child: Icon(
+                                      isBorderRadius
+                                          ? TablerIcons.border_corner_pill
+                                          : TablerIcons
+                                              .layout_sidebar_right_inactive,
                                       size: 15))),
                           const SizedBox(width: 5),
                           Expanded(
@@ -20566,38 +19423,40 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             child: Listener(
                               onPointerDown: (event) {
                                 if (event.kind == PointerDeviceKind.mouse &&
-                                event.buttons == kSecondaryMouseButton) { 
+                                    event.buttons == kSecondaryMouseButton) {
                                   if (dragBackupValue != null) {
-                                  double val = double.parse(dragBackupValue.toStringAsFixed(2));
-                              
-                                  setState(() {
-                                    if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('bottomRight', val),
-                                        ),
-                                      );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment: sheetListItem
-                                            .listDecoration.widthAdjustment
-                                            .copyWith(right: val),
-                                      );
-                                    } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem
-                                            .listDecoration.padding
-                                            .copyWith(right: val),
-                                      );
-                                    }
+                                    double val = double.parse(
+                                        dragBackupValue.toStringAsFixed(2));
 
-                                    dragBackupValue = null;
-                                  });
-                                  
-                                }
+                                    setState(() {
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'bottomRight',
+                                                val,
+                                                itemDecoration),
+                                          ),
+                                        );
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
+                                              .copyWith(right: val),
+                                        );
+                                      } else {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
+                                              .copyWith(right: val),
+                                        );
+                                      }
+
+                                      dragBackupValue = null;
+                                    });
+                                  }
                                 }
                               },
                               child: GestureDetector(
@@ -20605,40 +19464,45 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   focusNodes[4].requestFocus();
                                 },
                                 onHorizontalDragStart: (details) {
-                                  dragBackupValue = double.parse(controllers[4].text);
-                                }, 
+                                  dragBackupValue =
+                                      double.parse(controllers[4].text);
+                                },
                                 onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard.instance.isControlPressed
+                                  var multiplier = HardwareKeyboard
+                                          .instance.isControlPressed
                                       ? 10
                                       : HardwareKeyboard.instance.isShiftPressed
                                           ? 0.08
                                           : 1;
                                   setState(() {
-                                    double currentValue = double.tryParse(controllers[4].text) ?? 0.0;
-                                    double newValue = (currentValue + (details.delta.dx * multiplier))
+                                    double currentValue =
+                                        double.tryParse(controllers[4].text) ??
+                                            0.0;
+                                    double newValue = (currentValue +
+                                            (details.delta.dx * multiplier))
                                         .clamp(0, double.infinity);
-                              
-                                    double val = double.parse(newValue.toStringAsFixed(2));
-                              
+
+                                    double val = double.parse(
+                                        newValue.toStringAsFixed(2));
+
                                     if (isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius('bottomRight', val),
+                                      itemDecoration = itemDecoration.copyWith(
+                                        decoration:
+                                            itemDecoration.decoration.copyWith(
+                                          borderRadius: setBorderRadius(
+                                              'bottomRight',
+                                              val,
+                                              itemDecoration),
                                         ),
                                       );
-                                    } else if (isWidthAdjustment) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        widthAdjustment: sheetListItem
-                                            .listDecoration.widthAdjustment
+                                    } else if (isMargin) {
+                                      itemDecoration = itemDecoration.copyWith(
+                                        margin: itemDecoration.margin
                                             .copyWith(right: val),
                                       );
                                     } else {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                        padding: sheetListItem
-                                            .listDecoration.padding
+                                      itemDecoration = itemDecoration.copyWith(
+                                        padding: itemDecoration.padding
                                             .copyWith(right: val),
                                       );
                                     }
@@ -20653,7 +19517,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   cursorColor: defaultPalette.secondary,
                                   textAlign: TextAlign.center,
                                   textAlignVertical: TextAlignVertical.top,
-                                  selectionControls: NoMenuTextSelectionControls(),
+                                  selectionControls:
+                                      NoMenuTextSelectionControls(),
                                   decoration: InputDecoration(
                                     contentPadding: const EdgeInsets.all(0),
                                     filled: true,
@@ -20676,31 +19541,33 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ),
                                   keyboardType: TextInputType.number,
                                   style: GoogleFonts.bungee(
-                                      fontSize: 12, color: defaultPalette.black),
+                                      fontSize: 12,
+                                      color: defaultPalette.black),
                                   onFieldSubmitted: (value) {
                                     setState(() {
-                                      double val =
-                                          value.isEmpty ? 0 : double.parse(value);
-                                      if(isBorderRadius) {
-                                      sheetListItem.listDecoration =
-                                          sheetListItem.listDecoration.copyWith(
-                                            decoration: sheetListItem.listDecoration.decoration.copyWith(
-                                              borderRadius: setBorderRadius('bottomRight', val)
-                                          ), 
+                                      double val = value.isEmpty
+                                          ? 0
+                                          : double.parse(value);
+                                      if (isBorderRadius) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          decoration: itemDecoration.decoration
+                                              .copyWith(
+                                                  borderRadius: setBorderRadius(
+                                                      'bottomRight',
+                                                      val,
+                                                      itemDecoration)),
                                         );
-                                      }
-                                      else if (isWidthAdjustment) {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          widthAdjustment: sheetListItem
-                                              .listDecoration.widthAdjustment
+                                      } else if (isMargin) {
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          margin: itemDecoration.margin
                                               .copyWith(right: val),
                                         );
                                       } else {
-                                        sheetListItem.listDecoration =
-                                            sheetListItem.listDecoration.copyWith(
-                                          padding: sheetListItem
-                                              .listDecoration.padding
+                                        itemDecoration =
+                                            itemDecoration.copyWith(
+                                          padding: itemDecoration.padding
                                               .copyWith(right: val),
                                         );
                                       }
@@ -20725,45 +19592,78 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
-  BorderRadius setBorderRadius(String s, double value,){
-    bool isNotNull = sheetListItem.listDecoration.decoration.borderRadius!=null;
+  BorderRadius setBorderRadius(
+      String s, double value, ItemDecoration itemDecoration) {
+    bool isNotNull = itemDecoration.decoration.borderRadius != null;
     switch (s) {
       case 'topLeft':
         return BorderRadius.only(
           topLeft: Radius.circular(value),
-          topRight: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topRight:Radius.circular(0),
-          bottomLeft: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft:Radius.circular(0),
-          bottomRight: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomRight:Radius.circular(0),
+          topRight: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .topRight
+              : Radius.circular(0),
+          bottomLeft: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .bottomLeft
+              : Radius.circular(0),
+          bottomRight: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .bottomRight
+              : Radius.circular(0),
         );
       case 'topRight':
         return BorderRadius.only(
-          topLeft:isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topLeft:Radius.circular(0),
-          topRight: Radius.circular(value), 
-          bottomLeft: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft:Radius.circular(0),
-          bottomRight: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomRight:Radius.circular(0),
+          topLeft: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius).topLeft
+              : Radius.circular(0),
+          topRight: Radius.circular(value),
+          bottomLeft: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .bottomLeft
+              : Radius.circular(0),
+          bottomRight: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .bottomRight
+              : Radius.circular(0),
         );
       case 'bottomLeft':
         return BorderRadius.only(
-          topLeft: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topLeft:Radius.circular(0),
-          topRight: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topRight:Radius.circular(0),
+          topLeft: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius).topLeft
+              : Radius.circular(0),
+          topRight: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .topRight
+              : Radius.circular(0),
           bottomLeft: Radius.circular(value),
-          bottomRight: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomRight:Radius.circular(0),
+          bottomRight: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .bottomRight
+              : Radius.circular(0),
         );
       case 'bottomRight':
         return BorderRadius.only(
-          topLeft: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topLeft:Radius.circular(0),
-          topRight: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).topRight:Radius.circular(0),
-          bottomLeft: isNotNull ?(sheetListItem.listDecoration.decoration.borderRadius as BorderRadius).bottomLeft:Radius.circular(0),
+          topLeft: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius).topLeft
+              : Radius.circular(0),
+          topRight: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .topRight
+              : Radius.circular(0),
+          bottomLeft: isNotNull
+              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+                  .bottomLeft
+              : Radius.circular(0),
           bottomRight: Radius.circular(value),
         );
       case 'all':
         return BorderRadius.all(Radius.circular(value));
-         
+
       default:
         return BorderRadius.all(Radius.circular(value));
     }
   }
- 
 }
 
 class WordSpacingAttribute extends Attribute<String?> {

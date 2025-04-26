@@ -1,11 +1,13 @@
 import 'dart:math';
 
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:hive/hive.dart';
 
 class Boxes {
   static Box<LayoutModel> getLayouts() => Hive.box<LayoutModel>('layouts');
+  static Box<SheetDecoration> getDecorations() => Hive.box<SheetDecoration>('decorations');
 
   static String getLayoutName() {
     int highestNumber =
@@ -26,4 +28,14 @@ class Boxes {
     // Ensure that the next name is incremented correctly.
     return 'Untitled-${highestNumber + 1}';
   }
+
+  static Future<void> saveSuperDecoration(SuperDecoration newDecoration) async {
+  Box<SheetDecoration> box = Boxes.getDecorations();
+
+  // If id exists, overwrite; otherwise, insert as new (same method)
+  await box.put(newDecoration.id, newDecoration);
+}
+
+
+
 }
