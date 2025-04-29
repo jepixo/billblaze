@@ -1,8 +1,7 @@
 import 'dart:math';
 
 import 'package:billblaze/models/layout_model.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart'; 
 import 'package:hive/hive.dart';
 
 class Boxes {
@@ -16,7 +15,7 @@ class Boxes {
     final layouts = Boxes.getLayouts();
 
     for (var layout in layouts.values.toList()) {
-      final name = layout.name ?? '';
+      final name = layout.name;
       final match = regex.firstMatch(name);
 
       if (match != null) {

@@ -330,6 +330,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   late TextEditorItem item;
   late SheetList sheetListItem;
   var dragBackupValue;
+  bool showDecorationLayers = false;
   //
   //
   //
@@ -14747,6 +14748,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             physics: physics,
                                             child: Column(
                                               children: [
+                                                //DECO TITLE 
                                                 Row(
                                                   mainAxisAlignment:
                                                       MainAxisAlignment
@@ -14822,11 +14824,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               .listDecoration
                                                               .name,
                                                           style: GoogleFonts
-                                                              .bungee(),
+                                                              .bungee(fontSize:10),
                                                         ),
                                                       ),
                                                       Container(
-                                                        height: 80,
+                                                        height: 60,
                                                         width: width,
                                                         alignment:
                                                             Alignment.center,
@@ -14929,7 +14931,162 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       );
                                     }))),
                       ),
-                    )
+                    ),
+                    AnimatedPositioned(
+                      duration: Durations.medium1,
+                      curve: Curves.easeInExpo,
+                      bottom:30,
+                      left:showDecorationLayers?12:12,
+                      child:AnimatedContainer(
+                        duration:Durations.medium1,
+                        curve: Curves.easeInOut,
+                        height:showDecorationLayers?(sHeight*0.9)-245:0,
+                        width:25,
+                        decoration: BoxDecoration(
+                          color: defaultPalette.extras[0],
+                          borderRadius: BorderRadius.circular(50).copyWith(bottomLeft: Radius.circular(50), bottomRight: Radius.circular(0)),
+                        ),
+                      ), 
+                    ),
+                    AnimatedPositioned(
+                      duration: Durations.medium3,
+                      curve: Curves.easeInBack,
+                      bottom:30,
+                      left:showDecorationLayers?14:-50,
+                      child:ClipRRect(
+                        borderRadius: BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(50), bottomRight: Radius.circular(0)),
+                          
+                        child: AnimatedContainer(
+                          duration:Durations.medium1,
+                          curve: Curves.easeInOut,
+                          height: (sHeight*0.9)-250,
+                          width:30,
+                          padding: EdgeInsets.only(bottom:20),
+                          decoration: BoxDecoration(
+                            // color: defaultPalette.secondary,
+                            borderRadius: BorderRadius.circular(50).copyWith(bottomLeft: Radius.circular(50), bottomRight: Radius.circular(0)),
+                          ),
+                          child: ScrollConfiguration(
+                                behavior: ScrollBehavior(),
+                                    // .copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                    durationMS: 200,
+                                    scrollSpeed: 1,
+                                    
+                                    builder: (context, controller, physics) {
+                                return ReorderableListView(
+                                    onReorder: (oldIndex, newIndex) {
+                                      setState(() {
+                                        if (newIndex > oldIndex) {
+                                          newIndex -= 1;
+                                        }
+                                        final item = sheetListItem.listDecoration.itemDecorationList.removeAt(oldIndex);
+                                        sheetListItem.listDecoration.itemDecorationList.insert(newIndex, item);
+                                      });
+                                    },
+                                    proxyDecorator: (child, index, animation) {
+                                      return child;
+                                    },
+                                    reverse: true,
+                                    buildDefaultDragHandles: false,
+                                    physics: physics,
+                                    scrollController: controller,
+                                    children: [
+                                      for (final entry in sheetListItem.listDecoration.itemDecorationList.asMap().entries)
+                                        ReorderableDragStartListener(
+                                          index: entry.key, // <-- index here
+                                          key: ValueKey(entry.value),
+                                          child: Stack(
+                                            children: [Container(
+                                              height: 20,
+                                              width: 30,
+                                              margin: EdgeInsets.only(bottom: 10),
+                                              padding: EdgeInsets.only(top: 4, left:15),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.tertiary,
+                                                borderRadius: BorderRadius.circular(50).copyWith(
+                                                  bottomRight: Radius.circular(100),
+                                                  bottomLeft: Radius.circular(0),
+                                                  topRight: Radius.circular(0),
+                                                ),
+                                              ),  
+                                            ),
+                                             Positioned(
+                                              bottom:8,
+                                              right:0,
+                                               child: CountingAnimation(
+                                                value: entry.key.toString(), 
+                                                mainAlignment: MainAxisAlignment.end,
+                                                singleScollDuration:  Durations.short1, 
+                                                
+                                                scrollCount: 2,
+                                                textStyle:GoogleFonts.bungee(
+                                                fontSize: 10,
+                                                foreground: Paint()..style = PaintingStyle.stroke..strokeWidth = 0.2..color=defaultPalette.primary,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: defaultPalette.extras[0],
+                                                    offset: Offset(0.1, 0.1)
+                                                  )
+                                                ]
+                                                ), ),
+                                             )
+                                            ]
+                                          ),
+                                        )
+                                                        
+                                    ],
+                                  );
+                              }
+                            ),
+                          )
+                        
+                        ),
+                      ), 
+                    ),
+                    Positioned(
+                      bottom:17,
+                      left:12,
+                      child: //minimize button
+                        ElevatedLayerButton(
+                          // isTapped: false,
+                          // toggleOnTap: true,
+                          subfac: 3,
+                          depth: 3,
+                          onClick: () {
+                            // Future.delayed(Duration.zero)
+                            //     .then((y) {
+                            //   appWindow.minimize();
+                            // });
+                            setState(() {
+                              showDecorationLayers = !showDecorationLayers;
+                            });
+                          },
+                          buttonHeight: 35,
+                          buttonWidth: 35,
+                          borderRadius:
+                              BorderRadius.circular(30),
+                          animationDuration:
+                              const Duration(milliseconds: 10),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(),
+                          ),
+                          topLayerChild: Icon(
+                            TablerIcons.stack_2,
+                            size: 18,
+                            // color: defaultPalette.tertiary
+                            // color: Colors.blue,
+                          ),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(),
+                          ),
+                        ),
+                    ),
+                    
+                  
                   ],
                   // Positioned.fill(child: Center(child: Text(sheetListItem.id))),
                   // Left and Right adjustments
@@ -18532,7 +18689,53 @@ List<Widget> buildDecorationEditor(
       final currentY = e.alignment.y;
 
       return Row(
+        //Row for selecting Alignment and displaying details.
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          SizedBox(width:35),
+          //DETAILS TEXT FOR ALIGNMENT
+          Expanded(
+            flex:12,
+            child: Container(
+              height:62,
+              decoration: BoxDecoration(
+                color: defaultPalette.extras[0],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children:[
+                  Text(
+                    'Align',
+                    style: GoogleFonts.bungee(
+                      color: defaultPalette.primary
+                    )
+                  ),
+                  Row(
+                    children:[
+                      RichText(
+                        text: TextSpan(
+                          style: GoogleFonts.lexend(
+                          color: defaultPalette.secondary,
+                          height: 1.2
+                        ),
+                          children: [
+                            TextSpan(
+                              text: currentY==-1? ' Top\n': currentY ==0? ' Center\n': ' Bottom\n',
+                            ),
+                            TextSpan(
+                              text: currentX==-1? ' Left': currentX ==0? ' Center': ' Right',
+                            ),
+                          ]
+                        ))
+                    ]
+                  )
+                ]
+              )
+            )),
+          SizedBox(width:2),
+          // TOGGLE SELECTION FOR ALIGNMENT
           Expanded(
             flex:10,
             child: Column(
@@ -18544,16 +18747,17 @@ List<Widget> buildDecorationEditor(
                   values: verticalAlignments,
                   iconList: [
                     Icon(TablerIcons.layout_align_top),
-                    Icon(TablerIcons.layout_align_center),
+                    Icon(TablerIcons.layout_align_middle),
                     Icon(TablerIcons.layout_align_bottom),
                   ],
                   styleBuilder: (value) {
                     return ToggleStyle(
                       indicatorColor: defaultPalette.tertiary,
-                      indicatorBorderRadius: BorderRadius.circular(500),
+                      indicatorBorderRadius: BorderRadius.circular(0),
                       borderColor:  defaultPalette.tertiary,
-                      backgroundColor: defaultPalette.primary
-                    );
+                      backgroundColor: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(10)
+                      );
                   },
                   onChanged: (value) {
                     setState(() {
@@ -18565,7 +18769,7 @@ List<Widget> buildDecorationEditor(
                   fittingMode: FittingMode.preventHorizontalOverlapping,
                   height: 30,
                 ),
-                SizedBox(height: 0),
+                SizedBox(height: 2),
             
                 // Left / Center / Right (X axis)
                 AnimatedToggleSwitch<double>.rolling(
@@ -18574,16 +18778,16 @@ List<Widget> buildDecorationEditor(
                   indicatorIconScale: 1, 
                   iconList: [
                     Icon(TablerIcons.layout_align_left),
-                    Icon(TablerIcons.layout_align_middle),
+                    Icon(TablerIcons.layout_align_center),
                     Icon(TablerIcons.layout_align_right),
                   ],
                   styleBuilder: (value) {
                     return ToggleStyle(
                       indicatorColor: defaultPalette.tertiary ,
-                      indicatorBorderRadius: BorderRadius.circular(500),
+                      indicatorBorderRadius: BorderRadius.circular( 0),
                       borderColor:  defaultPalette.tertiary,
                       backgroundColor: defaultPalette.primary,
-                      
+                      borderRadius: BorderRadius.circular(10) 
                     );
                   },
                   onChanged: (value) {
@@ -18593,6 +18797,7 @@ List<Widget> buildDecorationEditor(
                     });
                   },
                   borderWidth: 2,
+
                   fittingMode: FittingMode.preventHorizontalOverlapping,
                   height: 30,
                 ),
@@ -18600,7 +18805,7 @@ List<Widget> buildDecorationEditor(
               ],
             ),
           ),
-          Expanded(flex:12,child: SizedBox())
+          
         ],
       );
     }

@@ -4,8 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/widgets.dart';
+import 'package:pdf/widgets.dart' as pw; 
 
 part 'document_properties_model.g.dart';
 
