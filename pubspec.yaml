@@ -68,7 +68,7 @@ dependencies:
   smooth_scroll_multiplatform: ^1.0.8
   file_picker: ^8.0.7
   mobkit_dashed_border: ^0.0.8 
-  scrollbar_ultima: 
+  scrollbar_ultima: ^1.0.4
 
 
 dev_dependencies:

@@ -69,6 +69,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pie_menu/pie_menu.dart';
+import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'dart:math' as math;
 
@@ -4250,7 +4251,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 child: Container(
                                   color: Colors.transparent,
                                   height: sHeight,
-                                  width: 10,
+                                  width: 5,
                                 ),
                               ),
                             )),
@@ -14768,6 +14769,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           print(
                                                               'tapped to add new decoration ');
                                                           setState(() {
+                                                            if (sheetListItem
+                                                                      .listDecoration
+                                                                      .itemDecorationList.length<70) {
                                                             sheetListItem
                                                                     .listDecoration =
                                                                 sheetListItem
@@ -14789,9 +14793,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                           border:
                                                                               Border.all())),
                                                                 ]);
-                                                          });
-                                                          print(
+                                                                print(
                                                               'new decoration added');
+                                                          } else {
+                                                            print(
+                                                              'guys come on, turn this into a super now');
+                                                          }
+                                                          });
+                                                          
                                                         },
                                                         child: Icon(TablerIcons
                                                             .sparkles)),
@@ -14932,118 +14941,159 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     }))),
                       ),
                     ),
+                    //BLACK STRIP ANIMATED OF DECORATION LAYERs BACKGRGOUND
                     AnimatedPositioned(
                       duration: Durations.medium1,
-                      curve: Curves.easeInExpo,
-                      bottom:30,
-                      left:showDecorationLayers?12:12,
+                      curve: Curves.easeOut,
+                      bottom:32,
+                      left:showDecorationLayers?12.5:12,
                       child:AnimatedContainer(
-                        duration:Durations.medium1,
+                        duration:Durations.medium4,
                         curve: Curves.easeInOut,
-                        height:showDecorationLayers?(sHeight*0.9)-245:0,
+                        height:showDecorationLayers?(sHeight*0.9)-240:0,
                         width:25,
+                        padding: EdgeInsets.only(left:5),
+                        alignment: Alignment.bottomCenter,
                         decoration: BoxDecoration(
                           color: defaultPalette.extras[0],
-                          borderRadius: BorderRadius.circular(50).copyWith(bottomLeft: Radius.circular(50), bottomRight: Radius.circular(0)),
+                          borderRadius: BorderRadius.circular(showDecorationLayers?50:0).copyWith(bottomLeft: Radius.circular(0)),
                         ),
+                        child: Text('Decor \n\nLayers \n \n     ', style: GoogleFonts.bungee(
+                          color: defaultPalette.primary.withAlpha(100),
+                          fontSize:10
+                          ) ),
                       ), 
                     ),
+                    //LAYERS OF DECORATION AS TILES REORDERABLE 
                     AnimatedPositioned(
                       duration: Durations.medium3,
                       curve: Curves.easeInBack,
                       bottom:30,
-                      left:showDecorationLayers?14:-50,
+                      left:showDecorationLayers?6.5:-50,
                       child:ClipRRect(
-                        borderRadius: BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(50), bottomRight: Radius.circular(0)),
+                        borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(5), bottomRight: Radius.circular(5)),
                           
                         child: AnimatedContainer(
                           duration:Durations.medium1,
                           curve: Curves.easeInOut,
                           height: (sHeight*0.9)-250,
-                          width:30,
-                          padding: EdgeInsets.only(bottom:20),
+                          width:38,
+                          padding: EdgeInsets.only(bottom:10),
                           decoration: BoxDecoration(
                             // color: defaultPalette.secondary,
-                            borderRadius: BorderRadius.circular(50).copyWith(bottomLeft: Radius.circular(50), bottomRight: Radius.circular(0)),
+                            borderRadius: BorderRadius.circular(50).copyWith(bottomLeft: Radius.circular(0), bottomRight: Radius.circular(0)),
                           ),
                           child: ScrollConfiguration(
-                                behavior: ScrollBehavior(),
-                                    // .copyWith(scrollbars: false),
+                                behavior: ScrollBehavior()
+                                    .copyWith(scrollbars: false),
                                 child: DynMouseScroll(
-                                    durationMS: 200,
+                                    durationMS: 500,
                                     scrollSpeed: 1,
-                                    
                                     builder: (context, controller, physics) {
-                                return ReorderableListView(
+                                return ScrollbarUltima.semicircle (
+                                  alwaysShowThumb: true, 
+                                  controller: controller,
+                                  scrollbarPosition: ScrollbarPosition.left, 
+                                  backgroundColor: defaultPalette.extras[0],
+                                  scrollbarLength: (sHeight*0.9)-270, 
+                                  isDraggable: true, 
+                                  thumbCrossAxisSize: 5,
+                                  thumbMainAxisSize: 80,
+                                  elevation: 0,
+                                  arrowsColor: defaultPalette.primary, 
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left:8.0),
+                                    child: ReorderableListView(
                                     onReorder: (oldIndex, newIndex) {
                                       setState(() {
-                                        if (newIndex > oldIndex) {
-                                          newIndex -= 1;
+                                        final itemList = sheetListItem.listDecoration.itemDecorationList;
+
+                                        final int reversedOldIndex = itemList.length - 1 - oldIndex;
+                                        int reversedNewIndex = itemList.length - 1 - newIndex;
+
+                                        // Fix: clamp new index to minimum 0
+                                        if (reversedOldIndex < reversedNewIndex) {
+                                          reversedNewIndex = reversedNewIndex.clamp(0, itemList.length);
+                                        } else {
+                                          reversedNewIndex = reversedNewIndex.clamp(0, itemList.length);
                                         }
-                                        final item = sheetListItem.listDecoration.itemDecorationList.removeAt(oldIndex);
-                                        sheetListItem.listDecoration.itemDecorationList.insert(newIndex, item);
+
+                                        final item = itemList.removeAt(reversedOldIndex);
+                                        itemList.insert(reversedNewIndex, item);
                                       });
                                     },
                                     proxyDecorator: (child, index, animation) {
                                       return child;
                                     },
-                                    reverse: true,
                                     buildDefaultDragHandles: false,
                                     physics: physics,
                                     scrollController: controller,
                                     children: [
-                                      for (final entry in sheetListItem.listDecoration.itemDecorationList.asMap().entries)
+                                      for (final entry in sheetListItem.listDecoration.itemDecorationList.asMap().entries.toList().reversed)
                                         ReorderableDragStartListener(
-                                          index: entry.key, // <-- index here
+                                          index: sheetListItem.listDecoration.itemDecorationList.length - 1 - entry.key,
                                           key: ValueKey(entry.value),
                                           child: Stack(
-                                            children: [Container(
-                                              height: 20,
-                                              width: 30,
-                                              margin: EdgeInsets.only(bottom: 10),
-                                              padding: EdgeInsets.only(top: 4, left:15),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.tertiary,
-                                                borderRadius: BorderRadius.circular(50).copyWith(
-                                                  bottomRight: Radius.circular(100),
-                                                  bottomLeft: Radius.circular(0),
-                                                  topRight: Radius.circular(0),
+                                            children: [
+                                              AnimatedContainer(
+                                                duration: Duration(
+                                                 milliseconds: (500 + 
+                                                 (400/(
+                                                  (sheetListItem.listDecoration.itemDecorationList.length==1
+                                                  ?2
+                                                  :sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
+                                                  * entry.key).round()  
                                                 ),
-                                              ),  
-                                            ),
-                                             Positioned(
-                                              bottom:8,
-                                              right:0,
-                                               child: CountingAnimation(
-                                                value: entry.key.toString(), 
-                                                mainAlignment: MainAxisAlignment.end,
-                                                singleScollDuration:  Durations.short1, 
-                                                
-                                                scrollCount: 2,
-                                                textStyle:GoogleFonts.bungee(
-                                                fontSize: 10,
-                                                foreground: Paint()..style = PaintingStyle.stroke..strokeWidth = 0.2..color=defaultPalette.primary,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: defaultPalette.extras[0],
-                                                    offset: Offset(0.1, 0.1)
-                                                  )
-                                                ]
-                                                ), ),
-                                             )
-                                            ]
+                                                curve: Curves.easeIn,
+                                                height:(((sHeight*0.9)-250)/10.3).clamp(0, 50),
+                                                alignment: Alignment.bottomLeft, // Set pivot to bottom-left
+                                                  transform: Matrix4.identity()
+                                                    ..translate(showDecorationLayers?0.0:(-((sHeight*0.9)-250)/10).clamp(double.negativeInfinity, 50))
+                                                    ..rotateZ(showDecorationLayers?0: -math.pi / 2),
+                                                margin: EdgeInsets.only(bottom: 5, right:showDecorationLayers? 0: (10*entry.key)+1),
+                                                padding: EdgeInsets.only(top: 4, left:15),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.tertiary,
+                                                  borderRadius: BorderRadius.circular(showDecorationLayers? 5:500).copyWith(
+                                                    // bottomRight: Radius.circular(0),
+                                                    // bottomLeft: Radius.circular(0),
+                                                    // topRight: Radius.circular(30),
+                                                  ), 
+                                                ),
+                                              ),
+                                              Positioned(
+                                                bottom:(((sHeight*0.9)-250)/10).clamp(0, 50)/2,
+                                                right: 2,
+                                                child: CountingAnimation(
+                                                  value: (entry.key).toString(),
+                                                  mainAlignment: MainAxisAlignment.end,
+                                                  singleScollDuration: Durations.short1,
+                                                  scrollCount: 2,
+                                                  textStyle: GoogleFonts.bungee(
+                                                    fontSize:10,
+                                                    color: defaultPalette.extras[0], 
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        )
-                                                        
+                                        ),
+                                        SizedBox(
+                                          key: ValueKey('rty'),
+                                          height:10)
                                     ],
-                                  );
-                              }
-                            ),
+                                  ),
+
+                                  ),
+                                );
+                                                              }
+                                                            ),
                           )
                         
                         ),
                       ), 
                     ),
+                    //BUTTON SHOW LAYER OF DECORATION
                     Positioned(
                       bottom:17,
                       left:12,
