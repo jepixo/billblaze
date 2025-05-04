@@ -99,6 +99,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
     setState(() {
       _setExpansionState(_roots, true);
     });
+    // _notifyExpansionChanged();
   }
 
   /// Collapses all nodes in the tree.
@@ -106,6 +107,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
     setState(() {
       _setExpansionState(_roots, false);
     });
+    // _notifyExpansionChanged();
   }
 
   /// Sets the selected values in the tree.
@@ -486,7 +488,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
       node._isExpanded = isExpanded;
       _setExpansionState(node.children, isExpanded);
     }
-
+    _notifyExpansionChanged();
   }
 
   void _updateSelectAllState() {
@@ -532,8 +534,21 @@ class TreeViewState<T> extends State<TreeView<T>> {
   void _toggleExpandCollapseAll() {
     setState(() {
       _isAllExpanded = !_isAllExpanded;
-      _setExpansionState(_roots, _isAllExpanded);
+      var expansionvalues = _getExpandedValues(_roots);
+      if (expansionvalues[1] &&
+    expansionvalues[6] &&
+    expansionvalues[11] &&
+    expansionvalues[16] &&
+    expansionvalues[26] &&
+    expansionvalues[31]){
+      _isAllExpanded = true;
+    } else {
+      _isAllExpanded = false;
+    }
+    
+    _setExpansionState(_roots, !_isAllExpanded);
     });
+    _notifyExpansionChanged();
   }
 
   @override
@@ -564,78 +579,37 @@ class TreeViewState<T> extends State<TreeView<T>> {
                                   widget.showExpandCollapseButton)
                                 Padding(
                                   padding:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                      const EdgeInsets.symmetric(vertical: 0.0),
                                   child: MouseRegion(
                                     cursor: SystemMouseCursors.click,
                                     child: InkWell(
+                                      hoverColor:  defaultPalette.extras[1],
+                                      splashColor: defaultPalette.extras[1],
+                                      highlightColor:  defaultPalette.extras[1],
                                       onTap: () {
-                                        if (widget.showSelectAll) {
-                                          setState(() {
-                                            _isAllSelected = !_isAllSelected;
-                                          });
-                                          _handleSelectAll(_isAllSelected);
-                                        }
+                                        _toggleExpandCollapseAll();
+                                      },
+                                      onDoubleTap: () {
+                                        setState(() {
+                                          _roots[0]._isExpanded =!_roots[0]._isExpanded; 
+                                        });
                                       },
                                       child: Row(
                                         children: [
-                                          SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: widget.showExpandCollapseButton
-                                                ? IconButton(
-                                                    icon: Icon(_isAllExpanded
-                                                        ? Icons.unfold_less
-                                                        : Icons.unfold_more),
-                                                    padding: EdgeInsets.zero,
-                                                    constraints:
-                                                        const BoxConstraints(),
-                                                    onPressed:
-                                                        _toggleExpandCollapseAll,
-                                                  )
-                                                : const SizedBox(),
-                                          ),
+                                          Expanded(child: Text(' Properties', 
+                                          style:GoogleFonts.lexend(
+                                        fontSize:13,
+                                        color: defaultPalette.extras[0]
+                                      ))),
                                           if (widget.showSelectAll)
-                                            SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: Checkbox(
-                                                value: _isAllSelected,
-                                                onChanged: _handleSelectAll,
-                                                materialTapTargetSize:
-                                                    MaterialTapTargetSize
-                                                        .shrinkWrap,
+                                             
+                                            customTriCheckbox(
+                                              value:  _isAllSelected, 
+                                              onChanged: _handleSelectAll,
+                                              activeColor: defaultPalette.extras[0],
+                                              size: 21
                                               ),
-                                            ),
-                                          if (widget.showSelectAll)
-                                            Expanded(
-                                              child: Padding(
-                                                  padding: const EdgeInsets.only(
-                                                      left: 4),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      if (widget
-                                                              .selectAllWidget !=
-                                                          null)
-                                                        widget.selectAllWidget!,
-                                                      if (widget
-                                                              .selectAllTrailing !=
-                                                          null)
-                                                        Expanded(
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsetsDirectional
-                                                                    .only(
-                                                                    end: 12),
-                                                            child: widget
-                                                                    .selectAllTrailing!(
-                                                                context)),
-                                                        ),
-                                                    ],
-                                                  )),
-                                            ),
+                                         
                                         ],
                                       ),
                                     ),

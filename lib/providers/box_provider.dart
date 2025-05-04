@@ -29,28 +29,28 @@ class Boxes {
     return 'Untitled-${highestNumber + 1}';
   }
 
-  static Future<void> saveSuperDecoration(SuperDecoration newDecoration) async {
+  static Future<void> saveSuperDecoration(SuperDecorationBox newDecoration) async {
   Box<SheetDecoration> box = Boxes.getDecorations();
 
   // If id exists, overwrite; otherwise, insert as new (same method)
   await box.put(newDecoration.id, newDecoration);
 }
 
-static SuperDecoration getSuperDecoration(String id){
+static SuperDecorationBox getSuperDecoration(String id){
   Box<SheetDecoration> decorations = Boxes.getDecorations();
 
   return decorations.values.firstWhere(
     (decoration) {
-      print(decoration);
-      return decoration.id == id && decoration is SuperDecoration;
+      print('getSuperDecoration: '+decoration.id+' '+decoration.runtimeType.toString());
+      return decoration.id == id && decoration is SuperDecorationBox;
       },
     orElse: () {
       String newDecoId = Uuid().v4();
       print('newonehas to be added in the decoBox unfort: '+ newDecoId);
       SuperDecoration newSuperDecoration = SuperDecoration(id: newDecoId);
-      Boxes.saveSuperDecoration(newSuperDecoration);
+      Boxes.saveSuperDecoration(newSuperDecoration.toSuperDecorationBox());
       return getSuperDecoration(newDecoId);},
-  ) as SuperDecoration;
+  ) as SuperDecorationBox;
 }
 
 

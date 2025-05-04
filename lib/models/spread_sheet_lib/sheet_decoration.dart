@@ -46,6 +46,14 @@ class SuperDecorationBox extends SheetDecoration{
     super.name = 'Untitled',
     this.itemDecorationList = const [],
   });
+
+  SuperDecoration toSuperDecoration() {
+    return SuperDecoration(
+      id: id,
+      name: name,
+      itemDecorationList: decodeItemDecorationList(itemDecorationList)
+      );
+  }
 }
 
 @HiveType(typeId: 8)
@@ -66,8 +74,7 @@ class ItemDecoration extends SheetDecoration{
   final BoxDecoration decoration;
   final Alignment alignment;
   final Matrix4? transform;
-  final BoxDecoration foregroundDecoration;
-  final double dashLength;
+  final BoxDecoration foregroundDecoration; 
   final Map<String, dynamic> pinned;
 
   ItemDecoration({
@@ -78,8 +85,7 @@ class ItemDecoration extends SheetDecoration{
     this.decoration = const BoxDecoration(),
     this.alignment = const Alignment(0, 0),
     this.foregroundDecoration = const BoxDecoration(),
-    this.transform,
-    this.dashLength = 0,
+    this.transform, 
     Map<String, dynamic>? pinned,
   }) : pinned = pinned?? defaultPins() ;
 
@@ -90,18 +96,17 @@ class ItemDecoration extends SheetDecoration{
       'name': name,
       'padding': [padding.top, padding.bottom, padding.left, padding.right],
       'margin': [margin.top, margin.bottom, margin.left, margin.right],
-      'decoration': _boxDecorationToJson(decoration, dashLength!=0),
+      'decoration': _boxDecorationToJson(decoration ),
       'alignment': [alignment.x, alignment.y],
       'transform': transform?.storage,
-      'foregroundDecoration': _boxDecorationToJson(foregroundDecoration, dashLength!=0),
-      'dashLength': dashLength,
+      'foregroundDecoration': _boxDecorationToJson(foregroundDecoration), 
       'pinned': pinned,
 
     };
   }
 
   // ✅ Convert the ItemDecoration from JSON
-  factory ItemDecoration.fromJson(Map<String, dynamic> json) {
+  factory ItemDecoration.fromJson(Map<dynamic, dynamic> json) {
     return ItemDecoration(
       padding: EdgeInsets.fromLTRB(
         json['padding'][2] ?? 0.0, // left
@@ -115,7 +120,7 @@ class ItemDecoration extends SheetDecoration{
         json['margin'][3] ?? 0.0, // right
         json['margin'][1] ?? 0.0, // bottom
       ),
-      decoration: _boxDecorationFromJson(json['decoration'],  json['dashLength']!=0),
+      decoration: _boxDecorationFromJson(json['decoration'], ),
       alignment: Alignment(
         json['alignment'][0] ?? 0.0,
         json['alignment'][1] ?? 0.0,
@@ -123,7 +128,7 @@ class ItemDecoration extends SheetDecoration{
       transform: json['transform'] != null
           ? Matrix4.fromList(List<double>.from(json['transform']))
           : null,
-      foregroundDecoration: _boxDecorationFromJson(json['foregroundDecoration'], json['dashLength']!=0), 
+      foregroundDecoration: _boxDecorationFromJson(json['foregroundDecoration'], ), 
       id: json['id'], 
       name: json['name'],
       pinned: Map<String, dynamic>.from(json['pinned'] ?? defaultPins()),
@@ -131,7 +136,7 @@ class ItemDecoration extends SheetDecoration{
   }
 
   // ✅ Helper for BoxDecoration to JSON
-  static Map<String, dynamic> _boxDecorationToJson(BoxDecoration decoration, bool dashed) {
+  static Map<String, dynamic> _boxDecorationToJson(BoxDecoration decoration ) {
     return {
       'color': decoration.color?.value,
       'border': decoration.border != null
@@ -193,13 +198,13 @@ class ItemDecoration extends SheetDecoration{
   }
 
   //  Helper for JSON to BoxDecoration
-  static BoxDecoration _boxDecorationFromJson(Map<String, dynamic>? json, bool dashed) {
+  static BoxDecoration _boxDecorationFromJson(Map<dynamic, dynamic>? json, ) {
     if (json == null) return const BoxDecoration();
 
     return BoxDecoration(
       color: json['color'] != null ? Color(json['color']) : null,
       border: json['border'] != null
-    ? json['dashLength'] != 0
+    ? json['border']['dashLength'] != null
         ? DashedBorder(
             left: _borderSideFromJson(json['border']['left']),
             right: _borderSideFromJson(json['border']['right']),
@@ -289,7 +294,7 @@ class ItemDecoration extends SheetDecoration{
   }
 
   // ✅ Helper for Gradient to JSON
-  static Map<String, dynamic>? _gradientToJson(Gradient? gradient) {
+  static Map<dynamic, dynamic>? _gradientToJson(Gradient? gradient) {
     if (gradient is LinearGradient) {
       return {
         'type': 'linear',
@@ -301,7 +306,7 @@ class ItemDecoration extends SheetDecoration{
     return null;
   }
 
-  static Gradient? _gradientFromJson(Map<String, dynamic>? json) {
+  static Gradient? _gradientFromJson(Map<dynamic, dynamic>? json) {
     if (json == null) return null;
     if (json['type'] == 'linear') {
       return LinearGradient(
@@ -321,7 +326,7 @@ class ItemDecoration extends SheetDecoration{
   }
 
   // ✅ Helper for JSON to BorderSide
-  static BorderSide _borderSideFromJson(Map<String, dynamic>? json) {
+  static BorderSide _borderSideFromJson(Map<dynamic, dynamic>? json) {
     if (json == null) return BorderSide.none;
     return BorderSide(
       width: json['width'] ?? 0.0,
@@ -337,8 +342,7 @@ class ItemDecoration extends SheetDecoration{
     BoxDecoration? decoration,
     Alignment? alignment,
     Matrix4? transform,
-    BoxDecoration? foregroundDecoration,
-    double? dashLength,
+    BoxDecoration? foregroundDecoration, 
     Map<String, dynamic>? pinned,
   }) {
     return ItemDecoration(
@@ -349,8 +353,7 @@ class ItemDecoration extends SheetDecoration{
       decoration: decoration ?? this.decoration,
       alignment: alignment ?? this.alignment,
       transform: transform ?? this.transform,
-      foregroundDecoration: foregroundDecoration ?? this.foregroundDecoration,
-      dashLength: dashLength ?? this.dashLength,
+      foregroundDecoration: foregroundDecoration ?? this.foregroundDecoration, 
       pinned: pinned ?? this.pinned,
     );
   }
@@ -433,7 +436,7 @@ class SuperDecoration extends SheetDecoration {
   }
 
   // ✅ Convert from JSON
-  factory SuperDecoration.fromJson(Map<String, dynamic> json) {
+  factory SuperDecoration.fromJson(Map<dynamic, dynamic> json) {
     return SuperDecoration(
       id: json['id'] ?? '',
       name: json['name'] ?? 'Untitled',
@@ -451,6 +454,15 @@ class SuperDecoration extends SheetDecoration {
       itemDecorationList: itemDecorationList ?? this.itemDecorationList,
     );
   }
+
+  SuperDecorationBox toSuperDecorationBox() {
+    return SuperDecorationBox(
+      id: id,
+      name: name,
+      itemDecorationList:encodeItemDecorationList(itemDecorationList)  
+      );
+  }
+
 }
 
  
