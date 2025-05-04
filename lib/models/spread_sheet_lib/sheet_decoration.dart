@@ -1,5 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
@@ -65,6 +68,7 @@ class ItemDecoration extends SheetDecoration{
   final Matrix4? transform;
   final BoxDecoration foregroundDecoration;
   final double dashLength;
+  final Map<String, dynamic> pinned;
 
   ItemDecoration({
     required super.id,
@@ -76,7 +80,8 @@ class ItemDecoration extends SheetDecoration{
     this.foregroundDecoration = const BoxDecoration(),
     this.transform,
     this.dashLength = 0,
-  }) ;
+    Map<String, dynamic>? pinned,
+  }) : pinned = pinned?? defaultPins() ;
 
   // ✅ Convert the ItemDecoration to JSON
   Map<String, dynamic> toJson() {
@@ -90,6 +95,7 @@ class ItemDecoration extends SheetDecoration{
       'transform': transform?.storage,
       'foregroundDecoration': _boxDecorationToJson(foregroundDecoration, dashLength!=0),
       'dashLength': dashLength,
+      'pinned': pinned,
 
     };
   }
@@ -119,7 +125,8 @@ class ItemDecoration extends SheetDecoration{
           : null,
       foregroundDecoration: _boxDecorationFromJson(json['foregroundDecoration'], json['dashLength']!=0), 
       id: json['id'], 
-      name: json['name']
+      name: json['name'],
+      pinned: Map<String, dynamic>.from(json['pinned'] ?? defaultPins()),
     );
   }
 
@@ -332,6 +339,7 @@ class ItemDecoration extends SheetDecoration{
     Matrix4? transform,
     BoxDecoration? foregroundDecoration,
     double? dashLength,
+    Map<String, dynamic>? pinned,
   }) {
     return ItemDecoration(
       id: id ?? this.id,
@@ -343,9 +351,68 @@ class ItemDecoration extends SheetDecoration{
       transform: transform ?? this.transform,
       foregroundDecoration: foregroundDecoration ?? this.foregroundDecoration,
       dashLength: dashLength ?? this.dashLength,
+      pinned: pinned ?? this.pinned,
     );
   }
 }
+
+Map<String, dynamic> defaultPins() => {
+    'padding': {
+      'isPinned': true,
+      'top': true,
+      'bottom': true,
+      'left': true,
+      'right': true,
+    },
+    'margin': {
+      'isPinned': true,
+      'top': true,
+      'bottom': true,
+      'left': true,
+      'right': true,
+    },
+    'decoration': {
+      'isPinned': true,
+      'color': true,
+      'border': true,
+      'borderRadius': true,
+      'boxShadow': true,
+      'image': {
+        'isPinned': true,
+        'bytes': true,
+        'fit': false,
+        'repeat': false,
+        'alignment': false,
+        'scale': false,
+        'opacity': false,
+        'filterQuality': false,
+        'invertColors': false,
+      }, 
+      'backgroundBlendMode': true,
+    }, 
+    'transform': {
+      'isPinned': false,
+    },
+    'foregroundDecoration': {
+      'isPinned': false,
+      'color': false,
+      'border': false,
+      'borderRadius': false,
+      'boxShadow': false,
+      'image': {
+        'isPinned': false,
+        'bytes': false,
+        'fit': false,
+        'repeat': false,
+        'alignment': false,
+        'scale': false,
+        'opacity': false,
+        'filterQuality': false,
+        'invertColors': false,
+      }, 
+      'backgroundBlendMode': false,
+    }, 
+  };
 
 class SuperDecoration extends SheetDecoration {
   List<SheetDecoration> itemDecorationList;
@@ -376,10 +443,11 @@ class SuperDecoration extends SheetDecoration {
 
   SuperDecoration copyWith({
     List<SheetDecoration>? itemDecorationList,
+    String? name,
   }) {
     return SuperDecoration(
       id: id,
-      name: name,
+      name: name ?? this.name,
       itemDecorationList: itemDecorationList ?? this.itemDecorationList,
     );
   }
@@ -413,18 +481,3 @@ List<SheetDecoration> decodeItemDecorationList(List<dynamic> list) {
 }
 
 
-SuperDecoration getSuperDecoration(String id){
-  Box<SheetDecoration> decorations = Boxes.getDecorations();
-
-  return decorations.values.firstWhere(
-    (decoration) {
-      print(decoration);
-      return decoration.id == id && decoration is SuperDecoration;
-      },
-    orElse: () {
-      String newDecoId = Uuid().v4();
-      SuperDecoration newSuperDecoration = SuperDecoration(id: newDecoId);
-      Boxes.saveSuperDecoration(newSuperDecoration);
-      return getSuperDecoration(newDecoId);},
-  ) as SuperDecoration;
-}

@@ -12,7 +12,10 @@ import 'package:billblaze/components/pickers/wheel_picker.dart';
 import 'package:billblaze/components/switcher_button.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
 import 'package:billblaze/components/widgets/hex_picker.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart'; 
+import 'package:cool_background_animation/cool_background_animation.dart';
+import 'package:cool_background_animation/custom_model/bubble_model.dart';
+import 'package:cool_background_animation/custom_model/rainbow_config.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
@@ -75,6 +78,7 @@ import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
 
+import '../components/checkable_treeview/treeview.dart';
 import '../components/elevated_button.dart';
 
 class PanelIndex {
@@ -209,7 +213,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   List<DocumentProperties> documentPropertiesList = [];
   double textFieldHeight = 40;
   double presuConstraintsMinW = 20;
-  double pdfPreviewPaddingScaleFactor = 1;
+  double pdfPreviewPaddingScaleFactor = 1; 
   FocusNode marginAllFocus = FocusNode();
   FocusNode marginTopFocus = FocusNode();
   FocusNode marginBottomFocus = FocusNode();
@@ -248,7 +252,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       return FocusNode();
     },
   );
-
+  List<bool> expansionLevels = [false,false,false,false,false,false];
   zz.TransformationController transformationcontroller =
       zz.TransformationController();
   late TabController tabcunt;
@@ -304,7 +308,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   List<Uint8List> _images = [];
   var filteredFonts = [];
   late LayoutModel? lm;
-  GlobalKey spreadSheetKey = GlobalKey();
+  GlobalKey spreadSheetKey = GlobalKey(); 
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
   Color dialogSelectColor = Color(0xFF000000);
@@ -313,9 +317,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   SystemMouseCursor _cursor = SystemMouseCursors.basic;
   Timer? _timer;
   TextEditingController layoutName = TextEditingController();
+  TextEditingController decorationName = TextEditingController();
+  int decorationIndex = -1;
   late String initialLayoutName;
   bool nameExists = false;
   final FocusNode layoutNamefocusNode = FocusNode();
+  final FocusNode decorationNamefocusNode = FocusNode();
   int whichPropertyTabIsClicked = 1;
   int whichTextPropertyTabIsClicked = 0;
   int whichListPropertyTabIsClicked = 0;
@@ -368,7 +375,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       key = Random().nextInt(100000);
       keyIndex = box.length;
       box.put(key, lm!);
-      print(key);
+      // print(key);
       lm!.save();
       Future.delayed(Duration.zero).then(
         (value) {
@@ -376,21 +383,21 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         },
       ).then(
         (value) {
-          print(Boxes.getLayouts().get(key)?.docPropsList);
+          // print(Boxes.getLayouts().get(key)?.docPropsList);
         },
       );
     } else {
       // _addPdfPage();
       print('reaches else in init');
-      print(key);
+      // print(key);
       lm = box.get(key);
-      print(box.get(key));
-      print(lm?.docPropsList);
+      // print(box.get(key));
+      // print(lm?.docPropsList);
       spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
       layoutName.text = lm!.name;
       initialLayoutName = layoutName.text;
-      print(documentPropertiesList.isEmpty);
+      // print(documentPropertiesList.isEmpty);
     }
     if (documentPropertiesList.isEmpty) {
       _addPdfPage();
@@ -405,13 +412,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     fontsTabContainerController = TabController(length: 6, vsync: this);
     fontsTabContainerController.animateTo(1);
     fontsTabContainerController.addListener(() {
-      setState(() {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        setState(() {
         // Update the category based on current tab index
-        selectedFontCategory = fontsTabContainerController.index == 0
+        if (whichPropertyTabIsClicked ==2 ) {
+          selectedFontCategory = fontsTabContainerController.index == 0
             ? 'search'
             : categorizedFonts.keys
-                .elementAt(fontsTabContainerController.index - 1);
+              .elementAt(fontsTabContainerController.index - 1);
+}
       });
+      },);
+      
     });
     textPropertyTabContainerController = TabController(length: 3, vsync: this);
     textPropertyTabContainerController.addListener(() {
@@ -470,8 +482,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     _timer?.cancel();
     pageViewIndicatorController.dispose();
     textStyleTabControler.dispose();
-    propertyCardsController.dispose();
-    // pdfScrollController.dispose();
+    propertyCardsController.dispose(); 
     transformationcontroller.dispose();
     super.dispose();
   }
@@ -1872,7 +1883,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
     var id = const Uuid().v4();
     var decoId = const Uuid().v4();
-    var newSuperDecoration = SuperDecoration(id: decoId);
+    var newSuperDecoration = SuperDecoration(id: decoId, itemDecorationList: [ItemDecoration(id: Uuid().v4())]);
+    print((newSuperDecoration.itemDecorationList[0] as ItemDecoration).pinned['padding']);
     print('pageCount in addpage: $pageCount');
     DocumentProperties newdoc = DocumentProperties(
       pageNumberController:
@@ -1888,10 +1900,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     setState(() {
       documentPropertiesList.add(newdoc);
     });
-    print('in addpage newdoc: $newdoc');
+    // print('in addpage newdoc: $newdoc');
     lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
     lm[keyIndex].save();
-    print('inaddpage after addinbox docprop: ${lm[keyIndex].docPropsList}');
+    // print('inaddpage after addinbox docprop: ${lm[keyIndex].docPropsList}');
     SheetList newsheetlist = SheetList(
         id: id,
         parentId: parentId,
@@ -1906,10 +1918,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         .save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
     Boxes.saveSuperDecoration(newSuperDecoration);
     setState(() {
-      print('pageCount in addpage after: $pageCount');
+      // print('pageCount in addpage after: $pageCount');
       selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
-      print('id : $id');
-      print(selectedIndex);
+      // print('id : $id');
+      // print(selectedIndex);
       // pageCount++;
     });
   }
@@ -2270,6 +2282,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           sheetList: [],
           listDecoration: SuperDecoration(id: ''));
     }
+    setState(() {
+      decorationName.text = sheetListItem.listDecoration.name;
+      decorationIndex = 0;
+    });
   }
 
   Future<void> _unfocusAll() {
@@ -3688,10 +3704,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         onClick: () {
                                           setState(() {
                                             whichPropertyTabIsClicked = 1;
-                                            propertyCardsController.animateTo(
-                                                Offset(1, 1),
-                                                duration: Duration.zero,
-                                                curve: Curves.linear);
+                                            // propertyCardsController.animateTo(
+                                            //     Offset(1, 1),
+                                            //     duration: Duration.zero,
+                                            //     curve: Curves.linear);
                                           });
                                         },
                                         buttonHeight: 50,
@@ -4188,6 +4204,17 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 padding: EdgeInsets.only(top: 73),
                                 child: FadeInLeft(child: _getProperTiesCards()),
                               ),
+                              //the place to render the preview for decoration before displaying
+                              // Positioned(
+                              //   left: -1000, // Move off-screen
+                              //   top: -1000,
+                              //   height: sHeight/5,
+                              //   width: sHeight/5,
+                              //   child: RepaintBoundary(
+                              //     key: previewBoxKey,
+                              //     child:  buildDecoratedContainer(sheetListItem.listDecoration, SizedBox(width:30,height:30), true),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
@@ -14731,216 +14758,641 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                   if (index == 1) ...[
                     Positioned.fill(
-                      child: Padding(
+                      child: AnimatedPadding(
+                        duration: Durations.medium1,
                         padding:
-                            EdgeInsets.all(17).copyWith(right: 15, left: 12),
+                            EdgeInsets.all(17.2).copyWith(right: 15, left: 12.2),
                         child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: ScrollConfiguration(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Column(
+                            children: [
+                              //DECO TITLE 
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment
+                                        .spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  //Black Strips and circlebutton elevated on upper half
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      GestureDetector(
+                                        onTap:(){
+                                           setState(() {
+                                          if (sheetListItem
+                                                    .listDecoration
+                                                    .itemDecorationList.length<70) {
+                                          sheetListItem
+                                                  .listDecoration =
+                                              sheetListItem
+                                                  .listDecoration
+                                                  .copyWith(
+                                                      itemDecorationList: [
+                                                ...sheetListItem
+                                                    .listDecoration
+                                                    .itemDecorationList,
+                                                    SuperDecoration(id: Uuid().v4())
+                                                 , 
+                                              ]);
+                                              print(
+                                            'new decoration added');
+                                        } else {
+                                          print(
+                                            'guys come on, turn this into a super now');
+                                        }
+                                        });
+                                        },
+                                        child: AnimatedContainer(
+                                          duration:Durations.medium4,
+                                          curve: Curves.easeInOut,
+                                          height:32,
+                                          width:32,
+                                          child: Icon(TablerIcons.balloon, size:20,
+                                          color: defaultPalette.primary),
+                                          // padding: EdgeInsets.only(left:5), 
+                                          decoration: BoxDecoration(
+                                            color: defaultPalette.extras[0],
+                                            borderRadius: BorderRadius.circular(500) ,
+                                          ),  
+                                        ),
+                                      ), 
+                                      SizedBox(height:3),
+                                      //add new itemdecoration Layer
+                                      ElevatedLayerButton( 
+                                        subfac: 2,
+                                        depth:2,
+                                        onClick: ()  { 
+                                          print(
+                                            'tapped to add new decoration ');
+                                        setState(() {
+                                          if (sheetListItem
+                                                    .listDecoration
+                                                    .itemDecorationList.length<70) {
+                                          sheetListItem
+                                                  .listDecoration =
+                                              sheetListItem
+                                                  .listDecoration
+                                                  .copyWith(
+                                                      itemDecorationList: [
+                                                ...sheetListItem
+                                                    .listDecoration
+                                                    .itemDecorationList,
+                                                ItemDecoration(
+                                                    pinned: defaultPins(),
+                                                    id: Uuid()
+                                                        .v4(),
+                                                    padding:
+                                                        EdgeInsets.all(
+                                                            5),
+                                                    decoration: BoxDecoration(
+                                                        color: defaultPalette
+                                                            .tertiary,
+                                                        border:
+                                                            Border.all())),
+                                              ]);
+                                              print(
+                                            'new decoration added'); 
+                                            print(defaultPins()['padding']['isPinned']);
+                                        } else {
+                                          print(
+                                            'guys come on, turn this into a super now');
+                                        }
+                                        }); 
+                                        },
+                                        buttonHeight: 25,
+                                        buttonWidth: 25,
+                                        borderRadius:
+                                            BorderRadius.circular(50),
+                                        animationDuration:
+                                            const Duration(milliseconds: 30),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild: Icon(
+                                          TablerIcons.north_star,
+                                          size: 18,
+                                          // color: defaultPalette.tertiary
+                                          // color: Colors.blue,
+                                        ),
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),
+                                      SizedBox(height:2),
+                                      ElevatedLayerButton( 
+                                        subfac: 2,
+                                        depth:2,
+                                        onClick: () { 
+                                          
+                                        },
+                                        buttonHeight: 25,
+                                        buttonWidth: 25,
+                                        borderRadius:
+                                            BorderRadius.circular(50),
+                                        animationDuration:
+                                            const Duration(milliseconds: 30),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild: Icon(
+                                          TablerIcons.tank,
+                                          size: 18,
+                                          // color: defaultPalette.tertiary
+                                          // color: Colors.blue,
+                                        ),
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),SizedBox(height:3),
+                                      ElevatedLayerButton( 
+                                        subfac: 2,
+                                        depth:2,
+                                        onClick: () { 
+                                          
+                                        },
+                                        buttonHeight: 25,
+                                        buttonWidth: 25,
+                                        borderRadius:
+                                            BorderRadius.circular(50),
+                                        animationDuration:
+                                            const Duration(milliseconds: 30),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild: Icon(
+                                          TablerIcons.baguette,
+                                          size: 18,
+                                          // color: defaultPalette.tertiary
+                                          // color: Colors.blue,
+                                        ),
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),
+                                       
+                                    ],
+                                  ), 
+                                  SizedBox(
+                                    width:3
+                                  ),
+                                  //DECOR Title and the preview box and text information besides
+                                  Expanded(
+                                    flex:2,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        //Matrix rain and TITILE saying "DECOR"
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(50),
+                                          child: Stack(
+                                            children: [
+                                              SizedBox( 
+                                                height:30,
+                                                child: MatrixRainAnimation(
+                                                   backgroundColor:defaultPalette.extras[0], 
+                                                ),
+                                              ),
+                                              Positioned(
+                                                right:0,
+                                                height: 30,
+                                                child: Text(
+                                                  "Decor  ",
+                                                  style: GoogleFonts.lexend(
+                                                    fontSize: 18,
+                                                    color:defaultPalette.primary
+                                                  ),
+                                                  textAlign:
+                                                      TextAlign.start, ),
+                                              ), 
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(height:6),
+                                        //PreviewBox of Decoration AND Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children:[
+                                            Expanded(
+                                              //Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start, 
+                                                children: [
+                                                  //Name of Decoration Editing Field.
+                                                  RichText(
+                                                  maxLines: 1,
+                                                  text: TextSpan(
+                                                    style: GoogleFonts.rockSalt(
+                                                    color: defaultPalette.extras[0], 
+                                                    height: 1.5, fontSize: 16,
+                                                    
+                                            
+                                                  ),
+                                                    children: [
+                                                      TextSpan(
+                                                        text:''+ sheetListItem.listDecoration.runtimeType.toString().replaceAll(RegExp(r'Decoration'), '') ,
+                                                        
+                                                      ), 
+                                                    ]
+                                                  )
+                                                  ),
+                                                  // Title saying "SUPER"
+                                                  SizedBox(
+                                                      height: 20,
+                                                      child: TextFormField(
+                                                        focusNode: decorationNamefocusNode,
+                                                        cursorColor: defaultPalette.extras[0],
+                                                        controller: decorationName, 
+                                                        decoration: InputDecoration( 
+                                                          filled: true,
+                                                          fillColor: defaultPalette.transparent,
+                                                          contentPadding: EdgeInsets.all(0),
+                                                          border: OutlineInputBorder(
+                                                            borderRadius: BorderRadius.circular(
+                                                                5),  
+                                                          ),
+                                                          enabledBorder: OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                width: 0, color: defaultPalette.transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(5),  
+                                                          ),
+                                                          focusedBorder: OutlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                              width: 3,
+                                                              color: nameExists
+                                                                  ? layoutName.text == initialLayoutName
+                                                                      ? defaultPalette.extras[1]
+                                                                      : Colors.red
+                                                                  : defaultPalette.transparent,
+                                                            ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(5), 
+                                                          ),
+                                                        ),
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(name: value);
+                                                          });
+                                                        },
+                                                        style: GoogleFonts.lexend(
+                                                            color: defaultPalette.black, fontSize: 15),
+                                                        
+                                                      ),
+                                                    ),
+                                                  //ID of Decoration display
+                                                  SingleChildScrollView(
+                                                      scrollDirection: Axis.horizontal,
+                                                      child:RichText(
+                                                        maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0], 
+                                                      height: 1.5, fontSize: 6, 
+                                                    ),
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'id: '
+                                                        ),
+                                                        TextSpan(
+                                                          text:sheetListItem.listDecoration.id,style: GoogleFonts.lexend(
+                                                        color: defaultPalette.extras[0], fontSize: 6 ,fontWeight: FontWeight.normal
+                                                          ),
+                                                        ),
+                                                         
+                                                      ]
+                                                    )),  
+                                                    ),
+                                                  // SizedBox(height:5),  
+                                                    
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(
+                                            width:5,
+                                            ),
+                                            //PreviewBox of Decoration
+                                            Container(
+                                              height:76,
+                                              width:58,  
+                                              padding: EdgeInsets.only(right:3),
+                                              child: buildDecoratedContainer(sheetListItem.listDecoration, SizedBox(width:30,height:30), true),
+                                                                            
+                                              
+                                               )
+                                          ]
+                                        ),
+                                      ],
+                                    ),
+                                        
+                                  ),
+                                  SizedBox(
+                                    width:2
+                                  ),
+                          
+                                ],
+                              ), 
+                            ],
+                          )
+                          ),
+                      ),
+                    ),
+
+                    //TreeView of Properties per layer
+                    AnimatedPositioned(
+                      duration:Durations.medium4,
+                      curve: Curves.easeInBack,
+                      left:showDecorationLayers?48:12,
+                      top: 138,
+                      right: 16, 
+                      bottom: 18,
+                      child: Builder(
+                        builder: (context) {
+                          var style =GoogleFonts.lexend(
+                                        fontSize:13,
+                                        color: defaultPalette.extras[0]
+                                      );
+                          var childStyle = style.copyWith(fontSize: 11);
+                          var iconColor = defaultPalette.extras[0];
+                          double childPinSize = 18;
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(9).copyWith(bottomLeft: Radius.circular(showDecorationLayers?10:25), bottomRight:Radius.circular(20)  ),
+                              
+                            child: Container(
+                              
+                              child:  ScrollConfiguration(
                                 behavior: ScrollBehavior()
                                     .copyWith(scrollbars: false),
                                 child: DynMouseScroll(
                                     durationMS: 500,
                                     scrollSpeed: 1,
                                     builder: (context, controller, physics) {
-                                      return PieCanvas(
-                                        child: SingleChildScrollView(
-                                            controller: controller,
-                                            physics: physics,
-                                            child: Column(
-                                              children: [
-                                                //DECO TITLE 
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceAround,
-                                                  children: [
-                                                    Icon(TablerIcons.sparkles),
-                                                    Text(
-                                                      " Decor",
-                                                      style: GoogleFonts.bungee(
-                                                        fontSize: 20,
-                                                      ),
-                                                      textAlign:
-                                                          TextAlign.start,
-                                                    ),
-                                                    GestureDetector(
-                                                        onTap: () {
-                                                          print(
-                                                              'tapped to add new decoration ');
-                                                          setState(() {
-                                                            if (sheetListItem
-                                                                      .listDecoration
-                                                                      .itemDecorationList.length<70) {
-                                                            sheetListItem
-                                                                    .listDecoration =
-                                                                sheetListItem
-                                                                    .listDecoration
-                                                                    .copyWith(
-                                                                        itemDecorationList: [
-                                                                  ...sheetListItem
-                                                                      .listDecoration
-                                                                      .itemDecorationList,
-                                                                  ItemDecoration(
-                                                                      id: Uuid()
-                                                                          .v4(),
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              5),
-                                                                      decoration: BoxDecoration(
-                                                                          color: defaultPalette
-                                                                              .tertiary,
-                                                                          border:
-                                                                              Border.all())),
-                                                                ]);
-                                                                print(
-                                                              'new decoration added');
-                                                          } else {
-                                                            print(
-                                                              'guys come on, turn this into a super now');
-                                                          }
-                                                          });
-                                                          
-                                                        },
-                                                        child: Icon(TablerIcons
-                                                            .sparkles)),
-                                                  ],
-                                                ),
+                                      print('inside dynscroll of treeview: '+(sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['isPinned'].toString());
+                                    return SingleChildScrollView(
+                                      controller: controller,
+                                      physics: physics,
+                                      child: Container( 
+                                        // height: 500,
+                                        decoration:BoxDecoration(color:defaultPalette.transparent, borderRadius: BorderRadius.circular(6)),
+                                        child: TreeView<String>( 
 
-                                                //{{MINI PREVIEW OF DECORATION}}
-                                                Container(
-                                                  padding: EdgeInsets.all(3),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        defaultPalette.tertiary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                  ),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                          width:showDecorationLayers?width-30: width,
+                                          onSelectionChanged: (p0) {
+                                            print(p0);
+                                            setState(() {
+                                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration)
+                                              .copyWith(
+                                                pinned: {
+                                                  'padding': {
+                                                    'isPinned': p0[1],
+                                                    'top': p0[2],
+                                                    'bottom': p0[3],
+                                                    'left': p0[4],
+                                                    'right': p0[5],
+                                                  },
+                                                  'margin': {
+                                                    'isPinned': p0[6],
+                                                    'top': p0[7],
+                                                    'bottom': p0[8],
+                                                    'left': p0[9],
+                                                    'right': p0[10],
+                                                  },
+                                                  'decoration': {
+                                                    'isPinned': p0[11],
+                                                    'color': p0[12],
+                                                    'border': p0[13],
+                                                    'borderRadius': p0[14],
+                                                    'boxShadow': p0[15],
+                                                    'image': {
+                                                      'isPinned': p0[16],
+                                                      'bytes': p0[17],
+                                                      'fit': p0[18],
+                                                      'repeat': p0[19],
+                                                      'alignment': p0[20],
+                                                      'scale': p0[21],
+                                                      'opacity': p0[22],
+                                                      'filterQuality': p0[23],
+                                                      'invertColors': p0[24],
+                                                    }, 
+                                                    'backgroundBlendMode': p0[25],
+                                                  },
+                                                  'foregroundDecoration': {
+                                                    'isPinned': p0[26],
+                                                    'color': p0[27],
+                                                    'border': p0[28],
+                                                    'borderRadius': p0[29],
+                                                    'boxShadow': p0[30],
+                                                    'image': {
+                                                      'isPinned': p0[31],
+                                                      'bytes': p0[32],
+                                                      'fit': p0[33],
+                                                      'repeat': p0[34],
+                                                      'alignment': p0[35],
+                                                      'scale': p0[36],
+                                                      'opacity': p0[37],
+                                                      'filterQuality': p0[38],
+                                                      'invertColors': p0[39],
+                                                    }, 
+                                                    'backgroundBlendMode': p0[40],
+                                                  }, 
+                                                  'transform': {
+                                                    'isPinned': p0[41],
+                                                  },
+                                                }
+
+                                                );
+                                            });
+                                          },
+                                          onExpansionChanged: (e0) {
+                                            setState(() {
+                                              expansionLevels = [
+                                                e0[1], e0[6], e0[11],e0[16], e0[26],e0[31]
+                                              ];
+                                            });
+                                          },
+                                          nodes:[
+                                          TreeNode( 
+                                            indentSize: 2,
+                                            selectable: false,
+                                            alternateChildren: true,
+                                            isExpanded: true,                
+                                            children:[
+                                              //padding
+                                              TreeNode(
+                                                isExpanded: expansionLevels[0],
+                                                label: Text('padding' , style: style),
+                                                isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['isPinned'],
+                                                icon: Icon(TablerIcons.box_padding, size:16,color:iconColor),
+                                                indentSize: 8,
+                                                alternateChildren: false,
+                                                checkboxSize: 20,
+
+                                                children: [
+                                                  TreeNode<String>(label: Text('top', style: childStyle),
+                                                    icon: Transform.rotate(angle: pi,child: Icon(TablerIcons.layout_bottombar_inactive, size:15)),
+                                                    checkboxSize: childPinSize,
+                                                    isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['top'],
+                                                
+                                                ),
+                                                  TreeNode<String>(label: Text('bottom', style: childStyle),
+                                                    icon: Icon(TablerIcons.layout_bottombar_inactive, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['bottom'],
+                                                ),
+                                                  TreeNode<String>(label: Text('left', style:childStyle),
+                                                    icon: Icon(TablerIcons.layout_sidebar_inactive, size:15),
+                                                    checkboxSize: childPinSize, isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['left'],
+                                                ),
+                                                  TreeNode<String>(label: Text('right', style:childStyle),
+                                                    icon: Icon(TablerIcons.layout_sidebar_right_inactive, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['right'],
+                                                )
+                                                            
+                                                  ]
+                                                ),
+                                              //margin
+                                              TreeNode(
+                                                label: Text('margin' , style: style),
+                                                isExpanded: expansionLevels[1],
+                                                icon: Icon(TablerIcons.box_margin, size:16,color: iconColor),
+                                                indentSize: 8,
+                                                alternateChildren: false,
+                                                checkboxSize: 20,
+                                                isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['isPinned'],
+                                                children: [
+                                                  TreeNode<String>(label: Text('top', style:childStyle),
+                                                    icon: Icon(TablerIcons.box_align_bottom, size:15),
+                                                    checkboxSize: childPinSize, isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['top'],
+                                                ),
+                                                  TreeNode<String>(label: Text('bottom', style:childStyle),
+                                                    icon: Icon(TablerIcons.box_align_top, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['bottom'],),
+                                                  TreeNode<String>(label: Text('left', style:childStyle),
+                                                    icon: Icon(TablerIcons.box_align_right, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['left'],),
+                                                  TreeNode<String>(label: Text('right', style:childStyle),
+                                                    icon: Icon(TablerIcons.box_align_left, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['right'],)
+                                                            
+                                                ] 
+                                              ),
+                                              //decoration
+                                              for(int i =0; i<2; i++)
+                                              TreeNode(
+                                                isExpanded: expansionLevels[i==0?2:4],
+                                                label: Text(i==0?'decor':'foreground' , style: style),
+                                                icon: Icon(TablerIcons.palette, size:16,color: iconColor),
+                                                indentSize: 8,
+                                                alternateChildren: false,
+                                                checkboxSize: 20,
+                                                isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['isPinned'],
+                                                children: [
+                                                  TreeNode<String>(label: Text('color', style:childStyle),
+                                                    icon: Icon(TablerIcons.color_swatch, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['color'],
+                                                ),
+                                                  TreeNode<String>(label: Text('border', style:childStyle),
+                                                    icon: Icon(TablerIcons.border_sides, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['border'],),
+                                                  TreeNode<String>(label: Text('cornerRadius', style:childStyle),
+                                                    icon: Icon(TablerIcons.border_corners, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius'],),
+                                                  TreeNode<String>(label: Text('boxShadow', style:childStyle),
+                                                    icon: Icon(TablerIcons.shadow, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['boxShadow'],),
+                                                  TreeNode<String>(label: Text('image', style:childStyle),
+                                                    isExpanded: expansionLevels[i==0?3:5],
+                                                    icon: Icon(TablerIcons.photo, size:15),
+                                                    checkboxSize: childPinSize,
+                                                    alternateChildren: false,
+                                                    indentSize: 5,
+                                                    isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['isPinned'],
                                                     children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                    .all(3.0)
-                                                                .copyWith(
-                                                                    left: 8),
-                                                        child: Text(
-                                                          sheetListItem
-                                                              .listDecoration
-                                                              .name,
-                                                          style: GoogleFonts
-                                                              .bungee(fontSize:10),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        height: 60,
-                                                        width: width,
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: Stack(
-                                                          children: [
-                                                            //{{{GRAPH}}}
-                                                            ClipRRect(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          20),
-                                                              child: Container(
-                                                                width: width,
-                                                                height: 80,
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            20),
-                                                                    border: Border
-                                                                        .all(),
-                                                                    color: defaultPalette
-                                                                        .secondary
-                                                                        .withOpacity(
-                                                                            1)),
-                                                                child: Opacity(
-                                                                  opacity: 1,
-                                                                  child: LineChart(LineChartData(
-                                                                      lineBarsData: [
-                                                                        LineChartBarData()
-                                                                      ],
-                                                                      titlesData: const FlTitlesData(
-                                                                          show:
-                                                                              false),
-                                                                      gridData: FlGridData(
-                                                                          getDrawingVerticalLine: (value) => FlLine(
-                                                                              color: defaultPalette.extras[0].withOpacity(
-                                                                                  0.3),
-                                                                              dashArray: [
-                                                                                5,
-                                                                                5
-                                                                              ],
-                                                                              strokeWidth:
-                                                                                  1),
-                                                                          getDrawingHorizontalLine: (value) => FlLine(
-                                                                              color: defaultPalette.extras[0].withOpacity(
-                                                                                  0.3),
-                                                                              dashArray: [
-                                                                                5,
-                                                                                5
-                                                                              ],
-                                                                              strokeWidth:
-                                                                                  1),
-                                                                          show:
-                                                                              true,
-                                                                          horizontalInterval: 10,
-                                                                          verticalInterval: 40),
-                                                                      borderData: FlBorderData(show: false),
-                                                                      minY: 0,
-                                                                      maxY: 50,
-                                                                      maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500 + 250,
-                                                                      minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            //{{{MINI PREVIEW DECORATION}}}
-                                                            Container(
-                                                              margin: EdgeInsets
-                                                                  .all(10),
-                                                              decoration: BoxDecoration(
-                                                                  border: Border
-                                                                      .all(
-                                                                          width:
-                                                                              1)),
-                                                              child:
-                                                                  buildDecoratedContainer(
-                                                                      sheetListItem
-                                                                          .listDecoration,
-                                                                      Container(
-                                                                        width:
-                                                                            width,
-                                                                        // height:20
-                                                                      ),
-                                                                      true),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
+                                                      TreeNode<String>(label: Text('file', style:childStyle),
+                                                    icon: Icon(TablerIcons.file_type_jpg, size:15),
+                                                    checkboxSize: childPinSize, isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['bytes'],),
+                                                    TreeNode<String>(label: Text('fit', style:childStyle),
+                                                    icon: Icon(TablerIcons.artboard, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['fit'],
+                                                    ),
+                                                    TreeNode<String>(label: Text('repeat', style:childStyle),
+                                                    icon: Icon(TablerIcons.layout_grid, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['repeat'],
+                                                    ),
+                                                    TreeNode<String>(label: Text('align', style:childStyle),
+                                                    icon: Icon(TablerIcons.align_box_left_stretch, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['alignment'],
+                                                    ),
+                                                    TreeNode<String>(label: Text('scale', style:childStyle),
+                                                    icon: Icon(TablerIcons.scale, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['scale'],
+                                                    ),
+                                                    TreeNode<String>(label: Text('opacity', style:childStyle),
+                                                    icon: Icon(TablerIcons.square_toggle, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['opacity'],
+                                                    ),
+                                                    TreeNode<String>(label: Text('quality', style:childStyle),
+                                                    icon: Icon(TablerIcons.michelin_star, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['filterQuality'],
+                                                    ),
+                                                    TreeNode<String>(label: Text('invert', style:childStyle),
+                                                    icon: Icon(TablerIcons.brightness_2, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['invertColors'],
+                                                    ),
 
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-
-                                                ...buildDecorationEditor(
-                                                    sheetListItem.listDecoration)
-                                              ],
-                                            )),
-                                      );
-                                    }))),
+                                                    ]
+                                                    
+                                                    ),
+                                                  TreeNode<String>(label: Text('blendMode', style:childStyle),
+                                                    icon: Icon(TablerIcons.blend_mode, size:15),
+                                                    checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['backgroundBlendMode'],),
+                                                            
+                                                ]
+                                              ),
+                                              
+                                              //transform
+                                              TreeNode( 
+                                                label: Text('transform' , style: style),
+                                                icon: Icon(TablerIcons.transform_point, size:16,color: iconColor),
+                                                indentSize: 17,
+                                                alternateChildren: false, 
+                                                checkboxSize: 20,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['transform']['isPinned'],
+                                                            
+                                              ),
+                                                            
+                                          ]
+                                       
+                                          )
+                                          
+                                          
+                                          ]),
+                                      ),
+                                    );
+                                  }
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                       ),
                     ),
+                  
+
+
+
+
                     //BLACK STRIP ANIMATED OF DECORATION LAYERs BACKGRGOUND
                     AnimatedPositioned(
                       duration: Durations.medium1,
@@ -14998,7 +15450,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   scrollbarLength: (sHeight*0.9)-270, 
                                   isDraggable: true, 
                                   thumbCrossAxisSize: 5,
-                                  thumbMainAxisSize: 80,
+                                  // thumbMainAxisSize: 80,
+
                                   elevation: 0,
                                   arrowsColor: defaultPalette.primary, 
                                   child: Padding(
@@ -15035,43 +15488,129 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           key: ValueKey(entry.value),
                                           child: Stack(
                                             children: [
+                                              //tiny layer body of decoration
                                               AnimatedContainer(
                                                 duration: Duration(
                                                  milliseconds: (500 + 
-                                                 (400/(
+                                                 (300/(
                                                   (sheetListItem.listDecoration.itemDecorationList.length==1
-                                                  ?2
-                                                  :sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
+                                                  ? 2
+                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
                                                   * entry.key).round()  
                                                 ),
                                                 curve: Curves.easeIn,
-                                                height:(((sHeight*0.9)-250)/10.3).clamp(0, 50),
-                                                alignment: Alignment.bottomLeft, // Set pivot to bottom-left
+                                                height:(((sHeight*0.9)-250)/(decorationIndex == entry.key?8:10.3)).clamp(0, decorationIndex == entry.key?70:50),
+                                                alignment: Alignment.topCenter, // Set pivot to bottom-left
                                                   transform: Matrix4.identity()
                                                     ..translate(showDecorationLayers?0.0:(-((sHeight*0.9)-250)/10).clamp(double.negativeInfinity, 50))
                                                     ..rotateZ(showDecorationLayers?0: -math.pi / 2),
                                                 margin: EdgeInsets.only(bottom: 5, right:showDecorationLayers? 0: (10*entry.key)+1),
                                                 padding: EdgeInsets.only(top: 4, left:15),
                                                 decoration: BoxDecoration(
-                                                  color: defaultPalette.tertiary,
+                                                  color: entry.value is ItemDecoration? decorationIndex == entry.key? defaultPalette.extras[0]: defaultPalette.tertiary:defaultPalette.extras[1] ,
                                                   borderRadius: BorderRadius.circular(showDecorationLayers? 5:500).copyWith(
                                                     // bottomRight: Radius.circular(0),
                                                     // bottomLeft: Radius.circular(0),
                                                     // topRight: Radius.circular(30),
                                                   ), 
+                                                   
+                                                ),
+                                                 ),
+                                              
+                                              
+                                              //Border for when tapped 
+                                              AnimatedOpacity(duration: Duration(
+                                                   milliseconds: (500 + 
+                                                 (300/(
+                                                  (sheetListItem.listDecoration.itemDecorationList.length==1
+                                                  ? 2
+                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
+                                                  * entry.key).round()  
+                                                  ), opacity: decorationIndex == entry.key?1:0,
+                                                child: AnimatedContainer(
+                                                  duration: Duration(
+                                                   milliseconds: 600
+                                                  ),
+                                                  curve: Curves.easeIn,
+                                                  height:(((sHeight*0.9)-250)/(decorationIndex == entry.key?8:10.3)).clamp(0,decorationIndex == entry.key?70: 50),
+                                                  alignment: Alignment.topLeft, // Set pivot to bottom-left
+                                                    transform: Matrix4.identity()
+                                                      ..translate(showDecorationLayers?0.0:(-((sHeight*0.9)-250)/10).clamp(double.negativeInfinity, 50))
+                                                      ..rotateZ(showDecorationLayers?0: -math.pi / 2),
+                                                  margin: EdgeInsets.only(bottom: 5, right:showDecorationLayers? 0: (10*entry.key)+1),
+                                                  padding: EdgeInsets.all( 1),
+                                                  decoration: BoxDecoration(
+                                                    // color: entry.value is ItemDecoration? defaultPalette.tertiary:defaultPalette.extras[1] ,
+                                                    borderRadius: BorderRadius.circular(showDecorationLayers? 5:500), 
+                                                    border: Border( 
+                                                      right: BorderSide(color: defaultPalette.tertiary,
+                                                      width: 2),
+                                                       left: BorderSide(color: defaultPalette.tertiary,
+                                                      width: 2),
+                                                       top: BorderSide(color: defaultPalette.tertiary,
+                                                      width: 2),
+                                                       bottom: BorderSide(color: defaultPalette.tertiary,
+                                                      width: 20),
+                                                      
+                                                    )
+                                                  ),
+                                                  child:  buildDecoratedContainer(SuperDecoration(id: 'id', itemDecorationList: [sheetListItem.listDecoration.itemDecorationList[entry.key]]), SizedBox(height: 10,width: 10,),true) ,
+                                             
                                                 ),
                                               ),
-                                              Positioned(
-                                                bottom:(((sHeight*0.9)-250)/10).clamp(0, 50)/2,
-                                                right: 2,
+                                              
+                                              //onTap onHover Functions
+                                              Padding(
+                                                padding: const EdgeInsets.all(2.0),
+                                                child: ClipRRect(
+                                                  borderRadius: BorderRadius.circular(showDecorationLayers? 5:500),
+                                                  child: Material(
+                                                    color: defaultPalette.transparent,
+                                                    child: InkWell(
+                                                      hoverColor:decorationIndex == entry.key?defaultPalette.transparent: defaultPalette.primary ,
+                                                      highlightColor:decorationIndex == entry.key?defaultPalette.transparent: defaultPalette.primary,
+                                                      splashColor:decorationIndex == entry.key?defaultPalette.transparent: defaultPalette.extras[0],
+                                                      onTap: () {
+                                                        setState(() {
+                                                          if (decorationIndex != entry.key) {
+                                                            decorationIndex = entry.key;
+                                                            // decorTreeViewKey.currentState?.setState(() {
+                                                              
+                                                            // });
+                                                          }
+                                                  
+                                                        });
+                                                      },
+                                                      child:SizedBox(
+                                                        width: 40,
+                                                        height:(((sHeight*0.9)-250)/10.3).clamp(0, 50)-4,
+                                                      )
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              
+                                              //Numbering on the right of the tiny layer box
+                                              AnimatedPositioned(
+                                                duration: Duration(
+                                                 milliseconds: (500 + 
+                                                 (300/(
+                                                  (sheetListItem.listDecoration.itemDecorationList.length==1
+                                                  ? 2
+                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
+                                                  * entry.key).round()  
+                                                ),
+                                                bottom:showDecorationLayers?decorationIndex == entry.key?5:(((sHeight*0.9)-250)/10).clamp(0, 50)/2.5:0,
+                                                right:decorationIndex == entry.key?8: 2,
                                                 child: CountingAnimation(
                                                   value: (entry.key).toString(),
                                                   mainAlignment: MainAxisAlignment.end,
                                                   singleScollDuration: Durations.short1,
                                                   scrollCount: 2,
                                                   textStyle: GoogleFonts.bungee(
-                                                    fontSize:10,
-                                                    color: defaultPalette.extras[0], 
+                                                    fontSize:decorationIndex == entry.key?15:10,
+                                                    color: decorationIndex == entry.key? defaultPalette.primary : defaultPalette.extras[0], 
                                                   ),
                                                 ),
                                               ),
@@ -15136,7 +15675,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         ),
                     ),
                     
-                  
                   ],
                   // Positioned.fill(child: Center(child: Text(sheetListItem.id))),
                   // Left and Right adjustments
@@ -18723,8 +19261,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     return Container(child: current);
   }
-
-List<Widget> buildDecorationEditor(
+  
+  List<Widget> buildDecorationEditor(
   SuperDecoration listDecoration,
 ) {
   return listDecoration.itemDecorationList.asMap().entries.map((entry) {
@@ -18742,7 +19280,7 @@ List<Widget> buildDecorationEditor(
         //Row for selecting Alignment and displaying details.
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+        children: [ 
           SizedBox(width:35),
           //DETAILS TEXT FOR ALIGNMENT
           Expanded(
@@ -19919,6 +20457,8 @@ List<Widget> buildDecorationEditor(
         return BorderRadius.all(Radius.circular(value));
     }
   }
+
+
 }
 
 class WordSpacingAttribute extends Attribute<String?> {

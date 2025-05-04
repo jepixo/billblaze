@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first 
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:flutter/material.dart'; 
 import 'package:hive/hive.dart';
 
@@ -37,7 +38,7 @@ class SheetListBox extends SheetItem {
         direction: direction == true ? Axis.vertical : Axis.horizontal,
         id: id,
         parentId: parentId,
-        listDecoration: getSuperDecoration(decorationId),
+        listDecoration: Boxes.getSuperDecoration(decorationId),
         );
   }
 }

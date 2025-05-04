@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart'; 
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 class Boxes {
   static Box<LayoutModel> getLayouts() => Hive.box<LayoutModel>('layouts');
@@ -35,6 +36,22 @@ class Boxes {
   await box.put(newDecoration.id, newDecoration);
 }
 
+static SuperDecoration getSuperDecoration(String id){
+  Box<SheetDecoration> decorations = Boxes.getDecorations();
+
+  return decorations.values.firstWhere(
+    (decoration) {
+      print(decoration);
+      return decoration.id == id && decoration is SuperDecoration;
+      },
+    orElse: () {
+      String newDecoId = Uuid().v4();
+      print('newonehas to be added in the decoBox unfort: '+ newDecoId);
+      SuperDecoration newSuperDecoration = SuperDecoration(id: newDecoId);
+      Boxes.saveSuperDecoration(newSuperDecoration);
+      return getSuperDecoration(newDecoId);},
+  ) as SuperDecoration;
+}
 
 
 }
