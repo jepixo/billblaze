@@ -74,6 +74,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:snapping_page_scroll/snapping_page_scroll.dart';
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -252,7 +253,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       return FocusNode();
     },
   );
-  List<bool> expansionLevels = [false,false,false,false,false,false];
+  List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0,9);
   zz.TransformationController transformationcontroller =
       zz.TransformationController();
   late TabController tabcunt;
@@ -283,7 +284,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     Colors.black,
     Colors.white,
     Color(int.parse('0xffEA2027')),
-    Color(int.parse('0xff006266')),
+    Color(int.parse('0xff006264')),
     Color(int.parse('0xff1B1464')),
     Color(int.parse('0xff5758BB')),
     Color(int.parse('0xff6F1E51')),
@@ -303,7 +304,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   ];
   Map<String, List<String>> categorizedFonts = {};
 
-  List<bool> isTapped = [false, true, false, false, false];
+  List<bool> isTapped =[false, true, false, false, false]; 
   List<GlobalKey> globalKeys = [];
   List<Uint8List> _images = [];
   var filteredFonts = [];
@@ -323,6 +324,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool nameExists = false;
   final FocusNode layoutNamefocusNode = FocusNode();
   final FocusNode decorationNameFocusNode = FocusNode();
+  // PageController propertyTabController = PageController(
+  //   viewportFraction: 1,
+  // );
   int whichPropertyTabIsClicked = 1;
   int whichTextPropertyTabIsClicked = 0;
   int whichListPropertyTabIsClicked = 0;
@@ -434,6 +438,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         whichTextPropertyTabIsClicked =
             textPropertyTabContainerController.index;
         whichPropertyTabIsClicked = 2;
+        // propertyTabController.jumpToPage(1);
       });
     });
     textPropertyTabContainerController.addListener(() {
@@ -442,6 +447,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         textPropertyCardsController.animateTo(Offset(1, 1),
             duration: Durations.short2, curve: Curves.ease);
         whichPropertyTabIsClicked = 2;
+        // propertyTabController.jumpToPage(1);
       });
     });
     listPropertyTabContainerController = TabController(length: 2, vsync: this);
@@ -450,14 +456,19 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         whichListPropertyTabIsClicked =
             listPropertyTabContainerController.index;
         whichPropertyTabIsClicked = 3;
+        // propertyTabController.jumpToPage(2);
       });
     });
     listPropertyTabContainerController.addListener(() {
       setState(() {
+        if (listPropertyCardsController.cardIndex != whichListPropertyTabIsClicked) {
         listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
         listPropertyCardsController.animateTo(Offset(0.1, 0.1),
             duration: Durations.short2, curve: Curves.ease);
+      }
         whichPropertyTabIsClicked = 3;
+         
+        // propertyTabController.jumpToPage(2);
       });
     });
     //
@@ -487,6 +498,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     textStyleTabControler.dispose();
     propertyCardsController.dispose(); 
     transformationcontroller.dispose();
+    // propertyTabController.dispose();
     super.dispose();
   }
 
@@ -2647,6 +2659,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 panelIndex.parentId = '';
                                 panelIndex.id = '';
                                 whichPropertyTabIsClicked = 1;
+                                // propertyTabController.jumpToPage(0);
                               });
                             },
                             onSecondaryTap: () {
@@ -2723,7 +2736,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         // scrollController: annoyingController,
                                         proxyDecorator:
                                             (child, index, animation) {
-                                          return PieCanvas(child: child);
+                                          return child;
                                         },
                                         padding: const EdgeInsets.all(0),
                                         onReorder:
@@ -3595,7 +3608,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           left: sWidth * (1 - wH2DividerPosition),
                           child: Stack(
                             children: [
-                              //Properties page, text, list tab animatedborders on the top right
+                              //animatedborders Properties page, text, list tab animatedborders on the top right
                               Container(
                                 height: (50),
                                 margin:
@@ -3689,7 +3702,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ],
                                 ),
                               ),
-                              //Properties page, text, list tab browser buttons on the top right
+                              //buttons Properties page, text, list tab browser buttons on the top right
                               Container(
                                 height: (50),
                                 margin:
@@ -3710,6 +3723,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         onClick: () {
                                           setState(() {
                                             whichPropertyTabIsClicked = 1;
+                                            // propertyTabController.jumpToPage(0);
                                             // propertyCardsController.animateTo(
                                             //     Offset(1, 1),
                                             //     duration: Duration.zero,
@@ -3944,6 +3958,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               onClick: () {
                                                 setState(() {
                                                   whichPropertyTabIsClicked = 2;
+                                                  // propertyTabController.jumpToPage(1);
                                                   textPropertyCardsController
                                                       .animateTo(Offset(1, 1),
                                                           duration:
@@ -4155,6 +4170,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               onClick: () {
                                                 setState(() {
                                                   whichPropertyTabIsClicked = 3;
+                                                  listPropertyTabContainerController.animateTo(0);
+                                                  // propertyTabController.jumpToPage(2);
                                                 });
                                               },
                                               buttonHeight: 30,
@@ -8832,6 +8849,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               panelIndex.parentId = sheetList.id;
               _findSheetListItem();
               whichPropertyTabIsClicked = 3;
+              // propertyTabController.jumpToPage(2);
+
+                
+                 
             });
           },
           child: Padding(
@@ -8903,6 +8924,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                                         _findSheetListItem();
                                         whichPropertyTabIsClicked = 2;
+                                        // propertyTabController.jumpToPage(1);
 
                                         if (hDividerPosition > 0.48) {
                                           hDividerPosition = 0.4;
@@ -10201,7 +10223,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       var itemE = _sheetItemIterator(newId, spreadSheetList[currentPageIndex]);
       print('parent id here from textfieldtapdown: ${itemE.parentId}');
 
-      var index =
+      var index = 
           _sheetListIterator(itemE.parentId, spreadSheetList[currentPageIndex])
               .indexOf(itemE);
       panelIndex =
@@ -10211,18 +10233,19 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           'this that id from addtext from panelindex: ${panelIndex.parentId}');
       _findSheetListItem();
       whichPropertyTabIsClicked = 2;
+      // propertyTabController.jumpToPage(1);
     });
 
     // Future.delayed(Duration.zero).then((_) {
     //   textStylePageController.jumpToPage(panelIndex.panelIndex);
     // });
 
-    Future.delayed(Durations.short1).then((_) {
-      if (!isTrue && Platform.isAndroid) {
-        textStyleTabControler.animateToPage(0,
-            curve: Curves.bounceIn, duration: Durations.short1);
-      }
-    });
+    // Future.delayed(Durations.short1).then((_) {
+    //   if (!isTrue && Platform.isAndroid) {
+    //     textStyleTabControler.animateToPage(0,
+    //         curve: Curves.bounceIn, duration: Durations.short1);
+    //   }
+    // });
 
     print('clicked');
     print(panelIndex);
@@ -10435,10 +10458,17 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   _getProperTiesCards() {
+
+
     switch (whichPropertyTabIsClicked) {
       case 2:
         // The actual cards for text properties font, format and color
         return FadeInUp(
+          onFinish: (direction) {
+            setState(() {
+              textPropertyCardsController.setCardIndex(textPropertyTabContainerController.index);
+            });
+          },
           from: 3,
           duration: Durations.short3,
           child: AppinioSwiper(
@@ -13664,7 +13694,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               //  ((sWidth *
                                               //           wH2DividerPosition) -
                                               //       145) >
-                                              //   66? true:false,
+                                              //   64? true:false,
                                               // showColorCode: true,
                                               // enableOpacity: true,
                                               customColorSwatchesAndNames: {
@@ -13924,7 +13954,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               //  ((sWidth *
                                               //           wH2DividerPosition) -
                                               //       145) >
-                                              //   66? true:false,
+                                              //   64? true:false,
                                               // showColorCode: true,
                                               // enableOpacity: true,
                                               customColorSwatchesAndNames: {
@@ -14016,6 +14046,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         return FadeInLeft(
           from: 3,
           duration: Durations.short3,
+           
           child: AppinioSwiper(
             controller: listPropertyCardsController,
             backgroundCardCount: 1,
@@ -14026,7 +14057,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             cardCount: 2,
             allowUnSwipe: true,
             allowUnlimitedUnSwipe: true,
-            initialIndex: 1,
+            initialIndex: 0,
             onCardPositionChanged: (position) {
               setState(() {
                 _cardPosition =
@@ -14231,537 +14262,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       ),
                     ),
                   ),
-
-                  // LIST PROPERTIES Tab Parent
-                  if (index == 2) ...[
-                    Positioned.fill(
-                      top: 5,
-                      left: 0,
-                      child: AnimatedOpacity(
-                        opacity: 1,
-                        duration: Duration.zero,
-                        child: Padding(
-                          padding:
-                              EdgeInsets.all(15).copyWith(left: 5, right: 5),
-                          child: PieCanvas(
-                            child: Container(
-                              padding: EdgeInsets.only(
-                                  top: 10, left: 8, right: 8, bottom: 10),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25),
-                                color: defaultPalette.transparent,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: ScrollConfiguration(
-                                  behavior: ScrollBehavior()
-                                      .copyWith(scrollbars: false),
-                                  child: DynMouseScroll(
-                                      durationMS: 500,
-                                      scrollSpeed: 1,
-                                      builder: (context, controller, physics) {
-                                        return SingleChildScrollView(
-                                          controller: controller,
-                                          physics: physics,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              SizedBox(height: 50),
-
-                                              ////The setup for direction Switching
-                                              Container(
-                                                width: width,
-                                                decoration: BoxDecoration(
-                                                    color:
-                                                        defaultPalette.primary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10)),
-                                                padding: EdgeInsets.all(3)
-                                                    .copyWith(top: 2),
-                                                child: Column(
-                                                  children: [
-                                                    Text(
-                                                      'direction',
-                                                      style: GoogleFonts.prompt(
-                                                          fontSize: 10,
-                                                          fontWeight:
-                                                              FontWeight.w500),
-                                                    ),
-                                                    AnimatedToggleSwitch<
-                                                        Axis>.dual(
-                                                      current: sheetListItem
-                                                          .direction,
-                                                      first: Axis.vertical,
-                                                      second: Axis.horizontal,
-                                                      onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem
-                                                                  .direction =
-                                                              value;
-                                                        });
-                                                      },
-                                                      animationCurve:
-                                                          Curves.easeInOutExpo,
-                                                      animationDuration:
-                                                          Durations.medium4,
-                                                      borderWidth:
-                                                          2, // backgroundColor is set independently of the current selection
-                                                      styleBuilder: (value) =>
-                                                          ToggleStyle(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                              // indicatorBorder: Border.all(
-                                                              //   width: 1.5,
-                                                              //   color: defaultPalette.extras[0],
-                                                              // ),
-                                                              indicatorBorderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          15),
-                                                              borderColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              backgroundColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              indicatorColor:
-                                                                  defaultPalette
-                                                                          .extras[
-                                                                      0]), // indicatorColor changes and animates its value with the selection
-                                                      iconBuilder: (value) {
-                                                        return Icon(
-                                                            value ==
-                                                                    Axis
-                                                                        .horizontal
-                                                                ? TablerIcons
-                                                                    .grip_horizontal
-                                                                : TablerIcons
-                                                                    .grip_vertical,
-                                                            size: 12,
-                                                            color:
-                                                                defaultPalette
-                                                                    .primary);
-                                                      },
-                                                      textBuilder: (value) {
-                                                        return Text(
-                                                          value ==
-                                                                  Axis.horizontal
-                                                              ? 'Horizontal'
-                                                              : 'Vertical',
-                                                          style: GoogleFonts
-                                                              .bungee(
-                                                                  fontSize: 12),
-                                                        );
-                                                      },
-                                                      height: 25,
-                                                      spacing: (width),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-
-                                              SizedBox(height: 10),
-
-                                              //The setup for both cross and main AxisSelectionButtons
-                                              Row(children: [
-                                                //The setup for mainAxisSelectionButton
-                                                Expanded(
-                                                    flex: 1,
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                          color: defaultPalette
-                                                              .primary,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      20)),
-                                                      padding: EdgeInsets.all(3)
-                                                          .copyWith(top: 2),
-                                                      child: Column(
-                                                        children: [
-                                                          Text(
-                                                            'mainAxis',
-                                                            style: GoogleFonts
-                                                                .prompt(
-                                                                    fontSize:
-                                                                        10,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500),
-                                                          ),
-                                                          PieMenu(
-                                                            controller:
-                                                                listMainAxisAlignmentPieController,
-                                                            actions: [
-                                                              getPieActionForListAxis(
-                                                                  0),
-                                                              getPieActionForListAxis(
-                                                                  1),
-                                                              getPieActionForListAxis(
-                                                                  2),
-                                                              getPieActionForListAxis(
-                                                                  3),
-                                                              getPieActionForListAxis(
-                                                                  4),
-                                                              getPieActionForListAxis(
-                                                                  5),
-                                                            ],
-                                                            onToggle:
-                                                                (menuOpen) {
-                                                              if (!menuOpen) {
-                                                                listDirectionPieController
-                                                                    .closeMenu();
-                                                                listCrossAxisAlignmentDirectionPieController
-                                                                    .closeMenu();
-                                                                listMainAxisAlignmentPieController
-                                                                    .closeMenu();
-                                                              }
-                                                            },
-                                                            theme: PieTheme(
-                                                                rightClickShowsMenu:
-                                                                    true,
-                                                                buttonSize:
-                                                                    ((sWidth * wH2DividerPosition - 100) / 3)
-                                                                        .clamp(
-                                                                            40, 70),
-                                                                spacing: 5,
-                                                                radius: ((sWidth * wH2DividerPosition - 85) /
-                                                                        2)
-                                                                    .clamp(
-                                                                        50, 100),
-                                                                customAngle: 0,
-                                                                menuAlignment:
-                                                                    Alignment
-                                                                        .center,
-                                                                pointerSize: 20,
-                                                                menuDisplacement:
-                                                                    Offset(
-                                                                        0, 0),
-                                                                // tooltipPadding: EdgeInsets.all(5),
-                                                                tooltipTextStyle:
-                                                                    GoogleFonts.bungee(
-                                                                        fontSize:
-                                                                            20),
-                                                                buttonTheme:
-                                                                    PieButtonTheme(
-                                                                        backgroundColor: defaultPalette
-                                                                            .tertiary,
-                                                                        iconColor:
-                                                                            defaultPalette
-                                                                                .primary,
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          border:
-                                                                              Border.all(width: 1),
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(200),
-                                                                          color:
-                                                                              defaultPalette.extras[0],
-                                                                        ))),
-                                                            child:
-                                                                GestureDetector(
-                                                              onTap: () {
-                                                                listMainAxisAlignmentPieController
-                                                                    .openMenu();
-                                                              }, // Handle tap manually
-                                                              child: Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: defaultPalette
-                                                                      .secondary,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              15.0), // Custom shape
-                                                                ),
-                                                                margin:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        top:
-                                                                            2.0,
-                                                                        left: 1,
-                                                                        right:
-                                                                            1,
-                                                                        bottom:
-                                                                            0),
-                                                                height: 62,
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            3), // Padding
-                                                                // constraints: BoxConstraints(
-                                                                //   minWidth: (sWidth * wH2DividerPosition - 90) / 2, // Width constraint
-                                                                //   minHeight: 42, // Height constraint
-                                                                // ),
-                                                                child: Center(
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceAround,
-                                                                    children: [
-                                                                      Container(
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            color:
-                                                                                defaultPalette.extras[1],
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(15.0), // Custom shape
-                                                                          ),
-                                                                          margin: const EdgeInsets
-                                                                              .only(
-                                                                              top:
-                                                                                  2.0,
-                                                                              left:
-                                                                                  1,
-                                                                              right:
-                                                                                  1,
-                                                                              bottom:
-                                                                                  0),
-                                                                          alignment: Alignment
-                                                                              .center,
-                                                                          height:
-                                                                              40,
-                                                                          child:
-                                                                              Icon(TablerIcons.kerning)),
-                                                                      //The text under the mainAxis button that says space between start end or wtever
-                                                                      Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .symmetric(
-                                                                            horizontal:
-                                                                                10.0),
-                                                                        child:
-                                                                            Text(
-                                                                          sheetListItem
-                                                                              .mainAxisAlignment
-                                                                              .name,
-                                                                          maxLines:
-                                                                              1,
-                                                                          style:
-                                                                              GoogleFonts.bungee(
-                                                                            fontSize:
-                                                                                10,
-                                                                            color:
-                                                                                defaultPalette.extras[0],
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )),
-                                                SizedBox(width: 5),
-                                                //The setup for crossAxisSelectionButton
-                                                Expanded(
-                                                    flex: 1,
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                          color: defaultPalette
-                                                              .primary,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      20)),
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                                  3)
-                                                              .copyWith(top: 2),
-                                                      child: Column(
-                                                        children: [
-                                                          //THE HEADING "crossAxis"
-                                                          Text(
-                                                            'crossAxis',
-                                                            style: GoogleFonts
-                                                                .prompt(
-                                                                    fontSize:
-                                                                        10,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500),
-                                                          ),
-                                                          PieMenu(
-                                                            controller:
-                                                                listDirectionPieController,
-                                                            actions: [
-                                                              getPieActionForListAxis(
-                                                                  0,
-                                                                  cross: true),
-                                                              getPieActionForListAxis(
-                                                                  1,
-                                                                  cross: true),
-                                                              getPieActionForListAxis(
-                                                                  2,
-                                                                  cross: true),
-                                                            ],
-                                                            onToggle:
-                                                                (menuOpen) {
-                                                              if (!menuOpen) {
-                                                                listDirectionPieController
-                                                                    .closeMenu();
-                                                                listCrossAxisAlignmentDirectionPieController
-                                                                    .closeMenu();
-                                                                listMainAxisAlignmentPieController
-                                                                    .closeMenu();
-                                                              }
-                                                            },
-                                                            theme: PieTheme(
-                                                                rightClickShowsMenu:
-                                                                    true,
-                                                                buttonSize:
-                                                                    ((sWidth * wH2DividerPosition - 65) / 3).clamp(
-                                                                        40, 80),
-                                                                spacing: 5,
-                                                                radius: ((sWidth * wH2DividerPosition - 65) /
-                                                                        2)
-                                                                    .clamp(
-                                                                        50, 100),
-                                                                customAngle:
-                                                                    180,
-                                                                menuAlignment:
-                                                                    Alignment
-                                                                        .center,
-                                                                pointerSize: 20,
-                                                                menuDisplacement:
-                                                                    Offset(
-                                                                        0, 0),
-                                                                // tooltipPadding: EdgeInsets.all(5),
-                                                                tooltipTextStyle:
-                                                                    GoogleFonts.bungee(
-                                                                        fontSize:
-                                                                            20),
-                                                                buttonTheme:
-                                                                    PieButtonTheme(
-                                                                        backgroundColor:
-                                                                            defaultPalette
-                                                                                .tertiary,
-                                                                        iconColor:
-                                                                            defaultPalette
-                                                                                .primary,
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          border:
-                                                                              Border.all(width: 1),
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(200),
-                                                                          color:
-                                                                              defaultPalette.extras[0],
-                                                                        ))),
-                                                            child:
-                                                                GestureDetector(
-                                                              onTap: () {
-                                                                listDirectionPieController
-                                                                    .openMenu();
-                                                              }, // Handle tap manually
-                                                              child: Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: defaultPalette
-                                                                      .secondary,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              15.0), // Custom shape
-                                                                ),
-                                                                margin:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        top:
-                                                                            2.0,
-                                                                        left: 1,
-                                                                        right:
-                                                                            1,
-                                                                        bottom:
-                                                                            0),
-                                                                height: 62,
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            3),
-                                                                child: Center(
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceAround,
-                                                                    children: [
-                                                                      Container(
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            color:
-                                                                                defaultPalette.extras[1],
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(15.0), // Custom shape
-                                                                          ),
-                                                                          margin: const EdgeInsets
-                                                                              .only(
-                                                                              top:
-                                                                                  2.0,
-                                                                              left:
-                                                                                  1,
-                                                                              right:
-                                                                                  1,
-                                                                              bottom:
-                                                                                  0),
-                                                                          alignment: Alignment
-                                                                              .center,
-                                                                          height:
-                                                                              40,
-                                                                          child:
-                                                                              Icon(TablerIcons.karate)),
-                                                                      Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .symmetric(
-                                                                            horizontal:
-                                                                                10.0),
-                                                                        child:
-                                                                            Text(
-                                                                          sheetListItem
-                                                                              .crossAxisAlignment
-                                                                              .name,
-                                                                          maxLines:
-                                                                              1,
-                                                                          style:
-                                                                              GoogleFonts.bungee(
-                                                                            fontSize:
-                                                                                10,
-                                                                            color:
-                                                                                defaultPalette.extras[0],
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )),
-                                              ]),
-                                              SizedBox(height: 10),
-
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
-                                        );
-                                      }),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-
+ 
                   if (index == 1) ...[
                     Positioned.fill(
                       child: AnimatedPadding(
@@ -14852,7 +14353,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     padding:
                                                         EdgeInsets.all(
                                                             5),
+                                                    alignment: Alignment.topLeft,
                                                     decoration: BoxDecoration(
+                                                        
                                                         color: defaultPalette
                                                             .tertiary,
                                                         border:
@@ -15135,9 +14638,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     ),
 
                     //TreeView of Properties per layer
-                    AnimatedPositioned(
-                      duration:Durations.medium4,
-                      curve: Curves.easeInBack,
+                    Positioned(
+                      // duration:Durations.medium4,
+                      // curve: Curves.easeIn,
                       left:showDecorationLayers?48:12,
                       top: 138,
                       right: 16, 
@@ -15156,7 +14659,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               
                             child: Container(
                               
-                              child:  ScrollConfiguration(
+                              decoration: BoxDecoration(
+                                color: defaultPalette.secondary, 
+                                border: Border.all(),
+                                borderRadius: BorderRadius.circular(9).copyWith(bottomLeft: Radius.circular(showDecorationLayers?10:25), bottomRight:Radius.circular(20)  ),
+                              
+
+                              ),
+                              child: ScrollConfiguration(
                                 behavior: ScrollBehavior()
                                     .copyWith(scrollbars: false),
                                 child: DynMouseScroll(
@@ -15172,7 +14682,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           Container(  
                                             decoration:BoxDecoration(color:defaultPalette.transparent, borderRadius: BorderRadius.circular(6)),
                                             child:
-                                               decorationIndex !=-1 && sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration ?
+                                               decorationIndex !=-1 ? sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration ?
                                               TreeView<String>( 
                                               showSelectAll: true,
                                               showExpandCollapseButton: true,
@@ -15185,70 +14695,83 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   .copyWith(
                                                     pinned: {
                                                       'padding': {
-                                                        'isPinned': p0[1],
-                                                        'top': p0[2],
-                                                        'bottom': p0[3],
-                                                        'left': p0[4],
-                                                        'right': p0[5],
+                                                        'isPinned': p0[1],       // 1
+                                                        'top': p0[2],            // 2
+                                                        'bottom': p0[3],         // 3
+                                                        'left': p0[4],           // 4
+                                                        'right': p0[5],          // 5
                                                       },
                                                       'margin': {
-                                                        'isPinned': p0[6],
-                                                        'top': p0[7],
-                                                        'bottom': p0[8],
-                                                        'left': p0[9],
-                                                        'right': p0[10],
+                                                        'isPinned': p0[6],       // 6
+                                                        'top': p0[7],            // 7
+                                                        'bottom': p0[8],         // 8
+                                                        'left': p0[9],           // 9
+                                                        'right': p0[10],         // 10
                                                       },
                                                       'decoration': {
-                                                        'isPinned': p0[11],
-                                                        'color': p0[12],
-                                                        'border': p0[13],
-                                                        'borderRadius': p0[14],
-                                                        'boxShadow': p0[15],
+                                                        'isPinned': p0[11],      // 11
+                                                        'color': p0[12],         // 12
+                                                        'border': p0[13],        // 13
+                                                        'borderRadius': {
+                                                          'isPinned': p0[14],        // 14
+                                                          'topLeft': p0[15],         // 15
+                                                          'topRight': p0[16],        // 16
+                                                          'bottomLeft': p0[17],      // 17
+                                                          'bottomRight': p0[18],     // 18
+                                                        },
+                                                        'boxShadow': p0[19],     // 19
                                                         'image': {
-                                                          'isPinned': p0[16],
-                                                          'bytes': p0[17],
-                                                          'fit': p0[18],
-                                                          'repeat': p0[19],
-                                                          'alignment': p0[20],
-                                                          'scale': p0[21],
-                                                          'opacity': p0[22],
-                                                          'filterQuality': p0[23],
-                                                          'invertColors': p0[24],
-                                                        }, 
-                                                        'backgroundBlendMode': p0[25],
+                                                          'isPinned': p0[20],        // 20
+                                                          'bytes': p0[21],           // 21
+                                                          'fit': p0[22],             // 22
+                                                          'repeat': p0[23],          // 23
+                                                          'alignment': p0[24],       // 24
+                                                          'scale': p0[25],           // 25
+                                                          'opacity': p0[26],         // 26
+                                                          'filterQuality': p0[27],   // 27
+                                                          'invertColors': p0[28],    // 28
+                                                        },
+                                                        'backgroundBlendMode': p0[29],  // 29
                                                       },
                                                       'foregroundDecoration': {
-                                                        'isPinned': p0[26],
-                                                        'color': p0[27],
-                                                        'border': p0[28],
-                                                        'borderRadius': p0[29],
-                                                        'boxShadow': p0[30],
+                                                        'isPinned': p0[30],      // 30
+                                                        'color': p0[31],         // 31
+                                                        'border': p0[32],        // 32
+                                                        'borderRadius': {
+                                                          'isPinned': p0[33],        // 33
+                                                          'topLeft': p0[34],         // 34
+                                                          'topRight': p0[35],        // 35
+                                                          'bottomLeft': p0[36],      // 36
+                                                          'bottomRight': p0[37],     // 37
+                                                        },
+                                                        'boxShadow': p0[38],     // 38
                                                         'image': {
-                                                          'isPinned': p0[31],
-                                                          'bytes': p0[32],
-                                                          'fit': p0[33],
-                                                          'repeat': p0[34],
-                                                          'alignment': p0[35],
-                                                          'scale': p0[36],
-                                                          'opacity': p0[37],
-                                                          'filterQuality': p0[38],
-                                                          'invertColors': p0[39],
-                                                        }, 
-                                                        'backgroundBlendMode': p0[40],
-                                                      }, 
-                                                      'transform': {
-                                                        'isPinned': p0[41],
+                                                          'isPinned': p0[39],        // 39
+                                                          'bytes': p0[40],           // 40
+                                                          'fit': p0[41],             // 41
+                                                          'repeat': p0[42],          // 42
+                                                          'alignment': p0[43],       // 43
+                                                          'scale': p0[44],           // 44
+                                                          'opacity': p0[45],         // 45
+                                                          'filterQuality': p0[46],   // 46
+                                                          'invertColors': p0[47],    // 47
+                                                        },
+                                                        'backgroundBlendMode': p0[48],  // 48
                                                       },
-                                                    }
-                                          
-                                                    );
-                                                  sheetListItem.listDecoration.toSuperDecorationBox().save();
-                                                });
+                                                      'transform': {
+                                                        'isPinned': p0[49],      // 49
+                                                      },
+                                                    },
+                                                  );
+                              
+                                                  // sheetListItem.listDecoration.toSuperDecorationBox().save();
+                                                });  
                                               },
-                                              onExpansionChanged: (e0) {
+                                              onExpansionChanged: (e) {
                                                 setState(() {
+                                                  // print(expansionLevels);
                                                   expansionLevels = [
-                                                    e0[1], e0[6], e0[11],e0[16], e0[26],e0[31]
+                                                    e[0], e[1], e[6],e[11],e[14],e[20],e[30],e[33],e[39], 
                                                   ];
                                                 });
                                               },
@@ -15257,11 +14780,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 indentSize: 2,
                                                 selectable: false,
                                                 alternateChildren: true,
-                                                isExpanded: true,                
+                                                isExpanded: expansionLevels[0],                
                                                 children:[
                                                   //padding
                                                   TreeNode(
-                                                    isExpanded: expansionLevels[0],
+                                                    isExpanded: expansionLevels[1],
                                                     label: Text('padding' , style: style),
                                                     isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['isPinned'],
                                                     icon: Icon(TablerIcons.box_padding, size:16,color:iconColor),
@@ -15294,7 +14817,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   //margin
                                                   TreeNode(
                                                     label: Text('margin' , style: style),
-                                                    isExpanded: expansionLevels[1],
+                                                    isExpanded: expansionLevels[2],
                                                     icon: Icon(TablerIcons.box_margin, size:16,color: iconColor),
                                                     indentSize: 8,
                                                     alternateChildren: false,
@@ -15320,7 +14843,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   //decoration
                                                   for(int i =0; i<2; i++)
                                                   TreeNode(
-                                                    isExpanded: expansionLevels[i==0?2:4],
+                                                    isExpanded: expansionLevels[i==0?3:6],
                                                     label: Text(i==0?'decor':'foreground' , style: style),
                                                     icon: Icon(TablerIcons.palette, size:16,color: iconColor),
                                                     indentSize: 8,
@@ -15337,12 +14860,37 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['border'],),
                                                       TreeNode<String>(label: Text('cornerRadius', style:childStyle),
                                                         icon: Icon(TablerIcons.border_corners, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius'],),
+                                                        checkboxSize: childPinSize,
+                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['isPinned'],
+                                                        isExpanded: expansionLevels[i==0?4:7],
+                                                        alternateChildren: false,
+                                                        children: [
+                                                          TreeNode<String>(label: Text('topLeft', style:childStyle),
+                                                        icon: Icon(TablerIcons.radius_top_left, size:15),
+                                                        checkboxSize: childPinSize,
+                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['topLeft']
+                                                    ),
+                                                      TreeNode<String>(label: Text('topRight', style:childStyle),
+                                                        icon: Icon(TablerIcons.radius_top_right, size:15),
+                                                        checkboxSize: childPinSize,
+                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['topRight']
+                                                    ),
+                                                      TreeNode<String>(label: Text('bottomLeft', style:childStyle),
+                                                        icon: Icon(TablerIcons.radius_bottom_left, size:15),
+                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['bottomLeft']
+                                                    ),
+                                                      TreeNode<String>(label: Text('bottomRight', style:childStyle),
+                                                        icon: Icon(TablerIcons.radius_bottom_right, size:15),
+                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['bottomRight']
+                                                    ),
+                                                      
+                                                        ]
+                                                        ),
                                                       TreeNode<String>(label: Text('boxShadow', style:childStyle),
                                                         icon: Icon(TablerIcons.shadow, size:15),
                                                         checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['boxShadow'],),
                                                       TreeNode<String>(label: Text('image', style:childStyle),
-                                                        isExpanded: expansionLevels[i==0?3:5],
+                                                        isExpanded: expansionLevels[i==0?5:8],
                                                         icon: Icon(TablerIcons.photo, size:15),
                                                         checkboxSize: childPinSize,
                                                         alternateChildren: false,
@@ -15405,12 +14953,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                            
                                               )
                                               
-                                              ]):null,
+                                              ]):null:null,
                                           ),
+                                          if(decorationIndex !=-1)
                                           if(sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration)
                                           ...buildDecorationEditor((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration))
-
-
+                              
+                              
                                         ],
                                       ),
                                     );
@@ -15608,6 +15157,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             // decorTreeViewKey.currentState?.setState(() {
                                                             decorationNameController.text = sheetListItem.listDecoration.itemDecorationList[decorationIndex].name;
                                                             // });
+                                                           
                                                           }
                                                   
                                                         });
@@ -19296,9 +18846,59 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   List<Widget> buildDecorationEditor(
   ItemDecoration itemDecoration,
 ) {
-
+  var pinned = itemDecoration.pinned;
+  List<TextEditingController> listPaddingControllers =[
+    TextEditingController()..text = itemDecoration.padding.top.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.padding.top.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.padding.bottom.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.padding.left.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.padding.right.toString().replaceAll(RegExp(r'\.0$'), ''),
+  ];
+  List<TextEditingController> listMarginControllers =[
+    TextEditingController()..text = itemDecoration.margin.top.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.margin.top.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.margin.bottom.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.margin.left.toString().replaceAll(RegExp(r'\.0$'), ''),
+    TextEditingController()..text = itemDecoration.margin.right.toString().replaceAll(RegExp(r'\.0$'), ''),
+  ];
+  
   return [
+    if(pinned['padding']['top'] ||
+    pinned['padding']['bottom'] ||
+    pinned['padding']['left'] ||
+    pinned['padding']['right']  
+    
+    )
+    Container( 
+       
+      child: buildListPaddingMarginAdjuster(
+        isMargin: false, itemDecoration: itemDecoration, 
+        listPaddingControllers: listPaddingControllers, 
+        marginControllers:listMarginControllers,
+        pinned: pinned
+        ),
+    ),
+    SizedBox(height: 0,),
+    if(pinned['margin']['top'] ||
+    pinned['margin']['bottom'] ||
+    pinned['margin']['left'] ||
+    pinned['margin']['right']  
+    
+    )
+    Container(  
+      child: buildListPaddingMarginAdjuster(
+        isMargin: true, itemDecoration: itemDecoration, 
+        listPaddingControllers: listPaddingControllers, 
+        marginControllers:listMarginControllers,
+        pinned: pinned
+        ),
+    ),
+ 
 
+    SizedBox(height: 3,),
+    if(pinned['decoration']['isPinned'])
+
+    buildListDecorationAdjuster()
   ];
 
 
@@ -19437,13 +19037,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 }
 
 
-  Widget buildListDecorationAdjuster({
+  Widget buildListPaddingMarginAdjuster({
     required bool isMargin,
     required ItemDecoration itemDecoration,
     required List<TextEditingController> listPaddingControllers,
     required List<TextEditingController> marginControllers,
     List<TextEditingController> borderRadiusControllers = const [],
     bool isBorderRadius = false,
+    Map<String, dynamic> pinned=const {},
   }) {
     // Choose the proper controller list based on the flag.
     var isExpanded = isBorderRadius
@@ -19461,6 +19062,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         : isMargin
             ? marginFocusNodes
             : listPaddingFocusNodes;
+    final topIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['top']);
+    final bottomIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['bottom']);
+    final leftIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['left']);
+    final rightIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['right']);
+    final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40))/2;
+    final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40);
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -19480,942 +19087,1181 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         });
       },
       child: Container(
-        decoration: BoxDecoration(
-            color: defaultPalette.primary,
-            borderRadius: BorderRadius.circular(10)),
-        padding: EdgeInsets.all(4).copyWith(top: 2),
+        decoration: BoxDecoration( 
+          borderRadius: BorderRadius.circular(10),
+          ), 
+        margin: EdgeInsets.all(4).copyWith(bottom: 2),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              isBorderRadius
-                  ? 'borderRadius'
-                  : !isMargin
-                      ? 'margin'
-                      : 'padding',
-              style: GoogleFonts.prompt(
-                  fontSize: 10, color: defaultPalette.extras[0]),
-            ),
-            // "Pad" field for all sides
-            Listener(
-              onPointerDown: (event) {
-                if (event.kind == PointerDeviceKind.mouse &&
-                    event.buttons == kSecondaryMouseButton) {
-                  if (dragBackupValue != null) {
-                    double parsedValue =
-                        double.parse(dragBackupValue.toStringAsFixed(2));
-                    // print('sliding values to increase decrease');
-                    setState(() {
-                      if (isBorderRadius) {
-                        itemDecoration = itemDecoration.copyWith(
-                          decoration: itemDecoration.decoration.copyWith(
-                            borderRadius: setBorderRadius(
-                                'all', parsedValue, itemDecoration),
-                          ),
-                        );
-                      } else if (isMargin) {
-                        itemDecoration = itemDecoration.copyWith(
-                          margin: EdgeInsets.all(parsedValue),
-                        );
-                      } else {
-                        // print('sliding values to increase decrease');
-                        itemDecoration = itemDecoration.copyWith(
-                          padding: EdgeInsets.all(parsedValue),
-                        );
-                      }
-
-                      dragBackupValue = null;
-                      focusNodes[0].unfocus();
-                    });
-                  }
-                }
-              },
-              child: GestureDetector(
-                onHorizontalDragCancel: () {
-                  focusNodes[0].requestFocus();
-                },
-                onHorizontalDragStart: (details) {
-                  dragBackupValue = double.parse(controllers[0].text);
-                },
-                onHorizontalDragUpdate: (details) {
-                  var multiplier = HardwareKeyboard.instance.isControlPressed
-                      ? 10
-                      : HardwareKeyboard.instance.isShiftPressed
-                          ? 0.1
-                          : 1;
-                  setState(() {
-                    double currentValue =
-                        double.tryParse(controllers[0].text) ?? 0.0;
-                    double newValue = (currentValue +
-                            details.delta.dx * multiplier)
-                        .clamp(0, double.infinity); // Adjust sensitivity here
-
-                    // controllers[0].text = newValue.toStringAsFixed(2);
-
-                    double parsedValue =
-                        double.parse(newValue.toStringAsFixed(2));
-
-                    if (isBorderRadius) {
-                      itemDecoration = itemDecoration.copyWith(
-                        decoration: itemDecoration.decoration.copyWith(
-                          borderRadius: setBorderRadius(
-                              'all', parsedValue, itemDecoration),
-                        ),
-                      );
-                    } else if (isMargin) {
-                      itemDecoration = itemDecoration.copyWith(
-                        margin: EdgeInsets.all(parsedValue),
-                      );
-                    } else {
-                      itemDecoration = itemDecoration.copyWith(
-                        padding: EdgeInsets.all(parsedValue),
-                      );
-                    }
-                  });
-                },
-                child: SizedBox(
-                  height: textFieldHeight / 2,
-                  child: TextFormField(
-                    onTapOutside: (event) => focusNodes[0].unfocus(),
-                    focusNode: focusNodes[0],
-                    controller: controllers[0],
-                    inputFormatters: [
-                      NumericInputFormatter(
-                        maxValue: documentPropertiesList[currentPageIndex]
-                                .pageFormatController
-                                .width /
-                            2.001,
-                      ),
-                    ],
-                    textAlignVertical: TextAlignVertical.top,
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.all(0),
-                      floatingLabelAlignment: FloatingLabelAlignment.center,
-                      labelStyle:
-                          GoogleFonts.lexend(color: defaultPalette.black),
-                      filled: true,
-                      fillColor: defaultPalette.secondary,
-                      border: InputBorder.none,
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            width: 1.2, color: defaultPalette.secondary),
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            width: 2, color: defaultPalette.extras[0]),
-                        borderRadius: BorderRadius.circular(5.0),
-                      ),
+            //padding/margin/borderRadius isPinned
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                  
+                // "Pad" field for all sides
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.only(left:2),
+                    decoration: BoxDecoration(
+                      border: Border.all(),
+                      color:defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(5)
                     ),
-                    keyboardType: TextInputType.number,
-                    style: GoogleFonts.bungee(
-                        fontSize: 12, color: defaultPalette.black),
-                    onFieldSubmitted: (value) {
-                      setState(() {
-                        double parsedValue = double.parse(value);
-                        if (isBorderRadius) {
-                          itemDecoration = itemDecoration.copyWith(
-                            decoration: itemDecoration.decoration.copyWith(
-                                borderRadius: setBorderRadius(
-                                    'all', parsedValue, itemDecoration)),
-                          );
-                        } else if (isMargin) {
-                          itemDecoration = itemDecoration.copyWith(
-                            margin: EdgeInsets.all(parsedValue),
-                          );
-                        } else {
-                          itemDecoration = itemDecoration.copyWith(
-                            padding: EdgeInsets.all(parsedValue),
-                          );
-                        }
-                      });
-                    },
+                    child: Row(
+                        children: [
+                          MouseRegion(
+                      cursor: SystemMouseCursors.resizeLeftRight,
+                      child: GestureDetector(
+                        onHorizontalDragCancel: () {
+                          focusNodes[0].requestFocus();
+                        },
+                        onHorizontalDragStart: (details) {
+                          dragBackupValue = double.parse(controllers[0].text);
+                        },
+                        onHorizontalDragUpdate: (details) {
+                          var multiplier = HardwareKeyboard.instance.isControlPressed
+                              ? 10
+                              : HardwareKeyboard.instance.isShiftPressed
+                                  ? 0.1
+                                  : 1;
+                          setState(() {
+                            double currentValue =
+                                double.tryParse(controllers[0].text) ?? 0.0;
+                            double newValue = (currentValue +
+                                    details.delta.dx * multiplier)
+                                .clamp(0, double.infinity); // Adjust sensitivity here
+                      
+                            // controllers[0].text = newValue.toStringAsFixed(2);
+                      
+                            double parsedValue =
+                                double.parse(newValue.toStringAsFixed(2));
+                      
+                            if (isBorderRadius) {
+                              itemDecoration = itemDecoration.copyWith(
+                                decoration: itemDecoration.decoration.copyWith(
+                                  borderRadius: setBorderRadius(
+                                      'all', parsedValue, itemDecoration),
+                                ),
+                              );
+                            } else if (isMargin) {
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                margin: EdgeInsets.all(parsedValue)
+                                );
+                            } else {
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                              padding: EdgeInsets.all(parsedValue)
+                              );
+                            }
+                          });
+                        },
+                        child: Row(
+                          children: [
+                          Icon(
+                          isBorderRadius
+                              ?  TablerIcons.border_corner_pill
+                              : isMargin
+                              ? TablerIcons.box_margin
+                              : TablerIcons.box_padding,
+                          size: 16,
+                          color: defaultPalette.extras[0]
+                          ),
+                          Text(isBorderRadius
+                            ?' borderRadius '
+                            : isMargin
+                            ? ' margin '
+                            : (sWidth * wH2DividerPosition)>220? ' padding ': ' pad ',
+                            style: GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.extras[0]),),
+                          ],
+                        ),
+                            ),
+                          ),
+                          Expanded(
+                            child: SizedBox(
+                             height: 20, 
+                             child: TextFormField(
+                               onTapOutside: (event) => focusNodes[0].unfocus(),
+                               focusNode: focusNodes[0],
+                               controller: controllers[0],
+                               inputFormatters: [
+                                 NumericInputFormatter( 
+                                 ),
+                               ], 
+                              cursorColor: defaultPalette.tertiary,
+                              selectionControls: NoMenuTextSelectionControls(),
+                              textAlign: TextAlign.end,
+                               decoration: InputDecoration(
+                                 contentPadding: const EdgeInsets.all(2 ), 
+                                 labelStyle:
+                                     GoogleFonts.lexend(color: defaultPalette.black),
+                                
+                                 fillColor: defaultPalette.transparent,
+                                 border: InputBorder.none,
+                                 enabledBorder:OutlineInputBorder(
+                                  borderSide: BorderSide.none
+                                 ),
+                                 focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide.none
+                                 ), 
+                               ),
+                               keyboardType: TextInputType.number,
+                               style: GoogleFonts.mitr(
+                                   fontSize: 15, color: defaultPalette.extras[0],
+                                   letterSpacing: -1
+                                   ),
+                               onFieldSubmitted: (value) {
+                                 setState(() {
+                                   double parsedValue = double.parse(value);
+                                   if (isBorderRadius) {
+                                     itemDecoration = itemDecoration.copyWith(
+                                       decoration: itemDecoration.decoration.copyWith(
+                                           borderRadius: setBorderRadius(
+                                               'all', parsedValue, itemDecoration)),
+                                     );
+                                   } else if (isMargin) {
+                                     sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                   margin: EdgeInsets.all(parsedValue)
+                                   );
+                                   } else {
+                                     print(itemDecoration.padding.toString());
+                                     sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                   padding: EdgeInsets.all(parsedValue)
+                                   );
+                                   }
+                                 });
+                               },
+                             ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ),
                 ),
-              ),
-            ),
-
-            // "Pad" field SLIDER for all sides
-            BalloonSlider(
-              color: defaultPalette.extras[0],
-              value: (isBorderRadius
-                      ? double.parse(controllers[0].text) / 100
-                      : isMargin
-                          ? itemDecoration.margin.top / 100
-                          : itemDecoration.padding.top / 100)
-                  .clamp(0, 1),
-              showRope: true,
-              ropeLength: 50,
-              onChanged: (value) {
-                setState(() {
-                  double parsedValue =
-                      double.parse((value * 100).toStringAsFixed(2));
-                  if (isBorderRadius) {
-                    itemDecoration = itemDecoration.copyWith(
-                      decoration: itemDecoration.decoration.copyWith(
-                          borderRadius: setBorderRadius(
-                              'all', parsedValue, itemDecoration)),
-                    );
-                  } else if (isMargin) {
-                    itemDecoration = itemDecoration.copyWith(
-                      margin: EdgeInsets.all(parsedValue),
-                    );
-                  } else {
-                    itemDecoration = itemDecoration.copyWith(
-                      padding: EdgeInsets.all(parsedValue),
-                    );
-                  }
-                });
-              },
-            ),
-
+                          const SizedBox(width: 2,),
+                //PIN isPinned
+                ClipRRect(
+                            borderRadius: BorderRadius.circular(500),
+                            child: Material(
+                              color: defaultPalette.transparent, 
+                              child: InkWell(
+                              
+                                hoverColor:  defaultPalette.tertiary,
+                                splashColor: defaultPalette.tertiary,
+                                highlightColor:  defaultPalette.tertiary,
+                                onTap: () {
+                                setState(() {
+                                  final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                              
+                                  // Toggle isPinned based on the condition
+                                  if (isBorderRadius) {
+                                    currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
+                                        !currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                    currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
+                                    currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
+                                    currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
+                                    currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
+                                    expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                  } else 
+                                  if (isMargin) {
+                                    currentItem.pinned['margin']['isPinned'] = 
+                                        !currentItem.pinned['margin']['isPinned'];
+                                    if (currentItem.pinned['margin']['isPinned']) {
+                                      currentItem.pinned['margin']['top'] = true;
+                                      currentItem.pinned['margin']['bottom'] = true;
+                                      currentItem.pinned['margin']['left'] = true;
+                                      currentItem.pinned['margin']['right'] = true;
+                                    } else {
+                                      currentItem.pinned['margin']['top'] = false;
+                                      currentItem.pinned['margin']['bottom'] = false;
+                                      currentItem.pinned['margin']['left'] = false;
+                                      currentItem.pinned['margin']['right'] = false;
+                                    }
+                                    // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                    
+                                  } else {
+                                    currentItem.pinned['padding']['isPinned'] = 
+                                        !currentItem.pinned['padding']['isPinned'];
+                                    if (currentItem.pinned['padding']['isPinned']) {
+                                      currentItem.pinned['padding']['top'] = true;
+                                      currentItem.pinned['padding']['bottom'] = true;
+                                      currentItem.pinned['padding']['left'] = true;
+                                      currentItem.pinned['padding']['right'] = true;
+                                    } else {
+                                      currentItem.pinned['padding']['top'] = false;
+                                      currentItem.pinned['padding']['bottom'] = false;
+                                      currentItem.pinned['padding']['left'] = false;
+                                      currentItem.pinned['padding']['right'] = false;
+                                    }
+                                  }
+                              
+                                  // Update the list item with the modified currentItem
+                                  sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                                });
+                                },
+                                child: Icon(
+                                  isBorderRadius
+                                      ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                      : isMargin
+                                      ? pinned['margin']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                      : pinned['padding']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                      ,
+                                    size: 16, color: defaultPalette.extras[0]),
+                              ),
+                            ),
+                          ),
+                        
+              ],
+            ), 
             if (!isExpanded) ...[
-              const SizedBox(height: 10),
-              // Top and Bottom adjustments
-              Row(
-                children: [
-                  // Top
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      height: textFieldHeight / 2,
-                      child: Row(
-                        children: [
-                          Expanded(
-                              flex: 1,
-                              child: Transform.rotate(
-                                  angle: isBorderRadius ? 0 : pi / 2,
-                                  child: Icon(
-                                      isBorderRadius
-                                          ? TablerIcons.border_corner_pill
-                                          : TablerIcons.layout_sidebar_inactive,
-                                      size: 15))),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            flex: 5,
-                            child: Listener(
-                              onPointerDown: (event) {
-                                if (event.kind == PointerDeviceKind.mouse &&
-                                    event.buttons == kSecondaryMouseButton) {
-                                  if (dragBackupValue != null) {
-                                    double val = double.parse(
-                                        dragBackupValue.toStringAsFixed(2));
-
-                                    setState(() {
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'topLeft', val, itemDecoration),
-                                          ),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin:
-                                              itemDecoration.margin.copyWith(
-                                            top: val,
-                                          ),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding:
-                                              itemDecoration.padding.copyWith(
-                                            top: val,
-                                          ),
-                                        );
-                                      }
-
-                                      dragBackupValue = null;
-                                    });
-                                  }
-                                }
-                              },
-                              child: GestureDetector(
-                                onHorizontalDragCancel: () {
-                                  focusNodes[1].requestFocus();
-                                },
-                                onHorizontalDragStart: (details) {
-                                  dragBackupValue =
-                                      double.parse(controllers[1].text);
-                                },
-                                onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard
-                                          .instance.isControlPressed
-                                      ? 10
-                                      : HardwareKeyboard.instance.isShiftPressed
-                                          ? 0.1
-                                          : 1;
-                                  setState(() {
-                                    double currentValue =
-                                        double.tryParse(controllers[1].text) ??
-                                            0.0;
-                                    double newValue = (currentValue +
-                                            (details.delta.dx * multiplier))
-                                        .clamp(0, double.infinity);
-
-                                    double val = double.parse(
-                                        newValue.toStringAsFixed(2));
-
-                                    if (isBorderRadius) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        decoration:
-                                            itemDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius(
-                                              'topLeft', val, itemDecoration),
-                                        ),
-                                      );
-                                    } else if (isMargin) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        margin: itemDecoration.margin.copyWith(
-                                          top: val,
-                                        ),
-                                      );
-                                    } else {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        padding:
-                                            itemDecoration.padding.copyWith(
-                                          top: val,
-                                        ),
-                                      );
-                                    }
-                                  });
-                                },
-                                child: TextFormField(
-                                  onTapOutside: (event) =>
-                                      focusNodes[1].unfocus(),
-                                  focusNode: focusNodes[1],
-                                  controller: controllers[1],
-                                  inputFormatters: [NumericInputFormatter()],
-                                  cursorColor: defaultPalette.extras[0],
-                                  selectionControls:
-                                      NoMenuTextSelectionControls(),
-                                  textAlign: TextAlign.center,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.all(0),
-                                    filled: true,
-                                    fillColor: defaultPalette.secondary,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5.0),
+              const SizedBox(height: 4),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.circular(5)
+                ),
+                child: Column(
+                  children: [
+                    
+                    // Top and Bottom adjustments
+                    Flex(
+                      direction:  (sWidth * wH2DividerPosition)>220?Axis.horizontal:Axis.vertical,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        if(topIsPinned)
+                        // Top
+                        Container(
+                          width: (sWidth * wH2DividerPosition)>220&& bottomIsPinned?widthSmall:widthBig,
+                          padding: EdgeInsets.only(left:2),
+                        decoration: BoxDecoration(
+                          
+                          color:defaultPalette.primary,
+                          borderRadius: BorderRadius.circular(0).copyWith(
+                            topLeft: Radius.circular(5),
+                            topRight: Radius.circular((sWidth * wH2DividerPosition)>220&& bottomIsPinned?0:5)
+                            )
+                        ),
+                        
+                          child: SizedBox(
+                            height: 20,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.resizeLeftRight,
+                                  child: GestureDetector(
+                                      onHorizontalDragCancel: () {
+                                        focusNodes[1].requestFocus();
+                                      },
+                                      onHorizontalDragStart: (details) {
+                                        dragBackupValue =
+                                            double.parse(controllers[1].text);
+                                      },
+                                      onHorizontalDragUpdate: (details) {
+                                        var multiplier = HardwareKeyboard
+                                                .instance.isControlPressed
+                                            ? 10
+                                            : HardwareKeyboard.instance.isShiftPressed
+                                                ? 0.1
+                                                : 1;
+                                        setState(() {
+                                          double currentValue =
+                                              double.tryParse(controllers[1].text) ??
+                                                  0.0;
+                                          double newValue = (currentValue +
+                                                  (details.delta.dx * multiplier))
+                                              .clamp(0, double.infinity);
+                                    
+                                          double val = double.parse(
+                                              newValue.toStringAsFixed(2));
+                                    
+                                          if (isBorderRadius) {
+                                            itemDecoration = itemDecoration.copyWith(
+                                              decoration:
+                                                  itemDecoration.decoration.copyWith(
+                                                borderRadius: setBorderRadius(
+                                                    'topLeft', val, itemDecoration),
+                                              ),
+                                            );
+                                          } else if (isMargin) {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(top: val)
+                                              );
+                                          } else {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(top: val)
+                                              );
+                                          }
+                                        });
+                                      },
+                                    child: Transform.rotate(
+                                        angle: isBorderRadius ? 0 : isMargin?0: -pi / 2,
+                                        child: Icon(
+                                            isBorderRadius
+                                                ? TablerIcons.border_corner_pill
+                                                : isMargin
+                                                ? TablerIcons.box_align_bottom
+                                                : TablerIcons.layout_sidebar_right_inactive,
+                                            size: 15,
+                                            color: defaultPalette.extras[0]
+                                            )),
+                                                             ),
+                                 ), 
+                                Expanded(  
+                                  child: TextFormField(
+                                    onTapOutside: (event) =>
+                                        focusNodes[1].unfocus(),
+                                    focusNode: focusNodes[1],
+                                    controller: controllers[1],
+                                    inputFormatters: [NumericInputFormatter()],
+                                    cursorColor: defaultPalette.tertiary,
+                                    selectionControls:
+                                        NoMenuTextSelectionControls(), 
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
+                                      filled: true,
+                                      fillColor: defaultPalette.transparent,
+                                      border: OutlineInputBorder( 
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      // suffix: Text('top',style: GoogleFonts.mitr(
+                                      //   fontSize: 10,
+                                      //   color: defaultPalette.primary),)
                                     ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 1.2,
-                                          color: defaultPalette.secondary),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 2,
-                                          color: defaultPalette.extras[0]),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
+                                    
+                                    keyboardType: TextInputType.number,
+                                    style: GoogleFonts.mitr(
+                                        fontSize: 12,
+                                        color: defaultPalette.extras[0]),
+                                    onFieldSubmitted: (value) {
+                                      setState(() {
+                                        double val = value.isEmpty
+                                            ? 0
+                                            : double.parse(value);
+                                        if (isBorderRadius) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            decoration: itemDecoration.decoration
+                                                .copyWith(
+                                                    borderRadius: setBorderRadius(
+                                                        'topLeft',
+                                                        val,
+                                                        itemDecoration)),
+                                          );
+                                        } else if (isMargin) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            margin: itemDecoration.margin
+                                                .copyWith(top: val),
+                                          );
+                                        } else {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            padding: itemDecoration.padding
+                                                .copyWith(top: val),
+                                          );
+                                        }
+                                      });
+                                    },
                                   ),
-                                  keyboardType: TextInputType.number,
-                                  style: GoogleFonts.bungee(
-                                      fontSize: 12,
-                                      color: defaultPalette.black),
-                                  onFieldSubmitted: (value) {
-                                    setState(() {
-                                      double val = value.isEmpty
-                                          ? 0
-                                          : double.parse(value);
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                                  borderRadius: setBorderRadius(
-                                                      'topLeft',
-                                                      val,
-                                                      itemDecoration)),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(top: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(top: val),
-                                        );
-                                      }
-                                    });
-                                  },
-                                ),
-                              ),
+                                ), 
+                                //PIN isPinned
+                              ClipRRect(
+                        borderRadius: BorderRadius.circular(500),
+                        child: Material(
+                          color: defaultPalette.transparent, 
+                          child: InkWell(
+                          
+                            hoverColor:  defaultPalette.tertiary,
+                            splashColor: defaultPalette.tertiary,
+                            highlightColor:  defaultPalette.tertiary,
+                            onTap: () {
+                            setState(() {
+                              final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                          
+                              // Toggle isPinned based on the condition
+                              if (isBorderRadius) {
+                                currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
+                                    !currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
+                                expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                              } else 
+                              if (isMargin) {
+                                currentItem.pinned['margin']['top'] = 
+                                    !currentItem.pinned['margin']['top'];
+                                // currentItem.pinned['margin']['top'] = false;
+                                // currentItem.pinned['margin']['bottom'] = false;
+                                // currentItem.pinned['margin']['left'] = false;
+                                // currentItem.pinned['margin']['right'] = false;
+                                // expansionLevels[1]  = currentItem.pinned['margin']['top'];
+                                 
+                              } else {
+                                currentItem.pinned['padding']['top'] = 
+                                    !currentItem.pinned['padding']['top'];
+                                // currentItem.pinned['padding']['top'] = false;
+                                // currentItem.pinned['padding']['bottom'] = false;
+                                // currentItem.pinned['padding']['left'] = false;
+                                // currentItem.pinned['padding']['right'] = false;
+                                // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                              }
+                          
+                              // Update the list item with the modified currentItem
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                            });
+                            },
+                            child: Icon(
+                              isBorderRadius
+                                  ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                  : isMargin
+                                  ? pinned['margin']['top']? TablerIcons.pin_filled : TablerIcons.pin
+                                  : pinned['padding']['top']? TablerIcons.pin_filled : TablerIcons.pin
+                                  ,
+                                size: 15, color:defaultPalette.extras[0]),
+                          ),
+                        ),
+                      ),
+                              const SizedBox(width: 2,),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 5),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Bottom
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      height: textFieldHeight / 2,
-                      child: Row(
-                        children: [
-                          Expanded(
-                              flex: 1,
-                              child: Transform.rotate(
-                                  angle: isBorderRadius ? pi / 2 : -pi / 2,
-                                  child: Icon(
-                                      isBorderRadius
-                                          ? TablerIcons.border_corner_pill
-                                          : TablerIcons.layout_sidebar_inactive,
-                                      size: 15))),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            flex: 5,
-                            child: Listener(
-                              onPointerDown: (event) {
-                                if (event.kind == PointerDeviceKind.mouse &&
-                                    event.buttons == kSecondaryMouseButton) {
-                                  if (dragBackupValue != null) {
-                                    double val = double.parse(
-                                        dragBackupValue.toStringAsFixed(2));
-
-                                    setState(() {
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'topRight',
-                                                val,
-                                                itemDecoration),
-                                          ),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(bottom: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(bottom: val),
-                                        );
-                                      }
-
-                                      dragBackupValue = null;
-                                    });
-                                  }
-                                }
-                              },
-                              child: GestureDetector(
-                                onHorizontalDragCancel: () {
-                                  focusNodes[2].requestFocus();
-                                },
-                                onHorizontalDragStart: (details) {
-                                  dragBackupValue =
-                                      double.parse(controllers[2].text);
-                                },
-                                onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard
-                                          .instance.isControlPressed
-                                      ? 10
-                                      : HardwareKeyboard.instance.isShiftPressed
-                                          ? 0.06
-                                          : 1;
-                                  setState(() {
-                                    double currentValue =
-                                        double.tryParse(controllers[2].text) ??
-                                            0.0;
-                                    double newValue = (currentValue +
-                                            (details.delta.dx * multiplier))
-                                        .clamp(0, double.infinity);
-
-                                    double val = double.parse(
-                                        newValue.toStringAsFixed(2));
-
-                                    if (isBorderRadius) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        decoration:
-                                            itemDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius(
-                                              'topRight', val, itemDecoration),
-                                        ),
-                                      );
-                                    } else if (isMargin) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        margin: itemDecoration.margin
-                                            .copyWith(bottom: val),
-                                      );
-                                    } else {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        padding: itemDecoration.padding
-                                            .copyWith(bottom: val),
-                                      );
-                                    }
-                                  });
-                                },
-                                child: TextFormField(
-                                  onTapOutside: (event) =>
-                                      focusNodes[2].unfocus(),
-                                  focusNode: focusNodes[2],
-                                  controller: controllers[2],
-                                  inputFormatters: [NumericInputFormatter()],
-                                  selectionControls:
-                                      NoMenuTextSelectionControls(),
-                                  cursorColor: defaultPalette.secondary,
-                                  textAlign: TextAlign.center,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.all(0),
-                                    filled: true,
-                                    fillColor: defaultPalette.secondary,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 1.2,
-                                          color: defaultPalette.secondary),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 2,
-                                          color: defaultPalette.extras[0]),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
+                        ), 
+                        const SizedBox(
+                          width: 0, height: 0,),
+                        if(bottomIsPinned)
+                        // Bottom
+                        Container(
+                          height: 20,
+                          width:(sWidth * wH2DividerPosition)>220&& topIsPinned?widthSmall:widthBig,
+                          padding: EdgeInsets.only(left:2),
+                          decoration: BoxDecoration(
+                            color:defaultPalette.primary,
+                            borderRadius: BorderRadius.circular(0).copyWith(
+                              topLeft: Radius.circular(topIsPinned? 0:5),
+                              topRight: Radius.circular((sWidth * wH2DividerPosition)>220?5:0),)
+                          ),
+                          child: SizedBox(
+                            height: 20,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.resizeLeftRight,
+                                  child: GestureDetector(
+                                    onHorizontalDragCancel: () {
+                                        focusNodes[2].requestFocus();
+                                      },
+                                    onHorizontalDragStart: (details) {
+                                        dragBackupValue =
+                                            double.parse(controllers[2].text);
+                                      },
+                                    onHorizontalDragUpdate: (details) {
+                                        var multiplier = HardwareKeyboard
+                                                .instance.isControlPressed
+                                            ? 10
+                                            : HardwareKeyboard.instance.isShiftPressed
+                                                ? 0.06
+                                                : 1;
+                                        setState(() {
+                                          double currentValue =
+                                              double.tryParse(controllers[2].text) ??
+                                                  0.0;
+                                          double newValue = (currentValue +
+                                                  (details.delta.dx * multiplier))
+                                              .clamp(0, double.infinity);
+                                    
+                                          double val = double.parse(
+                                              newValue.toStringAsFixed(2));
+                                    
+                                          if (isBorderRadius) {
+                                            itemDecoration = itemDecoration.copyWith(
+                                              decoration:
+                                                  itemDecoration.decoration.copyWith(
+                                                borderRadius: setBorderRadius(
+                                                    'topRight', val, itemDecoration),
+                                              ),
+                                            );
+                                          } else if (isMargin) {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(bottom: val)
+                                              );
+                                          } else {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(bottom: val)
+                                              );
+                                          }
+                                        });
+                                      },
+                                    child: Transform.rotate(
+                          
+                                        angle: isBorderRadius ? pi / 2 : 0,
+                                        child: Icon(
+                                            isBorderRadius
+                                            ? TablerIcons.border_corner_pill
+                                            : isMargin
+                                            ? TablerIcons.box_align_top
+                                            : TablerIcons.layout_bottombar_inactive,
+                                            size: 15, color: defaultPalette.extras[0])),
                                   ),
-                                  keyboardType: TextInputType.number,
-                                  style: GoogleFonts.bungee(
-                                      fontSize: 12,
-                                      color: defaultPalette.black),
-                                  onFieldSubmitted: (value) {
-                                    setState(() {
-                                      double val = value.isEmpty
-                                          ? 0
-                                          : double.parse(value);
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                                  borderRadius: setBorderRadius(
-                                                      'topRight',
-                                                      val,
-                                                      itemDecoration)),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(bottom: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(bottom: val),
-                                        );
-                                      }
-                                    });
-                                  },
                                 ),
-                              ),
+                                const SizedBox(width: 0),
+                                Expanded( 
+                                  child: TextFormField(
+                                    onTapOutside: (event) =>
+                                        focusNodes[2].unfocus(),
+                                    focusNode: focusNodes[2],
+                                    controller: controllers[2],
+                                    inputFormatters: [NumericInputFormatter()],
+                                    selectionControls:
+                                        NoMenuTextSelectionControls(),
+                                    cursorColor: defaultPalette.tertiary,
+                                    textAlign: TextAlign.start,
+                                    textAlignVertical: TextAlignVertical.top,
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
+                                      filled: true,
+                                      fillColor: defaultPalette.transparent,
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      // suffix: Text('bottom',style: GoogleFonts.mitr(
+                                      //   fontSize: 9,
+                                      //   color: defaultPalette.primary),)
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    style: GoogleFonts.mitr(
+                                        fontSize: 12,
+                                        color: defaultPalette.extras[0]),
+                                    onFieldSubmitted: (value) {
+                                      setState(() {
+                                        double val = value.isEmpty
+                                            ? 0
+                                            : double.parse(value);
+                                        if (isBorderRadius) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            decoration: itemDecoration.decoration
+                                                .copyWith(
+                                                    borderRadius: setBorderRadius(
+                                                        'topRight',
+                                                        val,
+                                                        itemDecoration)),
+                                          );
+                                        } else if (isMargin) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            margin: itemDecoration.margin
+                                                .copyWith(bottom: val),
+                                          );
+                                        } else {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            padding: itemDecoration.padding
+                                                .copyWith(bottom: val),
+                                          );
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ), 
+                                ClipRRect(
+                        borderRadius: BorderRadius.circular(500),
+                        child: Material(
+                          color: defaultPalette.transparent, 
+                          child: InkWell(
+                          
+                            hoverColor:  defaultPalette.tertiary,
+                            splashColor: defaultPalette.tertiary,
+                            highlightColor:  defaultPalette.tertiary,
+                            onTap: () {
+                            setState(() {
+                              final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                          
+                              // Toggle isPinned based on the condition
+                              if (isBorderRadius) {
+                                currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
+                                    !currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
+                                expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                              } else 
+                              if (isMargin) {
+                                currentItem.pinned['margin']['bottom'] = 
+                                    !currentItem.pinned['margin']['bottom'];
+                                // currentItem.pinned['margin']['top'] = false;
+                                // currentItem.pinned['margin']['bottom'] = false;
+                                // currentItem.pinned['margin']['left'] = false;
+                                // currentItem.pinned['margin']['right'] = false;
+                                // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                 
+                              } else {
+                                currentItem.pinned['padding']['bottom'] = 
+                                    !currentItem.pinned['padding']['bottom'];
+                                // currentItem.pinned['padding']['top'] = false;
+                                // currentItem.pinned['padding']['bottom'] = false;
+                                // currentItem.pinned['padding']['left'] = false;
+                                // currentItem.pinned['padding']['right'] = false;
+                                // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                              }
+                          
+                              // Update the list item with the modified currentItem
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                            });
+                            },
+                            child: Icon(
+                              isBorderRadius
+                                  ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                  : isMargin
+                                  ? pinned['margin']['bottom']? TablerIcons.pin_filled : TablerIcons.pin
+                                  : pinned['padding']['bottom']? TablerIcons.pin_filled : TablerIcons.pin
+                                  ,
+                                size: 15, color:defaultPalette.extras[0] ),
+                          ),
+                        ),
+                      ),
+                       SizedBox(width: 2)
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 5),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 0),
+                    // Left and Right adjustments
+                    Flex(
+                      direction:  (sWidth * wH2DividerPosition)>220?Axis.horizontal:Axis.vertical,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        if(leftIsPinned)
+                        // Left
+                        Container(
+                          width: (sWidth * wH2DividerPosition)>220&& rightIsPinned?widthSmall:widthBig,
+                          padding: EdgeInsets.only(left:2),
+                        decoration: BoxDecoration(
+                          color:defaultPalette.primary,
+                          borderRadius: BorderRadius.circular(0).copyWith(
+                            bottomLeft: Radius.circular((sWidth * wH2DividerPosition)>220?5:0),
+                            bottomRight: Radius.circular(rightIsPinned?0:5)
+                            )
+                        ),
+                          child: SizedBox(
+                            height: 20,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.resizeLeftRight,
+                                  child: GestureDetector(
+                                      onHorizontalDragCancel: () {
+                                        focusNodes[3].requestFocus();
+                                      },
+                                      onHorizontalDragStart: (details) {
+                                        dragBackupValue =
+                                            double.parse(controllers[3].text);
+                                      },
+                                      onHorizontalDragUpdate: (details) {
+                                        var multiplier = HardwareKeyboard
+                                                .instance.isControlPressed
+                                            ? 10
+                                            : HardwareKeyboard.instance.isShiftPressed
+                                                ? 0.1
+                                                : 1;
+                                        setState(() {
+                                          double currentValue =
+                                              double.tryParse(controllers[3].text) ??
+                                                  0.0;
+                                          double newValue = (currentValue +
+                                                  (details.delta.dx * multiplier))
+                                              .clamp(0, double.infinity);
+                                    
+                                          double val = double.parse(
+                                              newValue.toStringAsFixed(2));
+                                    
+                                          if (isBorderRadius) {
+                                            itemDecoration = itemDecoration.copyWith(
+                                              decoration:
+                                                  itemDecoration.decoration.copyWith(
+                                                borderRadius: setBorderRadius(
+                                                    'topLeft', val, itemDecoration),
+                                              ),
+                                            );
+                                          } else if (isMargin) {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(left: val)
+                                              );
+                                          } else {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(left: val)
+                                              );
+                                          }
+                                        });
+                                      },
+                                    child: Transform.rotate(
+                                        angle: isBorderRadius ? 0 : isMargin?0: 0,
+                                        child: Icon(
+                                            isBorderRadius
+                                                ? TablerIcons.border_corner_pill
+                                                : isMargin
+                                                ? TablerIcons.box_align_right
+                                                : TablerIcons.layout_sidebar_inactive,
+                                            size: 15,
+                                            color: defaultPalette.extras[0]
+                                            )),
+                                                             ),
+                                 ), 
+                                Expanded(  
+                                  child: TextFormField(
+                                    onTapOutside: (event) =>
+                                        focusNodes[3].unfocus(),
+                                    focusNode: focusNodes[3],
+                                    controller: controllers[3],
+                                    inputFormatters: [NumericInputFormatter()],
+                                    cursorColor: defaultPalette.tertiary,
+                                    selectionControls:
+                                        NoMenuTextSelectionControls(), 
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
+                                      filled: true,
+                                      fillColor: defaultPalette.transparent,
+                                      border: OutlineInputBorder( 
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),  
+                                    ),
+                                    
+                                    keyboardType: TextInputType.number,
+                                    style: GoogleFonts.mitr(
+                                        fontSize: 12,
+                                        color: defaultPalette.extras[0]),
+                                    onFieldSubmitted: (value) {
+                                      setState(() {
+                                        double val = value.isEmpty
+                                            ? 0
+                                            : double.parse(value);
+                                        if (isBorderRadius) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            decoration: itemDecoration.decoration
+                                                .copyWith(
+                                                    borderRadius: setBorderRadius(
+                                                        'topLeft',
+                                                        val,
+                                                        itemDecoration)),
+                                          );
+                                        } else if (isMargin) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            margin: itemDecoration.margin
+                                                .copyWith(left: val),
+                                          );
+                                        } else {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            padding: itemDecoration.padding
+                                                .copyWith(left: val),
+                                          );
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ), 
+                                ClipRRect(
+                        borderRadius: BorderRadius.circular(500),
+                        child: Material(
+                          color: defaultPalette.transparent, 
+                          child: InkWell(
+                          
+                            hoverColor:  defaultPalette.tertiary,
+                            splashColor: defaultPalette.tertiary,
+                            highlightColor:  defaultPalette.tertiary,
+                            onTap: () {
+                            setState(() {
+                              final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                          
+                              // Toggle isPinned based on the condition
+                              if (isBorderRadius) {
+                                currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
+                                    !currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
+                                currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
+                                expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                              } else 
+                              if (isMargin) {
+                                currentItem.pinned['margin']['left'] = 
+                                    !currentItem.pinned['margin']['left'];
+                                // currentItem.pinned['margin']['top'] = false;
+                                // currentItem.pinned['margin']['bottom'] = false;
+                                // currentItem.pinned['margin']['left'] = false;
+                                // currentItem.pinned['margin']['right'] = false;
+                                // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                 
+                              } else {
+                                currentItem.pinned['padding']['left'] = 
+                                    !currentItem.pinned['padding']['left'];
+                                // currentItem.pinned['padding']['top'] = false;
+                                // currentItem.pinned['padding']['bottom'] = false;
+                                // currentItem.pinned['padding']['left'] = false;
+                                // currentItem.pinned['padding']['right'] = false;
+                                // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                              }
+                          
+                              // Update the list item with the modified currentItem
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                            });
+                            },
+                            child: Icon(
+                              isBorderRadius
+                                  ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                  : isMargin
+                                  ? pinned['margin']['left']? TablerIcons.pin_filled : TablerIcons.pin
+                                  : pinned['padding']['left']? TablerIcons.pin_filled : TablerIcons.pin
+                                  ,
+                                size: 15, color:defaultPalette.extras[0]),
+                          ),
+                        ),
+                      ),
+                       SizedBox(width: 2)
+                              ],
+                            ),
+                          ),
+                        ), 
+                        const SizedBox(
+                          width: 0, height: 0,),
+                        if(rightIsPinned)
+                        // RIGHT
+                        Container(
+                          height: 20,
+                          width:(sWidth * wH2DividerPosition)>220&& leftIsPinned?widthSmall:widthBig,
+                          padding: EdgeInsets.only(left:2),
+                          decoration: BoxDecoration(
+                            color:defaultPalette.primary,
+                            borderRadius: BorderRadius.circular(0).copyWith(
+                              bottomLeft: Radius.circular((sWidth * wH2DividerPosition)>220 && leftIsPinned?0:5),
+                              bottomRight: Radius.circular(5))
+                          ),
+                          child: SizedBox(
+                            height: 18,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.resizeLeftRight,
+                                  child: GestureDetector(
+                                    onHorizontalDragCancel: () {
+                                        focusNodes[4].requestFocus();
+                                      },
+                                    onHorizontalDragStart: (details) {
+                                        dragBackupValue =
+                                            double.parse(controllers[4].text);
+                                      },
+                                    onHorizontalDragUpdate: (details) {
+                                        var multiplier = HardwareKeyboard
+                                                .instance.isControlPressed
+                                            ? 10
+                                            : HardwareKeyboard.instance.isShiftPressed
+                                                ? 0.06
+                                                : 1;
+                                        setState(() {
+                                          double currentValue =
+                                              double.tryParse(controllers[4].text) ??
+                                                  0.0;
+                                          double newValue = (currentValue +
+                                                  (details.delta.dx * multiplier))
+                                              .clamp(0, double.infinity);
+                                    
+                                          double val = double.parse(
+                                              newValue.toStringAsFixed(2));
+                                    
+                                          if (isBorderRadius) {
+                                            itemDecoration = itemDecoration.copyWith(
+                                              decoration:
+                                                  itemDecoration.decoration.copyWith(
+                                                borderRadius: setBorderRadius(
+                                                    'topRight', val, itemDecoration),
+                                              ),
+                                            );
+                                          } else if (isMargin) {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(right: val)
+                                              );
+                                          } else {
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(right: val)
+                                              );
+                                          }
+                                        });
+                                      },
+                                    child: Transform.rotate(
+                          
+                                        angle: isBorderRadius ? pi / 2 : 0,
+                                        child: Icon(
+                                            isBorderRadius
+                                            ? TablerIcons.border_corner_pill
+                                            : isMargin
+                                            ? TablerIcons.box_align_left
+                                            : TablerIcons.layout_sidebar_right_inactive,
+                                            size: 15, color: defaultPalette.extras[0])),
+                                  ),
+                                ),
+                                const SizedBox(width: 0),
+                                Expanded( 
+                                  child: TextFormField(
+                                    onTapOutside: (event) =>
+                                        focusNodes[4].unfocus(),
+                                    focusNode: focusNodes[4],
+                                    controller: controllers[4],
+                                    inputFormatters: [NumericInputFormatter()],
+                                    selectionControls:
+                                        NoMenuTextSelectionControls(),
+                                    cursorColor: defaultPalette.tertiary,
+                                    textAlign: TextAlign.start,
+                                    textAlignVertical: TextAlignVertical.top,
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
+                                      filled: true,
+                                      fillColor: defaultPalette.transparent,
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                      ),
+                                      // suffix: Text('right',style: GoogleFonts.mitr(
+                                      //   fontSize: 9,
+                                      //   color: defaultPalette.primary),)
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    style: GoogleFonts.mitr(
+                                        fontSize: 12,
+                                        color: defaultPalette.extras[0]),
+                                    onFieldSubmitted: (value) {
+                                      setState(() {
+                                        double val = value.isEmpty
+                                            ? 0
+                                            : double.parse(value);
+                                        if (isBorderRadius) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            decoration: itemDecoration.decoration
+                                                .copyWith(
+                                                    borderRadius: setBorderRadius(
+                                                        'topRight',
+                                                        val,
+                                                        itemDecoration)),
+                                          );
+                                        } else if (isMargin) {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            margin: itemDecoration.margin
+                                                .copyWith(right: val),
+                                          );
+                                        } else {
+                                          itemDecoration =
+                                              itemDecoration.copyWith(
+                                            padding: itemDecoration.padding
+                                                .copyWith(right: val),
+                                          );
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ), 
+                                ClipRRect(
+                                borderRadius: BorderRadius.circular(500),
+                                child: Material(
+                                  color: defaultPalette.transparent, 
+                                  child: InkWell(
+                                  
+                                    hoverColor:  defaultPalette.tertiary,
+                                    splashColor: defaultPalette.tertiary,
+                                    highlightColor:  defaultPalette.tertiary,
+                                    onTap: () {
+                                    setState(() {
+                                      final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                                  
+                                      // Toggle isPinned based on the condition
+                                      if (isBorderRadius) {
+                                        currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
+                                            !currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                        currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
+                                        currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
+                                        currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
+                                        currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
+                                        expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                      } else 
+                                      if (isMargin) {
+                                        currentItem.pinned['margin']['right'] = 
+                                            !currentItem.pinned['margin']['right'];
+                                        // currentItem.pinned['margin']['top'] = false;
+                                        // currentItem.pinned['margin']['bottom'] = false;
+                                        // currentItem.pinned['margin']['left'] = false;
+                                        // currentItem.pinned['margin']['right'] = false;
+                                        // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                        
+                                      } else {
+                                        currentItem.pinned['padding']['right'] = 
+                                            !currentItem.pinned['padding']['right'];
+                                        // currentItem.pinned['padding']['top'] = false;
+                                        // currentItem.pinned['padding']['bottom'] = false;
+                                        // currentItem.pinned['padding']['left'] = false;
+                                        // currentItem.pinned['padding']['right'] = false;
+                                        // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                                      }
+                                  
+                                      // Update the list item with the modified currentItem
+                                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                                    });
+                                    },
+                                    child: Icon(
+                                      isBorderRadius
+                                          ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                          : isMargin
+                                          ? pinned['margin']['right']? TablerIcons.pin_filled : TablerIcons.pin
+                                          : pinned['padding']['right']? TablerIcons.pin_filled : TablerIcons.pin
+                                          ,
+                                        size: 15, color:defaultPalette.extras[0] ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 2)
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 0),
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
-              // Left and Right adjustments
-              Row(
-                children: [
-                  // Left
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      height: textFieldHeight / 2,
-                      child: Row(
-                        children: [
-                          Expanded(
-                              flex: 1,
-                              child: Transform.rotate(
-                                  angle: isBorderRadius ? -pi / 2 : 0,
-                                  child: Icon(
-                                      isBorderRadius
-                                          ? TablerIcons.border_corner_pill
-                                          : TablerIcons.layout_sidebar_inactive,
-                                      size: 15))),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            flex: 5,
-                            child: Listener(
-                              onPointerDown: (event) {
-                                if (event.kind == PointerDeviceKind.mouse &&
-                                    event.buttons == kSecondaryMouseButton) {
-                                  if (dragBackupValue != null) {
-                                    double val = double.parse(
-                                        dragBackupValue.toStringAsFixed(2));
-
-                                    setState(() {
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'bottomLeft',
-                                                val,
-                                                itemDecoration),
-                                          ),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(left: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(left: val),
-                                        );
-                                      }
-
-                                      dragBackupValue = null;
-                                    });
-                                  }
-                                }
-                              },
-                              child: GestureDetector(
-                                onHorizontalDragCancel: () {
-                                  focusNodes[3].requestFocus();
-                                },
-                                onHorizontalDragStart: (details) {
-                                  dragBackupValue =
-                                      double.parse(controllers[3].text);
-                                },
-                                onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard
-                                          .instance.isControlPressed
-                                      ? 10
-                                      : HardwareKeyboard.instance.isShiftPressed
-                                          ? 0.1
-                                          : 1;
-                                  setState(() {
-                                    double currentValue =
-                                        double.tryParse(controllers[3].text) ??
-                                            0.0;
-                                    double newValue = (currentValue +
-                                            (details.delta.dx * multiplier))
-                                        .clamp(0, double.infinity);
-
-                                    double val = double.parse(
-                                        newValue.toStringAsFixed(2));
-
-                                    if (isBorderRadius) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        decoration:
-                                            itemDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius(
-                                              'bottomLeft',
-                                              val,
-                                              itemDecoration),
-                                        ),
-                                      );
-                                    } else if (isMargin) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        margin: itemDecoration.margin
-                                            .copyWith(left: val),
-                                      );
-                                    } else {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        padding: itemDecoration.padding
-                                            .copyWith(left: val),
-                                      );
-                                    }
-                                  });
-                                },
-                                child: TextFormField(
-                                  onTapOutside: (event) =>
-                                      focusNodes[3].unfocus(),
-                                  focusNode: focusNodes[3],
-                                  controller: controllers[3],
-                                  inputFormatters: [NumericInputFormatter()],
-                                  selectionControls:
-                                      NoMenuTextSelectionControls(),
-                                  cursorColor: defaultPalette.secondary,
-                                  textAlign: TextAlign.center,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.all(0),
-                                    filled: true,
-                                    fillColor: defaultPalette.secondary,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 1.2,
-                                          color: defaultPalette.secondary),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 2,
-                                          color: defaultPalette.extras[0]),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  style: GoogleFonts.bungee(
-                                      fontSize: 12,
-                                      color: defaultPalette.black),
-                                  onFieldSubmitted: (value) {
-                                    setState(() {
-                                      double val = value.isEmpty
-                                          ? 0
-                                          : double.parse(value);
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                                  borderRadius: setBorderRadius(
-                                                      'bottomLeft',
-                                                      val,
-                                                      itemDecoration)),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(left: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(left: val),
-                                        );
-                                      }
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Right
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      height: textFieldHeight / 2,
-                      child: Row(
-                        children: [
-                          Expanded(
-                              flex: 1,
-                              child: Transform.rotate(
-                                  angle: isBorderRadius ? pi : 0,
-                                  child: Icon(
-                                      isBorderRadius
-                                          ? TablerIcons.border_corner_pill
-                                          : TablerIcons
-                                              .layout_sidebar_right_inactive,
-                                      size: 15))),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            flex: 5,
-                            child: Listener(
-                              onPointerDown: (event) {
-                                if (event.kind == PointerDeviceKind.mouse &&
-                                    event.buttons == kSecondaryMouseButton) {
-                                  if (dragBackupValue != null) {
-                                    double val = double.parse(
-                                        dragBackupValue.toStringAsFixed(2));
-
-                                    setState(() {
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'bottomRight',
-                                                val,
-                                                itemDecoration),
-                                          ),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(right: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(right: val),
-                                        );
-                                      }
-
-                                      dragBackupValue = null;
-                                    });
-                                  }
-                                }
-                              },
-                              child: GestureDetector(
-                                onHorizontalDragCancel: () {
-                                  focusNodes[4].requestFocus();
-                                },
-                                onHorizontalDragStart: (details) {
-                                  dragBackupValue =
-                                      double.parse(controllers[4].text);
-                                },
-                                onHorizontalDragUpdate: (details) {
-                                  var multiplier = HardwareKeyboard
-                                          .instance.isControlPressed
-                                      ? 10
-                                      : HardwareKeyboard.instance.isShiftPressed
-                                          ? 0.08
-                                          : 1;
-                                  setState(() {
-                                    double currentValue =
-                                        double.tryParse(controllers[4].text) ??
-                                            0.0;
-                                    double newValue = (currentValue +
-                                            (details.delta.dx * multiplier))
-                                        .clamp(0, double.infinity);
-
-                                    double val = double.parse(
-                                        newValue.toStringAsFixed(2));
-
-                                    if (isBorderRadius) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        decoration:
-                                            itemDecoration.decoration.copyWith(
-                                          borderRadius: setBorderRadius(
-                                              'bottomRight',
-                                              val,
-                                              itemDecoration),
-                                        ),
-                                      );
-                                    } else if (isMargin) {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        margin: itemDecoration.margin
-                                            .copyWith(right: val),
-                                      );
-                                    } else {
-                                      itemDecoration = itemDecoration.copyWith(
-                                        padding: itemDecoration.padding
-                                            .copyWith(right: val),
-                                      );
-                                    }
-                                  });
-                                },
-                                child: TextFormField(
-                                  onTapOutside: (event) =>
-                                      focusNodes[4].unfocus(),
-                                  focusNode: focusNodes[4],
-                                  controller: controllers[4],
-                                  inputFormatters: [NumericInputFormatter()],
-                                  cursorColor: defaultPalette.secondary,
-                                  textAlign: TextAlign.center,
-                                  textAlignVertical: TextAlignVertical.top,
-                                  selectionControls:
-                                      NoMenuTextSelectionControls(),
-                                  decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.all(0),
-                                    filled: true,
-                                    fillColor: defaultPalette.secondary,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 1.2,
-                                          color: defaultPalette.secondary),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          width: 2,
-                                          color: defaultPalette.extras[0]),
-                                      borderRadius: BorderRadius.circular(5.0),
-                                    ),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  style: GoogleFonts.bungee(
-                                      fontSize: 12,
-                                      color: defaultPalette.black),
-                                  onFieldSubmitted: (value) {
-                                    setState(() {
-                                      double val = value.isEmpty
-                                          ? 0
-                                          : double.parse(value);
-                                      if (isBorderRadius) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          decoration: itemDecoration.decoration
-                                              .copyWith(
-                                                  borderRadius: setBorderRadius(
-                                                      'bottomRight',
-                                                      val,
-                                                      itemDecoration)),
-                                        );
-                                      } else if (isMargin) {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          margin: itemDecoration.margin
-                                              .copyWith(right: val),
-                                        );
-                                      } else {
-                                        itemDecoration =
-                                            itemDecoration.copyWith(
-                                          padding: itemDecoration.padding
-                                              .copyWith(right: val),
-                                        );
-                                      }
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
             ]
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildListDecorationAdjuster() {
+    final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                          
+    return Container(
+      height: 25, 
+      padding: EdgeInsets.only(left:4, right:4),
+      child: Column(
+        children: [
+          Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [ 
+                    //DECORATION Title this is the editable property title
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.only(left:2),
+                        decoration: BoxDecoration(
+                          border: Border.all(),
+                          color:defaultPalette.primary,
+                          borderRadius: BorderRadius.circular(5)
+                        ),
+                        child: Row(
+                          children: [
+                          Icon( TablerIcons.palette,
+                          size: 16,
+                          color: defaultPalette.extras[0]
+                          ),
+                          Text(  ' decoration ',
+                            style: GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.extras[0]),),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2,),
+                    //DECORATION isPinned
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(500),
+                      child: Material(
+                        color: defaultPalette.transparent, 
+                        child: InkWell( 
+                          hoverColor:  defaultPalette.tertiary,
+                          splashColor: defaultPalette.tertiary,
+                          highlightColor:  defaultPalette.tertiary,
+                          onTap: () {
+                          setState(() {
+                            final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                            currentItem.pinned['decoration'] = {
+                              'isPinned': false,
+                              'color': false,
+                              'border': false,
+                              'borderRadius': {
+                                'isPinned': false,
+                              'topLeft': false,
+                              'topRight': false,
+                              'bottomLeft': false, 
+                              'bottomRight': false,
+                              },
+                              'boxShadow': false,
+                              'image': {
+                                'isPinned': false,
+                                'bytes': false,
+                                'fit': false,
+                                'repeat': false,
+                                'alignment': false,
+                                'scale': false,
+                                'opacity': false,
+                                'filterQuality': false,
+                                'invertColors': false,
+                              }, 
+                              'backgroundBlendMode': false,
+                            }; 
+                            
+                            // Update the list item with the modified currentItem
+                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                          });
+                          },
+                          child: Icon( currentItem.pinned['decoration']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin,
+                              size: 16, color: defaultPalette.extras[0]),
+                        ),
+                      ),
+                    ),
+                            
+                  ],
+                ),
+                
+        ],
+      ), 
     );
   }
 

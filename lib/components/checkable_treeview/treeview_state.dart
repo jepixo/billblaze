@@ -107,7 +107,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
     setState(() {
       _setExpansionState(_roots, false);
     });
-    // _notifyExpansionChanged();
+    _notifyExpansionChanged();
   }
 
   /// Sets the selected values in the tree.
@@ -294,7 +294,10 @@ class TreeViewState<T> extends State<TreeView<T>> {
               hoverColor:  defaultPalette.extras[1],
               splashColor: defaultPalette.extras[1],
               highlightColor:  defaultPalette.extras[1],
-              onDoubleTap: () => _toggleNodeExpansion(node),
+              onDoubleTap: () { 
+                _toggleNodeExpansion(node);
+                _notifyExpansionChanged();
+              },
               onTap: () { 
                 if(node.children.isNotEmpty)_toggleNodeExpansion(node);
                 if(node.children.isEmpty) _updateNodeSelection(node, !(node._isSelected??false));
@@ -339,24 +342,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
                       // ],
                       // )
                       ),
-                  //down arrow for expansion and shrinkage
-                  // SizedBox(
-                  //   width:node._checkboxSize,
-                  //   height:node._checkboxSize,
-                  //   child: node.children.isNotEmpty
-                  //       ? IconButton(
-                  //           icon: Icon(
-                  //             node._isExpanded
-                  //                 ? TablerIcons.chevrons_up
-                  //                 : TablerIcons.chevrons_down,
-                  //             size: node._checkboxSize,
-                  //           ),
-                  //           onPressed: () => _toggleNodeExpansion(node),
-                  //           padding: EdgeInsets.zero,
-                  //           constraints: const BoxConstraints(),
-                  //         )
-                  //       : null,
-                  // ),
+                  
                   if(node._selectable)
                   customTriCheckbox(
                           value: (node._isSelected ?? false)
@@ -535,18 +521,25 @@ class TreeViewState<T> extends State<TreeView<T>> {
     setState(() {
       _isAllExpanded = !_isAllExpanded;
       var expansionvalues = _getExpandedValues(_roots);
-      if (expansionvalues[1] &&
+      if ( 
+        expansionvalues[1] &&
     expansionvalues[6] &&
     expansionvalues[11] &&
-    expansionvalues[16] &&
-    expansionvalues[26] &&
-    expansionvalues[31]){
+    expansionvalues[14] &&
+    expansionvalues[20] &&
+    expansionvalues[30] &&
+    expansionvalues[33] &&
+    expansionvalues[39]){
       _isAllExpanded = true;
     } else {
       _isAllExpanded = false;
     }
+    if (!expansionvalues[0] && !_isAllExpanded){
+      _isAllExpanded = true;
+    }
     
     _setExpansionState(_roots, !_isAllExpanded);
+    _roots[0]._isExpanded = true;
     });
     _notifyExpansionChanged();
   }
@@ -558,20 +551,11 @@ class TreeViewState<T> extends State<TreeView<T>> {
         data: widget.theme ?? Theme.of(context),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return  Material(
-              color: defaultPalette.transparent,
-              child: IntrinsicHeight(
+            return   ClipRRect(
+                borderRadius: BorderRadius.circular(9),child: Material(
+                color: defaultPalette.transparent,
                 child: Container( 
-                      width: widget.width,
-                      // constraints: BoxConstraints(
-                      //   minWidth: constraints.maxWidth,
-                      //   // minHeight: constraints.maxHeight,
-                      // ),
-                      // padding:EdgeInsets.symmetric(vertical:5,), 
-                              // decoration:BoxDecoration(color:defaultPalette.extras[1], 
-                              // // border: Border.all(color:defaultPalette.extras[0]),
-                              // borderRadius: BorderRadius.circular(10)),
-                              
+                      width: widget.width,         
                       child:   Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -579,28 +563,33 @@ class TreeViewState<T> extends State<TreeView<T>> {
                                   widget.showExpandCollapseButton)
                                 Padding(
                                   padding:
-                                      const EdgeInsets.symmetric(vertical: 0.0),
+                                      const EdgeInsets.symmetric(vertical: 0),
                                   child: MouseRegion(
                                     cursor: SystemMouseCursors.click,
                                     child: InkWell(
-                                      hoverColor:  defaultPalette.extras[1],
-                                      splashColor: defaultPalette.extras[1],
-                                      highlightColor:  defaultPalette.extras[1],
+                                      hoverColor:  defaultPalette.primary,
+                                      splashColor: defaultPalette.primary,
+                                      highlightColor:  defaultPalette.primary,
                                       onTap: () {
                                         _toggleExpandCollapseAll();
                                       },
                                       onDoubleTap: () {
                                         setState(() {
                                           _roots[0]._isExpanded =!_roots[0]._isExpanded; 
+                                          _notifyExpansionChanged();
                                         });
                                       },
                                       child: Row(
                                         children: [
-                                          Expanded(child: Text(' Properties', 
-                                          style:GoogleFonts.lexend(
-                                        fontSize:13,
-                                        color: defaultPalette.extras[0]
-                                      ))),
+                                          Expanded(child: Text('  Properties', 
+                                          style: GoogleFonts.lexend(
+                                            fontWeight: FontWeight.w500,
+                                    fontSize: 15,
+                                    height: 1.2,
+                                    letterSpacing: -1,
+                                    color: defaultPalette.extras[0])
+                                      )),
+                                          
                                           if (widget.showSelectAll)
                                              
                                             customTriCheckbox(
@@ -609,7 +598,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
                                               activeColor: defaultPalette.extras[0],
                                               size: 21
                                               ),
-                                         
+                                         SizedBox(width: 1,)
                                         ],
                                       ),
                                     ),

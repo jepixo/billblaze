@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:billblaze/Home.dart';
+import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
@@ -72,6 +73,12 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: defaultPalette.extras[0],               // Cursor color
+      selectionColor: defaultPalette.tertiary.withOpacity(0.5),   // Text highlight color
+      selectionHandleColor: Colors.blue,      // Handle color when dragging selection
+    ),),
       home: Consumer(builder: (context, ref, c) {
         return StreamBuilder(
             stream: FirebaseAuth.instance.authStateChanges(),

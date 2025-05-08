@@ -378,7 +378,13 @@ Map<String, dynamic> defaultPins() => {
       'isPinned': true,
       'color': true,
       'border': true,
-      'borderRadius': true,
+      'borderRadius': {
+        'isPinned': true,
+      'topLeft': true,
+      'topRight': true,
+      'bottomLeft': true, 
+      'bottomRight': true,
+      },
       'boxShadow': true,
       'image': {
         'isPinned': true,
@@ -400,7 +406,13 @@ Map<String, dynamic> defaultPins() => {
       'isPinned': false,
       'color': false,
       'border': false,
-      'borderRadius': false,
+      'borderRadius': {
+        'isPinned': true,
+      'topLeft': true,
+      'topRight': true,
+      'bottomLeft': true, 
+      'bottomRight': true,
+      },
       'boxShadow': false,
       'image': {
         'isPinned': false,

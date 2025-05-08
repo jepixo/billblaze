@@ -1,3 +1,4 @@
+
 import 'package:flutter/services.dart';
 
 class NumericInputFormatter extends TextInputFormatter {
@@ -6,72 +7,71 @@ class NumericInputFormatter extends TextInputFormatter {
   NumericInputFormatter({this.maxValue});
 
   @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final RegExp regex = RegExp(r'^\d*\.?\d*$');
+TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue, TextEditingValue newValue) {
+  final text = newValue.text;
 
-    // Handle empty input by setting it to "0"
-    if (newValue.text.isEmpty) {
-      return TextEditingValue(
-        text: '0',
-        selection: TextSelection.collapsed(offset: 1),
-      );
-    }
+  // 1) Empty → “0”
+  if (text.isEmpty) {
+    return TextEditingValue(
+      text: '0',
+      selection: TextSelection.collapsed(offset: 1),
+    );
+  }
 
-    // If the new value contains only legal characters
-    if (regex.hasMatch(newValue.text)) {
-      // Handle leading zero
-      if (newValue.text.length > 1 &&
-          newValue.text.startsWith('0') &&
-          newValue.text[1] != '.') {
-        final newText = newValue.text.substring(1);
-        return TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: newText.length),
-        );
-      }
-
-      // Handle case where last character is a dot
-      if (newValue.text.endsWith('.')) {
-        return newValue;
-      }
-
-      // Parse the new value as double
-      double parsedValue;
-      try {
-        parsedValue = double.parse(newValue.text);
-      } catch (e) {
-        return oldValue;
-      }
-
-      // Limit the value to maxValue if provided
-      if (maxValue != null && parsedValue > maxValue!) {
-        parsedValue = maxValue!;
-      }
-
-      // Format the value properly
-      String formattedText = _formatNumber(parsedValue);
-
-      // Adjust selection offset
-      int offset = newValue.selection.end;
-      if (newValue.text.contains('.') && !formattedText.contains('.')) {
-        offset -= 1; // Adjust for removed dot
-      }
-
-      return TextEditingValue(
-        text: formattedText,
-        selection: TextSelection.collapsed(offset: offset),
-      );
-    }
-
+  // 2) Only digits & at most one dot
+  final regex = RegExp(r'^\d*\.?\d*$');
+  if (!regex.hasMatch(text)) {
     return oldValue;
   }
 
-  String _formatNumber(double value) {
-    String formattedText = value.toStringAsFixed(3);
-    formattedText = formattedText.contains('.')
-        ? formattedText.replaceAll(RegExp(r'0*$'), '').replaceAll(RegExp(r'\.$'), '')
-        : formattedText;
-    return formattedText;
+  // 3) Strip leading zero unless it’s "0." prefix
+  if (text.length > 1 && text.startsWith('0') && !text.startsWith('0.')) {
+    final stripped = text.substring(1);
+    return TextEditingValue(
+      text: stripped,
+      selection: TextSelection.collapsed(offset: stripped.length),
+    );
   }
+
+  // 4) If it ends in a dot, let them type the fraction
+  if (text.endsWith('.')) {
+    return newValue;
+  }
+
+  // 5) If no decimal point at all, just echo the integer they typed (no .0!)
+  if (!text.contains('.')) {
+    // optionally clamp to maxValue
+    final intVal = int.tryParse(text) ?? 0;
+    final clamped = (maxValue != null && intVal > maxValue!)
+        ? maxValue!.toInt().toString()
+        : text;
+    return TextEditingValue(
+      text: clamped,
+      selection: TextSelection.collapsed(offset: clamped.length),
+    );
+  }
+
+  // 6) Otherwise we have a decimal number: parse, clamp, and trim zeros
+  double value;
+  try {
+    value = double.parse(text);
+  } catch (_) {
+    return oldValue;
+  }
+
+  if (maxValue != null && value > maxValue!) {
+    value = maxValue!;
+  }
+
+  // Trim unnecessary zeros/trailing dot
+  String formatted = value.toStringAsFixed(3)
+    .replaceFirst(RegExp(r'\.?0*$'), '');
+
+  return TextEditingValue(
+    text: formatted,
+    selection: TextSelection.collapsed(offset: formatted.length),
+  );
+}
+  
 }
