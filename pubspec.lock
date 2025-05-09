@@ -301,10 +301,10 @@ packages:
     dependency: "direct main"
     description:
       name: cool_background_animation
-      sha256: e3dd4d8cec9e29c72ba824ed294ddeef07532ed55bac3fa66a0ff9c254c5aac7
+      sha256: "9425e781e968a18e4b37d560923a723c775518748b56f42b5a21d07c8b117b69"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.6"
+    version: "0.0.6+1"
   cross_file:
     dependency: transitive
     description:
@@ -1354,14 +1354,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
-  snapping_page_scroll:
-    dependency: "direct main"
-    description:
-      name: snapping_page_scroll
-      sha256: "498996a74581b4e6820fef054b141d9e4db1e3432e007636dbd2d32ddde40b65"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
   source_gen:
     dependency: transitive
     description:
@@ -1534,10 +1526,10 @@ packages:
     dependency: "direct main"
     description:
       name: uuid
-      sha256: a5be9ef6618a7ac1e964353ef476418026db906c4facdedaa299b7a2e71690ff
+      sha256: "814e9e88f21a176ae1359149021870e87f7cddaf633ab678a5d2b0bff7fd1ba8"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.1"
+    version: "4.4.0"
   vector_math:
     dependency: transitive
     description:

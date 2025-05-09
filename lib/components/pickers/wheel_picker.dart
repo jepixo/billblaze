@@ -129,9 +129,9 @@ class _WheelPickerState extends State<WheelPicker> {
       onPanDown: (DragDownDetails details) => onPanDown(details.globalPosition),
       child: Container(
         key: paletteKey,
-        padding: const EdgeInsets.only(top: 12.0),
+        // padding: const EdgeInsets.only(top: 12.0),
         width: 120,
-        height: 132,
+        height: 100,
         child: CustomPaint(
           painter: _WheelPainter(
             color: color,

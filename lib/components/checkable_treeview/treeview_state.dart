@@ -581,7 +581,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
                                       },
                                       child: Row(
                                         children: [
-                                          Expanded(child: Text('  Properties', 
+                                          Expanded(child: Text('  properties', 
                                           style: GoogleFonts.lexend(
                                             fontWeight: FontWeight.w500,
                                     fontSize: 15,

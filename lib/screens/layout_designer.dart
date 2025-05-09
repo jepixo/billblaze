@@ -8,6 +8,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/Home.dart';
+import 'package:billblaze/components/pickers/hsv_picker.dart';
 import 'package:billblaze/components/pickers/wheel_picker.dart';
 import 'package:billblaze/components/switcher_button.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
@@ -73,8 +74,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
-import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
-import 'package:snapping_page_scroll/snapping_page_scroll.dart';
+import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart'; 
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -253,6 +253,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       return FocusNode();
     },
   );
+  List<FocusNode> listBorderFocusNodes = List.generate(
+    5,
+    (index) {
+      return FocusNode();
+    },
+  );
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0,9);
   zz.TransformationController transformationcontroller =
       zz.TransformationController();
@@ -337,6 +343,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   var isListMarginExpanded = false;
   var isListPaddingExpanded = false;
   var isListBorderRadiusExpanded = false;
+  var isListBorderExpanded = false;
   bool isListColorExpanded = true;
   bool isListBorderColorExpanded = false;
   late TextEditorItem item;
@@ -14262,7 +14269,109 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       ),
                     ),
                   ),
- 
+
+                  if(index==0)
+                  ...[
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.all(15).copyWith(left:10, right:12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: ScrollConfiguration(
+                            behavior:
+                                ScrollBehavior().copyWith(scrollbars: false),
+                            child: DynMouseScroll(
+                                durationMS: 500,
+                                scrollSpeed: 1,
+                                builder: (context, controller, physics) {
+                                  return SingleChildScrollView(
+                                    controller: controller,
+                                    physics: physics,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                          Column(
+                                            children: [
+                                              Text(
+                                                'direction',
+                                                style: GoogleFonts.prompt(
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.w500),
+                                              ),
+                                              AnimatedToggleSwitch<Axis>.dual(
+                                                current:
+                                                    sheetListItem.direction,
+                                                first: Axis.vertical,
+                                                second: Axis.horizontal,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    sheetListItem.direction =
+                                                        value;
+                                                  });
+                                                },
+                                                animationCurve:
+                                                    Curves.easeInOutExpo,
+                                                animationDuration:
+                                                    Durations.medium4,
+                                                borderWidth:
+                                                    2, // backgroundColor is set independently of the current selection
+                                                styleBuilder: (value) =>
+                                                    ToggleStyle(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10), 
+                                                        indicatorBorderRadius:
+                                                            BorderRadius
+                                                                .circular(15),
+                                                        borderColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        backgroundColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        indicatorColor:
+                                                            defaultPalette
+                                                                    .extras[
+                                                                0]), // indicatorColor changes and animates its value with the selection
+                                                iconBuilder: (value) {
+                                                  return Icon(
+                                                      value == Axis.horizontal
+                                                          ? TablerIcons
+                                                              .grip_horizontal
+                                                          : TablerIcons
+                                                              .grip_vertical,
+                                                      size: 12,
+                                                      color: defaultPalette
+                                                          .primary);
+                                                },
+                                                textBuilder: (value) {
+                                                  return Text(
+                                                    value == Axis.horizontal
+                                                        ? 'Horizontal'
+                                                        : 'Vertical',
+                                                    style: GoogleFonts.bungee(
+                                                        fontSize: 12),
+                                                  );
+                                                },
+                                                height: 25,
+                                                spacing: (width) - 100, 
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      
+                                    )
+                                  );
+                                }
+                            )
+                          )
+                        ),
+                      ),
+                    )
+                  ],
+
                   if (index == 1) ...[
                     Positioned.fill(
                       child: AnimatedPadding(
@@ -15093,6 +15202,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     // bottomLeft: Radius.circular(0),
                                                     // topRight: Radius.circular(30),
                                                   ), 
+                                                  // border: Border.all()
                                                    
                                                 ),
                                                  ),
@@ -15141,7 +15251,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               
                                               //onTap onHover Functions
                                               Padding(
-                                                padding: const EdgeInsets.all(2.0),
+                                                padding: const EdgeInsets.all(1.0),
                                                 child: ClipRRect(
                                                   borderRadius: BorderRadius.circular(showDecorationLayers? 5:500),
                                                   child: Material(
@@ -15164,7 +15274,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       },
                                                       child:SizedBox(
                                                         width: 40,
-                                                        height:(((sHeight*0.9)-250)/10.3).clamp(0, 50)-4,
+                                                        height:(((sHeight*0.9)-250)/10.3).clamp(0, 50)-2 ,
                                                       )
                                                     ),
                                                   ),
@@ -15217,7 +15327,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     Positioned(
                       bottom:17,
                       left:12,
-                      child: //minimize button
+                      child:
                         ElevatedLayerButton(
                           // isTapped: false,
                           // toggleOnTap: true,
@@ -15230,6 +15340,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             // });
                             setState(() {
                               showDecorationLayers = !showDecorationLayers;
+                              if (sheetListItem.id == 'yo') {
+                                _findSheetListItem();
+                              }
                             });
                           },
                           buttonHeight: 35,
@@ -18827,8 +18940,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         }
 
         current = Container(
-          padding: deco.padding,
-          margin: deco.margin,
+          padding:  deco.padding,
+          margin:  deco.margin,
           alignment: deco.alignment,
           decoration: boxDecoration,
           foregroundDecoration: deco.foregroundDecoration,
@@ -18861,7 +18974,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     TextEditingController()..text = itemDecoration.margin.left.toString().replaceAll(RegExp(r'\.0$'), ''),
     TextEditingController()..text = itemDecoration.margin.right.toString().replaceAll(RegExp(r'\.0$'), ''),
   ];
-  
+  List<TextEditingController> colorHexControllers =[
+    TextEditingController()..text = colorToHex(itemDecoration.decoration.color ?? defaultPalette.transparent)
+  ];
+
   return [
     if(pinned['padding']['top'] ||
     pinned['padding']['bottom'] ||
@@ -18896,9 +19012,26 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
  
 
     SizedBox(height: 3,),
-    if(pinned['decoration']['isPinned'])
+    if(pinned['decoration']['color'] ||
+    pinned['decoration']['border'] ||
+    pinned['decoration']['borderRadius']['isPinned'] ||
+    pinned['decoration']['borderRadius']['topLeft'] ||
+    pinned['decoration']['borderRadius']['topRight'] ||
+    pinned['decoration']['borderRadius']['bottomLeft'] ||
+    pinned['decoration']['borderRadius']['bottomRight'] ||
+    pinned['decoration']['image']['bytes'] ||
+    pinned['decoration']['image']['fit'] ||
+    pinned['decoration']['image']['repeat'] ||
+    pinned['decoration']['image']['alignment'] ||
+    pinned['decoration']['image']['scale'] ||
+    pinned['decoration']['image']['opacity'] ||
+    pinned['decoration']['image']['filterQuality'] ||
+    pinned['decoration']['image']['invertColors'] ||
+    pinned['decoration']['boxShadow'] ||
+    pinned['decoration']['blendMode']
+    )
 
-    buildListDecorationAdjuster()
+    buildListDecorationAdjuster(colorHexControllers)
   ];
 
 
@@ -19040,34 +19173,59 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   Widget buildListPaddingMarginAdjuster({
     required bool isMargin,
     required ItemDecoration itemDecoration,
-    required List<TextEditingController> listPaddingControllers,
-    required List<TextEditingController> marginControllers,
+    List<TextEditingController> listPaddingControllers = const [],
+    List<TextEditingController> marginControllers = const [],
     List<TextEditingController> borderRadiusControllers = const [],
+    List<TextEditingController> listBorderControllers = const [],
     bool isBorderRadius = false,
+    bool isBorder = false,
     Map<String, dynamic> pinned=const {},
   }) {
     // Choose the proper controller list based on the flag.
     var isExpanded = isBorderRadius
         ? isListBorderRadiusExpanded
+        : isBorder
+        ? isListBorderExpanded
         : isMargin
             ? isListMarginExpanded
             : isListPaddingExpanded;
     final controllers = isBorderRadius
         ? borderRadiusControllers
+        : isBorder
+        ? listBorderControllers
         : isMargin
             ? marginControllers
             : listPaddingControllers;
     final focusNodes = isBorderRadius
         ? borderRadiusFocusNodes
+        : isBorder
+        ? listBorderFocusNodes
         : isMargin
             ? marginFocusNodes
             : listPaddingFocusNodes;
-    final topIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['top']);
-    final bottomIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['bottom']);
-    final leftIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['left']);
-    final rightIsPinned = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[isMargin?'margin':'padding']['right']);
+    String pinnedKey = isBorderRadius ? 'decoration' : (isMargin ? 'margin' : 'padding');
+    String subKey = isBorderRadius ? 'borderRadius' : '';
+
+    final pinnedMap = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[pinnedKey];
+
+    final topIsPinned = isBorderRadius 
+        ? pinnedMap[subKey]['topLeft'] 
+        : pinnedMap['top'];
+
+    final bottomIsPinned = isBorderRadius 
+        ? pinnedMap[subKey]['topRight'] 
+        : pinnedMap['bottom'];
+
+    final leftIsPinned = isBorderRadius 
+        ? pinnedMap[subKey]['bottomLeft'] 
+        : pinnedMap['left'];
+
+    final rightIsPinned = isBorderRadius 
+        ? pinnedMap[subKey]['bottomRight'] 
+        : pinnedMap['right'];
     final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40))/2;
     final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40);
+    final currentItemDecoration = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration);
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -19090,7 +19248,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         decoration: BoxDecoration( 
           borderRadius: BorderRadius.circular(10),
           ), 
-        margin: EdgeInsets.all(4).copyWith(bottom: 2),
+        margin: EdgeInsets.all(4).copyWith(bottom: 2, left: 3,top:2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -19138,12 +19296,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 double.parse(newValue.toStringAsFixed(2));
                       
                             if (isBorderRadius) {
-                              itemDecoration = itemDecoration.copyWith(
-                                decoration: itemDecoration.decoration.copyWith(
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                decoration: currentItemDecoration.decoration.copyWith(
                                   borderRadius: setBorderRadius(
                                       'all', parsedValue, itemDecoration),
-                                ),
-                              );
+                                )
+                                );
+                               
                             } else if (isMargin) {
                               sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
                                 margin: EdgeInsets.all(parsedValue)
@@ -19159,7 +19318,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           children: [
                           Icon(
                           isBorderRadius
-                              ?  TablerIcons.border_corner_pill
+                              ?  TablerIcons.border_corners
                               : isMargin
                               ? TablerIcons.box_margin
                               : TablerIcons.box_padding,
@@ -19167,7 +19326,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           color: defaultPalette.extras[0]
                           ),
                           Text(isBorderRadius
-                            ?' borderRadius '
+                            ? (sWidth * wH2DividerPosition)>220? ' borderRadius ': 'radius'
                             : isMargin
                             ? ' margin '
                             : (sWidth * wH2DividerPosition)>220? ' padding ': ' pad ',
@@ -19243,81 +19402,82 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           const SizedBox(width: 2,),
                 //PIN isPinned
                 ClipRRect(
-                            borderRadius: BorderRadius.circular(500),
-                            child: Material(
-                              color: defaultPalette.transparent, 
-                              child: InkWell(
-                              
-                                hoverColor:  defaultPalette.tertiary,
-                                splashColor: defaultPalette.tertiary,
-                                highlightColor:  defaultPalette.tertiary,
-                                onTap: () {
-                                setState(() {
-                                  final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                              
-                                  // Toggle isPinned based on the condition
-                                  if (isBorderRadius) {
-                                    currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
-                                        !currentItem.pinned['decoration']['borderRadius']['isPinned'];
-                                    currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
-                                    currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
-                                    currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
-                                    currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
-                                    expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
-                                  } else 
-                                  if (isMargin) {
-                                    currentItem.pinned['margin']['isPinned'] = 
-                                        !currentItem.pinned['margin']['isPinned'];
-                                    if (currentItem.pinned['margin']['isPinned']) {
-                                      currentItem.pinned['margin']['top'] = true;
-                                      currentItem.pinned['margin']['bottom'] = true;
-                                      currentItem.pinned['margin']['left'] = true;
-                                      currentItem.pinned['margin']['right'] = true;
-                                    } else {
-                                      currentItem.pinned['margin']['top'] = false;
-                                      currentItem.pinned['margin']['bottom'] = false;
-                                      currentItem.pinned['margin']['left'] = false;
-                                      currentItem.pinned['margin']['right'] = false;
-                                    }
-                                    // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
-                                    
-                                  } else {
-                                    currentItem.pinned['padding']['isPinned'] = 
-                                        !currentItem.pinned['padding']['isPinned'];
-                                    if (currentItem.pinned['padding']['isPinned']) {
-                                      currentItem.pinned['padding']['top'] = true;
-                                      currentItem.pinned['padding']['bottom'] = true;
-                                      currentItem.pinned['padding']['left'] = true;
-                                      currentItem.pinned['padding']['right'] = true;
-                                    } else {
-                                      currentItem.pinned['padding']['top'] = false;
-                                      currentItem.pinned['padding']['bottom'] = false;
-                                      currentItem.pinned['padding']['left'] = false;
-                                      currentItem.pinned['padding']['right'] = false;
-                                    }
-                                  }
-                              
-                                  // Update the list item with the modified currentItem
-                                  sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
-                                });
-                                },
-                                child: Icon(
-                                  isBorderRadius
-                                      ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
-                                      : isMargin
-                                      ? pinned['margin']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
-                                      : pinned['padding']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
-                                      ,
-                                    size: 16, color: defaultPalette.extras[0]),
-                              ),
-                            ),
-                          ),
+                  borderRadius: BorderRadius.circular(500),
+                  child: Material(
+                    color: defaultPalette.transparent, 
+                    child: InkWell(
+                    
+                      hoverColor:  defaultPalette.tertiary,
+                      splashColor: defaultPalette.tertiary,
+                      highlightColor:  defaultPalette.tertiary,
+                      onTap: () {
+                      setState(() {
+                        final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                    
+                        // Toggle isPinned based on the condition
+                        if (isBorderRadius) {
+                          currentitemDecoration.pinned['decoration']['borderRadius']['isPinned'] = 
+                              !currentitemDecoration.pinned['decoration']['borderRadius']['isPinned'];
+                          currentitemDecoration.pinned['decoration']['borderRadius']['topLeft'] = false;
+                          currentitemDecoration.pinned['decoration']['borderRadius']['topRight'] = false;
+                          currentitemDecoration.pinned['decoration']['borderRadius']['bottomLeft'] = false;
+                          currentitemDecoration.pinned['decoration']['borderRadius']['bottomRight'] = false;
+                          expansionLevels[7]  = currentitemDecoration.pinned['decoration']['borderRadius']['isPinned'];
+                        } else 
+                        if (isMargin) {
+                          currentitemDecoration.pinned['margin']['isPinned'] = 
+                              !currentitemDecoration.pinned['margin']['isPinned'];
+                          if (currentitemDecoration.pinned['margin']['isPinned']) {
+                            currentitemDecoration.pinned['margin']['top'] = true;
+                            currentitemDecoration.pinned['margin']['bottom'] = true;
+                            currentitemDecoration.pinned['margin']['left'] = true;
+                            currentitemDecoration.pinned['margin']['right'] = true;
+                          } else {
+                            currentitemDecoration.pinned['margin']['top'] = false;
+                            currentitemDecoration.pinned['margin']['bottom'] = false;
+                            currentitemDecoration.pinned['margin']['left'] = false;
+                            currentitemDecoration.pinned['margin']['right'] = false;
+                          }
+                          // expansionLevels[1]  = currentitemDecoration.pinned['margin']['isPinned'];
+                          
+                        } else {
+                          currentitemDecoration.pinned['padding']['isPinned'] = 
+                              !currentitemDecoration.pinned['padding']['isPinned'];
+                          if (currentitemDecoration.pinned['padding']['isPinned']) {
+                            currentitemDecoration.pinned['padding']['top'] = true;
+                            currentitemDecoration.pinned['padding']['bottom'] = true;
+                            currentitemDecoration.pinned['padding']['left'] = true;
+                            currentitemDecoration.pinned['padding']['right'] = true;
+                          } else {
+                            currentitemDecoration.pinned['padding']['top'] = false;
+                            currentitemDecoration.pinned['padding']['bottom'] = false;
+                            currentitemDecoration.pinned['padding']['left'] = false;
+                            currentitemDecoration.pinned['padding']['right'] = false;
+                          }
+                        }
+                    
+                        // Update the list item with the modified currentitemDecoration
+                        sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
+                      });
+                      },
+                      child: Icon(
+                        isBorderRadius
+                            ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                            : isMargin
+                            ? pinned['margin']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                            : pinned['padding']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                            ,
+                          size: 16, color: defaultPalette.extras[0]),
+                    ),
+                  ),
+                ),
                         
               ],
             ), 
             if (!isExpanded) ...[
               const SizedBox(height: 4),
               Container(
+                padding: EdgeInsets.all(0),
                 decoration: BoxDecoration(
                   border: Border.all(),
                   borderRadius: BorderRadius.circular(5)
@@ -19380,13 +19540,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               newValue.toStringAsFixed(2));
                                     
                                           if (isBorderRadius) {
-                                            itemDecoration = itemDecoration.copyWith(
-                                              decoration:
-                                                  itemDecoration.decoration.copyWith(
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                              decoration: currentItemDecoration.decoration.copyWith(
                                                 borderRadius: setBorderRadius(
                                                     'topLeft', val, itemDecoration),
-                                              ),
-                                            );
+                                              )
+                                              );
                                           } else if (isMargin) {
                                             sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
                                               margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(top: val)
@@ -19402,7 +19561,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         angle: isBorderRadius ? 0 : isMargin?0: -pi / 2,
                                         child: Icon(
                                             isBorderRadius
-                                                ? TablerIcons.border_corner_pill
+                                                ? TablerIcons.radius_top_left
                                                 : isMargin
                                                 ? TablerIcons.box_align_bottom
                                                 : TablerIcons.layout_sidebar_right_inactive,
@@ -19449,14 +19608,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ? 0
                                             : double.parse(value);
                                         if (isBorderRadius) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            decoration: itemDecoration.decoration
-                                                .copyWith(
-                                                    borderRadius: setBorderRadius(
-                                                        'topLeft',
-                                                        val,
-                                                        itemDecoration)),
+                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'topLeft', val, itemDecoration),
+                                          )
                                           );
                                         } else if (isMargin) {
                                           itemDecoration =
@@ -19487,44 +19643,39 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             highlightColor:  defaultPalette.tertiary,
                             onTap: () {
                             setState(() {
-                              final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                              final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
                           
                               // Toggle isPinned based on the condition
                               if (isBorderRadius) {
-                                currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
-                                    !currentItem.pinned['decoration']['borderRadius']['isPinned'];
-                                currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
-                                expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                currentitemDecoration.pinned['decoration']['borderRadius']['topLeft'] = 
+                                    !currentitemDecoration.pinned['decoration']['borderRadius']['topLeft']; 
                               } else 
                               if (isMargin) {
-                                currentItem.pinned['margin']['top'] = 
-                                    !currentItem.pinned['margin']['top'];
-                                // currentItem.pinned['margin']['top'] = false;
-                                // currentItem.pinned['margin']['bottom'] = false;
-                                // currentItem.pinned['margin']['left'] = false;
-                                // currentItem.pinned['margin']['right'] = false;
-                                // expansionLevels[1]  = currentItem.pinned['margin']['top'];
+                                currentitemDecoration.pinned['margin']['top'] = 
+                                    !currentitemDecoration.pinned['margin']['top'];
+                                // currentitemDecoration.pinned['margin']['top'] = false;
+                                // currentitemDecoration.pinned['margin']['bottom'] = false;
+                                // currentitemDecoration.pinned['margin']['left'] = false;
+                                // currentitemDecoration.pinned['margin']['right'] = false;
+                                // expansionLevels[1]  = currentitemDecoration.pinned['margin']['top'];
                                  
                               } else {
-                                currentItem.pinned['padding']['top'] = 
-                                    !currentItem.pinned['padding']['top'];
-                                // currentItem.pinned['padding']['top'] = false;
-                                // currentItem.pinned['padding']['bottom'] = false;
-                                // currentItem.pinned['padding']['left'] = false;
-                                // currentItem.pinned['padding']['right'] = false;
-                                // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                                currentitemDecoration.pinned['padding']['top'] = 
+                                    !currentitemDecoration.pinned['padding']['top'];
+                                // currentitemDecoration.pinned['padding']['top'] = false;
+                                // currentitemDecoration.pinned['padding']['bottom'] = false;
+                                // currentitemDecoration.pinned['padding']['left'] = false;
+                                // currentitemDecoration.pinned['padding']['right'] = false;
+                                // expansionLevels[0]  = currentitemDecoration.pinned['padding']['isPinned'];
                               }
                           
-                              // Update the list item with the modified currentItem
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                              // Update the list item with the modified currentitemDecoration
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
                             });
                             },
                             child: Icon(
                               isBorderRadius
-                                  ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                  ? pinned['decoration']['borderRadius']['topLeft']? TablerIcons.pin_filled : TablerIcons.pin
                                   : isMargin
                                   ? pinned['margin']['top']? TablerIcons.pin_filled : TablerIcons.pin
                                   : pinned['padding']['top']? TablerIcons.pin_filled : TablerIcons.pin
@@ -19586,13 +19737,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               newValue.toStringAsFixed(2));
                                     
                                           if (isBorderRadius) {
-                                            itemDecoration = itemDecoration.copyWith(
-                                              decoration:
-                                                  itemDecoration.decoration.copyWith(
-                                                borderRadius: setBorderRadius(
-                                                    'topRight', val, itemDecoration),
-                                              ),
-                                            );
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'topRight', val, itemDecoration),
+                                          )
+                                          );
                                           } else if (isMargin) {
                                             sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
                                               margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(bottom: val)
@@ -19606,10 +19756,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       },
                                     child: Transform.rotate(
                           
-                                        angle: isBorderRadius ? pi / 2 : 0,
+                                        angle:  0,
                                         child: Icon(
                                             isBorderRadius
-                                            ? TablerIcons.border_corner_pill
+                                            ? TablerIcons.radius_top_right
                                             : isMargin
                                             ? TablerIcons.box_align_top
                                             : TablerIcons.layout_bottombar_inactive,
@@ -19656,14 +19806,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ? 0
                                             : double.parse(value);
                                         if (isBorderRadius) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            decoration: itemDecoration.decoration
-                                                .copyWith(
-                                                    borderRadius: setBorderRadius(
-                                                        'topRight',
-                                                        val,
-                                                        itemDecoration)),
+                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'topRight', val, itemDecoration),
+                                          )
                                           );
                                         } else if (isMargin) {
                                           itemDecoration =
@@ -19693,44 +19840,39 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             highlightColor:  defaultPalette.tertiary,
                             onTap: () {
                             setState(() {
-                              final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                              final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
                           
                               // Toggle isPinned based on the condition
                               if (isBorderRadius) {
-                                currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
-                                    !currentItem.pinned['decoration']['borderRadius']['isPinned'];
-                                currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
-                                expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                currentitemDecoration.pinned['decoration']['borderRadius']['topRight'] = 
+                                    !currentitemDecoration.pinned['decoration']['borderRadius']['topRight']; 
                               } else 
                               if (isMargin) {
-                                currentItem.pinned['margin']['bottom'] = 
-                                    !currentItem.pinned['margin']['bottom'];
-                                // currentItem.pinned['margin']['top'] = false;
-                                // currentItem.pinned['margin']['bottom'] = false;
-                                // currentItem.pinned['margin']['left'] = false;
-                                // currentItem.pinned['margin']['right'] = false;
-                                // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                currentitemDecoration.pinned['margin']['bottom'] = 
+                                    !currentitemDecoration.pinned['margin']['bottom'];
+                                // currentitemDecoration.pinned['margin']['top'] = false;
+                                // currentitemDecoration.pinned['margin']['bottom'] = false;
+                                // currentitemDecoration.pinned['margin']['left'] = false;
+                                // currentitemDecoration.pinned['margin']['right'] = false;
+                                // expansionLevels[1]  = currentitemDecoration.pinned['margin']['topRight'];
                                  
                               } else {
-                                currentItem.pinned['padding']['bottom'] = 
-                                    !currentItem.pinned['padding']['bottom'];
-                                // currentItem.pinned['padding']['top'] = false;
-                                // currentItem.pinned['padding']['bottom'] = false;
-                                // currentItem.pinned['padding']['left'] = false;
-                                // currentItem.pinned['padding']['right'] = false;
-                                // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                                currentitemDecoration.pinned['padding']['bottom'] = 
+                                    !currentitemDecoration.pinned['padding']['bottom'];
+                                // currentitemDecoration.pinned['padding']['top'] = false;
+                                // currentitemDecoration.pinned['padding']['bottom'] = false;
+                                // currentitemDecoration.pinned['padding']['left'] = false;
+                                // currentitemDecoration.pinned['padding']['right'] = false;
+                                // expansionLevels[0]  = currentitemDecoration.pinned['padding']['topRight'];
                               }
                           
-                              // Update the list item with the modified currentItem
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                              // Update the list item with the modified currentitemDecoration
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
                             });
                             },
                             child: Icon(
                               isBorderRadius
-                                  ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                  ? pinned['decoration']['borderRadius']['topRight']? TablerIcons.pin_filled : TablerIcons.pin
                                   : isMargin
                                   ? pinned['margin']['bottom']? TablerIcons.pin_filled : TablerIcons.pin
                                   : pinned['padding']['bottom']? TablerIcons.pin_filled : TablerIcons.pin
@@ -19739,7 +19881,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           ),
                         ),
                       ),
-                       SizedBox(width: 2)
+                                SizedBox(width: 2)
                               ],
                             ),
                           ),
@@ -19800,13 +19942,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               newValue.toStringAsFixed(2));
                                     
                                           if (isBorderRadius) {
-                                            itemDecoration = itemDecoration.copyWith(
-                                              decoration:
-                                                  itemDecoration.decoration.copyWith(
-                                                borderRadius: setBorderRadius(
-                                                    'topLeft', val, itemDecoration),
-                                              ),
-                                            );
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'bottomLeft', val, itemDecoration),
+                                          )
+                                          );
                                           } else if (isMargin) {
                                             sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
                                               margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(left: val)
@@ -19822,7 +19963,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         angle: isBorderRadius ? 0 : isMargin?0: 0,
                                         child: Icon(
                                             isBorderRadius
-                                                ? TablerIcons.border_corner_pill
+                                                ? TablerIcons.radius_bottom_left
                                                 : isMargin
                                                 ? TablerIcons.box_align_right
                                                 : TablerIcons.layout_sidebar_inactive,
@@ -19866,14 +20007,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ? 0
                                             : double.parse(value);
                                         if (isBorderRadius) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            decoration: itemDecoration.decoration
-                                                .copyWith(
-                                                    borderRadius: setBorderRadius(
-                                                        'topLeft',
-                                                        val,
-                                                        itemDecoration)),
+                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'bottomLeft', val, itemDecoration),
+                                          )
                                           );
                                         } else if (isMargin) {
                                           itemDecoration =
@@ -19903,44 +20041,39 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             highlightColor:  defaultPalette.tertiary,
                             onTap: () {
                             setState(() {
-                              final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                              final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
                           
                               // Toggle isPinned based on the condition
                               if (isBorderRadius) {
-                                currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
-                                    !currentItem.pinned['decoration']['borderRadius']['isPinned'];
-                                currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
-                                currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
-                                expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                currentitemDecoration.pinned['decoration']['borderRadius']['bottomLeft'] = 
+                                    !currentitemDecoration.pinned['decoration']['borderRadius']['bottomLeft']; 
                               } else 
                               if (isMargin) {
-                                currentItem.pinned['margin']['left'] = 
-                                    !currentItem.pinned['margin']['left'];
-                                // currentItem.pinned['margin']['top'] = false;
-                                // currentItem.pinned['margin']['bottom'] = false;
-                                // currentItem.pinned['margin']['left'] = false;
-                                // currentItem.pinned['margin']['right'] = false;
-                                // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                currentitemDecoration.pinned['margin']['left'] = 
+                                    !currentitemDecoration.pinned['margin']['left'];
+                                // currentitemDecoration.pinned['margin']['top'] = false;
+                                // currentitemDecoration.pinned['margin']['bottom'] = false;
+                                // currentitemDecoration.pinned['margin']['left'] = false;
+                                // currentitemDecoration.pinned['margin']['right'] = false;
+                                // expansionLevels[1]  = currentitemDecoration.pinned['margin']['bottomLeft'];
                                  
                               } else {
-                                currentItem.pinned['padding']['left'] = 
-                                    !currentItem.pinned['padding']['left'];
-                                // currentItem.pinned['padding']['top'] = false;
-                                // currentItem.pinned['padding']['bottom'] = false;
-                                // currentItem.pinned['padding']['left'] = false;
-                                // currentItem.pinned['padding']['right'] = false;
-                                // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                                currentitemDecoration.pinned['padding']['left'] = 
+                                    !currentitemDecoration.pinned['padding']['left'];
+                                // currentitemDecoration.pinned['padding']['top'] = false;
+                                // currentitemDecoration.pinned['padding']['bottom'] = false;
+                                // currentitemDecoration.pinned['padding']['left'] = false;
+                                // currentitemDecoration.pinned['padding']['right'] = false;
+                                // expansionLevels[0]  = currentitemDecoration.pinned['padding']['bottomLeft'];
                               }
                           
-                              // Update the list item with the modified currentItem
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                              // Update the list item with the modified currentitemDecoration
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
                             });
                             },
                             child: Icon(
                               isBorderRadius
-                                  ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                  ? pinned['decoration']['borderRadius']['bottomLeft']? TablerIcons.pin_filled : TablerIcons.pin
                                   : isMargin
                                   ? pinned['margin']['left']? TablerIcons.pin_filled : TablerIcons.pin
                                   : pinned['padding']['left']? TablerIcons.pin_filled : TablerIcons.pin
@@ -19949,7 +20082,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           ),
                         ),
                       ),
-                       SizedBox(width: 2)
+                                SizedBox(width: 2)
                               ],
                             ),
                           ),
@@ -20002,13 +20135,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               newValue.toStringAsFixed(2));
                                     
                                           if (isBorderRadius) {
-                                            itemDecoration = itemDecoration.copyWith(
-                                              decoration:
-                                                  itemDecoration.decoration.copyWith(
-                                                borderRadius: setBorderRadius(
-                                                    'topRight', val, itemDecoration),
-                                              ),
-                                            );
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'bottomRight', val, itemDecoration),
+                                          )
+                                          );
                                           } else if (isMargin) {
                                             sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
                                               margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(right: val)
@@ -20022,10 +20154,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       },
                                     child: Transform.rotate(
                           
-                                        angle: isBorderRadius ? pi / 2 : 0,
+                                        angle:   0,
                                         child: Icon(
                                             isBorderRadius
-                                            ? TablerIcons.border_corner_pill
+                                            ? TablerIcons.radius_bottom_right
                                             : isMargin
                                             ? TablerIcons.box_align_left
                                             : TablerIcons.layout_sidebar_right_inactive,
@@ -20072,14 +20204,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ? 0
                                             : double.parse(value);
                                         if (isBorderRadius) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            decoration: itemDecoration.decoration
-                                                .copyWith(
-                                                    borderRadius: setBorderRadius(
-                                                        'topRight',
-                                                        val,
-                                                        itemDecoration)),
+                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            borderRadius: setBorderRadius(
+                                                'bottomRight', val, itemDecoration),
+                                          )
                                           );
                                         } else if (isMargin) {
                                           itemDecoration =
@@ -20109,44 +20238,39 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     highlightColor:  defaultPalette.tertiary,
                                     onTap: () {
                                     setState(() {
-                                      final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                                      final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
                                   
                                       // Toggle isPinned based on the condition
                                       if (isBorderRadius) {
-                                        currentItem.pinned['decoration']['borderRadius']['isPinned'] = 
-                                            !currentItem.pinned['decoration']['borderRadius']['isPinned'];
-                                        currentItem.pinned['decoration']['borderRadius']['topLeft'] = false;
-                                        currentItem.pinned['decoration']['borderRadius']['topRight'] = false;
-                                        currentItem.pinned['decoration']['borderRadius']['bottomLeft'] = false;
-                                        currentItem.pinned['decoration']['borderRadius']['bottomRight'] = false;
-                                        expansionLevels[7]  = currentItem.pinned['decoration']['borderRadius']['isPinned'];
+                                        currentitemDecoration.pinned['decoration']['borderRadius']['bottomRight'] = 
+                                            !currentitemDecoration.pinned['decoration']['borderRadius']['bottomRight']; 
                                       } else 
                                       if (isMargin) {
-                                        currentItem.pinned['margin']['right'] = 
-                                            !currentItem.pinned['margin']['right'];
-                                        // currentItem.pinned['margin']['top'] = false;
-                                        // currentItem.pinned['margin']['bottom'] = false;
-                                        // currentItem.pinned['margin']['left'] = false;
-                                        // currentItem.pinned['margin']['right'] = false;
-                                        // expansionLevels[1]  = currentItem.pinned['margin']['isPinned'];
+                                        currentitemDecoration.pinned['margin']['right'] = 
+                                            !currentitemDecoration.pinned['margin']['right'];
+                                        // currentitemDecoration.pinned['margin']['top'] = false;
+                                        // currentitemDecoration.pinned['margin']['bottom'] = false;
+                                        // currentitemDecoration.pinned['margin']['left'] = false;
+                                        // currentitemDecoration.pinned['margin']['right'] = false;
+                                        // expansionLevels[1]  = currentitemDecoration.pinned['margin']['bottomRight'];
                                         
                                       } else {
-                                        currentItem.pinned['padding']['right'] = 
-                                            !currentItem.pinned['padding']['right'];
-                                        // currentItem.pinned['padding']['top'] = false;
-                                        // currentItem.pinned['padding']['bottom'] = false;
-                                        // currentItem.pinned['padding']['left'] = false;
-                                        // currentItem.pinned['padding']['right'] = false;
-                                        // expansionLevels[0]  = currentItem.pinned['padding']['isPinned'];
+                                        currentitemDecoration.pinned['padding']['right'] = 
+                                            !currentitemDecoration.pinned['padding']['right'];
+                                        // currentitemDecoration.pinned['padding']['top'] = false;
+                                        // currentitemDecoration.pinned['padding']['bottom'] = false;
+                                        // currentitemDecoration.pinned['padding']['left'] = false;
+                                        // currentitemDecoration.pinned['padding']['right'] = false;
+                                        // expansionLevels[0]  = currentitemDecoration.pinned['padding']['bottomRight'];
                                       }
                                   
-                                      // Update the list item with the modified currentItem
-                                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                                      // Update the list item with the modified currentitemDecoration
+                                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
                                     });
                                     },
                                     child: Icon(
                                       isBorderRadius
-                                          ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
+                                          ? pinned['decoration']['borderRadius']['bottomRight']? TablerIcons.pin_filled : TablerIcons.pin
                                           : isMargin
                                           ? pinned['margin']['right']? TablerIcons.pin_filled : TablerIcons.pin
                                           : pinned['padding']['right']? TablerIcons.pin_filled : TablerIcons.pin
@@ -20173,43 +20297,202 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
-  Widget buildListDecorationAdjuster() {
-    final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                          
-    return Container(
-      height: 25, 
-      padding: EdgeInsets.only(left:4, right:4),
-      child: Column(
-        children: [
-          Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [ 
-                    //DECORATION Title this is the editable property title
+  Widget buildListDecorationAdjuster( List<TextEditingController> colorHexControllers) {
+    final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+    final borderRadiusControllers = [
+      TextEditingController()..text= ((currentitemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).topLeft.x.toString().replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()..text= ((currentitemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).topLeft.x.toString().replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()..text= ((currentitemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).topRight.x.toString().replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()..text= ((currentitemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).bottomLeft.x.toString().replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()..text= ((currentitemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).bottomRight.x.toString().replaceAll(RegExp(r'\.0$'), ''),
+    ];
+    final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40))/2;
+    final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 74:40);  
+
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [ 
+            //DECORATION Title this is the editable property title
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.only(left:2),
+                margin: EdgeInsets.only(left:3, right:4),
+                decoration: BoxDecoration(
+                  // border: Border.all(),
+                  // color:defaultPalette.primary,
+                  borderRadius: BorderRadius.circular(5)
+                ),
+                child:  Row(
+                    children: [
+                    Icon( TablerIcons.palette,
+                    size: 16,
+                    color: defaultPalette.extras[0]
+                    ),
                     Expanded(
-                      child: Container(
-                        padding: EdgeInsets.only(left:2),
-                        decoration: BoxDecoration(
-                          border: Border.all(),
-                          color:defaultPalette.primary,
-                          borderRadius: BorderRadius.circular(5)
-                        ),
-                        child: Row(
-                          children: [
-                          Icon( TablerIcons.palette,
-                          size: 16,
-                          color: defaultPalette.extras[0]
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(  ' decor ',
+                          style: GoogleFonts.lexend(
+                                fontSize: 15,
+                                letterSpacing: -1,
+                                color: defaultPalette.extras[0]),),
+                      ),
+                    ),
+                    ],
+                  ),
+              ),
+            ),
+            const SizedBox(width: 2,),
+            //DECORATION isPinned
+            ClipRRect(
+              borderRadius: BorderRadius.circular(500),
+              child: Material(
+                color: defaultPalette.transparent, 
+                child: InkWell( 
+                  hoverColor:  defaultPalette.tertiary,
+                  splashColor: defaultPalette.tertiary,
+                  highlightColor:  defaultPalette.tertiary,
+                  onTap: () {
+                  setState(() {
+                    final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                    currentitemDecoration.pinned['decoration'] = {
+                      'isPinned': false,
+                      'color': false,
+                      'border': false,
+                      'borderRadius': {
+                        'isPinned': false,
+                      'topLeft': false,
+                      'topRight': false,
+                      'bottomLeft': false, 
+                      'bottomRight': false,
+                      },
+                      'boxShadow': false,
+                      'image': {
+                        'isPinned': false,
+                        'bytes': false,
+                        'fit': false,
+                        'repeat': false,
+                        'alignment': false,
+                        'scale': false,
+                        'opacity': false,
+                        'filterQuality': false,
+                        'invertColors': false,
+                      }, 
+                      'backgroundBlendMode': false,
+                    }; 
+                    
+                    // Update the list item with the modified currentitemDecoration
+                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
+                  });
+                  },
+                  child: Icon( currentitemDecoration.pinned['decoration']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin,
+                      size: 16, color: defaultPalette.extras[0]),
+                ),
+              ),
+            ),
+             const SizedBox(width: 4,),       
+          ],
+        ),
+        const SizedBox(width: 2,height:2,),
+        if(currentitemDecoration.pinned['decoration']['color'])
+        Flex(
+          direction: Axis.vertical,
+          children: [
+            SizedBox(width: 2,height: 2),
+            //title and hex code of plain color title
+            Container(
+                padding: EdgeInsets.only(left:2),
+                margin: EdgeInsets.only(left:3, right:4),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  color:defaultPalette.primary,
+                  borderRadius: BorderRadius.circular(5)
+                ),
+                child:  Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                    Icon( TablerIcons.color_swatch,
+                    size: 16,
+                    color: defaultPalette.extras[0]
+                    ),
+                    if( (sWidth * wH2DividerPosition)>220)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Text(  ' color ' 
+                            ,
+                        style: GoogleFonts.lexend(
+                              fontSize: 15,
+                              letterSpacing: -1,
+                              color: defaultPalette.extras[0]),),
+                    ),
+                    Expanded(
+                      child: SizedBox(
+                        height: 25,
+                        child: TextField( 
+                        focusNode: colorHexFocusNodes[0],
+                        controller: colorHexControllers[0],
+                        onSubmitted: (value) {
+                          setState(() {
+                            sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentitemDecoration.copyWith(
+                              decoration: currentitemDecoration.decoration.copyWith(
+                                color: hexToColor(value)
+                              )
+                            ); 
+                              });
+                            },
+                        textAlignVertical: TextAlignVertical.top,
+                        textAlign: TextAlign.end,
+                        cursorColor: defaultPalette.tertiary,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.only(left:2), 
+                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          hoverColor: defaultPalette.transparent,
+                          filled: true,
+                          fillColor: defaultPalette.transparent, 
+                          border: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide.none, 
                           ),
-                          Text(  ' decoration ',
-                            style: GoogleFonts.lexend(
-                                  fontSize: 15,
-                                  letterSpacing: -1,
-                                  color: defaultPalette.extras[0]),),
-                          ],
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide.none,
+                            borderRadius: BorderRadius.circular(5.0),
+                          ),
+                        ), 
+                        style: GoogleFonts.lexend(
+                          letterSpacing: -1, fontWeight: FontWeight.w500,
+                                  fontSize: 14, color: defaultPalette.black),
+                              ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                      setState(() {
+                        isListColorExpanded =
+                            !isListColorExpanded;
+                      });},
+                      child: Padding(
+                        padding: const EdgeInsets.all(0.0),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.fromBorderSide(
+                              BorderSide.none,
+                            ),
+                            color: currentitemDecoration
+                        .decoration
+                        .color ??
+                        defaultPalette
+                        .transparent,
+                          ),
+                          child: SizedBox(width: 15,height: 15,),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 2,),
-                    //DECORATION isPinned
+                    SizedBox(width: 2,),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(500),
                       child: Material(
@@ -20220,48 +20503,149 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           highlightColor:  defaultPalette.tertiary,
                           onTap: () {
                           setState(() {
-                            final currentItem = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                            currentItem.pinned['decoration'] = {
-                              'isPinned': false,
-                              'color': false,
-                              'border': false,
-                              'borderRadius': {
-                                'isPinned': false,
-                              'topLeft': false,
-                              'topRight': false,
-                              'bottomLeft': false, 
-                              'bottomRight': false,
-                              },
-                              'boxShadow': false,
-                              'image': {
-                                'isPinned': false,
-                                'bytes': false,
-                                'fit': false,
-                                'repeat': false,
-                                'alignment': false,
-                                'scale': false,
-                                'opacity': false,
-                                'filterQuality': false,
-                                'invertColors': false,
-                              }, 
-                              'backgroundBlendMode': false,
-                            }; 
+                            final currentitemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+                            currentitemDecoration.pinned['decoration']['color'] =  !currentitemDecoration.pinned['decoration']['color'];
                             
-                            // Update the list item with the modified currentItem
-                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItem;
+                            // Update the list item with the modified currentitemDecoration
+                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentitemDecoration;
                           });
                           },
-                          child: Icon( currentItem.pinned['decoration']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin,
+                          child: Icon( currentitemDecoration.pinned['decoration']['color']? TablerIcons.pin_filled : TablerIcons.pin,
                               size: 16, color: defaultPalette.extras[0]),
                         ),
                       ),
                     ),
-                            
-                  ],
+                    SizedBox(width: 2,)
+                    ],
+                  ),
+              ), 
+            // List Decoration COLOR main
+            
+            if(isListColorExpanded)   
+            ...[//list COLOR PICKER Main    
+            SizedBox(width: 2,height: 4,),
+            Container( 
+              width: widthBig,
+              padding: EdgeInsets.only(left:3, right: 3),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  color:defaultPalette.primary,
+                  borderRadius: BorderRadius.circular(5)
                 ),
-                
-        ],
-      ), 
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(  ' ${(fl.ColorTools.nameThatColor(currentitemDecoration.decoration
+                          .color ?? defaultPalette
+                          .transparent, )).toLowerCase()}'
+                          , 
+                      style: GoogleFonts.lexend(
+                            fontSize: 14,
+                            letterSpacing: -1,
+                            color: defaultPalette.extras[0]),),
+                  ),
+                           
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if( (sWidth * wH2DividerPosition)>220)
+                      Expanded( 
+                        child: HSVPicker(
+                          color: HSVColor.fromColor(currentitemDecoration
+                          .decoration
+                          .color ?? defaultPalette
+                          .transparent,),
+                            onChanged: (value) {
+                              setState(() {
+                              sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentitemDecoration.copyWith(
+                                decoration: currentitemDecoration.decoration.copyWith(
+                                  color: value.toColor().withAlpha(
+                                    (currentitemDecoration
+                                    .decoration
+                                    .color ?? defaultPalette
+                                    .transparent).alpha
+                                  )
+                                )
+                              );
+                              });
+                            },),
+                      ),
+                      Expanded(
+                        child: IntrinsicHeight(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            // crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              
+                                //list Aplha COLOR
+                              WheelPicker(
+                              color: HSVColor.fromColor(currentitemDecoration
+                                        .decoration
+                                        .color ?? defaultPalette
+                                        .transparent,),
+                              onChanged: (HSVColor value) {
+                                setState(() {
+                                  sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentitemDecoration.copyWith(
+                                    decoration: currentitemDecoration.decoration.copyWith(
+                                      color: value.toColor().withAlpha(
+                                        (currentitemDecoration
+                                        .decoration
+                                        .color ?? defaultPalette
+                                        .transparent).alpha
+                                      )
+                                    )
+                                  );
+                                  });
+                                },
+                              ), 
+                              
+                               
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  //list COLOR WHEEL picker
+                  AlphaPicker(
+                    alpha: (currentitemDecoration
+                              .decoration
+                              .color ?? defaultPalette
+                              .transparent).alpha,
+                    onChanged: (int value) {
+                      setState(() {
+                        sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentitemDecoration.copyWith(
+                        decoration: currentitemDecoration.decoration.copyWith(
+                          color:(  currentitemDecoration.decoration.color ?? defaultPalette
+                              .transparent).withAlpha(value)
+                        )
+                      ); 
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 2,height: 4),
+            ],
+            
+             
+          ],
+        ),
+        
+            buildListPaddingMarginAdjuster(
+              isBorderRadius: true,
+              isMargin: false, 
+              itemDecoration: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration), 
+              pinned: currentitemDecoration.pinned,
+              borderRadiusControllers: borderRadiusControllers,
+              ),
+            SizedBox(width: 2,height: 10),      
+    
+        
+      ],
     );
   }
 

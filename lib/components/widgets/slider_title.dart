@@ -15,7 +15,7 @@ class SliderTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.bottomCenter,
-      margin: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+      margin: const EdgeInsets.fromLTRB(5, 0, 5, 0),
       child: Row(
         children: <Widget>[
           Opacity(

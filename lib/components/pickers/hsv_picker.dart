@@ -63,7 +63,7 @@ class _HSVPickerState extends State<HSVPicker> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         // Hue
-        SliderTitle('H', '${color.hue.toInt()}º'),
+        SliderTitle('H', '${color.hue.toInt()}'),
         SliderPicker(
           height: 20,
           border: Border.all(
@@ -77,7 +77,7 @@ class _HSVPickerState extends State<HSVPicker> {
         ),
 
         // Saturation
-        SliderTitle('S', '${(color.saturation * 100).toInt()}º'),
+        SliderTitle('S', '${(color.saturation * 100).toInt()}'),
         SliderPicker(
           height: 20,
           border: Border.all(
@@ -90,7 +90,7 @@ class _HSVPickerState extends State<HSVPicker> {
         ),
 
         // Value
-        SliderTitle('L', '${(color.value * 100).toInt()}º'),
+        SliderTitle('L', '${(color.value * 100).toInt()}'),
         SliderPicker(
           height: 20,
           border: Border.all(
