@@ -1,9 +1,11 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:ui' as ui;
 
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:uuid/uuid.dart';
@@ -15,9 +17,9 @@ part 'sheet_decoration.g.dart';
 @HiveType(typeId: 5)
 enum Access {
   @HiveField(0)
- local,
- @HiveField(1)
- global
+  local,
+  @HiveField(1)
+  global
 }
 
 @HiveType(typeId: 6)
@@ -28,16 +30,12 @@ class SheetDecoration extends HiveObject {
   final String name;
   @HiveField(2)
   final Access access;
-  SheetDecoration({
-    required this.id,
-    required this.name,
-    this.access = Access.global
-  });
-  
+  SheetDecoration(
+      {required this.id, required this.name, this.access = Access.global});
 }
 
 @HiveType(typeId: 7)
-class SuperDecorationBox extends SheetDecoration{
+class SuperDecorationBox extends SheetDecoration {
   @HiveField(3)
   List<dynamic> itemDecorationList;
 
@@ -49,10 +47,9 @@ class SuperDecorationBox extends SheetDecoration{
 
   SuperDecoration toSuperDecoration() {
     return SuperDecoration(
-      id: id,
-      name: name,
-      itemDecorationList: decodeItemDecorationList(itemDecorationList)
-      );
+        id: id,
+        name: name,
+        itemDecorationList: decodeItemDecorationList(itemDecorationList));
   }
 }
 
@@ -60,21 +57,21 @@ class SuperDecorationBox extends SheetDecoration{
 class ItemDecorationBox extends SheetDecoration {
   @HiveField(3)
   Map<String, dynamic> itemDecoration;
-  
+
   ItemDecorationBox({
-    required this.itemDecoration, required super.id, super.name = 'Untitled',
+    required this.itemDecoration,
+    required super.id,
+    super.name = 'Untitled',
   });
 }
 
- 
-class ItemDecoration extends SheetDecoration{
-  
+class ItemDecoration extends SheetDecoration {
   final EdgeInsets padding;
   final EdgeInsets margin;
   final BoxDecoration decoration;
   final Alignment alignment;
   final Matrix4? transform;
-  final BoxDecoration foregroundDecoration; 
+  final BoxDecoration foregroundDecoration;
   final Map<String, dynamic> pinned;
 
   ItemDecoration({
@@ -85,9 +82,9 @@ class ItemDecoration extends SheetDecoration{
     this.decoration = const BoxDecoration(),
     this.alignment = const Alignment(0, 0),
     this.foregroundDecoration = const BoxDecoration(),
-    this.transform, 
+    this.transform,
     Map<String, dynamic>? pinned,
-  }) : pinned = pinned?? defaultPins() ;
+  }) : pinned = pinned ?? defaultPins();
 
   // ✅ Convert the ItemDecoration to JSON
   Map<String, dynamic> toJson() {
@@ -96,12 +93,11 @@ class ItemDecoration extends SheetDecoration{
       'name': name,
       'padding': [padding.top, padding.bottom, padding.left, padding.right],
       'margin': [margin.top, margin.bottom, margin.left, margin.right],
-      'decoration': _boxDecorationToJson(decoration ),
+      'decoration': _boxDecorationToJson(decoration),
       'alignment': [alignment.x, alignment.y],
       'transform': transform?.storage,
-      'foregroundDecoration': _boxDecorationToJson(foregroundDecoration), 
+      'foregroundDecoration': _boxDecorationToJson(foregroundDecoration),
       'pinned': pinned,
-
     };
   }
 
@@ -120,7 +116,9 @@ class ItemDecoration extends SheetDecoration{
         json['margin'][3] ?? 0.0, // right
         json['margin'][1] ?? 0.0, // bottom
       ),
-      decoration: _boxDecorationFromJson(json['decoration'], ),
+      decoration: _boxDecorationFromJson(
+        json['decoration'],
+      ),
       alignment: Alignment(
         json['alignment'][0] ?? 0.0,
         json['alignment'][1] ?? 0.0,
@@ -128,48 +126,58 @@ class ItemDecoration extends SheetDecoration{
       transform: json['transform'] != null
           ? Matrix4.fromList(List<double>.from(json['transform']))
           : null,
-      foregroundDecoration: _boxDecorationFromJson(json['foregroundDecoration'], ), 
-      id: json['id'], 
+      foregroundDecoration: _boxDecorationFromJson(
+        json['foregroundDecoration'],
+      ),
+      id: json['id'],
       name: json['name'],
       pinned: Map<String, dynamic>.from(json['pinned'] ?? defaultPins()),
     );
   }
 
   // ✅ Helper for BoxDecoration to JSON
-  static Map<String, dynamic> _boxDecorationToJson(BoxDecoration decoration ) {
+  static Map<String, dynamic> _boxDecorationToJson(BoxDecoration decoration) {
     return {
       'color': decoration.color?.value,
       'border': decoration.border != null
           ? (decoration.border! is Border)
-          ? {
-              'left': _borderSideToJson((decoration.border! as Border).left),
-              'right': _borderSideToJson((decoration.border!  as Border).right),
-              'top': _borderSideToJson((decoration.border!  as Border).top),
-              'bottom': _borderSideToJson((decoration.border!  as Border).bottom),
-              
-            }
-          : {
-              'left': _borderSideToJson((decoration.border! as DashedBorder).left),
-              'right': _borderSideToJson((decoration.border!  as DashedBorder).right),
-              'top': _borderSideToJson((decoration.border!  as DashedBorder).top),
-              'bottom': _borderSideToJson((decoration.border!  as DashedBorder).bottom),
-              'dashLength':(decoration.border! as DashedBorder).dashLength,
-              'spaceLength':(decoration.border! as DashedBorder).spaceLength??0,
-              'isOnlyCorners':(decoration.border! as DashedBorder).isOnlyCorner,
-              'strokeCap':(decoration.border! as DashedBorder).strokeCap.index
-
-            }
+              ? {
+                  'left':
+                      _borderSideToJson((decoration.border! as Border).left),
+                  'right':
+                      _borderSideToJson((decoration.border! as Border).right),
+                  'top': _borderSideToJson((decoration.border! as Border).top),
+                  'bottom':
+                      _borderSideToJson((decoration.border! as Border).bottom),
+                }
+              : {
+                  'left': _borderSideToJson(
+                      (decoration.border! as DashedBorder).left),
+                  'right': _borderSideToJson(
+                      (decoration.border! as DashedBorder).right),
+                  'top': _borderSideToJson(
+                      (decoration.border! as DashedBorder).top),
+                  'bottom': _borderSideToJson(
+                      (decoration.border! as DashedBorder).bottom),
+                  'dashLength': (decoration.border! as DashedBorder).dashLength,
+                  'spaceLength':
+                      (decoration.border! as DashedBorder).spaceLength ?? 0,
+                  'isOnlyCorners':
+                      (decoration.border! as DashedBorder).isOnlyCorner,
+                  'strokeCap':
+                      (decoration.border! as DashedBorder).strokeCap.index
+                }
           : null,
       'borderRadius': decoration.borderRadius != null
           ? [
-              (decoration.borderRadius!  as BorderRadius).topLeft.x,
-              (decoration.borderRadius!  as BorderRadius).topLeft.y,
-              (decoration.borderRadius!  as BorderRadius).topRight.x,
-              (decoration.borderRadius!  as BorderRadius).topRight.y,
-              (decoration.borderRadius!  as BorderRadius).bottomLeft.x,
-              (decoration.borderRadius!  as BorderRadius).bottomLeft.y,
-              (decoration.borderRadius!  as BorderRadius).bottomRight.x,
-              (decoration.borderRadius!  as BorderRadius).bottomRight.y,
+              (decoration.borderRadius! as BorderRadius).topLeft.x,
+              (decoration.borderRadius! as BorderRadius).topLeft.y,
+              (decoration.borderRadius! as BorderRadius).topRight.x,
+              (decoration.borderRadius! as BorderRadius).topRight.y,
+              (decoration.borderRadius! as BorderRadius).bottomLeft.x,
+              (decoration.borderRadius! as BorderRadius).bottomLeft.y,
+              (decoration.borderRadius! as BorderRadius).bottomRight.x,
+              (decoration.borderRadius! as BorderRadius).bottomRight.y,
             ]
           : null,
       'image': decoration.image != null
@@ -198,33 +206,34 @@ class ItemDecoration extends SheetDecoration{
   }
 
   //  Helper for JSON to BoxDecoration
-  static BoxDecoration _boxDecorationFromJson(Map<dynamic, dynamic>? json, ) {
+  static BoxDecoration _boxDecorationFromJson(
+    Map<dynamic, dynamic>? json,
+  ) {
     if (json == null) return const BoxDecoration();
 
     return BoxDecoration(
       color: json['color'] != null ? Color(json['color']) : null,
       border: json['border'] != null
-    ? json['border']['dashLength'] != null
-        ? DashedBorder(
-            left: _borderSideFromJson(json['border']['left']),
-            right: _borderSideFromJson(json['border']['right']),
-            top: _borderSideFromJson(json['border']['top']),
-            bottom: _borderSideFromJson(json['border']['bottom']),
-            dashLength: json['border']['dashLength'],
-            spaceLength: json['border']['spaceLength'] ?? 0,
-            isOnlyCorner: json['border']['isOnlyCorners'] ?? false,
-            strokeCap: json['border']['strokeCap'] != null
-                ? StrokeCap.values[json['border']['strokeCap']]
-                : StrokeCap.butt, // Default value
-          )
-        : Border(
-            left: _borderSideFromJson(json['border']['left']),
-            right: _borderSideFromJson(json['border']['right']),
-            top: _borderSideFromJson(json['border']['top']),
-            bottom: _borderSideFromJson(json['border']['bottom']),
-          )
-    : null,
-
+          ? json['border']['dashLength'] != null
+              ? DashedBorder(
+                  left: _borderSideFromJson(json['border']['left']),
+                  right: _borderSideFromJson(json['border']['right']),
+                  top: _borderSideFromJson(json['border']['top']),
+                  bottom: _borderSideFromJson(json['border']['bottom']),
+                  dashLength: json['border']['dashLength'],
+                  spaceLength: json['border']['spaceLength'] ?? 0,
+                  isOnlyCorner: json['border']['isOnlyCorners'] ?? false,
+                  strokeCap: json['border']['strokeCap'] != null
+                      ? StrokeCap.values[json['border']['strokeCap']]
+                      : StrokeCap.butt, // Default value
+                )
+              : Border(
+                  left: _borderSideFromJson(json['border']['left']),
+                  right: _borderSideFromJson(json['border']['right']),
+                  top: _borderSideFromJson(json['border']['top']),
+                  bottom: _borderSideFromJson(json['border']['bottom']),
+                )
+          : null,
       borderRadius: json['borderRadius'] != null
           ? BorderRadius.only(
               topLeft: Radius.elliptical(
@@ -247,8 +256,8 @@ class ItemDecoration extends SheetDecoration{
           : null,
       image: json['image'] != null
           ? DecorationImage(
-              image: MemoryImage(Uint8List.fromList(
-                  List<int>.from(json['image']['bytes']))),
+              image: MemoryImage(
+                  Uint8List.fromList(List<int>.from(json['image']['bytes']))),
               fit: BoxFit.values[json['image']['fit']],
               repeat: ImageRepeat.values[json['image']['repeat']],
               alignment: Alignment(
@@ -275,18 +284,18 @@ class ItemDecoration extends SheetDecoration{
   }
 
   //  Helper for BoxShadow to JSON
-  static Map<String, dynamic> _boxShadowToJson(BoxShadow shadow) {
+  static Map<dynamic, dynamic> _boxShadowToJson(BoxShadow shadow) {
     return {
-      'color': shadow.color.value,
+      'color': shadow.color.hexAlpha,
       'offset': [shadow.offset.dx, shadow.offset.dy],
       'blurRadius': shadow.blurRadius,
       'spreadRadius': shadow.spreadRadius,
     };
   }
 
-  static BoxShadow _boxShadowFromJson(Map<String, dynamic> json) {
+  static BoxShadow _boxShadowFromJson(Map<dynamic, dynamic> json) {
     return BoxShadow(
-      color: Color(json['color']),
+      color: hexToColor(json['color']),
       offset: Offset(json['offset'][0], json['offset'][1]),
       blurRadius: json['blurRadius'],
       spreadRadius: json['spreadRadius'],
@@ -299,7 +308,10 @@ class ItemDecoration extends SheetDecoration{
       return {
         'type': 'linear',
         'colors': gradient.colors.map((c) => c.value).toList(),
-        'begin': [(gradient.begin as Alignment).x, (gradient.begin as Alignment).y],
+        'begin': [
+          (gradient.begin as Alignment).x,
+          (gradient.begin as Alignment).y
+        ],
         'end': [(gradient.end as Alignment).x, (gradient.end as Alignment).y],
       };
     }
@@ -317,7 +329,8 @@ class ItemDecoration extends SheetDecoration{
     }
     return null;
   }
-    // ✅ Helper for BorderSide to JSON
+
+  // ✅ Helper for BorderSide to JSON
   static Map<String, dynamic> _borderSideToJson(BorderSide side) {
     return {
       'width': side.width,
@@ -342,7 +355,7 @@ class ItemDecoration extends SheetDecoration{
     BoxDecoration? decoration,
     Alignment? alignment,
     Matrix4? transform,
-    BoxDecoration? foregroundDecoration, 
+    BoxDecoration? foregroundDecoration,
     Map<String, dynamic>? pinned,
   }) {
     return ItemDecoration(
@@ -353,81 +366,81 @@ class ItemDecoration extends SheetDecoration{
       decoration: decoration ?? this.decoration,
       alignment: alignment ?? this.alignment,
       transform: transform ?? this.transform,
-      foregroundDecoration: foregroundDecoration ?? this.foregroundDecoration, 
+      foregroundDecoration: foregroundDecoration ?? this.foregroundDecoration,
       pinned: pinned ?? this.pinned,
     );
   }
 }
 
 Map<String, dynamic> defaultPins() => {
-    'padding': {
-      'isPinned': true,
-      'top': true,
-      'bottom': true,
-      'left': true,
-      'right': true,
-    },
-    'margin': {
-      'isPinned': true,
-      'top': true,
-      'bottom': true,
-      'left': true,
-      'right': true,
-    },
-    'decoration': {
-      'isPinned': true,
-      'color': true,
-      'border': true,
-      'borderRadius': {
+      'padding': {
         'isPinned': true,
-      'topLeft': true,
-      'topRight': true,
-      'bottomLeft': true, 
-      'bottomRight': true,
+        'top': true,
+        'bottom': true,
+        'left': true,
+        'right': true,
       },
-      'boxShadow': true,
-      'image': {
+      'margin': {
         'isPinned': true,
-        'bytes': true,
-        'fit': false,
-        'repeat': false,
-        'alignment': false,
-        'scale': false,
-        'opacity': false,
-        'filterQuality': false,
-        'invertColors': false,
-      }, 
-      'backgroundBlendMode': true,
-    }, 
-    'transform': {
-      'isPinned': false,
-    },
-    'foregroundDecoration': {
-      'isPinned': false,
-      'color': false,
-      'border': false,
-      'borderRadius': {
-        'isPinned': true,
-      'topLeft': true,
-      'topRight': true,
-      'bottomLeft': true, 
-      'bottomRight': true,
+        'top': true,
+        'bottom': true,
+        'left': true,
+        'right': true,
       },
-      'boxShadow': false,
-      'image': {
+      'decoration': {
+        'isPinned': true,
+        'color': true,
+        'border': true,
+        'borderRadius': {
+          'isPinned': true,
+          'topLeft': true,
+          'topRight': true,
+          'bottomLeft': true,
+          'bottomRight': true,
+        },
+        'boxShadow': true,
+        'image': {
+          'isPinned': true,
+          'bytes': true,
+          'fit': false,
+          'repeat': false,
+          'alignment': false,
+          'scale': false,
+          'opacity': false,
+          'filterQuality': false,
+          'invertColors': false,
+        },
+        'backgroundBlendMode': true,
+      },
+      'transform': {
         'isPinned': false,
-        'bytes': false,
-        'fit': false,
-        'repeat': false,
-        'alignment': false,
-        'scale': false,
-        'opacity': false,
-        'filterQuality': false,
-        'invertColors': false,
-      }, 
-      'backgroundBlendMode': false,
-    }, 
-  };
+      },
+      'foregroundDecoration': {
+        'isPinned': false,
+        'color': false,
+        'border': false,
+        'borderRadius': {
+          'isPinned': true,
+          'topLeft': true,
+          'topRight': true,
+          'bottomLeft': true,
+          'bottomRight': true,
+        },
+        'boxShadow': false,
+        'image': {
+          'isPinned': false,
+          'bytes': false,
+          'fit': false,
+          'repeat': false,
+          'alignment': false,
+          'scale': false,
+          'opacity': false,
+          'filterQuality': false,
+          'invertColors': false,
+        },
+        'backgroundBlendMode': false,
+      },
+    };
 
 class SuperDecoration extends SheetDecoration {
   List<SheetDecoration> itemDecorationList;
@@ -469,15 +482,12 @@ class SuperDecoration extends SheetDecoration {
 
   SuperDecorationBox toSuperDecorationBox() {
     return SuperDecorationBox(
-      id: id,
-      name: name,
-      itemDecorationList:encodeItemDecorationList(itemDecorationList)  
-      );
+        id: id,
+        name: name,
+        itemDecorationList: encodeItemDecorationList(itemDecorationList));
   }
-
 }
 
- 
 List<dynamic> encodeItemDecorationList(List<SheetDecoration> list) {
   return list.map((item) {
     if (item is ItemDecoration) {
@@ -493,7 +503,6 @@ List<dynamic> encodeItemDecorationList(List<SheetDecoration> list) {
 }
 
 List<SheetDecoration> decodeItemDecorationList(List<dynamic> list) {
-   
   return list.map((item) {
     if (item['type'] == 'ItemDecoration') {
       return ItemDecoration.fromJson(item['value']);
@@ -503,5 +512,3 @@ List<SheetDecoration> decodeItemDecorationList(List<dynamic> list) {
     throw Exception('Unsupported type');
   }).toList();
 }
-
-
