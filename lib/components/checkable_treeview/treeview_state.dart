@@ -527,9 +527,9 @@ class TreeViewState<T> extends State<TreeView<T>> {
     expansionvalues[11] &&
     expansionvalues[14] &&
     expansionvalues[20] &&
-    expansionvalues[30] &&
-    expansionvalues[33] &&
-    expansionvalues[39]){
+    expansionvalues[29] &&
+    expansionvalues[32] &&
+    expansionvalues[38]){
       _isAllExpanded = true;
     } else {
       _isAllExpanded = false;

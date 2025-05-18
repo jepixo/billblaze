@@ -41,15 +41,15 @@ static SuperDecorationBox getSuperDecoration(String id){
 
   return decorations.values.firstWhere(
     (decoration) {
-      print('getSuperDecoration: '+decoration.id+' '+decoration.runtimeType.toString());
+      // print('getSuperDecoration: '+decoration.id+' '+decoration.runtimeType.toString());
       return decoration.id == id && decoration is SuperDecorationBox;
       },
     orElse: () {
       String newDecoId = Uuid().v4();
-      print('newonehas to be added in the decoBox unfort: '+ newDecoId);
+      // print('newonehas to be added in the decoBox unfort: '+ newDecoId);
       SuperDecoration newSuperDecoration = SuperDecoration(id: newDecoId);
-      Boxes.saveSuperDecoration(newSuperDecoration.toSuperDecorationBox());
-      return getSuperDecoration(newDecoId);},
+      print('doesnt exist '+ id);
+      throw Error();},
   ) as SuperDecorationBox;
 }
 

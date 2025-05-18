@@ -68,7 +68,7 @@ class SheetList extends SheetItem {
 
   SheetListBox toSheetListBox() {
     print('found A SUPERDECORATION: '+ listDecoration.id );
-    Boxes.getDecorations().put(listDecoration.id, listDecoration.toSuperDecorationBox());
+    // Boxes.getDecorations().put(listDecoration.id, listDecoration.toSuperDecorationBox());
     return SheetListBox(
         sheetList: [],
         direction: direction == Axis.vertical ? true : false,

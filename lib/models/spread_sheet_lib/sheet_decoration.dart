@@ -37,7 +37,7 @@ class SheetDecoration extends HiveObject {
 @HiveType(typeId: 7)
 class SuperDecorationBox extends SheetDecoration {
   @HiveField(3)
-  List<dynamic> itemDecorationList;
+  List<String> itemDecorationList;
 
   SuperDecorationBox({
     required super.id,
@@ -49,7 +49,7 @@ class SuperDecorationBox extends SheetDecoration {
     return SuperDecoration(
         id: id,
         name: name,
-        itemDecorationList: decodeItemDecorationList(itemDecorationList));
+        itemDecorationList: itemDecorationList);
   }
 }
 
@@ -63,6 +63,12 @@ class ItemDecorationBox extends SheetDecoration {
     required super.id,
     super.name = 'Untitled',
   });
+
+  ItemDecoration toItemDecoration() {
+    return ItemDecoration.fromJson(itemDecoration);
+  }
+
+
 }
 
 class ItemDecoration extends SheetDecoration {
@@ -370,6 +376,15 @@ class ItemDecoration extends SheetDecoration {
       pinned: pinned ?? this.pinned,
     );
   }
+
+  ItemDecorationBox toItemDecorationBox(){
+    return ItemDecorationBox(
+      itemDecoration: toJson(), 
+      id: id,
+      name: name
+      );
+  }
+
 }
 
 Map<String, dynamic> defaultPins() => {
@@ -410,7 +425,7 @@ Map<String, dynamic> defaultPins() => {
           'filterQuality': false,
           'invertColors': false,
         },
-        'backgroundBlendMode': true,
+        
       },
       'transform': {
         'isPinned': false,
@@ -443,7 +458,7 @@ Map<String, dynamic> defaultPins() => {
     };
 
 class SuperDecoration extends SheetDecoration {
-  List<SheetDecoration> itemDecorationList;
+  List<String> itemDecorationList;
 
   SuperDecoration({
     required super.id,
@@ -456,7 +471,7 @@ class SuperDecoration extends SheetDecoration {
     return {
       'id': id,
       'name': name,
-      'itemDecorationList': encodeItemDecorationList(itemDecorationList),
+      'itemDecorationList': itemDecorationList,
     };
   }
 
@@ -465,16 +480,17 @@ class SuperDecoration extends SheetDecoration {
     return SuperDecoration(
       id: json['id'] ?? '',
       name: json['name'] ?? 'Untitled',
-      itemDecorationList: decodeItemDecorationList(json['itemDecorationList']),
+      itemDecorationList: json['itemDecorationList'],
     );
   }
 
   SuperDecoration copyWith({
-    List<SheetDecoration>? itemDecorationList,
+    List<String>? itemDecorationList,
     String? name,
+    String? id
   }) {
     return SuperDecoration(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
       itemDecorationList: itemDecorationList ?? this.itemDecorationList,
     );
@@ -484,7 +500,7 @@ class SuperDecoration extends SheetDecoration {
     return SuperDecorationBox(
         id: id,
         name: name,
-        itemDecorationList: encodeItemDecorationList(itemDecorationList));
+        itemDecorationList: itemDecorationList);
   }
 }
 

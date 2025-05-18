@@ -59,7 +59,7 @@ class SuperDecorationBoxAdapter extends TypeAdapter<SuperDecorationBox> {
     return SuperDecorationBox(
       id: fields[0] as String,
       name: fields[1] as String,
-      itemDecorationList: (fields[3] as List).cast<dynamic>(),
+      itemDecorationList: (fields[3] as List).cast<String>(),
     );
   }
 

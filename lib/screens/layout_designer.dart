@@ -14,11 +14,12 @@ import 'package:billblaze/components/pickers/wheel_picker.dart';
 import 'package:billblaze/components/switcher_button.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
 import 'package:billblaze/components/widgets/hex_picker.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart'; 
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_quill/extensions.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
@@ -75,7 +76,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
-import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart'; 
+import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -187,8 +188,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   double wVDividerPosition = 0.5;
   double _cardPosition = 0;
   DateTime dateTimeNow = DateTime.now();
-  int pageCount = 0;
-  int currentPageIndex = 0;
   List<SelectedIndex> selectedIndex = [];
   PanelIndex panelIndex = PanelIndex(id: '', panelIndex: -1, parentId: '');
   SheetListClipboard sheetListClipboard = SheetListClipboard(data: []);
@@ -196,7 +195,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   PageController textStyleTabControler = PageController();
   late TabController fontsTabContainerController;
   late TabController textPropertyTabContainerController;
-  late TabController listPropertyTabContainerController; 
+  late TabController listPropertyTabContainerController;
   AppinioSwiperController propertyCardsController = AppinioSwiperController();
   AppinioSwiperController textPropertyCardsController =
       AppinioSwiperController();
@@ -212,9 +211,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       PieMenuController();
   List<SheetList> spreadSheetList = [];
   List<DocumentProperties> documentPropertiesList = [];
+  List<SheetDecoration> sheetDecorationList = [];
   double textFieldHeight = 40;
   double presuConstraintsMinW = 20;
-  double pdfPreviewPaddingScaleFactor = 1; 
+  double pdfPreviewPaddingScaleFactor = 1;
   FocusNode marginAllFocus = FocusNode();
   FocusNode marginTopFocus = FocusNode();
   FocusNode marginBottomFocus = FocusNode();
@@ -224,49 +224,47 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   FocusNode letterSpaceFocus = FocusNode();
   FocusNode wordSpaceFocus = FocusNode();
   FocusNode lineSpaceFocus = FocusNode();
-  List<FocusNode> marginFocusNodes = [
-    FocusNode(),
-    FocusNode(),
-    FocusNode(),
-    FocusNode(),
-    FocusNode()
-  ];
-  List<FocusNode> listPaddingFocusNodes = [
-    FocusNode(),
-    FocusNode(),
-    FocusNode(),
-    FocusNode(),
-    FocusNode()
-  ];
-  List<FocusNode> colorHexFocusNodes = [
-    FocusNode(),
-    FocusNode(),
-  ];
-  List<FocusNode> borderFocusNodes = [
-    FocusNode(),
-    FocusNode(),
-    FocusNode(),
-  ];
-  List<FocusNode> borderRadiusFocusNodes = List.generate(
-    5,
-    (index) {
-      return FocusNode();
-    },
-  );
-  List<FocusNode> listBorderFocusNodes = List.generate(
-    5,
-    (index) {
-      return FocusNode();
-    },
-  );
-  List<List<FocusNode>> listShadowFocusNodes = [];
-  List<FocusNode> listImageAlignFocusNodes =[
-    FocusNode(), FocusNode()
-  ];
-  List<FocusNode> listImagePropertyFocusNodes =[
-    FocusNode(), FocusNode()
-  ];
-  List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0,9);
+  final FocusNode layoutNamefocusNode = FocusNode();
+  final FocusNode decorationNameFocusNode = FocusNode();
+  // List<FocusNode> marginFocusNodes = [
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode()
+  // ];
+  // List<FocusNode> listPaddingFocusNodes = [
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode()
+  // ];
+  // List<FocusNode> colorHexFocusNodes = [
+  //   FocusNode(),
+  //   FocusNode(),
+  // ];
+  // List<FocusNode> borderFocusNodes = [
+  //   FocusNode(),
+  //   FocusNode(),
+  //   FocusNode(),
+  // ];
+  // List<FocusNode> borderRadiusFocusNodes = List.generate(
+  //   5,
+  //   (index) {
+  //     return FocusNode();
+  //   },
+  // );
+  // List<FocusNode> listBorderFocusNodes = List.generate(
+  //   5,
+  //   (index) {
+  //     return FocusNode();
+  //   },
+  // );
+  // List<List<FocusNode>> listShadowFocusNodes = [];
+  // List<FocusNode> listImageAlignFocusNodes = [FocusNode(), FocusNode()];
+  // List<FocusNode> listImagePropertyFocusNodes = [FocusNode(), FocusNode()];
+  List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
   zz.TransformationController transformationcontroller =
       zz.TransformationController();
   late TabController tabcunt;
@@ -317,48 +315,50 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   ];
   Map<String, List<String>> categorizedFonts = {};
 
-  List<bool> isTapped =[false, true, false, false, false]; 
+  List<bool> isTapped = [false, true, false, false, false];
   List<GlobalKey> globalKeys = [];
   List<Uint8List> _images = [];
   var filteredFonts = [];
+  var filteredDecorations =[];
   late LayoutModel? lm;
-  GlobalKey spreadSheetKey = GlobalKey(); 
+  GlobalKey spreadSheetKey = GlobalKey();
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
   Color dialogSelectColor = Color(0xFF000000);
-  int key = 0;
-  int keyIndex = 0;
+  List<SheetDecorationVariables> sheetDecorationVariables = [];
   SystemMouseCursor _cursor = SystemMouseCursors.basic;
   Timer? _timer;
   TextEditingController layoutName = TextEditingController();
   TextEditingController decorationNameController = TextEditingController();
+  TextEditingController decorationSearchController = TextEditingController();
+  int key = 0;
+  int keyIndex = 0;
+  int pageCount = 0;
+  int currentPageIndex = 0;
   int decorationIndex = -1;
   late String initialLayoutName;
-  bool nameExists = false;
-  final FocusNode layoutNamefocusNode = FocusNode();
-  final FocusNode decorationNameFocusNode = FocusNode();
-  int whichListBorderSideIsSelected = 0; 
-  int whichListShadowLayerIsSelected = -1;
   int whichPropertyTabIsClicked = 1;
   int whichTextPropertyTabIsClicked = 0;
   int whichListPropertyTabIsClicked = 0;
   Uint8List? cachedImageData;
+  bool nameExists = false;
   bool hasRenderedOnce = false;
   bool addToTheLeft = false;
   bool addToTheRight = false;
-  var isListMarginExpanded = false;
-  var isListPaddingExpanded = false;
-  var isListBorderRadiusExpanded = false;
-  var isListBorderExpanded = true;
+  bool isListMarginExpanded = false;
+  bool isListPaddingExpanded = false;
+  bool isListBorderRadiusExpanded = false;
+  bool isListBorderExpanded = true;
   bool isListColorExpanded = true;
   bool isListShadowExpanded = true;
   bool isListDecorationImageExpanded = true;
   bool isListDecorationPropertiesToggled = false;
+  bool isListDecorationLibraryToggled = false;
 
   late TextEditorItem item;
   late SheetList sheetListItem;
   var dragBackupValue;
-  bool showDecorationLayers = false;
+  bool showDecorationLayers = true;
   //
   //
   //
@@ -380,6 +380,16 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     // });
     // animateToPage(currentPageIndex);
     var box = Boxes.getLayouts();
+    var decorationBox = Boxes.getDecorations();
+    sheetDecorationList = decorationBox.values.map(
+      (decoration) {
+        if (decoration is ItemDecorationBox) {
+          return (decoration as ItemDecorationBox).toItemDecoration();
+        } else {
+          return (decoration as SuperDecorationBox).toSuperDecoration();
+        }
+      },
+    ).toList();
     if (key == -1) {
       print('create new layout');
       layoutName.text = Boxes.getLayoutName();
@@ -429,24 +439,31 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     _findItem();
     _findSheetListItem();
     _unfocusAll();
-    Boxes.getDecorations().values.toList().forEach((element) {
-      print(element.id + ' '+ element.name + ' ' + element.runtimeType.toString());
-    },);
+    Boxes.getDecorations().values.toList().forEach(
+      (element) {
+        print(element.id +
+            ' ' +
+            element.name +
+            ' ' +
+            element.runtimeType.toString());
+      },
+    );
     fontsTabContainerController = TabController(length: 6, vsync: this);
     fontsTabContainerController.animateTo(1);
     fontsTabContainerController.addListener(() {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {
-        // Update the category based on current tab index
-        if (whichPropertyTabIsClicked ==2 ) {
-          selectedFontCategory = fontsTabContainerController.index == 0
-            ? 'search'
-            : categorizedFonts.keys
-              .elementAt(fontsTabContainerController.index - 1);
-}
-      });
-      },);
-      
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) {
+          setState(() {
+            // Update the category based on current tab index
+            if (whichPropertyTabIsClicked == 2) {
+              selectedFontCategory = fontsTabContainerController.index == 0
+                  ? 'search'
+                  : categorizedFonts.keys
+                      .elementAt(fontsTabContainerController.index - 1);
+            }
+          });
+        },
+      );
     });
     textPropertyTabContainerController = TabController(length: 3, vsync: this);
     textPropertyTabContainerController.addListener(() {
@@ -477,13 +494,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     });
     listPropertyTabContainerController.addListener(() {
       setState(() {
-        if (listPropertyCardsController.cardIndex != whichListPropertyTabIsClicked) {
-        listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
-        listPropertyCardsController.animateTo(Offset(0.1, 0.1),
-            duration: Durations.short2, curve: Curves.ease);
-      }
+        if (listPropertyCardsController.cardIndex !=
+            whichListPropertyTabIsClicked) {
+          listPropertyCardsController
+              .setCardIndex(whichListPropertyTabIsClicked);
+          listPropertyCardsController.animateTo(Offset(0.1, 0.1),
+              duration: Durations.short2, curve: Curves.ease);
+        }
         whichPropertyTabIsClicked = 3;
-         
+
         // propertyTabController.jumpToPage(2);
       });
     });
@@ -512,7 +531,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     _timer?.cancel();
     pageViewIndicatorController.dispose();
     textStyleTabControler.dispose();
-    propertyCardsController.dispose(); 
+    propertyCardsController.dispose();
     transformationcontroller.dispose();
     // propertyTabController.dispose();
     super.dispose();
@@ -1104,6 +1123,36 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     }
 
     return null; // This should return null if nothing is found, letting the parent function decide what to do
+  }
+
+  SheetDecoration decorationIterator(
+    String id, List<SheetDecoration> sheetDecorationList) {
+      // print('decoration '+ id);
+  for (int i = 0; i < sheetDecorationList.length; i++) {
+    
+    var decoration = sheetDecorationList[i];
+
+    // Check if the current decoration matches the ID
+    if ((decoration is ItemDecoration || decoration is SuperDecoration) &&
+        decoration.id == id) {
+      // Directly return the reference from the list
+      // print('found decoration ' );
+      return sheetDecorationList[i];
+    }
+ 
+  }
+  // print('Couldnt find decoration '+ id);
+  // Return null if no matching decoration is found
+  return SheetDecoration(id: 'yo', name: 'name');
+}
+
+
+  List<SheetDecoration> decorationListIterator(List<String> ids) {
+    return ids.map(
+      (id) {
+        return decorationIterator(id, sheetDecorationList);
+      },
+    ).toList();
   }
 
   void _updatehDividerPosition(double newPosition) {
@@ -1913,9 +1962,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   void _addPdfPage() {
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
     var id = const Uuid().v4();
+    var superDecoId = Uuid().v4();
     var decoId = Uuid().v4();
-    var newSuperDecoration = SuperDecoration(id: decoId, itemDecorationList: [ItemDecoration(id: Uuid().v4())]);
-    print((newSuperDecoration.itemDecorationList[0] as ItemDecoration).pinned['padding']);
+
+    var newSuperDecoration =
+        SuperDecoration(id: superDecoId, itemDecorationList: [decoId]);
+    print (newSuperDecoration.itemDecorationList[0]  ) ;
     print('pageCount in addpage: $pageCount');
     DocumentProperties newdoc = DocumentProperties(
       pageNumberController:
@@ -1930,9 +1982,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
     setState(() {
       documentPropertiesList.add(newdoc);
-    }); 
+    });
     lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
-    lm[keyIndex].save(); 
+    lm[keyIndex].save();
     SheetList newsheetlist = SheetList(
         id: id,
         parentId: parentId,
@@ -1941,13 +1993,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     setState(() {
       spreadSheetList.add(newsheetlist);
+      sheetDecorationList
+          .addAll([newSuperDecoration, ItemDecoration(id: decoId)]);
     });
     lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
     lm[keyIndex]
         .save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
     Boxes.saveSuperDecoration(newSuperDecoration.toSuperDecorationBox());
-    setState(() { 
-      selectedIndex.add(SelectedIndex(id: id, selectedIndexes: [])); 
+    setState(() {
+      selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
     });
   }
 
@@ -2310,33 +2364,67 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     setState(() {
       decorationNameController.text = sheetListItem.listDecoration.name;
       decorationIndex = -1;
-      whichListShadowLayerIsSelected =0;
+    sheetDecorationVariables =  sheetListItem.listDecoration.itemDecorationList.map((e) {
+      return SheetDecorationVariables(
+        id:e,
+        marginFocusNodes : List.generate( 5,(index) => FocusNode(),),
+        listPaddingFocusNodes : List.generate( 5,(index) => FocusNode(),),
+        colorHexFocusNodes : List.generate( 2,(index) => FocusNode(),),
+        borderFocusNodes : List.generate( 3,(index) => FocusNode(),),
+        borderRadiusFocusNodes : List.generate( 5,(index) => FocusNode(),),
+        listBorderFocusNodes : List.generate( 5,(index) => FocusNode(),),
+        listShadowFocusNodes : List.generate(
+        sheetDecorationList.firstWhere((element) => element.id == e,) is ItemDecoration
+        ? (sheetDecorationList.firstWhere((element) => element.id == e,) as ItemDecoration).decoration.boxShadow?.length??1
+        : 1,
+        (i) {
+           return List.generate( 5,(index) => FocusNode(),);
+        },
+      ),
+      listImageAlignFocusNodes : [FocusNode(), FocusNode()],
+      listImagePropertyFocusNodes : [FocusNode(), FocusNode()],
+      listShadowLayerSelectedIndex : 0,
+      );
+    },).toList();
+    print(sheetDecorationVariables);
     });
   }
 
-  void updateListDecorationVariables(
-    {int whichListShadowLayer = 0}
-  ){
+  void updateListDecorationVariables({int whichListShadowLayer = 0,required int sIndex}) {
     setState(() {
-      var length =0; 
-      if (decorationIndex !=-1) {
-        if (sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration) {
-          length = ((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).decoration.boxShadow ?? [BoxShadow()]).length;
+      var length = 0;
+      
+      if (decorationIndex != -1) {
+        SheetDecoration currentItemDecoration = decorationIterator(
+        sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+        sheetDecorationList) ;
+        if (currentItemDecoration
+            is ItemDecoration) {
+          length =
+              ((currentItemDecoration )
+                          .decoration
+                          .boxShadow ??
+                      [BoxShadow()])
+                  .length;
         }
-      }
-      listShadowFocusNodes =  List.generate(
+        sheetDecorationVariables[decorationIndex].listShadowFocusNodes = List.generate(
         length,
         (index) {
-          return  List.generate(
-        5,
-        (index) {
-          return  FocusNode();
+          return List.generate(
+            5,
+            (index) {
+              return FocusNode();
+            },
+          );
         },
       );
-        },
-      );
+      }
+      
       // print(listShadowFocusNodes);
-      whichListShadowLayerIsSelected = whichListShadowLayer;
+      if (sIndex != -1) {
+        sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = whichListShadowLayer;
+      }
+      
     });
   }
 
@@ -2379,7 +2467,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     // Return default TextStyle if attribute not handled
     return const TextStyle();
   }
-  
+
   ////BUUILDDDDDDDD
   ///BUILDDD
   ///BUILDDDDDDD
@@ -2695,13 +2783,16 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 panelIndex.panelIndex = -1;
                                 panelIndex.parentId = '';
                                 panelIndex.id = '';
+                                if (whichPropertyTabIsClicked !=1) {
                                 whichPropertyTabIsClicked = 1;
-                                Future.delayed(Durations.short1).then( (value) {
-                                  print("YUHUUUUUUUU");
-                                  whichPropertyTabIsClicked = 1;
-                                  propertyCardsController.swipeDefault();
-                                },);
-                                 
+                                Future.delayed(Durations.short1).then(
+                                  (value) {
+                                    print("YUHUUUUUUUU");
+                                    whichPropertyTabIsClicked = 1;
+                                    propertyCardsController.swipeDefault();
+                                  },
+                                );
+                              }
                               });
                             },
                             onSecondaryTap: () {
@@ -4212,7 +4303,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               onClick: () {
                                                 setState(() {
                                                   whichPropertyTabIsClicked = 3;
-                                                  listPropertyTabContainerController.animateTo(0);
+                                                  listPropertyTabContainerController
+                                                      .animateTo(0);
                                                   // propertyTabController.jumpToPage(2);
                                                 });
                                               },
@@ -4269,6 +4361,58 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 padding: EdgeInsets.only(top: 73),
                                 child: FadeInLeft(child: _getProperTiesCards()),
                               ),
+                              // if(decorationIndex == -1 && !isListDecorationLibraryToggled)
+                              if(false)
+                              Positioned(
+                              left: showDecorationLayers ? 48 : 12,
+                              top: 210,
+                              right: 16,
+                              bottom: 18,
+                              child: Builder(builder: (context) {
+                                var style = GoogleFonts.lexend(
+                                    fontSize: 13, color: defaultPalette.extras[0]);
+                                var childStyle = style.copyWith(fontSize: 11);
+                                var iconColor = defaultPalette.extras[0];
+                                double childPinSize = 18;
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(9).copyWith(
+                                      bottomLeft: Radius.circular(
+                                          showDecorationLayers ? 10 : 25),
+                                      bottomRight: Radius.circular(20)),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: defaultPalette.secondary,
+                                      border: Border.all(),
+                                      borderRadius: BorderRadius.circular(9).copyWith(
+                                          bottomLeft: Radius.circular(
+                                              showDecorationLayers ? 10 : 25),
+                                          bottomRight: Radius.circular(20)),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(0).copyWith(top: isListDecorationLibraryToggled? 35:0),
+                                          child: ScrollConfiguration(
+                                            behavior:
+                                                ScrollBehavior().copyWith(scrollbars: false),
+                                            child: DynMouseScroll(
+                                                durationMS: 500,
+                                                scrollSpeed: 1,
+                                                builder: (context, controller, physics) {
+                                                  SheetDecoration currentItemDecoration = SuperDecoration(id: 'yo', name: 'name');
+                                                  
+                                                  if (decorationIndex != -1 ) {
+                                                  currentItemDecoration = decorationIterator(
+                                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                    sheetDecorationList);
+                                                  }
+                                                  return SingleChildScrollView(
+                                                    controller: controller,
+                                                    physics: physics,
+                                                    child: Column(
+                                                      children:buildSuperDecorationEditor(sheetListItem.listDecoration)
+                                                      ),);})))])));}))
+                              
                               //the place to render the preview for decoration before displaying
                               // Positioned(
                               //   left: -1000, // Move off-screen
@@ -4290,7 +4434,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         //RESIZE HANDLE VERTICAL 2
                         Positioned(
                             top: Platform.isAndroid ? 35 : 0,
-                            left: sWidth * (1 - wH2DividerPosition) -5,
+                            left: sWidth * (1 - wH2DividerPosition) - 5,
                             child: MouseRegion(
                               cursor: _cursor,
                               onExit: (event) {
@@ -8892,9 +9036,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               _findSheetListItem();
               whichPropertyTabIsClicked = 3;
               // propertyTabController.jumpToPage(2);
-
-                
-                 
             });
           },
           child: Padding(
@@ -10257,6 +10398,21 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
     lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
     lm[keyIndex].save();
+    saveDecorations(sheetDecorationList);
+  }
+
+  void saveDecorations(List<SheetDecoration> sheetDecorationList) {
+    final decorationBox = Boxes.getDecorations();
+
+    for (var decoration in sheetDecorationList) {
+      if (decoration is SuperDecoration) {
+        decorationBox.put(decoration.id, decoration.toSuperDecorationBox());
+        print('Saved SuperDecoration with ID: ${decoration.id}');
+      } else {
+        decorationBox.put(decoration.id, (decoration as ItemDecoration).toItemDecorationBox());
+        print('Saved ItemDecoration with ID: ${decoration.id}');
+      }
+    }
   }
 
   bool textFieldTapDown(TapDownDetails details, String newId) {
@@ -10265,7 +10421,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       var itemE = _sheetItemIterator(newId, spreadSheetList[currentPageIndex]);
       print('parent id here from textfieldtapdown: ${itemE.parentId}');
 
-      var index = 
+      var index =
           _sheetListIterator(itemE.parentId, spreadSheetList[currentPageIndex])
               .indexOf(itemE);
       panelIndex =
@@ -10500,15 +10656,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   _getProperTiesCards() {
-
-
     switch (whichPropertyTabIsClicked) {
       case 2:
         // The actual cards for text properties font, format and color
         return FadeInUp(
           onFinish: (direction) {
             setState(() {
-              textPropertyCardsController.setCardIndex(textPropertyTabContainerController.index);
+              textPropertyCardsController
+                  .setCardIndex(textPropertyTabContainerController.index);
             });
           },
           from: 3,
@@ -14088,7 +14243,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         return FadeInLeft(
           from: 3,
           duration: Durations.short3,
-           
           child: AppinioSwiper(
             controller: listPropertyCardsController,
             backgroundCardCount: 1,
@@ -14100,8 +14254,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             allowUnSwipe: true,
             allowUnlimitedUnSwipe: true,
             initialIndex: 0,
+            maxAngle: 50,
+            threshold: 100,
             onCardPositionChanged: (position) {
               setState(() {
+                // isListDecorationLibraryToggled = true;
                 _cardPosition =
                     position.offset.dx.abs() + position.offset.dy.abs();
               });
@@ -14110,6 +14267,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               // print(direction.toString());
               setState(() {
                 // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
+                isListDecorationLibraryToggled = false;
                 whichListPropertyTabIsClicked = b;
                 listPropertyTabContainerController.index =
                     whichListPropertyTabIsClicked;
@@ -14123,66 +14281,76 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             cardBuilder: (BuildContext context, int index) {
               int currentCardIndex = whichListPropertyTabIsClicked;
               var width = (sWidth * wH2DividerPosition - 25);
-              final isSizeBigForRow = (sWidth * wH2DividerPosition)>200;
+              final isSizeBigForRow = (sWidth * wH2DividerPosition) > 200;
 
-
-              Widget roundButton(void Function() onTap, Widget icon, String s,{ 
+              Widget roundButton(
+                void Function() onTap,
+                Widget icon,
+                String s, {
                 double borderRadius = 9999,
                 bool isSelected = false,
-                EdgeInsets padding =const EdgeInsets.all(3),
-              } ){
+                EdgeInsets padding = const EdgeInsets.all(3),
+                bool showText = true
+              }) {
                 return InkWell(
-                  hoverColor:  defaultPalette.primary.withOpacity(0.5),
-                    splashColor: defaultPalette.primary.withOpacity(0.5),
-                    highlightColor:  defaultPalette.primary.withOpacity(0.5),
-                    onTap: ()  { 
+                  hoverColor: defaultPalette.primary.withOpacity(0.5),
+                  splashColor: defaultPalette.primary.withOpacity(0.5),
+                  highlightColor: defaultPalette.primary.withOpacity(0.5),
+                  onTap: () {
                     setState(() {
                       onTap();
-                    }); 
-                    },
+                    });
+                  },
                   child: Row(
                     children: [
                       ClipRRect(
-                      borderRadius: BorderRadius.circular(borderRadius),
-                      child: Material(
-                        color: isSelected? defaultPalette.primary: defaultPalette.secondary,
-                        child: InkWell(
-                      hoverColor:  defaultPalette.primary.withOpacity(0.5),
-                      splashColor: defaultPalette.primary.withOpacity(0.5),
-                      highlightColor:  defaultPalette.primary.withOpacity(0.5),
-                      onTap: ()  { 
-                      setState(() {
-                        onTap();
-                      }); 
-                      },
-                      child: Container(
-                      padding: padding,
-                      decoration: BoxDecoration(border:isSelected? Border.all(
-                        color: defaultPalette.extras[0]
-                      ):Border.fromBorderSide(BorderSide.none), 
-                      borderRadius: BorderRadius.circular(borderRadius),
-                      // color: defaultPalette.secondary
-                      ),
-                      child:icon
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        child: Material(
+                          color: isSelected
+                              ? defaultPalette.primary
+                              : defaultPalette.transparent,
+                          child: InkWell(
+                            hoverColor: defaultPalette.primary.withOpacity(0.5),
+                            splashColor:
+                                defaultPalette.primary.withOpacity(0.5),
+                            highlightColor:
+                                defaultPalette.primary.withOpacity(0.5),
+                            onTap: () {
+                              setState(() {
+                                onTap();
+                              });
+                            },
+                            child: Container(
+                                padding: padding,
+                                decoration: BoxDecoration(
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: defaultPalette.extras[0])
+                                      : Border.fromBorderSide(BorderSide.none),
+                                  borderRadius:
+                                      BorderRadius.circular(borderRadius),
+                                  // color: defaultPalette.secondary
+                                ),
+                                child: icon),
                           ),
                         ),
                       ),
-                      ),
                       // SizedBox(width: 2,),
-                      if(isSizeBigForRow)
-                      Expanded(
-                        child: Text( s,
-                        maxLines: 1,
-                          style: GoogleFonts.lexend(
-                          fontSize: 13,
-                          letterSpacing: -1,
-                          color: defaultPalette.extras[0]),),
-                      )
+                      if (isSizeBigForRow && showText)
+                        Expanded(
+                          child: Text(
+                            s,
+                            maxLines: 1,
+                            style: GoogleFonts.lexend(
+                                fontSize: 13,
+                                letterSpacing: -1,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        )
                     ],
                   ),
                 );
               }
-
 
               return Stack(
                 children: [
@@ -14223,104 +14391,105 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     ),
                   ),
 
-                  if(index==0)
-                  ...[
+                  if (index == 0) ...[
                     Positioned.fill(
                       child: Padding(
-                        padding: EdgeInsets.all(15).copyWith(left:10, right:12),
+                        padding:
+                            EdgeInsets.all(15).copyWith(left: 10, right: 12),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: ScrollConfiguration(
-                            behavior:
-                                ScrollBehavior().copyWith(scrollbars: false),
-                            child: DynMouseScroll(
-                                durationMS: 500,
-                                scrollSpeed: 1,
-                                builder: (context, controller, physics) {
-                                  return SingleChildScrollView(
-                                    controller: controller,
-                                    physics: physics,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                          Column(
+                            borderRadius: BorderRadius.circular(20),
+                            child: ScrollConfiguration(
+                                behavior: ScrollBehavior()
+                                    .copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                    durationMS: 500,
+                                    scrollSpeed: 1,
+                                    builder: (context, controller, physics) {
+                                      return SingleChildScrollView(
+                                          controller: controller,
+                                          physics: physics,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
                                             children: [
-                                              Text(
-                                                'direction',
-                                                style: GoogleFonts.prompt(
-                                                    fontSize: 10,
-                                                    fontWeight:
-                                                        FontWeight.w500),
-                                              ),
-                                              AnimatedToggleSwitch<Axis>.dual(
-                                                current:
-                                                    sheetListItem.direction,
-                                                first: Axis.vertical,
-                                                second: Axis.horizontal,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    sheetListItem.direction =
-                                                        value;
-                                                  });
-                                                },
-                                                animationCurve:
-                                                    Curves.easeInOutExpo,
-                                                animationDuration:
-                                                    Durations.medium4,
-                                                borderWidth:
-                                                    2, // backgroundColor is set independently of the current selection
-                                                styleBuilder: (value) =>
-                                                    ToggleStyle(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10), 
-                                                        indicatorBorderRadius:
-                                                            BorderRadius
-                                                                .circular(15),
-                                                        borderColor:
-                                                            defaultPalette
-                                                                .secondary,
-                                                        backgroundColor:
-                                                            defaultPalette
-                                                                .secondary,
-                                                        indicatorColor:
-                                                            defaultPalette
-                                                                    .extras[
-                                                                0]), // indicatorColor changes and animates its value with the selection
-                                                iconBuilder: (value) {
-                                                  return Icon(
-                                                      value == Axis.horizontal
-                                                          ? TablerIcons
-                                                              .grip_horizontal
-                                                          : TablerIcons
-                                                              .grip_vertical,
-                                                      size: 12,
-                                                      color: defaultPalette
-                                                          .primary);
-                                                },
-                                                textBuilder: (value) {
-                                                  return Text(
-                                                    value == Axis.horizontal
-                                                        ? 'Horizontal'
-                                                        : 'Vertical',
-                                                    style: GoogleFonts.bungee(
-                                                        fontSize: 12),
-                                                  );
-                                                },
-                                                height: 25,
-                                                spacing: (width) - 100, 
+                                              Column(
+                                                children: [
+                                                  Text(
+                                                    'direction',
+                                                    style: GoogleFonts.prompt(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w500),
+                                                  ),
+                                                  AnimatedToggleSwitch<
+                                                      Axis>.dual(
+                                                    current:
+                                                        sheetListItem.direction,
+                                                    first: Axis.vertical,
+                                                    second: Axis.horizontal,
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        sheetListItem
+                                                            .direction = value;
+                                                      });
+                                                    },
+                                                    animationCurve:
+                                                        Curves.easeInOutExpo,
+                                                    animationDuration:
+                                                        Durations.medium4,
+                                                    borderWidth:
+                                                        2, // backgroundColor is set independently of the current selection
+                                                    styleBuilder: (value) =>
+                                                        ToggleStyle(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
+                                                            indicatorBorderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        15),
+                                                            borderColor:
+                                                                defaultPalette
+                                                                    .secondary,
+                                                            backgroundColor:
+                                                                defaultPalette
+                                                                    .secondary,
+                                                            indicatorColor:
+                                                                defaultPalette
+                                                                        .extras[
+                                                                    0]), // indicatorColor changes and animates its value with the selection
+                                                    iconBuilder: (value) {
+                                                      return Icon(
+                                                          value ==
+                                                                  Axis
+                                                                      .horizontal
+                                                              ? TablerIcons
+                                                                  .grip_horizontal
+                                                              : TablerIcons
+                                                                  .grip_vertical,
+                                                          size: 12,
+                                                          color: defaultPalette
+                                                              .primary);
+                                                    },
+                                                    textBuilder: (value) {
+                                                      return Text(
+                                                        value == Axis.horizontal
+                                                            ? 'Horizontal'
+                                                            : 'Vertical',
+                                                        style:
+                                                            GoogleFonts.bungee(
+                                                                fontSize: 12),
+                                                      );
+                                                    },
+                                                    height: 25,
+                                                    spacing: (width) - 100,
+                                                  ),
+                                                ],
                                               ),
                                             ],
-                                          ),
-                                        ],
-                                      
-                                    )
-                                  );
-                                }
-                            )
-                          )
-                        ),
+                                          ));
+                                    }))),
                       ),
                     )
                   ],
@@ -14329,1106 +14498,1974 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     Positioned.fill(
                       child: AnimatedPadding(
                         duration: Durations.medium1,
-                        padding:
-                            EdgeInsets.all(17.2).copyWith(right: 15, left: 12.2),
+                        padding: EdgeInsets.all(17.2)
+                            .copyWith(right: 15, left: 12.2),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Column(
-                            children: [
-                              //Black Balloon button and circlebutton elevated &&&  DECOR Title and the preview box and text information
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  //Black Balloon button and circlebutton elevated on upper half
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      GestureDetector(
-                                        onTap:(){
-                                            
-                                        },
-                                        child: AnimatedContainer(
-                                          duration:Durations.medium4,
-                                          curve: Curves.easeInOut,
-                                          height:32,
-                                          width:32,
-                                          child: Icon(TablerIcons.balloon, size:20,
-                                          color: defaultPalette.primary),
-                                          // padding: EdgeInsets.only(left:5), 
-                                          decoration: BoxDecoration(
-                                            color: defaultPalette.extras[0],
-                                            borderRadius: BorderRadius.circular(500) ,
-                                          ),  
-                                        ),
-                                      ), 
-                                      SizedBox(height:3),
-                                      //add new itemdecoration Layer
-                                      ElevatedLayerButton( 
-                                        subfac: 2,
-                                        depth:2,
-                                        onClick: ()  { 
-                                          print(
-                                            'tapped to add new decoration ');
-                                        setState(() {
-                                          if (sheetListItem
-                                                    .listDecoration
-                                                    .itemDecorationList.length<70) {
-                                          sheetListItem
-                                                  .listDecoration =
-                                              sheetListItem
-                                                  .listDecoration
-                                                  .copyWith(
-                                                      itemDecorationList: [
-                                                ...sheetListItem
-                                                    .listDecoration
-                                                    .itemDecorationList,
-                                                    SuperDecoration(id: Uuid().v4())
-                                                 , 
-                                              ]);
-                                              print(
-                                            'new decoration added');
-                                        } else {
-                                          print(
-                                            'guys come on, turn this into a super now');
-                                        }
-                                          
-                                        }); 
-                                        },
-                                        buttonHeight: 25,
-                                        buttonWidth: 25,
-                                        borderRadius:
-                                            BorderRadius.circular(50),
-                                        animationDuration:
-                                            const Duration(milliseconds: 30),
-                                        animationCurve: Curves.ease,
-                                        topDecoration: BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border.all(),
-                                        ),
-                                        topLayerChild: Icon(
-                                          TablerIcons.file_search,
-                                          size: 18,
-                                          // color: defaultPalette.tertiary
-                                          // color: Colors.blue,
-                                        ),
-                                        baseDecoration: BoxDecoration(
-                                          color: defaultPalette.extras[0],
-                                          border: Border.all(),
-                                        ),
-                                      ),
-                                      SizedBox(height:2),
-                                      ElevatedLayerButton( 
-                                        subfac: 2,
-                                        depth:2,
-                                        onClick: () { 
-                                          setState(() {
-                                            isListDecorationPropertiesToggled = !isListDecorationPropertiesToggled;
-                                          });
-                                        },
-                                        buttonHeight: 25,
-                                        buttonWidth: 25,
-                                        
-                                        borderRadius:
-                                            BorderRadius.circular(50),
-                                        animationDuration:
-                                            const Duration(milliseconds: 30),
-                                        animationCurve: Curves.ease,
-                                        topDecoration: BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border.all(),
-                                        ),
-                                        topLayerChild: Icon(
-                                          TablerIcons.adjustments_alt,
-                                          size: 18,
-                                           
-                                        ),
-                                        baseDecoration: BoxDecoration(
-                                          color: defaultPalette.extras[0],
-                                          border: Border.all(),
-                                        ),
-                                      ),SizedBox(height:3),
-                                      ElevatedLayerButton( 
-                                        subfac: 2,
-                                        depth:2,
-                                        onClick: () { 
-                                        setState(() {
-                                          if (sheetListItem
-                                                    .listDecoration
-                                                    .itemDecorationList.length<70) {
-                                          sheetListItem
-                                                  .listDecoration =
-                                              sheetListItem
-                                                  .listDecoration
-                                                  .copyWith(
-                                                      itemDecorationList: [
-                                                ...sheetListItem
-                                                    .listDecoration
-                                                    .itemDecorationList,
-                                                ItemDecoration(
-                                                    pinned: defaultPins(),
-                                                    id: Uuid()
-                                                        .v4(),
-                                                    padding:
-                                                        EdgeInsets.all(
-                                                            5),
-                                                    alignment: Alignment.topLeft,
-                                                    decoration: BoxDecoration(
-                                                        
-                                                        color: defaultPalette
-                                                            .tertiary,
-                                                        border:
-                                                            Border.all())),
-                                              ]);
-                                              print(
-                                            'new decoration added'); 
-                                            print(defaultPins()['padding']['isPinned']);
-                                        } else {
-                                          print(
-                                            'guys come on, turn this into a super now');
-                                        }
-                                        });
-                                        },
-                                        buttonHeight: 25,
-                                        buttonWidth: 25,
-                                        borderRadius:
-                                            BorderRadius.circular(50),
-                                        animationDuration:
-                                            const Duration(milliseconds: 30),
-                                        animationCurve: Curves.ease,
-                                        topDecoration: BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border.all(),
-                                        ),
-                                        topLayerChild: Icon(
-                                          TablerIcons.north_star,
-                                          size: 18,
-                                          // color: defaultPalette.tertiary
-                                          // color: Colors.blue,
-                                        ),
-                                        baseDecoration: BoxDecoration(
-                                          color: defaultPalette.extras[0],
-                                          border: Border.all(),
-                                        ),
-                                      ),
-                                       
-                                    ],
-                                  ), 
-                                  SizedBox(
-                                    width:3
-                                  ),
-                                  //DECOR Title and the preview box and text information besides
-                                  Expanded(
-                                    flex:2,
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            borderRadius: BorderRadius.circular(10),
+                            child: Column(
+                              children: [
+                                //Black Balloon button and circlebutton elevated &&&  DECOR Title and the preview box and text information
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    //Black Balloon button and circlebutton elevated on upper half
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        //Matrix rain and TITLE saying "DECOR"
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(50),
-                                          child: Stack(
-                                            children: [
-                                              SizedBox( 
-                                                height:30,
-                                                child: MatrixRainAnimation(
-                                                   backgroundColor:defaultPalette.extras[0], 
-                                                ),
-                                              ),
-                                              Positioned(
-                                                right:0,
-                                                height: 30,
-                                                child: Text(
-                                                  "Decor  ",
-                                                  style: GoogleFonts.lexend(
-                                                    fontSize: 18,
-                                                    color:defaultPalette.primary
-                                                  ),
-                                                  textAlign:
-                                                      TextAlign.start, ),
-                                              ), 
-                                            ],
+                                        GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              decorationIndex = -1;
+                                              isListDecorationLibraryToggled = false;
+                                              isListDecorationPropertiesToggled = false;
+                                              showDecorationLayers = false;
+                                              _findSheetListItem();
+                                            });
+                                          },
+                                          child: AnimatedContainer(
+                                            duration: Durations.medium4,
+                                            curve: Curves.easeInOut,
+                                            height: 32,
+                                            width: 32,
+                                            child: Icon(TablerIcons.balloon,
+                                                size: 20,
+                                                color: defaultPalette.primary),
+                                            // padding: EdgeInsets.only(left:5),
+                                            decoration: BoxDecoration(
+                                              color: defaultPalette.extras[0],
+                                              borderRadius:
+                                                  BorderRadius.circular(500),
+                                            ),
                                           ),
                                         ),
-                                        SizedBox(height:3),
-                                        //PreviewBox of Decoration AND Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
-                                        Stack(
-                                          children: [
-                                            SizedBox(
-                                              width: width,
-                                              height:80
+                                        SizedBox(height: 3),
+                                        
+                                        ElevatedLayerButton(
+                                          subfac: 2,
+                                          depth: 2,
+                                          onClick: () {
+                                            // setState(() {
+                                            //   var superDecoId = Uuid().v4();
+                                            //   var superDecoration = SuperDecoration(id: superDecoId);
+                                            //   if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
+                                            //     // Add the new decoration to the main list
+                                            //     sheetDecorationList.add(superDecoration);
+                                            //     // Get the reference to the SuperDecoration from the list
+                                            //     var currentItemDecoration = decorationIterator(sheetListItem.listDecoration.id, sheetDecorationList);
+                                            //     if (currentItemDecoration is SuperDecoration) {
+                                            //       // Create a new list with the updated decoration IDs
+                                            //       var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
+                                            //       updatedList.add(superDecoId);
+                                            //       // Create the updated decoration using copyWith
+                                            //       var updatedDecoration = currentItemDecoration.copyWith(
+                                            //         itemDecorationList: updatedList,
+                                            //       );
+                                            //       // Find the index and update the list with the new decoration
+                                            //       int index = sheetDecorationList.indexWhere((deco) => deco.id == currentItemDecoration.id);
+                                            //       if (index != -1) {
+                                            //         sheetDecorationList[index] = updatedDecoration;
+                                            //       }
+                                            //       // Also update the decoration reference in the item itself
+                                            //       sheetListItem.listDecoration = updatedDecoration;
+                                            //       print('New decoration added');
+                                            //       print(updatedDecoration.itemDecorationList);
+                                            //     } else {
+                                            //       print('Error: Decoration is not a SuperDecoration');
+                                            //     }
+                                            //   } else {
+                                            //     print('Guys come on, turn this into a super now');
+                                            //   }
+                                            // });
+                                         
+                                            setState(() {
+                                              isListDecorationLibraryToggled = !isListDecorationLibraryToggled;
+                                            });
+                                          },
+                                          buttonHeight: 25,
+                                          buttonWidth: 25,
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                          animationDuration:
+                                              const Duration(milliseconds: 30),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.file_search,
+                                            size: 18,
+                                            // color: defaultPalette.tertiary
+                                            // color: Colors.blue,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: defaultPalette.extras[0],
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        ElevatedLayerButton(
+                                          subfac: 2,
+                                          depth: 2,
+                                          onClick: () {
+                                            setState(() {
+                                              isListDecorationPropertiesToggled =
+                                                  !isListDecorationPropertiesToggled;
+                                            });
+                                          },
+                                          buttonHeight: 25,
+                                          buttonWidth: 25,
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                          animationDuration:
+                                              const Duration(milliseconds: 30),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.adjustments_alt,
+                                            size: 18,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: defaultPalette.extras[0],
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                        SizedBox(height: 3),
+                                        //add new itemdecoration Layer
+                                        ElevatedLayerButton(
+                                          subfac: 2,
+                                          depth: 2,
+                                          onClick: () {
+                                            setState(() {
+                                              var itemDecoId = Uuid().v4();
+                                              var itemDecoration = ItemDecoration(id: itemDecoId);
+
+                                              if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
+                                                // Add the new decoration to the main list
+                                                sheetDecorationList.add(itemDecoration);
+
+                                                // Get the reference to the SuperDecoration from the list
+                                                var currentItemDecoration = decorationIterator(sheetListItem.listDecoration.id, sheetDecorationList);
+
+                                                if (currentItemDecoration is SuperDecoration) {
+                                                  // Create a new list with the updated decoration IDs
+                                                  var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
+                                                  updatedList.add(itemDecoId);
+
+                                                  // Create the updated decoration using copyWith
+                                                  var updatedDecoration = currentItemDecoration.copyWith(
+                                                    itemDecorationList: updatedList,
+                                                  );
+
+                                                  // Find the index and update the list with the new decoration
+                                                  int index = sheetDecorationList.indexWhere((deco) => deco.id == currentItemDecoration.id);
+                                                  if (index != -1) {
+                                                    sheetDecorationList[index] = updatedDecoration;
+                                                  }
+
+                                                  // Also update the decoration reference in the item itself
+                                                  sheetListItem.listDecoration = updatedDecoration;
+
+                                                  print('New decoration added');
+                                                  print(updatedDecoration.itemDecorationList);
+                                                  _findSheetListItem();
+                                                } else {
+                                                  print('Error: Decoration is not a SuperDecoration');
+                                                }
+                                              } else {
+                                                print('Guys come on, turn this into a super now');
+                                              }
+                                            });
+
+                                          },
+                                          buttonHeight: 25,
+                                          buttonWidth: 25,
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                          animationDuration:
+                                              const Duration(milliseconds: 30),
+                                          animationCurve: Curves.ease,
+                                          topDecoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ),
+                                          topLayerChild: Icon(
+                                            TablerIcons.north_star,
+                                            size: 18,
+                                            // color: defaultPalette.tertiary
+                                            // color: Colors.blue,
+                                          ),
+                                          baseDecoration: BoxDecoration(
+                                            color: defaultPalette.extras[0],
+                                            border: Border.all(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(width: 3),
+                                    //DECOR Title and the preview box and text information besides
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          //Matrix rain and TITLE saying "DECOR"
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(50),
+                                            child: Stack(
+                                              children: [
+                                                SizedBox(
+                                                  height: 30,
+                                                  child: MatrixRainAnimation(
+                                                    backgroundColor:
+                                                        defaultPalette
+                                                            .extras[0],
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  right: 0,
+                                                  height: 30,
+                                                  child: Text(
+                                                    "Decor  ",
+                                                    style: GoogleFonts.lexend(
+                                                        fontSize: 18,
+                                                        color: defaultPalette
+                                                            .primary),
+                                                    textAlign: TextAlign.start,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            // PreviewBox of Decoration AND Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                              children:[
+                                          ),
+                                          SizedBox(height: 3),
+                                          //PreviewBox of Decoration AND Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
+                                          Stack(
+                                            children: [
+                                              SizedBox(
+                                                  width: width, height: 80),
+                                              // PreviewBox of Decoration AND Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
+                                              Row(
+                                              mainAxisAlignment:MainAxisAlignment .spaceBetween,
+                                              crossAxisAlignment:CrossAxisAlignment.end,
+                                              children: [
                                                 Expanded(
                                                   //Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
                                                   child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start, 
-                                                    children:!isListDecorationPropertiesToggled? [
-                                                      // Title saying "SUPER" 
+                                                    crossAxisAlignment:CrossAxisAlignment.start,
+                                                    children:  !isListDecorationPropertiesToggled
+                                                    ? [
+                                                      // Title saying "SUPER"
                                                       RichText(
-                                                      maxLines: 1,
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.rockSalt(
-                                                        color: defaultPalette.extras[0], 
-                                                        height: 1.5, fontSize: 16,
-                                                        
-                                                
-                                                      ),
-                                                        children: [
-                                                          TextSpan(
-                                                            text:''+ (decorationIndex==-1?sheetListItem.listDecoration:sheetListItem.listDecoration.itemDecorationList[decorationIndex]).runtimeType.toString().replaceAll(RegExp(r'Decoration'), '').replaceAll(RegExp(r'Item'), 'Layer '+ decorationIndex.toString()) ,
-                                                            
-                                                          ), 
-                                                        ]
-                                                      )
-                                                      ),
+                                                          maxLines:
+                                                              1,
+                                                          text: TextSpan(
+                                                              style: GoogleFonts.rockSalt(
+                                                                color: defaultPalette.extras[0],
+                                                                height: 1.5,
+                                                                fontSize: 16,
+                                                              ),
+                                                              children: [
+                                                                TextSpan(
+                                                                  text: ' ' + (decorationIndex == -1 ? sheetListItem.listDecoration : decorationIterator(sheetListItem.listDecoration.itemDecorationList[decorationIndex], sheetDecorationList)).runtimeType.toString().replaceAll(RegExp(r'Decoration'), '').replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()),
+                                                                ),
+                                                              ])),
                                                       //Name of Decoration Editing Field.
                                                       SizedBox(
-                                                          height: 20,
-                                                          child: TextFormField(
-                                                            focusNode: decorationNameFocusNode,
-                                                            cursorColor: defaultPalette.extras[0],
-                                                            controller: decorationNameController, 
-                                                            decoration: InputDecoration( 
-                                                              filled: true,
-                                                              fillColor: defaultPalette.transparent,
-                                                              contentPadding: EdgeInsets.all(0),
-                                                              border: OutlineInputBorder(
-                                                                borderRadius: BorderRadius.circular(
-                                                                    5),  
-                                                              ),
-                                                              enabledBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 0, color: defaultPalette.transparent),
-                                                                borderRadius:
-                                                                    BorderRadius.circular(5),  
-                                                              ),
-                                                              focusedBorder: OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                  width: 3,
-                                                                  color: nameExists
-                                                                      ? layoutName.text == initialLayoutName
-                                                                          ? defaultPalette.extras[1]
-                                                                          : Colors.red
-                                                                      : defaultPalette.transparent,
-                                                                ),
-                                                                borderRadius:
-                                                                    BorderRadius.circular(5), 
-                                                              ),
+                                                        height:
+                                                            20,
+                                                        child:
+                                                            TextFormField(
+                                                          focusNode:
+                                                              decorationNameFocusNode,
+                                                          cursorColor:
+                                                              defaultPalette.extras[0],
+                                                          controller:
+                                                              decorationNameController,
+                                                          decoration:
+                                                              InputDecoration(
+                                                            filled:
+                                                                true,
+                                                            fillColor:
+                                                                defaultPalette.transparent,
+                                                            contentPadding:
+                                                                EdgeInsets.all(0),
+                                                            border:
+                                                                OutlineInputBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(5),
                                                             ),
-                                                            onChanged: (value) {
-                                                              setState(() {
-                                                                if (decorationIndex ==-1) {
-                                                                  sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(name: value);
-                                                                } else {
-                                                                  if (sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration) {
-                                                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(name: value);
-                                                                  } else {
-                                                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as SuperDecoration).copyWith(name: value);
-                                                                  
-                                                                  }
-                                                                    
-                                             
-                                                                }
-                                                              });
-                                                            },
-                                                            style: GoogleFonts.lexend(
-                                                                color: defaultPalette.black, fontSize: 15),
-                                                            
+                                                            enabledBorder:
+                                                                OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide(width: 0, color: defaultPalette.transparent),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(5),
+                                                            ),
+                                                            focusedBorder:
+                                                                OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide(
+                                                                width: 3,
+                                                                color: nameExists
+                                                                    ? layoutName.text == initialLayoutName
+                                                                        ? defaultPalette.extras[1]
+                                                                        : Colors.red
+                                                                    : defaultPalette.transparent,
+                                                              ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(5),
+                                                            ),
                                                           ),
+                                                          onChanged:
+                                                              (value) {
+                                                            setState(() {
+                                                            var currentItemDecoration = decorationIterator(sheetListItem.listDecoration.id, sheetDecorationList);
+
+                                                            if (decorationIndex == -1) {
+                                                              if (currentItemDecoration is SuperDecoration) {
+                                                                // Update the decoration and the name in the list item
+                                                                var updatedDecoration = currentItemDecoration.copyWith(name: value);
+                                                                int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                                                if (index != -1) {
+                                                                  sheetDecorationList[index] = updatedDecoration;
+                                                                  // Update the name in the sheetListItem as well
+                                                                  sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(name: value);
+                                                                }
+                                                              }
+                                                            } else {
+                                                              currentItemDecoration = decorationIterator(sheetListItem.listDecoration.itemDecorationList[decorationIndex], sheetDecorationList);
+
+                                                              try {
+                                                                if (currentItemDecoration is SuperDecoration) {
+                                                                  var updatedDecoration = currentItemDecoration.copyWith(name: value);
+                                                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                                                  if (index != -1) {
+                                                                    sheetDecorationList[index] = updatedDecoration;
+                                                                    // Update the name in the sheetListItem
+                                                                  }
+                                                                } else if (currentItemDecoration is ItemDecoration) {
+                                                                  var updatedDecoration = currentItemDecoration.copyWith(name: value);
+                                                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                                                  if (index != -1) {
+                                                                    sheetDecorationList[index] = updatedDecoration;
+                                                                    // Update the name in the sheetListItem
+                                                                    }
+                                                                }
+                                                              } on Exception catch (e) {
+                                                                print('Error updating decoration: $e');
+                                                              }
+                                                            }
+                                                          });
+
+
+                                                          },
+                                                          style: GoogleFonts.lexend(
+                                                              color:
+                                                                  defaultPalette.black,
+                                                              fontSize: 15),
                                                         ),
+                                                      ),
                                                       //ID of Decoration display
                                                       SingleChildScrollView(
-                                                          scrollDirection: Axis.horizontal,
-                                                          child:RichText(
+                                                        scrollDirection:
+                                                            Axis.horizontal,
+                                                        child: RichText(
                                                             maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          
-                                                        text: TextSpan(
-                                                          style: GoogleFonts.lexend(
-                                                          color: defaultPalette.extras[0], 
-                                                          height: 1.5, fontSize: 6, 
-                                                        ),
-                                                          children: [
-                                                            TextSpan(
-                                                              text: 'id: '
-                                                            ),
-                                                            TextSpan(
-                                                              text:decorationIndex==-1?sheetListItem.listDecoration.id:sheetListItem.listDecoration.itemDecorationList[decorationIndex].id,style: GoogleFonts.lexend(
-                                                            color: defaultPalette.extras[0], fontSize: 6 ,fontWeight: FontWeight.normal
-                                                              ),
-                                                            ),
-                                                             
-                                                          ]
-                                                        )),  
-                                                        ),
-                                                      // SizedBox(height:5),  
-                                                        
-                                                    ]:[],
+                                                            overflow: TextOverflow.ellipsis,
+                                                            text: TextSpan(
+                                                                style: GoogleFonts.lexend(
+                                                                  color: defaultPalette.extras[0],
+                                                                  height: 1.5,
+                                                                  fontSize: 6,
+                                                                ),
+                                                                children: [
+                                                                  TextSpan(text: 'id: '),
+                                                                  TextSpan(
+                                                                    text: decorationIndex == -1 ? sheetListItem.listDecoration.id : sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                                    style: GoogleFonts.lexend(color: defaultPalette.extras[0], fontSize: 6, fontWeight: FontWeight.normal),
+                                                                  ),
+                                                                ])),
+                                                      ),
+                                                      // SizedBox(height:5),
+                                                    ]
+                                                  : [],
                                                   ),
                                                 ),
                                                 SizedBox(
-                                                width:5,
+                                                  width: 5,
                                                 ),
                                                 //PreviewBox of Selected Decoration
                                                 Container(
-                                                  height:80,
-                                                  width:58,  
-                                                  padding: EdgeInsets.only(right:3),
-                                                  child: 
-                                                  buildDecoratedContainer(
-                                                    decorationIndex==-1? sheetListItem.listDecoration :SuperDecoration(id: 'yo',
-                                                    itemDecorationList: [...sheetListItem.listDecoration.itemDecorationList.sublist(0,(decorationIndex+1).clamp(0, sheetListItem.listDecoration.itemDecorationList.length))]
-                                                    ), 
-                                                    SizedBox(width:30,height:30), 
-                                                    true),
-                                                                                
-                                                  
-                                                   )
-                                              ]
-                                            ),
-                                            // Layer Functions
-                                            AnimatedPositioned(
-                                              duration:Durations.medium4,
-                                              curve: Curves.easeInOut,
-                                              left:isListDecorationPropertiesToggled?0
-                                              :-width,
-                                              top: 0,
-                                              width:isListDecorationPropertiesToggled? width-102: 50,
-                                              child: AnimatedContainer( 
-                                                duration:Durations.medium4,
+                                                  height: 80,
+                                                  width: 58,
+                                                  padding: EdgeInsets.only(
+                                                      right: 3),
+                                                  child:
+                                                      buildDecoratedContainer(
+                                                          decorationIndex ==
+                                                                  -1
+                                                              ? sheetListItem
+                                                                  .listDecoration
+                                                              : SuperDecoration(
+                                                                  id: 'yo',
+                                                                  itemDecorationList: [
+                                                                      ...sheetListItem
+                                                                          .listDecoration
+                                                                          .itemDecorationList
+                                                                          .sublist(0, (decorationIndex + 1).clamp(0, sheetListItem.listDecoration.itemDecorationList.length))
+                                                                    ]),
+                                                          SizedBox(
+                                                              width: 30,
+                                                              height: 30),
+                                                          true),
+                                                )
+                                              ]),
+                                              // Layer Functions
+                                              AnimatedPositioned(
+                                                duration: Durations.medium4,
                                                 curve: Curves.easeInOut,
-                                                height: 80,  
-                                                padding: EdgeInsets.all(4),
-                                                transform: Matrix4.identity()
-                                                    ..translate(isListDecorationPropertiesToggled?0.0:(-((sHeight*0.9)-250)/10).clamp(double.negativeInfinity, 50))
-                                                    ..rotateZ(isListDecorationPropertiesToggled?0: -math.pi / 4),
-                                                decoration: BoxDecoration(
-                                                  color:isListDecorationPropertiesToggled? defaultPalette.secondary:defaultPalette.extras[0],
-                                                  borderRadius: BorderRadius.circular(isListDecorationPropertiesToggled?10:0),
-                                                  border: Border.all()
-                                                ),
-                                                child: SingleChildScrollView( 
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                left:
+                                                    isListDecorationPropertiesToggled
+                                                        ? 0
+                                                        : -width,
+                                                top: 0,
+                                                width:
+                                                    isListDecorationPropertiesToggled
+                                                        ? width - 102
+                                                        : 50,
+                                                child: AnimatedContainer(
+                                                  duration: Durations.medium4,
+                                                  curve: Curves.easeInOut,
+                                                  height: 80,
+                                                  padding: EdgeInsets.all(4),
+                                                  transform: Matrix4.identity()
+                                                    ..translate(
+                                                        isListDecorationPropertiesToggled
+                                                            ? 0.0
+                                                            : (-((sHeight * 0.9) -250) /10).clamp(double.negativeInfinity,50))
+                                                    ..rotateZ(
+                                                        isListDecorationPropertiesToggled
+                                                            ? 0
+                                                            : -math.pi / 4),
+                                                  decoration: BoxDecoration(
+                                                      color:
+                                                          isListDecorationPropertiesToggled
+                                                              ? defaultPalette.secondary
+                                                              : defaultPalette.extras[0],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              isListDecorationPropertiesToggled
+                                                                  ? 10
+                                                                  : 0),
+                                                      border: Border.all()),
+                                                  child: Stack(
                                                     children: [
-                                                      Text(' layerFunctions',maxLines: 1,
-                                                      style: GoogleFonts.lexend(
-                                                      fontSize: 13,
-                                                      letterSpacing: -1,
-                                                      color: defaultPalette.extras[0]),),
-                                                      roundButton((){
-                                                      if (decorationIndex != -1) {
-                                                        
-                                                        setState(() {
-                                                          var currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex];
-                                                          sheetListItem.listDecoration.itemDecorationList.insert(decorationIndex, 
-                                                          currentItemDecoration is ItemDecoration? ItemDecoration(
-                                                            id: Uuid().v4(),
-                                                            alignment: currentItemDecoration.alignment,
-                                                            decoration: currentItemDecoration.decoration,
-                                                            foregroundDecoration: currentItemDecoration.foregroundDecoration,
-                                                            margin: currentItemDecoration.margin,
-                                                            name: currentItemDecoration.name,
-                                                            padding: currentItemDecoration.padding,
-                                                            pinned: currentItemDecoration.pinned,
-                                                            transform: currentItemDecoration.transform
-                                                            ): SuperDecoration(
-                                                              id: Uuid().v4(),
-                                                              name: currentItemDecoration.name,
-                                                              itemDecorationList: (currentItemDecoration as SuperDecoration).itemDecorationList,
-                                                  
-                                                            )
-                                                          );
-                                                        });
-                                                      }
-                                                      }, Icon(TablerIcons.copy, 
-                                                      color: defaultPalette.extras[0],size: 15,), 'duplicate'),
-                                                      // SizedBox(height: 3,),
-                                                      roundButton((){
-                                                      if (decorationIndex != -1) {
-                                                          
-                                                      }
-                                                      }, Icon(TablerIcons.file_star, 
-                                                      color: defaultPalette.extras[0],size: 15,), 'makeNew'),
-                                                      roundButton((){
-                                                      if (decorationIndex != -1) {
-                                                        
-                                                        setState(() {
-                                                            
-                                                          if (sheetListItem.listDecoration.itemDecorationList.length >1) {
-                                                            sheetListItem.listDecoration.itemDecorationList.removeAt(decorationIndex);
-                                                            decorationIndex -= 1; 
-                                                            whichListShadowLayerIsSelected=0;
-                                                          }
-                                                        });
-                                                      }
-                                                      }, Icon(TablerIcons.trash, 
-                                                      color: defaultPalette.extras[0],size: 15,), 'delete'),
+                                                      SingleChildScrollView(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              ' layerFunctions',
+                                                              maxLines: 1,
+                                                              style: GoogleFonts.lexend(
+                                                                  fontSize: 13,
+                                                                  letterSpacing: -1,
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .extras[0]),
+                                                            ),
+                                                            //duplicate
+                                                            roundButton(() {
+                                                              if (decorationIndex != -1) {
+                                                             
+                                                                var decoId = Uuid().v4();
+                                                                print('Generated new ID: $decoId');
+                                                                print('Parent decoration ID: ${sheetListItem.listDecoration.id}');
                                                       
+                                                                // Step 1: Get the parent decoration safely
+                                                                var parentItemDecoration = decorationIterator(
+                                                                    sheetListItem.listDecoration.id, sheetDecorationList);
+                                                      
+                                                                if (parentItemDecoration == null) {
+                                                                  print('Error: Could not find parent decoration.');
+                                                                  return;
+                                                                }
+                                                      
+                                                                // Ensure the parent is a SuperDecoration
+                                                                if (parentItemDecoration is! SuperDecoration) {
+                                                                  print('Error: Parent decoration is not a SuperDecoration.');
+                                                                  return;
+                                                                }
+                                                      
+                                                                // Step 2: Create a new decoration based on the current one
+                                                                var currentItemDecoration = decorationIterator(
+                                                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                                    sheetDecorationList);
+                                                      
+                                                                if (currentItemDecoration == null) {
+                                                                  print(
+                                                                      'Error: Could not find current item decoration at index: $decorationIndex');
+                                                                  return;
+                                                                }
+                                                      
+                                                                // Step 3: Create the new decoration
+                                                                SheetDecoration newDecoration;
+                                                                if (currentItemDecoration is ItemDecoration) {
+                                                                  newDecoration = currentItemDecoration.copyWith(id: decoId);
+                                                                } else if (currentItemDecoration is SuperDecoration) {
+                                                                  newDecoration = currentItemDecoration.copyWith(
+                                                                    id: decoId,
+                                                                    itemDecorationList: List<String>.from(currentItemDecoration.itemDecorationList),
+                                                                  );
+                                                                } else {
+                                                                  print('Error: Unknown decoration type.');
+                                                                  return;
+                                                                }
+                                                      
+                                                                // Step 4: Add the new decoration to the list
+                                                                sheetDecorationList.add(newDecoration);
+                                                                print('New decoration added with ID: $decoId');
+                                                      
+                                                                // Step 5: Update the parent decoration with the new ID
+                                                                var updatedItemDecorationList = [
+                                                                  ...parentItemDecoration.itemDecorationList.sublist(0, decorationIndex),
+                                                                  decoId,
+                                                                  ...parentItemDecoration.itemDecorationList.sublist(decorationIndex),
+                                                                ];
+                                                      
+                                                                var updatedParentDecoration = parentItemDecoration.copyWith(
+                                                                  itemDecorationList: updatedItemDecorationList,
+                                                                );
+                                                      
+                                                                // Step 6: Update the list item and the sheet decoration list
+                                                                int parentIndex = sheetDecorationList.indexWhere((decoration) =>
+                                                                    decoration.id == parentItemDecoration.id);
+                                                      
+                                                                if (parentIndex != -1) {
+                                                                  sheetDecorationList[parentIndex] = updatedParentDecoration;
+                                                                  print('Updated parent decoration with new ID list.');
+                                                                } else {
+                                                                  print('Error: Could not update parent decoration.');
+                                                                }
+                                                      
+                                                                // Also update the list decoration in the sheetListItem
+                                                                sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
+                                                                  itemDecorationList: updatedItemDecorationList,
+                                                                );
+                                                            }
+                                                      
+                                                      
+                                                            },
+                                                                Icon(
+                                                                  TablerIcons.copy,
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .extras[0],
+                                                                  size: 15,
+                                                                ),
+                                                                'duplicate'),
+                                                            // make new
+                                                            roundButton(() {
+                                                              if (decorationIndex !=
+                                                                  -1) {}
+                                                            },
+                                                                Icon(
+                                                                  TablerIcons
+                                                                      .file_star,
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .extras[0],
+                                                                  size: 15,
+                                                                ),
+                                                                'makeNew'),
+                                                            //delete
+                                                            roundButton(() {
+                                                              if (decorationIndex !=
+                                                                        -1) {
+                                                                if (sheetListItem
+                                                                        .listDecoration
+                                                                        .itemDecorationList
+                                                                        .length >
+                                                                    1) {
+                                                                  sheetListItem
+                                                                      .listDecoration
+                                                                      .itemDecorationList
+                                                                      .removeAt(
+                                                                          decorationIndex);
+                                                                  decorationIndex -=
+                                                                      1;
+                                                                }
+                                                                
+                                                            }
+                                                            },
+                                                                Icon(
+                                                                  TablerIcons.trash,
+                                                                  color:
+                                                                      defaultPalette
+                                                                          .extras[0],
+                                                                  size: 15,
+                                                                ),
+                                                                'delete'),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Positioned(
+                                                        width: 20,
+                                                        right:0,
+                                                        child: roundButton((){
+                                                          isListDecorationPropertiesToggled = !isListDecorationPropertiesToggled; 
+                                                        }, Icon(TablerIcons.x, size:14), ''))
                                                     ],
                                                   ),
-                                                  ),
                                                 ),
-                                            )
-                                          ],
-                                        ),
-                                      
-                                      ],
+                                              )
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                        
-                                  ),
-                                  SizedBox(
-                                    width:2
-                                  ),
-                          
-                                ],
-                              ), 
-                            ],
-                          )
-                          ),
+                                    SizedBox(width: 2),
+                                  ],
+                                ),
+                              ],
+                            )),
                       ),
                     ),
 
-                    //TreeView of Properties per layer
+                    //TreeView of Properties per layer and THE ALL THE EDITOR UIs
                     Positioned(
-                      // duration:Durations.medium4,
-                      // curve: Curves.easeIn,
-                      left:showDecorationLayers?48:12,
+                      left: showDecorationLayers ? 48 : 12,
                       top: 138,
-                      right: 16, 
+                      right: 16,
                       bottom: 18,
-                      child: Builder(
-                        builder: (context) {
-                          var style =GoogleFonts.lexend(
-                                        fontSize:13,
-                                        color: defaultPalette.extras[0]
-                                      );
-                          var childStyle = style.copyWith(fontSize: 11);
-                          var iconColor = defaultPalette.extras[0];
-                          double childPinSize = 18;
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(9).copyWith(bottomLeft: Radius.circular(showDecorationLayers?10:25), bottomRight:Radius.circular(20)  ), 
-                            child: Container( 
-                              decoration: BoxDecoration(
-                                color: defaultPalette.secondary, 
-                                border: Border.all(),
-                                borderRadius: BorderRadius.circular(9).copyWith(bottomLeft: Radius.circular(showDecorationLayers?10:25), bottomRight:Radius.circular(20)  ),
-                               
-                              ),
-                              child: ScrollConfiguration(
-                                behavior: ScrollBehavior()
-                                    .copyWith(scrollbars: false),
-                                child: DynMouseScroll(
-                                    durationMS: 500,
-                                    scrollSpeed: 1,
-                                    builder: (context, controller, physics) {
-                                    return SingleChildScrollView(
-                                      controller: controller,
-                                      physics: physics,
-                                      child: Column(
-                                        children: [
-                                          Container(  
-                                            decoration:BoxDecoration(color:defaultPalette.transparent, borderRadius: BorderRadius.circular(6)),
-                                            child:
-                                               decorationIndex !=-1 ? sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration ?
-                                              TreeView<String>( 
-                                              showSelectAll: true,
-                                              showExpandCollapseButton: true,
-                                          
-                                              width:showDecorationLayers?width-30: width,
-                                              onSelectionChanged: (p0) {
-                                                // print(p0);
-                                                setState(() {
-                                                  sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration)
-                                                  .copyWith(
-                                                    pinned: {
-                                                      'padding': {
-                                                        'isPinned': p0[1],       // 1
-                                                        'top': p0[2],            // 2
-                                                        'bottom': p0[3],         // 3
-                                                        'left': p0[4],           // 4
-                                                        'right': p0[5],          // 5
-                                                      },
-                                                      'margin': {
-                                                        'isPinned': p0[6],       // 6
-                                                        'top': p0[7],            // 7
-                                                        'bottom': p0[8],         // 8
-                                                        'left': p0[9],           // 9
-                                                        'right': p0[10],         // 10
-                                                      },
-                                                      'decoration': {
-                                                        'isPinned': p0[11],      // 11
-                                                        'color': p0[12],         // 12
-                                                        'border': p0[13],        // 13
-                                                        'borderRadius': {
-                                                          'isPinned': p0[14],        // 14
-                                                          'topLeft': p0[15],         // 15
-                                                          'topRight': p0[16],        // 16
-                                                          'bottomLeft': p0[17],      // 17
-                                                          'bottomRight': p0[18],     // 18
-                                                        },
-                                                        'boxShadow': p0[19],     // 19
-                                                        'image': {
-                                                          'isPinned': p0[20],        // 20
-                                                          'bytes': p0[21],           // 21
-                                                          'fit': p0[22],             // 22
-                                                          'repeat': p0[23],          // 23
-                                                          'alignment': p0[24],       // 24
-                                                          'scale': p0[25],           // 25
-                                                          'opacity': p0[26],         // 26
-                                                          'filterQuality': p0[27],   // 27
-                                                          'invertColors': p0[28],    // 28
-                                                        },
-                                                        'backgroundBlendMode': p0[29],  // 29
-                                                      },
-                                                      'foregroundDecoration': {
-                                                        'isPinned': p0[30],      // 30
-                                                        'color': p0[31],         // 31
-                                                        'border': p0[32],        // 32
-                                                        'borderRadius': {
-                                                          'isPinned': p0[33],        // 33
-                                                          'topLeft': p0[34],         // 34
-                                                          'topRight': p0[35],        // 35
-                                                          'bottomLeft': p0[36],      // 36
-                                                          'bottomRight': p0[37],     // 37
-                                                        },
-                                                        'boxShadow': p0[38],     // 38
-                                                        'image': {
-                                                          'isPinned': p0[39],        // 39
-                                                          'bytes': p0[40],           // 40
-                                                          'fit': p0[41],             // 41
-                                                          'repeat': p0[42],          // 42
-                                                          'alignment': p0[43],       // 43
-                                                          'scale': p0[44],           // 44
-                                                          'opacity': p0[45],         // 45
-                                                          'filterQuality': p0[46],   // 46
-                                                          'invertColors': p0[47],    // 47
-                                                        },
-                                                        'backgroundBlendMode': p0[48],  // 48
-                                                      },
-                                                      'transform': {
-                                                        'isPinned': p0[49],      // 49
-                                                      },
-                                                    },
-                                                  );
-                              
-                                                  // sheetListItem.listDecoration.toSuperDecorationBox().save();
-                                                });  
-                                              },
-                                              onExpansionChanged: (e) {
-                                                setState(() {
-                                                  // print(expansionLevels);
-                                                  expansionLevels = [
-                                                    e[0], e[1], e[6],e[11],e[14],e[20],e[30],e[33],e[39], 
-                                                  ];
-                                                });
-                                              },
-                                              nodes:[
-                                              TreeNode( 
-                                                indentSize: 2,
-                                                selectable: false,
-                                                alternateChildren: true,
-                                                isExpanded: expansionLevels[0],                
-                                                children:[
-                                                  //padding
-                                                  TreeNode(
-                                                    isExpanded: expansionLevels[1],
-                                                    label: Text('padding' , style: style),
-                                                    isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['isPinned'],
-                                                    icon: Icon(TablerIcons.box_padding, size:16,color:iconColor),
-                                                    indentSize: 8,
-                                                    alternateChildren: false,
-                                                    checkboxSize: 20,
-                                          
-                                                    children: [
-                                                      TreeNode<String>(label: Text('top', style: childStyle),
-                                                        icon: Transform.rotate(angle: pi,child: Icon(TablerIcons.layout_bottombar_inactive, size:15)),
-                                                        checkboxSize: childPinSize,
-                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['top'],
-                                                    
-                                                    ),
-                                                      TreeNode<String>(label: Text('bottom', style: childStyle),
-                                                        icon: Icon(TablerIcons.layout_bottombar_inactive, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['bottom'],
-                                                    ),
-                                                      TreeNode<String>(label: Text('left', style:childStyle),
-                                                        icon: Icon(TablerIcons.layout_sidebar_inactive, size:15),
-                                                        checkboxSize: childPinSize, isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['left'],
-                                                    ),
-                                                      TreeNode<String>(label: Text('right', style:childStyle),
-                                                        icon: Icon(TablerIcons.layout_sidebar_right_inactive, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['padding']['right'],
-                                                    )
-                                                                
-                                                      ]
-                                                    ),
-                                                  //margin
-                                                  TreeNode(
-                                                    label: Text('margin' , style: style),
-                                                    isExpanded: expansionLevels[2],
-                                                    icon: Icon(TablerIcons.box_margin, size:16,color: iconColor),
-                                                    indentSize: 8,
-                                                    alternateChildren: false,
-                                                    checkboxSize: 20,
-                                                    isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['isPinned'],
-                                                    children: [
-                                                      TreeNode<String>(label: Text('top', style:childStyle),
-                                                        icon: Icon(TablerIcons.box_align_bottom, size:15),
-                                                        checkboxSize: childPinSize, isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['top'],
-                                                    ),
-                                                      TreeNode<String>(label: Text('bottom', style:childStyle),
-                                                        icon: Icon(TablerIcons.box_align_top, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['bottom'],),
-                                                      TreeNode<String>(label: Text('left', style:childStyle),
-                                                        icon: Icon(TablerIcons.box_align_right, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['left'],),
-                                                      TreeNode<String>(label: Text('right', style:childStyle),
-                                                        icon: Icon(TablerIcons.box_align_left, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['margin']['right'],)
-                                                                
-                                                    ] 
-                                                  ),
-                                                  //decoration
-                                                  for(int i =0; i<2; i++)
-                                                  TreeNode(
-                                                    isExpanded: expansionLevels[i==0?3:6],
-                                                    label: Text(i==0?'decor':'foreground' , style: style),
-                                                    icon: Icon(TablerIcons.palette, size:16,color: iconColor),
-                                                    indentSize: 8,
-                                                    alternateChildren: false,
-                                                    checkboxSize: 20,
-                                                    isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['isPinned'],
-                                                    children: [
-                                                      TreeNode<String>(label: Text('color', style:childStyle),
-                                                        icon: Icon(TablerIcons.color_swatch, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['color'],
-                                                    ),
-                                                      TreeNode<String>(label: Text('border', style:childStyle),
-                                                        icon: Icon(TablerIcons.border_sides, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['border'],),
-                                                      TreeNode<String>(label: Text('cornerRadius', style:childStyle),
-                                                        icon: Icon(TablerIcons.border_corners, size:15),
-                                                        checkboxSize: childPinSize,
-                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['isPinned'],
-                                                        isExpanded: expansionLevels[i==0?4:7],
-                                                        alternateChildren: false,
-                                                        children: [
-                                                          TreeNode<String>(label: Text('topLeft', style:childStyle),
-                                                        icon: Icon(TablerIcons.radius_top_left, size:15),
-                                                        checkboxSize: childPinSize,
-                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['topLeft']
-                                                    ),
-                                                      TreeNode<String>(label: Text('topRight', style:childStyle),
-                                                        icon: Icon(TablerIcons.radius_top_right, size:15),
-                                                        checkboxSize: childPinSize,
-                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['topRight']
-                                                    ),
-                                                      TreeNode<String>(label: Text('bottomLeft', style:childStyle),
-                                                        icon: Icon(TablerIcons.radius_bottom_left, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['bottomLeft']
-                                                    ),
-                                                      TreeNode<String>(label: Text('bottomRight', style:childStyle),
-                                                        icon: Icon(TablerIcons.radius_bottom_right, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['borderRadius']['bottomRight']
-                                                    ),
-                                                      
-                                                        ]
-                                                        ),
-                                                      TreeNode<String>(label: Text('shadow', style:childStyle),
-                                                        icon: Icon(TablerIcons.shadow, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['boxShadow'],),
-                                                      TreeNode<String>(label: Text('image', style:childStyle),
-                                                        isExpanded: expansionLevels[i==0?5:8],
-                                                        icon: Icon(TablerIcons.photo, size:15),
-                                                        checkboxSize: childPinSize,
-                                                        alternateChildren: false,
-                                                        indentSize: 5,
-                                                        isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['isPinned'],
-                                                        children: [
-                                                          TreeNode<String>(label: Text('file', style:childStyle), selectable: false,
-                                                        icon: Icon(TablerIcons.file_type_jpg, size:15),
-                                                        checkboxSize: childPinSize, isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['bytes'],),
-                                                        TreeNode<String>(label: Text('fit', style:childStyle),
-                                                        icon: Icon(TablerIcons.artboard, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['fit'],
-                                                        ),
-                                                        TreeNode<String>(label: Text('repeat', style:childStyle),
-                                                        icon: Icon(TablerIcons.layout_grid, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['repeat'],
-                                                        ),
-                                                        TreeNode<String>(label: Text('align', style:childStyle),
-                                                        icon: Icon(TablerIcons.align_box_left_stretch, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['alignment'],
-                                                        ),
-                                                        TreeNode<String>(label: Text('scale', style:childStyle),
-                                                        icon: Icon(TablerIcons.scale, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['scale'],
-                                                        ),
-                                                        TreeNode<String>(label: Text('opacity', style:childStyle),
-                                                        icon: Icon(TablerIcons.square_toggle, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['opacity'],
-                                                        ),
-                                                        TreeNode<String>(label: Text('quality', style:childStyle),
-                                                        icon: Icon(TablerIcons.michelin_star, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['filterQuality'],
-                                                        ),
-                                                        TreeNode<String>(label: Text('invert', style:childStyle),
-                                                        icon: Icon(TablerIcons.brightness_2, size:15),
-                                                        checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['image']['invertColors'],
-                                                        ),
-                                          
-                                                        ]
-                                                        
-                                                        ),
-                                                      TreeNode<String>( 
-                                                        // checkboxSize: childPinSize,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[i==0?'decoration':'foregroundDecoration']['backgroundBlendMode'],
-                                                        selectable: false,
-                                                        ),
-                                                                
-                                                    ]
-                                                  ),
-                                                  
-                                                  //transform
-                                                  TreeNode( 
-                                                    label: Text('transform' , style: style),
-                                                    icon: Icon(TablerIcons.transform_point, size:16,color: iconColor),
-                                                    indentSize: 17,
-                                                    alternateChildren: false, 
-                                                    checkboxSize: 20,isSelected: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned['transform']['isPinned'],
-                                                                
-                                                  ),
-                                                                
-                                              ]
-                                           
-                                              )
-                                              
-                                              ]):null:null,
-                                          ),
-                                          if(decorationIndex !=-1)
-                                          if(sheetListItem.listDecoration.itemDecorationList[decorationIndex] is ItemDecoration)
-                                          ...buildItemDecorationEditor((sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration))
-                              
-                              
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                ),
-                              ),
+                      child: Builder(builder: (context) {
+                        var style = GoogleFonts.lexend(
+                            fontSize: 13, color: defaultPalette.extras[0]);
+                        var childStyle = style.copyWith(fontSize: 11);
+                        var iconColor = defaultPalette.extras[0];
+                        double childPinSize = 18;
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(9).copyWith(
+                              bottomLeft: Radius.circular(
+                                  showDecorationLayers ? 10 : 25),
+                              bottomRight: Radius.circular(20)),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: defaultPalette.secondary,
+                              border: Border.all(),
+                              borderRadius: BorderRadius.circular(9).copyWith(
+                                  bottomLeft: Radius.circular(
+                                      showDecorationLayers ? 10 : 25),
+                                  bottomRight: Radius.circular(20)),
                             ),
-                          );
-                        }
-                      ),
+                            child: Stack(
+                              children: [
+                                //TreeView of Properties per layer and THE ALL THE EDITOR UIs
+                                Padding(
+                                  padding: const EdgeInsets.all(0).copyWith(top: isListDecorationLibraryToggled? 35:0),
+                                  child: ScrollConfiguration(
+                                    behavior:
+                                        ScrollBehavior().copyWith(scrollbars: false),
+                                    child: DynMouseScroll(
+                                        durationMS: 500,
+                                        scrollSpeed: 1,
+                                        builder: (context, controller, physics) {
+                                          SheetDecoration currentItemDecoration = SuperDecoration(id: 'yo', name: 'name');
+                                          
+                                          if (decorationIndex != -1 ) {
+                                          currentItemDecoration = decorationIterator(
+                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                            sheetDecorationList);
+                                          }
+                                          return SingleChildScrollView(
+                                            controller: controller,
+                                            physics: physics,
+                                            child: Column(
+                                              children: [
+                                                if (decorationIndex != -1 && !isListDecorationLibraryToggled)
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                      color:
+                                                          defaultPalette.transparent,
+                                                      borderRadius:
+                                                          BorderRadius.circular(6)),
+                                                  child: decorationIndex != -1
+                                                ? currentItemDecoration
+                                                    is ItemDecoration
+                                                ? TreeView<String>(
+                                                    showSelectAll: true,
+                                                    showExpandCollapseButton:
+                                                        true,
+                                                    width:
+                                                        showDecorationLayers
+                                                            ? width - 30
+                                                            : width,
+                                                    onSelectionChanged:
+                                                        (p0) {
+                                                      // print(p0);
+                                                      setState(() {
+                                                      var selectedItemDecoration = decorationIterator(
+                                                        sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                        sheetDecorationList,
+                                                      ) as ItemDecoration;
+                                  
+                                                      // Update the decoration with new pinned properties
+                                                      selectedItemDecoration = selectedItemDecoration.copyWith(
+                                                        pinned: {
+                                                          'padding': {
+                                                            'isPinned': p0[1],      // 1
+                                                            'top': p0[2],           // 2
+                                                            'bottom': p0[3],        // 3
+                                                            'left': p0[4],          // 4
+                                                            'right': p0[5],         // 5
+                                                          },
+                                                          'margin': {
+                                                            'isPinned': p0[6],      // 6
+                                                            'top': p0[7],           // 7
+                                                            'bottom': p0[8],        // 8
+                                                            'left': p0[9],          // 9
+                                                            'right': p0[10],        // 10
+                                                          },
+                                                          'decoration': {
+                                                            'isPinned': p0[11],     // 11
+                                                            'color': p0[12],        // 12
+                                                            'border': p0[13],       // 13
+                                                            'borderRadius': {
+                                                              'isPinned': p0[14],   // 14
+                                                              'topLeft': p0[15],    // 15
+                                                              'topRight': p0[16],   // 16
+                                                              'bottomLeft': p0[17], // 17
+                                                              'bottomRight': p0[18],// 18
+                                                            },
+                                                            'boxShadow': p0[19],    // 19
+                                                            'image': {
+                                                              'isPinned': p0[20],   // 20
+                                                              'bytes': p0[21],      // 21
+                                                              'fit': p0[22],        // 22
+                                                              'repeat': p0[23],     // 23
+                                                              'alignment': p0[24],  // 24
+                                                              'scale': p0[25],      // 25
+                                                              'opacity': p0[26],    // 26
+                                                              'filterQuality': p0[27], // 27
+                                                              'invertColors': p0[28],  // 28
+                                                            },   
+                                                          },
+                                                          'foregroundDecoration': {
+                                                            'isPinned': p0[29],     // 29
+                                                            'color': p0[30],        // 30
+                                                            'border': p0[31],       // 31
+                                                            'borderRadius': {
+                                                              'isPinned': p0[32],   // 32
+                                                              'topLeft': p0[33],    // 33
+                                                              'topRight': p0[34],   // 34
+                                                              'bottomLeft': p0[35], // 35
+                                                              'bottomRight': p0[36],// 36
+                                                            },
+                                                            'boxShadow': p0[37],    // 37
+                                                            'image': {
+                                                              'isPinned': p0[38],   // 38
+                                                              'bytes': p0[39],      // 39
+                                                              'fit': p0[40],        // 40
+                                                              'repeat': p0[41],     // 41
+                                                              'alignment': p0[42],  // 42
+                                                              'scale': p0[43],      // 43
+                                                              'opacity': p0[44],    // 44
+                                                              'filterQuality': p0[45], // 45
+                                                              'invertColors': p0[46],  // 46
+                                                            }, 
+                                                          },
+                                                          'transform': {
+                                                            'isPinned': p0[47],     // 47
+                                                          },
+                                                        },
+                                                      );
+                                  
+                                                      // ✅ Update the main decoration list with the modified item decoration
+                                                      int index = sheetDecorationList.indexWhere((decoration) => decoration.id == selectedItemDecoration.id);
+                                                      if (index != -1) {
+                                                        sheetDecorationList[index] = selectedItemDecoration;
+                                                      }
+                                  
+                                                      // ✅ Update the decoration in the sheetListItem
+                                                       
+                                  
+                                                      print('Updated decoration: ${selectedItemDecoration.id}');
+                                                    });
+                                  
+                                                    },
+                                                    onExpansionChanged:
+                                                        (e) {
+                                                      setState(() {
+                                                        // print(expansionLevels);
+                                                        expansionLevels = [
+                                                          e[0],
+                                                          e[1],
+                                                          e[6],
+                                                          e[11],
+                                                          e[14],
+                                                          e[20],
+                                                          e[29],
+                                                          e[32],
+                                                          e[38],
+                                                        ];
+                                                      });
+                                                    },
+                                                    nodes: [
+                                                        TreeNode(
+                                                            indentSize: 2,
+                                                            selectable:
+                                                                false,
+                                                            alternateChildren:
+                                                                true,
+                                                            isExpanded:
+                                                                expansionLevels[
+                                                                    0],
+                                                            children: [
+                                                              //padding
+                                                              TreeNode(
+                                                                  isExpanded:
+                                                                      expansionLevels[
+                                                                          1],
+                                                                  label: Text(
+                                                                      'padding',
+                                                                      style:
+                                                                          style),
+                                                                  isSelected:
+                                                                      currentItemDecoration.pinned['padding'][
+                                                                          'isPinned'],
+                                                                  icon: Icon(
+                                                                      TablerIcons
+                                                                          .box_padding,
+                                                                      size:
+                                                                          16,
+                                                                      color:
+                                                                          iconColor),
+                                                                  indentSize:
+                                                                      8,
+                                                                  alternateChildren:
+                                                                      false,
+                                                                  checkboxSize:
+                                                                      20,
+                                                                  children: [
+                                                                    TreeNode<String>(
+                                                                      label: Text('top',style: childStyle),
+                                                                      icon: Transform.rotate(
+                                                                          angle: pi,
+                                                                          child: Icon(TablerIcons.layout_bottombar_inactive, size: 15)),
+                                                                      checkboxSize:childPinSize,
+                                                                      isSelected:currentItemDecoration.pinned['padding']['top'],
+                                                                    ),
+                                                                    TreeNode<String>(
+                                                                      label: Text('bottom',style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.layout_bottombar_inactive,
+                                                                          size: 15),
+                                                                      checkboxSize:childPinSize,
+                                                                      isSelected: currentItemDecoration.pinned['padding']['bottom'],
+                                                                    ),
+                                                                    TreeNode<String>(
+                                                                      label: Text('left',style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.layout_sidebar_inactive,
+                                                                          size: 15),
+                                                                      checkboxSize:childPinSize,
+                                                                      isSelected:currentItemDecoration.pinned['padding']['left'],
+                                                                    ),
+                                                                    TreeNode<  String>(
+                                                                      label: Text(
+                                                                          'right',
+                                                                          style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.layout_sidebar_right_inactive,
+                                                                          size: 15),
+                                                                      checkboxSize:
+                                                                          childPinSize,
+                                                                      isSelected:
+                                                                          currentItemDecoration.pinned['padding']['right'],
+                                                                    )
+                                                                  ]),
+                                                              //margin
+                                                              TreeNode(
+                                                                  label: Text(
+                                                                      'margin',
+                                                                      style:
+                                                                          style),
+                                                                  isExpanded:
+                                                                      expansionLevels[
+                                                                          2],
+                                                                  icon: Icon(TablerIcons.box_margin,
+                                                                      size:
+                                                                          16,
+                                                                      color:
+                                                                          iconColor),
+                                                                  indentSize:
+                                                                      8,
+                                                                  alternateChildren:
+                                                                      false,
+                                                                  checkboxSize:
+                                                                      20,
+                                                                  isSelected: (currentItemDecoration)
+                                                                      .pinned['margin']['isPinned'],
+                                                                  children: [
+                                                                    TreeNode<
+                                                                        String>(
+                                                                      label: Text(
+                                                                          'top',
+                                                                          style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.box_align_bottom,
+                                                                          size: 15),
+                                                                      checkboxSize:
+                                                                          childPinSize,
+                                                                      isSelected:
+                                                                          currentItemDecoration.pinned['margin']['top'],
+                                                                    ),
+                                                                    TreeNode<
+                                                                        String>(
+                                                                      label: Text(
+                                                                          'bottom',
+                                                                          style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.box_align_top,
+                                                                          size: 15),
+                                                                      checkboxSize:
+                                                                          childPinSize,
+                                                                      isSelected:
+                                                                          currentItemDecoration.pinned['margin']['bottom'],
+                                                                    ),
+                                                                    TreeNode<
+                                                                        String>(
+                                                                      label: Text(
+                                                                          'left',
+                                                                          style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.box_align_right,
+                                                                          size: 15),
+                                                                      checkboxSize:
+                                                                          childPinSize,
+                                                                      isSelected:
+                                                                          currentItemDecoration.pinned['margin']['left'],
+                                                                    ),
+                                                                    TreeNode<
+                                                                        String>(
+                                                                      label: Text(
+                                                                          'right',
+                                                                          style: childStyle),
+                                                                      icon: Icon(
+                                                                          TablerIcons.box_align_left,
+                                                                          size: 15),
+                                                                      checkboxSize:
+                                                                          childPinSize,
+                                                                      isSelected:
+                                                                          currentItemDecoration.pinned['margin']['right'],
+                                                                    )
+                                                                  ]),
+                                                              //decoration
+                                                              for (int i = 0;
+                                                                  i < 2;
+                                                                  i++)
+                                                                TreeNode(
+                                                                    isExpanded: expansionLevels[i == 0
+                                                                        ? 3
+                                                                        : 6],
+                                                                    label: Text(
+                                                                        i == 0
+                                                                            ? 'decor'
+                                                                            : 'foreground',
+                                                                        style:
+                                                                            style),
+                                                                    icon: Icon(  TablerIcons .palette,
+                                                                        size:  16,
+                                                                        color: iconColor),
+                                                                    indentSize: 8,
+                                                                    alternateChildren:  false,
+                                                                    checkboxSize:   20,
+                                                                    isSelected: (currentItemDecoration).pinned[i ==0
+                                                                        ? 'decoration'
+                                                                        : 'foregroundDecoration']['isPinned'],
+                                                                    children: [
+                                                                      TreeNode< String>(
+                                                                        label: Text('color', style: childStyle),
+                                                                        icon: Icon(TablerIcons.color_swatch, size: 15),
+                                                                        checkboxSize: childPinSize,
+                                                                        isSelected: currentItemDecoration.pinned[i == 0
+                                                                            ? 'decoration'
+                                                                            : 'foregroundDecoration']['color'],
+                                                                      ),
+                                                                      TreeNode< String>(
+                                                                        label:  Text('border', style: childStyle),
+                                                                        icon: Icon(TablerIcons.border_sides, size: 15),
+                                                                        checkboxSize:
+                                                                            childPinSize,
+                                                                        isSelected: currentItemDecoration.pinned[i == 0
+                                                                            ? 'decoration'
+                                                                            : 'foregroundDecoration']['border'],
+                                                                      ),
+                                                                      TreeNode<String>(
+                                                                          label: Text('cornerRadius', style: childStyle),
+                                                                          icon: Icon(TablerIcons.border_corners, size: 15),
+                                                                          checkboxSize: childPinSize,
+                                                                          isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['borderRadius']['isPinned'],
+                                                                          isExpanded: expansionLevels[i == 0 ? 4 : 7],
+                                                                          alternateChildren: false,
+                                                                          children: [
+                                                                            TreeNode<String>(label: Text('topLeft', style: childStyle), icon: Icon(TablerIcons.radius_top_left, size: 15), checkboxSize: childPinSize, isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['borderRadius']['topLeft']),
+                                                                            TreeNode<String>(label: Text('topRight', style: childStyle), icon: Icon(TablerIcons.radius_top_right, size: 15), checkboxSize: childPinSize, isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['borderRadius']['topRight']),
+                                                                            TreeNode<String>(label: Text('bottomLeft', style: childStyle), icon: Icon(TablerIcons.radius_bottom_left, size: 15), checkboxSize: childPinSize, isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['borderRadius']['bottomLeft']),
+                                                                            TreeNode<String>(label: Text('bottomRight', style: childStyle), icon: Icon(TablerIcons.radius_bottom_right, size: 15), checkboxSize: childPinSize, isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['borderRadius']['bottomRight']),
+                                                                          ]),
+                                                                      TreeNode<
+                                                                          String>(
+                                                                        label:
+                                                                            Text('shadow', style: childStyle),
+                                                                        icon:
+                                                                            Icon(TablerIcons.shadow, size: 15),
+                                                                        checkboxSize:
+                                                                            childPinSize,
+                                                                        isSelected: currentItemDecoration.pinned[i == 0
+                                                                            ? 'decoration'
+                                                                            : 'foregroundDecoration']['boxShadow'],
+                                                                      ),
+                                                                      TreeNode<String>(
+                                                                          label: Text('image', style: childStyle),
+                                                                          isExpanded: expansionLevels[i == 0 ? 5 : 8],
+                                                                          icon: Icon(TablerIcons.photo, size: 15),
+                                                                          checkboxSize: childPinSize,
+                                                                          alternateChildren: false,
+                                                                          indentSize: 5,
+                                                                          isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['isPinned'],
+                                                                          children: [
+                                                                            TreeNode<String>(
+                                                                              label: Text('file', style: childStyle),
+                                                                              selectable: false,
+                                                                              icon: Icon(TablerIcons.file_type_jpg, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['bytes'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('fit', style: childStyle),
+                                                                              icon: Icon(TablerIcons.artboard, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['fit'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('repeat', style: childStyle),
+                                                                              icon: Icon(TablerIcons.layout_grid, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['repeat'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('align', style: childStyle),
+                                                                              icon: Icon(TablerIcons.align_box_left_stretch, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['alignment'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('scale', style: childStyle),
+                                                                              icon: Icon(TablerIcons.scale, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['scale'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('opacity', style: childStyle),
+                                                                              icon: Icon(TablerIcons.square_toggle, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['opacity'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('quality', style: childStyle),
+                                                                              icon: Icon(TablerIcons.michelin_star, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['filterQuality'],
+                                                                            ),
+                                                                            TreeNode<String>(
+                                                                              label: Text('invert', style: childStyle),
+                                                                              icon: Icon(TablerIcons.brightness_2, size: 15),
+                                                                              checkboxSize: childPinSize,
+                                                                              isSelected: currentItemDecoration.pinned[i == 0 ? 'decoration' : 'foregroundDecoration']['image']['invertColors'],
+                                                                            ),
+                                                                          ]),
+                                                                      
+                                                                    ]),
+                                  
+                                                              //transform
+                                                              TreeNode(
+                                                                label: Text(
+                                                                    'transform',
+                                                                    style:
+                                                                        style),
+                                                            icon: Icon(
+                                                                TablerIcons .transform_point,
+                                                                size:  16,
+                                                                color: iconColor),
+                                                            indentSize: 17,
+                                                            alternateChildren: false,
+                                                            checkboxSize:  20,
+                                                            isSelected: (currentItemDecoration)
+                                                                .pinned['transform']['isPinned'],
+                                                          ),
+                                                        ])
+                                                      ])
+                                                : null
+                                                : null,
+                                                ),
+                                                //ALL THE EDITOR UIs
+                                                if (decorationIndex != -1 && !isListDecorationLibraryToggled)
+                                                  if (decorationIterator(sheetListItem.listDecoration.itemDecorationList[
+                                                        decorationIndex], sheetDecorationList)
+                                                    is ItemDecoration)
+                                                  ...buildItemDecorationEditor(
+                                                      (decorationIterator(sheetListItem.listDecoration
+                                                            .itemDecorationList[
+                                                        decorationIndex], sheetDecorationList)
+                                                          as ItemDecoration), shadowLayerIndex: sheetDecorationVariables[decorationIndex].listShadowLayerSelectedIndex),
+                                                //If selected layer is superdecoration
+                                                if (decorationIndex != -1 && !isListDecorationLibraryToggled)
+                                                  if (decorationIterator(sheetListItem.listDecoration.itemDecorationList[
+                                                        decorationIndex], sheetDecorationList)
+                                                    is SuperDecoration)
+                                                      ...buildSuperDecorationEditor(decorationIterator(sheetListItem.listDecoration
+                                                            .itemDecorationList[
+                                                        decorationIndex], sheetDecorationList)
+                                                          as SuperDecoration),
+
+                                                
+                                                if(isListDecorationLibraryToggled)
+                                                Padding(
+                                                  padding: const EdgeInsets.all(4.0),
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      // SizedBox(height:4),
+                                                       ...filteredDecorations.map((e) {
+                                                        if(e.id == sheetListItem.listDecoration.id){
+                                                          return SizedBox();
+                                                        }
+                                                    return Container(
+                                                      width: width,
+                                                      margin: EdgeInsets.only(bottom: 4),
+                                                      padding: EdgeInsets.all(3),
+                                                       decoration: BoxDecoration(
+                                                      color: defaultPalette.secondary,
+                                                      border: Border.all(color: defaultPalette.extras[0],),
+                                                      borderRadius: BorderRadius.circular(5)
+                                                    ),
+                                                      child: Column(
+                                                        children: [
+                                                          // the preview in the cards and details in searching decoration
+                                                          Container( 
+                                                            padding: EdgeInsets.all(3),
+                                                            decoration: BoxDecoration(
+                                                            color: defaultPalette.primary,
+                                                            border: Border.all(color: defaultPalette.extras[0],),
+                                                            borderRadius: BorderRadius.circular(5)),
+                                                            child: Row(
+                                                              // crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                SizedBox(
+                                                                  height:75,
+                                                                  width:55,
+                                                                  child: buildDecoratedContainer(
+                                                                   !(e is ItemDecoration)? e: SuperDecoration(id: 'yo', itemDecorationList: [e.id]), 
+                                                                  SizedBox(
+                                                                    height: 20, width:20
+                                                                  ), true),
+                                                                ),
+                                                                SizedBox(  width:3),
+
+                                                                Expanded(
+                                                                  child: Column(
+                                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                                                    children: [
+                                                                      Text(e.name, style: GoogleFonts.lexend(
+                                                                        color: defaultPalette.extras[0],
+                                                                        letterSpacing:-1,
+                                                                        fontSize: 15), maxLines: 2),
+                                                                      Text(e.id, style: GoogleFonts.lexend(
+                                                                        color: defaultPalette.extras[0],
+                                                                        letterSpacing:-0.5,
+                                                                        fontSize: 8),maxLines: 1,textAlign: TextAlign.end,),
+                                                                      SizedBox(  height:5),
+                                                                      // The runTimeType badge for Decoration in Search
+                                                                      Container(decoration: BoxDecoration(
+                                                                      color: defaultPalette.secondary,
+                                                                      border: Border.all(width: 0.6),
+                                                                      borderRadius: BorderRadius.circular(5),),
+                                                                        child: SingleChildScrollView(
+                                                                          scrollDirection: Axis.horizontal,
+                                                                          child: Row(
+                                                                            mainAxisSize: MainAxisSize.min,
+
+                                                                            children: [
+                                                                              SizedBox(  width:3),
+                                                                              DecoratedBox(decoration: BoxDecoration(
+                                                                                borderRadius: BorderRadius.circular(9999),
+                                                                                color:(e is ItemDecoration)? defaultPalette.tertiary: defaultPalette.extras[2],
+                                                                              ), child: SizedBox(height: 10,width: 10,),),
+                                                                              SizedBox(  width:3),
+                                                                              Text(e.runtimeType.toString(), style: GoogleFonts.lexend(
+                                                                              color: defaultPalette.extras[0],
+                                                                              letterSpacing:-1,
+                                                                              fontSize: 10), maxLines: 1,),
+                                                                              SizedBox(  width:3),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      // SizedBox(  height:5),
+                                                                      
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          SizedBox(  height:3),
+                                                          // the buttons in the cards and functions in searching decoration
+                                                          
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.start,
+                                                            children: [
+                                                              
+                                                            UtilityWidgets.maybeTooltip(
+                                                              message: 'add this as a layer to the current SuperDecoration.',
+                                                              child: roundButton(
+                                                                () { 
+                                                                if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
+                                                                  var currentItemDecoration = decorationIterator(
+                                                                  sheetListItem.listDecoration.id,
+                                                                  sheetDecorationList); 
+                                                                    
+                                                                  if (currentItemDecoration is SuperDecoration) {
+                                                                    // Create a new list with the updated decoration IDs
+                                                                    var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
+                                                                    updatedList.add(e.id);
+                                                                                                            
+                                                                    // Create the updated decoration using copyWith
+                                                                    var updatedDecoration = currentItemDecoration.copyWith(
+                                                                      itemDecorationList: updatedList,
+                                                                    );
+                                                                                                            
+                                                                    // Find the index and update the list with the new decoration
+                                                                    int index = sheetDecorationList.indexWhere((deco) => deco.id == currentItemDecoration.id);
+                                                                    if (index != -1) {
+                                                                      sheetDecorationList[index] = updatedDecoration;
+                                                                    }
+                                                                                                            
+                                                                    // Also update the decoration reference in the item itself
+                                                                    sheetListItem.listDecoration = updatedDecoration;
+                                                                                                            
+                                                                    print('New decoration added');
+                                                                    print(updatedDecoration.itemDecorationList);
+                                                                  } else {
+                                                                    print('Error: Decoration is not a SuperDecoration');
+                                                                  }
+                                                                } else {
+                                                                  print('Guys come on, turn this into a super now');
+                                                                }
+                                                                },
+                                                                Icon(TablerIcons.plus,size: 14,), 'add',padding: EdgeInsets.all(2), showText: false),
+                                                            ),
+                                                              
+                                                            UtilityWidgets.maybeTooltip(
+                                                              message: 'delete this decoration permanently.',
+                                                              child: roundButton(() {
+                                                                                                            
+                                                                int index = sheetDecorationList.indexWhere((deco) => deco.id == e.id);
+                                                                if (index != -1) {
+                                                                  sheetDecorationList.removeAt(index);
+                                                                }
+                                                                Boxes.getDecorations().deleteAt(index);
+                                                                saveDecorations(sheetDecorationList);
+                                                                filteredDecorations = sheetDecorationList
+                                                                .where((decoration) =>
+                                                                    decoration.name.toLowerCase().contains(decorationSearchController.text.toLowerCase()))
+                                                                .toList();
+                                                                },Icon(TablerIcons.trash,size: 14,), 'delete',padding: EdgeInsets.all(2), showText: false),
+                                                            ),
+                                                            if(e is SuperDecoration)
+                                                            UtilityWidgets.maybeTooltip(
+                                                              message: 'switch the current SuperDecoration with this one.',
+                                                              child: roundButton(() {
+                                                              
+                                                                sheetListItem.listDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
+                                                                updateListDecorationVariables(sIndex: -1);
+                                                                decorationIndex =-1;
+                                                                filteredDecorations = sheetDecorationList
+                                                                .where((decoration) =>
+                                                                    decoration.name.toLowerCase().contains(decorationSearchController.text.toLowerCase()))
+                                                                .toList();
+                                                                },Icon(TablerIcons.replace,size: 14,), 'switchTo',padding: EdgeInsets.all(2), showText: false),
+                                                            ),
+                                                            
+                                                            if(e is SuperDecoration)
+                                                            UtilityWidgets.maybeTooltip(
+                                                              message: '''add it's child layers to the current SuperDecoration.''',
+                                                              child: roundButton(() {
+                                                                if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
+                                                                  
+                                                                  
+                                                                  if (sheetListItem.listDecoration is SuperDecoration) {
+                                                                    // Create a new list with the updated decoration IDs
+                                                                    var updatedList = List<String>.from(sheetListItem.listDecoration.itemDecorationList);
+                                                                    updatedList.addAll(e.itemDecorationList);
+                                                                                                            
+                                                                    // Create the updated decoration using copyWith
+                                                                    var updatedDecoration = sheetListItem.listDecoration.copyWith(
+                                                                      itemDecorationList: updatedList,
+                                                                    );
+                                                                                                            
+                                                                    // Find the index and update the list with the new decoration
+                                                                    int index = sheetDecorationList.indexWhere((deco) => deco.id == sheetListItem.listDecoration.id);
+                                                                    if (index != -1) {
+                                                                      sheetDecorationList[index] = updatedDecoration;
+                                                                    }
+                                                                                                            
+                                                                    // Also update the decoration reference in the item itself
+                                                                    sheetListItem.listDecoration = updatedDecoration;
+                                                                                                            
+                                                                    print('New decoration added');
+                                                                    print(updatedDecoration.itemDecorationList);
+                                                                  } else {
+                                                                    print('Error: Decoration is not a SuperDecoration');
+                                                                  }
+                                                                } else {
+                                                                  print('Guys come on, turn this into a super now');
+                                                                }
+                                                                },Icon(TablerIcons.library_plus,size: 14,), 'switchTo',padding: EdgeInsets.all(2), showText: false),
+                                                            ),
+                                                            
+                                                            ],
+                                                          ),    
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },).toList()
+                                                    ],
+                                                  ),
+                                                ),
+                                                if(decorationIndex == -1 && !isListDecorationLibraryToggled)
+                                                ...buildSuperDecorationEditor(sheetListItem.listDecoration)
+                                                
+                                                ],
+                                            ),
+                                          );
+                                        }),
+                                  ),
+                                ),
+                                //Decoration Search Bar
+                                if(isListDecorationLibraryToggled)
+                                Container(
+                                height: 25,
+                                margin: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(color: defaultPalette.extras[0],),
+                                  borderRadius: BorderRadius.circular(5)
+                                ),
+                                child: TextFormField(
+                                    style: GoogleFonts.lexend(
+                                        color: defaultPalette.extras[0],
+                                        letterSpacing:-1,
+                                        fontSize: 15),
+                                    cursorColor: defaultPalette.tertiary,
+                                    controller: decorationSearchController,
+                                    decoration: InputDecoration(
+                                      contentPadding: EdgeInsets.all(0),
+                                      hintText: 'searchDecors...',
+                                      focusColor: defaultPalette.primary,
+                                      hintStyle: GoogleFonts.lexend(
+                                        color: defaultPalette.extras[0],
+                                        letterSpacing:-1,
+                                        fontSize: 15),
+                                      prefixIcon: Icon(TablerIcons.search, size:15,
+                                          color: defaultPalette.extras[0]),
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide.none, 
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onChanged: (query) {
+                                      setState(() {
+                                        // Filter the list of SheetDecoration by their names
+                                        filteredDecorations = sheetDecorationList
+                                            .where((decoration) =>
+                                                decoration.name.toLowerCase().contains(query.toLowerCase()))
+                                            .toList();
+                                         // Debugging output
+                                      });
+                                    },
+                                          
+                                  ),
+                                                              ),
+                                                   
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                  
 
                     //BLACK STRIP ANIMATED OF DECORATION LAYERs BACKGRGOUND
                     AnimatedPositioned(
                       duration: Durations.medium1,
                       curve: Curves.easeOut,
-                      bottom:32,
-                      left:showDecorationLayers?12.5:12,
-                      child:AnimatedContainer(
-                        duration:Durations.medium4,
+                      bottom: 32,
+                      left: showDecorationLayers ? 12.5 : 12,
+                      child: AnimatedContainer(
+                        duration: Durations.medium4,
                         curve: Curves.easeInOut,
-                        height:showDecorationLayers?(sHeight*0.9)-240:0,
-                        width:25,
-                        padding: EdgeInsets.only(left:5),
+                        height:
+                            showDecorationLayers ? (sHeight * 0.9) - 240 : 0,
+                        width: 25,
+                        padding: EdgeInsets.only(left: 5),
                         alignment: Alignment.bottomCenter,
                         decoration: BoxDecoration(
                           color: defaultPalette.extras[0],
-                          borderRadius: BorderRadius.circular(showDecorationLayers?50:0).copyWith(bottomLeft: Radius.circular(0)),
+                          borderRadius: BorderRadius.circular(
+                                  showDecorationLayers ? 50 : 0)
+                              .copyWith(bottomLeft: Radius.circular(0)),
                         ),
-                        child: Text('Decor \n\nLayers \n \n     ', style: GoogleFonts.bungee(
-                          color: defaultPalette.primary.withAlpha(100),
-                          fontSize:10
-                          ) ),
-                      ), 
+                        child: Text('Decor \n\nLayers \n \n     ',
+                            style: GoogleFonts.bungee(
+                                color: defaultPalette.primary.withAlpha(100),
+                                fontSize: 10)),
+                      ),
                     ),
-                    //LAYERS OF DECORATION AS TILES REORDERABLE 
+                    //LAYERS OF DECORATION AS TILES REORDERABLE
                     AnimatedPositioned(
                       duration: Durations.medium3,
                       curve: Curves.easeInBack,
-                      bottom:30,
-                      left:showDecorationLayers?6.5:-50,
-                      child:ClipRRect(
-                        borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(5), bottomRight: Radius.circular(5)),
-                          
+                      bottom: 30,
+                      left: showDecorationLayers ? 6.5 : -50,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(0).copyWith(
+                            topRight: Radius.circular(5),
+                            bottomRight: Radius.circular(5)),
                         child: AnimatedContainer(
-                          duration:Durations.medium1,
-                          curve: Curves.easeInOut,
-                          height: (sHeight*0.9)-250,
-                          width:38,
-                          padding: EdgeInsets.only(bottom:10),
-                          decoration: BoxDecoration(
-                            // color: defaultPalette.secondary,
-                            borderRadius: BorderRadius.circular(50).copyWith(bottomLeft: Radius.circular(0), bottomRight: Radius.circular(0)),
-                          ),
-                          child: ScrollConfiguration(
-                                behavior: ScrollBehavior()
-                                    .copyWith(scrollbars: false),
-                                child: DynMouseScroll(
-                                    durationMS: 500,
-                                    scrollSpeed: 1,
-                                    builder: (context, controller, physics) {
-                                return ScrollbarUltima.semicircle (
-                                  alwaysShowThumb: true, 
-                                  controller: controller,
-                                  scrollbarPosition: ScrollbarPosition.left, 
-                                  backgroundColor: defaultPalette.extras[0],
-                                  scrollbarLength: (sHeight*0.9)-270, 
-                                  isDraggable: true, 
-                                  thumbCrossAxisSize: 5,
-                                  // thumbMainAxisSize: 80,
+                            duration: Durations.medium1,
+                            curve: Curves.easeInOut,
+                            height: (sHeight * 0.9) - 250,
+                            width: 38,
+                            padding: EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              // color: defaultPalette.secondary,
+                              borderRadius: BorderRadius.circular(50).copyWith(
+                                  bottomLeft: Radius.circular(0),
+                                  bottomRight: Radius.circular(0)),
+                            ),
+                            child: ScrollConfiguration(
+                              behavior:
+                                  ScrollBehavior().copyWith(scrollbars: false),
+                              child: DynMouseScroll(
+                                  durationMS: 500,
+                                  scrollSpeed: 1,
+                                  builder: (context, controller, physics) {
+                                    final decorationEntries = sheetListItem.listDecoration.itemDecorationList
+                                    .asMap().entries.toList().reversed.map((entry) {
+                                      // Get the actual decoration using the ID
+                                      final decoration = decorationIterator(entry.value, sheetDecorationList);
+                                      return MapEntry(entry.key, decoration);
+                                    }).toList();
+                                    return ScrollbarUltima.semicircle(
+                                      alwaysShowThumb: true,
+                                      controller: controller,
+                                      scrollbarPosition: ScrollbarPosition.left,
+                                      backgroundColor: defaultPalette.extras[0],
+                                      scrollbarLength: (sHeight * 0.9) - 270,
+                                      isDraggable: true,
+                                      thumbCrossAxisSize: 5,
+                                      elevation: 0,
+                                      arrowsColor: defaultPalette.primary,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 8.0),
+                                        child: ReorderableListView(
+                                          onReorder: (oldIndex, newIndex) {
+                                            setState(() {
+                                              final itemList = sheetListItem
+                                                  .listDecoration
+                                                  .itemDecorationList;
 
-                                  elevation: 0,
-                                  arrowsColor: defaultPalette.primary, 
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left:8.0),
-                                    child: ReorderableListView(
-                                    onReorder: (oldIndex, newIndex) {
-                                      setState(() {
-                                        final itemList = sheetListItem.listDecoration.itemDecorationList;
+                                              final int reversedOldIndex =
+                                                  itemList.length -
+                                                      1 -
+                                                      oldIndex;
+                                              int reversedNewIndex =
+                                                  itemList.length -
+                                                      1 -
+                                                      newIndex;
 
-                                        final int reversedOldIndex = itemList.length - 1 - oldIndex;
-                                        int reversedNewIndex = itemList.length - 1 - newIndex;
+                                              // Fix: clamp new index to minimum 0
+                                              if (reversedOldIndex <
+                                                  reversedNewIndex) {
+                                                reversedNewIndex =
+                                                    reversedNewIndex.clamp(
+                                                        0, itemList.length);
+                                              } else {
+                                                reversedNewIndex =
+                                                    reversedNewIndex.clamp(
+                                                        0, itemList.length);
+                                              }
 
-                                        // Fix: clamp new index to minimum 0
-                                        if (reversedOldIndex < reversedNewIndex) {
-                                          reversedNewIndex = reversedNewIndex.clamp(0, itemList.length);
-                                        } else {
-                                          reversedNewIndex = reversedNewIndex.clamp(0, itemList.length);
-                                        }
-
-                                        final item = itemList.removeAt(reversedOldIndex);
-                                        itemList.insert(reversedNewIndex, item);
-                                      });
-                                    },
-                                    proxyDecorator: (child, index, animation) {
-                                      return child;
-                                    },
-                                    buildDefaultDragHandles: false,
-                                    physics: physics,
-                                    scrollController: controller,
-                                    children: [
-                                      for (final entry in sheetListItem.listDecoration.itemDecorationList.asMap().entries.toList().reversed)
-                                        ReorderableDragStartListener(
-                                          index: sheetListItem.listDecoration.itemDecorationList.length - 1 - entry.key,
-                                          key: ValueKey(entry.value),
-                                          child: Stack(
-                                            children: [
-                                              //tiny layer body of decoration
-                                              AnimatedContainer(
-                                                duration: Duration(
-                                                 milliseconds: (500 + 
-                                                 (300/(
-                                                  (sheetListItem.listDecoration.itemDecorationList.length==1
-                                                  ? 2
-                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
-                                                  * entry.key).round()  
-                                                ),
-                                                curve: Curves.easeIn,
-                                                height:(((sHeight*0.9)-250)/(decorationIndex == entry.key?8:10.3)).clamp(0, decorationIndex == entry.key?70:50),
-                                                alignment: Alignment.topCenter, // Set pivot to bottom-left
-                                                  transform: Matrix4.identity()
-                                                    ..translate(showDecorationLayers?0.0:(-((sHeight*0.9)-250)/10).clamp(double.negativeInfinity, 50))
-                                                    ..rotateZ(showDecorationLayers?0: -math.pi / 2),
-                                                margin: EdgeInsets.only(bottom: 5, right:showDecorationLayers? 0: (10*entry.key)+1),
-                                                padding: EdgeInsets.only(top: 4, left:15),
-                                                decoration: BoxDecoration(
-                                                  color: entry.value is ItemDecoration? decorationIndex == entry.key? defaultPalette.extras[0]: defaultPalette.tertiary:defaultPalette.extras[1] ,
-                                                  borderRadius: BorderRadius.circular(showDecorationLayers? 5:500).copyWith(
-                                                   
-                                                  ),  
-                                                   
-                                                ),
-                                                 ),
-                                              
-                                              
-                                              //Border for when tapped 
-                                              AnimatedOpacity(duration: Duration(
-                                                   milliseconds: (500 + 
-                                                 (300/(
-                                                  (sheetListItem.listDecoration.itemDecorationList.length==1
-                                                  ? 2
-                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
-                                                  * entry.key).round()  
-                                                  ), opacity: decorationIndex == entry.key?1:0,
-                                                child: AnimatedContainer(
-                                                  duration: Duration(
-                                                   milliseconds: 600
-                                                  ),
-                                                  curve: Curves.easeIn,
-                                                  height:(((sHeight*0.9)-250)/(decorationIndex == entry.key?8:10.3)).clamp(0,decorationIndex == entry.key?70: 50),
-                                                  alignment: Alignment.topLeft, // Set pivot to bottom-left
-                                                    transform: Matrix4.identity()
-                                                      ..translate(showDecorationLayers?0.0:(-((sHeight*0.9)-250)/10).clamp(double.negativeInfinity, 50))
-                                                      ..rotateZ(showDecorationLayers?0: -math.pi / 2),
-                                                  margin: EdgeInsets.only(bottom: 5, right:showDecorationLayers? 0: (10*entry.key)+1),
-                                                  padding: EdgeInsets.all( 1),
-                                                  decoration: BoxDecoration(
-                                                    // color: entry.value is ItemDecoration? defaultPalette.tertiary:defaultPalette.extras[1] ,
-                                                    borderRadius: BorderRadius.circular(showDecorationLayers? 5:500), 
-                                                    border: Border( 
-                                                      right: BorderSide(color: defaultPalette.tertiary,
-                                                      width: 2),
-                                                       left: BorderSide(color: defaultPalette.tertiary,
-                                                      width: 2),
-                                                       top: BorderSide(color: defaultPalette.tertiary,
-                                                      width: 2),
-                                                       bottom: BorderSide(color: defaultPalette.tertiary,
-                                                      width: 16),
-                                                      
-                                                    )
-                                                  ),
-                                                  child:  buildDecoratedContainer(SuperDecoration(id: 'id', itemDecorationList: [sheetListItem.listDecoration.itemDecorationList[entry.key]]), SizedBox(height: 10,width: 10,),true) ,
-                                             
-                                                ),
-                                              ),
-                                              
-                                              //onTap onHover Functions
-                                              Padding(
-                                                padding: const EdgeInsets.all(1.0),
-                                                child: ClipRRect(
-                                                  borderRadius: BorderRadius.circular(showDecorationLayers? 5:500),
-                                                  child: Material(
-                                                    color: defaultPalette.transparent,
-                                                    child: InkWell(
-                                                      hoverColor:decorationIndex == entry.key?defaultPalette.transparent: defaultPalette.primary ,
-                                                      highlightColor:decorationIndex == entry.key?defaultPalette.transparent: defaultPalette.primary,
-                                                      splashColor:decorationIndex == entry.key?defaultPalette.transparent: defaultPalette.extras[0],
-                                                      onTap: () {
-                                                        setState(() {
-                                                          if (decorationIndex != entry.key) {
-                                                            decorationIndex = entry.key;
-                                                            // decorTreeViewKey.currentState?.setState(() {
-                                                            decorationNameController.text = sheetListItem.listDecoration.itemDecorationList[decorationIndex].name;
-                                                            // });
-                                                           
-                                                          }
-                                                          updateListDecorationVariables();
-                                                        });
-                                                      },
-                                                      child:SizedBox(
-                                                        width: 40,
-                                                        height:(((sHeight*0.9)-250)/10.3).clamp(0, 50)-2 ,
-                                                      )
+                                              final item = itemList
+                                                  .removeAt(reversedOldIndex);
+                                              itemList.insert(
+                                                  reversedNewIndex, item);
+                                            });
+                                          },
+                                          proxyDecorator:
+                                              (child, index, animation) {
+                                            return child;
+                                          },
+                                          buildDefaultDragHandles: false,
+                                          physics: physics,
+                                          scrollController: controller,
+                                          children: [
+                                            for (final entry in decorationEntries)
+                                              ReorderableDragStartListener(
+                                                index: sheetListItem
+                                                        .listDecoration
+                                                        .itemDecorationList
+                                                        .length -
+                                                    1 -
+                                                    entry.key,
+                                                key: ValueKey(entry.key),
+                                                child: Stack(
+                                                  children: [
+                                                    //tiny layer body of decoration
+                                                    AnimatedContainer(
+                                                      duration: Duration(
+                                                          milliseconds: (500 +
+                                                                  (300 /((sheetListItem.listDecoration.itemDecorationList.length == 1 
+                                                                  ? 2 
+                                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) * entry.key)
+                                                              .round()),
+                                                      curve: Curves.easeIn,
+                                                      height: (((sHeight * 0.9) - 250) / (decorationIndex == entry.key ? 8 : 10.3))
+                                                          .clamp(0, decorationIndex == entry.key ? 70 : 50),
+                                                      alignment: Alignment.topCenter, // Set pivot to bottom-left
+                                                      transform: Matrix4.identity()
+                                                      ..translate(showDecorationLayers
+                                                            ? 0.0
+                                                            : (-((sHeight * 0.9) - 250) /10).clamp(double.negativeInfinity, 50))
+                                                        ..rotateZ( showDecorationLayers? 0: -math.pi / 2),
+                                                      margin: EdgeInsets.only(
+                                                          bottom: 5,
+                                                          right: showDecorationLayers
+                                                              ? 0
+                                                              : (10 *entry.key) + 1),
+                                                      padding: EdgeInsets.only(
+                                                          top: 4, left: 15),
+                                                      decoration: BoxDecoration(
+                                                        color: entry.value
+                                                                is ItemDecoration
+                                                            ? decorationIndex ==
+                                                                    entry.key
+                                                                ? defaultPalette
+                                                                    .extras[0]
+                                                                : defaultPalette
+                                                                    .tertiary
+                                                            : defaultPalette
+                                                                .extras[1],
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                    showDecorationLayers
+                                                                        ? 5
+                                                                        : 500)
+                                                                .copyWith(),
+                                                      ),
                                                     ),
-                                                  ),
-                                                ),
-                                              ),
-                                              
-                                              
-                                              //Numbering on the right of the tiny layer box
-                                              AnimatedPositioned(
-                                                duration: Duration(
-                                                 milliseconds: (500 + 
-                                                 (300/(
-                                                  (sheetListItem.listDecoration.itemDecorationList.length==1
-                                                  ? 2
-                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) 
-                                                  * entry.key).round()  
-                                                ),
-                                                bottom:showDecorationLayers?decorationIndex == entry.key?6:(((sHeight*0.9)-250)/10).clamp(0, 50)/2.5:0,
-                                                right:decorationIndex == entry.key?8: 2,
-                                                child:decorationIndex == entry.key?GestureDetector(
-                                                  onTap: () {
-                                                    if (decorationIndex != -1) {
-                                                        
-                                                        setState(() {
-                                                            
-                                                          if (sheetListItem.listDecoration.itemDecorationList.length >1) {
-                                                            sheetListItem.listDecoration.itemDecorationList.removeAt(decorationIndex);
-                                                            decorationIndex -= 1; 
-                                                          }
-                                                        });
-                                                      }
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.trash, size:14, color: defaultPalette.extras[0],
-                                                  ),
-                                                ): CountingAnimation(
-                                                  value: (entry.key).toString(),
-                                                  mainAlignment: MainAxisAlignment.end,
-                                                  singleScollDuration: Durations.short1,
-                                                  scrollCount: 2,
-                                                  textStyle: GoogleFonts.bungee(
-                                                    fontSize:decorationIndex == entry.key?15:10,
-                                                    color: decorationIndex == entry.key? defaultPalette.primary : defaultPalette.extras[0], 
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          key: ValueKey('rty'),
-                                          height:10)
-                                    ],
-                                  ),
 
-                                  ),
-                                );
-                                                              }
+                                                    //Border for when tapped
+                                                    AnimatedOpacity(
+                                                      duration: Duration(
+                                                          milliseconds: (500 +
+                                                                  (300 /
+                                                                          ((sheetListItem.listDecoration.itemDecorationList.length == 1 ? 2 : sheetListItem.listDecoration.itemDecorationList.length) -
+                                                                              1)) *
+                                                                      entry.key)
+                                                              .round()),
+                                                      opacity:
+                                                          decorationIndex ==
+                                                                  entry.key
+                                                              ? 1
+                                                              : 0,
+                                                      child: AnimatedContainer(
+                                                        duration: Duration(
+                                                            milliseconds: 600),
+                                                        curve: Curves.easeIn,
+                                                        height: (((sHeight *
+                                                                        0.9) -
+                                                                    250) /
+                                                                (decorationIndex ==
+                                                                        entry
+                                                                            .key
+                                                                    ? 8
+                                                                    : 10.3))
+                                                            .clamp(
+                                                                0,
+                                                                decorationIndex ==
+                                                                        entry
+                                                                            .key
+                                                                    ? 70
+                                                                    : 50),
+                                                        alignment: Alignment
+                                                            .topLeft, // Set pivot to bottom-left
+                                                        transform: Matrix4
+                                                            .identity()
+                                                          ..translate(showDecorationLayers
+                                                              ? 0.0
+                                                              : (-((sHeight * 0.9) -
+                                                                          250) /
+                                                                      10)
+                                                                  .clamp(
+                                                                      double
+                                                                          .negativeInfinity,
+                                                                      50))
+                                                          ..rotateZ(
+                                                              showDecorationLayers
+                                                                  ? 0
+                                                                  : -math.pi /
+                                                                      2),
+                                                        margin: EdgeInsets.only(
+                                                            bottom: 5,
+                                                            right: showDecorationLayers
+                                                                ? 0
+                                                                : (10 *
+                                                                        entry
+                                                                            .key) +
+                                                                    1),
+                                                        padding:
+                                                            EdgeInsets.all(1),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                                // color: entry.value is ItemDecoration? defaultPalette.tertiary:defaultPalette.extras[1] ,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                        showDecorationLayers
+                                                                            ? 5
+                                                                            : 500),
+                                                                border: Border(
+                                                                  right: BorderSide(
+                                                                      color: defaultPalette
+                                                                          .tertiary,
+                                                                      width: 2),
+                                                                  left: BorderSide(
+                                                                      color: defaultPalette
+                                                                          .tertiary,
+                                                                      width: 2),
+                                                                  top: BorderSide(
+                                                                      color: defaultPalette
+                                                                          .tertiary,
+                                                                      width: 2),
+                                                                  bottom: BorderSide(
+                                                                      color: defaultPalette
+                                                                          .tertiary,
+                                                                      width:
+                                                                          16),
+                                                                )),
+                                                        child:
+                                                            buildDecoratedContainer(
+                                                                SuperDecoration(
+                                                                    id: 'id',
+                                                                    itemDecorationList: [
+                                                                      sheetListItem
+                                                                          .listDecoration
+                                                                          .itemDecorationList[entry.key]
+                                                                    ]),
+                                                                SizedBox(
+                                                                  height: 10,
+                                                                  width: 10,
+                                                                ),
+                                                                true),
+                                                      ),
+                                                    ),
+
+                                                    //onTap onHover Functions
+                                                    if(decorationIndex != entry.key)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              1.0),
+                                                      child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                showDecorationLayers
+                                                                    ? 5
+                                                                    : 500),
+                                                        child: Material(
+                                                          color: defaultPalette
+                                                              .transparent,
+                                                          child: InkWell(
+                                                              hoverColor: decorationIndex == entry.key
+                                                                  ? defaultPalette.transparent
+                                                                  : defaultPalette.primary,
+                                                              highlightColor: decorationIndex ==entry.key
+                                                                  ? defaultPalette.transparent
+                                                                  : defaultPalette.primary,
+                                                              splashColor: decorationIndex == entry.key
+                                                                  ? defaultPalette .transparent
+                                                                  : defaultPalette.tertiary,
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  if (decorationIndex !=
+                                                                        entry
+                                                                            .key) {
+                                                                      decorationIndex =
+                                                                          entry
+                                                                              .key;
+                                                                      var itemDecoration = decorationIterator(
+                                                                          sheetListItem
+                                                                              .listDecoration
+                                                                              .itemDecorationList[decorationIndex],
+                                                                          sheetDecorationList);
+                                                                      decorationNameController
+                                                                              .text =
+                                                                          itemDecoration
+                                                                              .name;
+                                                                      isListDecorationLibraryToggled =
+                                                                          false;
+                                                                      
+                                                                      updateListDecorationVariables(
+                                                                          sIndex:
+                                                                              -1);
+
+                                                                      if (itemDecoration
+                                                                          is SuperDecoration) {
+                                                                        sheetDecorationVariables = itemDecoration
+                                                                            .itemDecorationList
+                                                                            .map(
+                                                                          (e) {
+                                                                            return SheetDecorationVariables(
+                                                                              id: e,
+                                                                              marginFocusNodes: List.generate(
+                                                                                5,
+                                                                                (index) => FocusNode(),
+                                                                              ),
+                                                                              listPaddingFocusNodes: List.generate(
+                                                                                5,
+                                                                                (index) => FocusNode(),
+                                                                              ),
+                                                                              colorHexFocusNodes: List.generate(
+                                                                                2,
+                                                                                (index) => FocusNode(),
+                                                                              ),
+                                                                              borderFocusNodes: List.generate(
+                                                                                3,
+                                                                                (index) => FocusNode(),
+                                                                              ),
+                                                                              borderRadiusFocusNodes: List.generate(
+                                                                                5,
+                                                                                (index) => FocusNode(),
+                                                                              ),
+                                                                              listBorderFocusNodes: List.generate(
+                                                                                5,
+                                                                                (index) => FocusNode(),
+                                                                              ),
+                                                                              listShadowFocusNodes: List.generate(
+                                                                                sheetDecorationList.firstWhere(
+                                                                                  (element) => element.id == e,
+                                                                                ) is ItemDecoration
+                                                                                    ? (sheetDecorationList.firstWhere(
+                                                                                          (element) => element.id == e,
+                                                                                        ) as ItemDecoration)
+                                                                                            .decoration
+                                                                                            .boxShadow
+                                                                                            ?.length ??
+                                                                                        1
+                                                                                    : 1,
+                                                                                (i) {
+                                                                                  return List.generate(
+                                                                                    5,
+                                                                                    (index) => FocusNode(),
+                                                                                  );
+                                                                                },
+                                                                              ),
+                                                                              listImageAlignFocusNodes: [
+                                                                                FocusNode(),
+                                                                                FocusNode()
+                                                                              ],
+                                                                              listImagePropertyFocusNodes: [
+                                                                                FocusNode(),
+                                                                                FocusNode()
+                                                                              ],
+                                                                              listShadowLayerSelectedIndex: 0,
+                                                                            );
+                                                                          },
+                                                                        ).toList();
+                                                                      } else{
+                                                                        _findSheetListItem();
+                                                                        decorationIndex =
+                                                                          entry
+                                                                              .key;
+                                                                        }
+
+                                                                    }
+                                                                });
+                                                              },
+                                                              child: SizedBox(
+                                                                width: 40,
+                                                                height: (((sHeight * 0.9) - 250) / (decorationIndex == entry.key ? 8 : 10.3))
+                                                          .clamp(0, decorationIndex == entry.key ? 70 : 50) -
+                                                                    2,
+                                                              )),
+                                                        ),
+                                                      ),
+                                                    ),
+
+                                                    //Numbering on the right of the tiny layer box
+                                                    AnimatedPositioned(
+                                                      duration: Duration(
+                                                          milliseconds: (500 +
+                                                                  (300 /
+                                                                          ((sheetListItem.listDecoration.itemDecorationList.length == 1 ? 2 : sheetListItem.listDecoration.itemDecorationList.length) -
+                                                                              1)) *
+                                                                      entry.key)
+                                                              .round()),
+                                                      bottom:
+                                                          showDecorationLayers
+                                                              ? decorationIndex ==
+                                                                      entry.key
+                                                                  ? 6
+                                                                  : (((sHeight * 0.9) - 250) /
+                                                                              10)
+                                                                          .clamp(
+                                                                              0,
+                                                                              50) /
+                                                                      2.5
+                                                              : 0,
+                                                      right: decorationIndex ==
+                                                              entry.key
+                                                          ? 8
+                                                          : 2,
+                                                      child: decorationIndex ==
+                                                              entry.key
+                                                          ? GestureDetector(
+                                                              onTap: () {
+                                                                if (decorationIndex !=
+                                                                    -1) {
+                                                                  setState(() {
+                                                                    if (sheetListItem
+                                                                            .listDecoration
+                                                                            .itemDecorationList
+                                                                            .length >
+                                                                        1) {
+                                                                      sheetListItem
+                                                                          .listDecoration
+                                                                          .itemDecorationList
+                                                                          .removeAt(
+                                                                              decorationIndex);
+                                                                      decorationIndex -=
+                                                                          1;
+                                                                    }
+                                                                  });
+                                                                }
+                                                              },
+                                                              child: Icon(
+                                                                TablerIcons
+                                                                    .trash,
+                                                                size: 14,
+                                                                color: defaultPalette
+                                                                    .extras[0],
+                                                              ),
+                                                            )
+                                                          : CountingAnimation(
+                                                              value: (entry.key)
+                                                                  .toString(),
+                                                              mainAlignment:
+                                                                  MainAxisAlignment
+                                                                      .end,
+                                                              singleScollDuration:
+                                                                  Durations
+                                                                      .short1,
+                                                              scrollCount: 2,
+                                                              textStyle:
+                                                                  GoogleFonts
+                                                                      .bungee(
+                                                                fontSize:
+                                                                    decorationIndex ==
+                                                                            entry.key
+                                                                        ? 15
+                                                                        : 10,
+                                                                color: decorationIndex ==
+                                                                        entry
+                                                                            .key
+                                                                    ? defaultPalette
+                                                                        .primary
+                                                                    : defaultPalette
+                                                                        .extras[0],
+                                                              ),
                                                             ),
-                          )
-                        
-                        ),
-                      ), 
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            SizedBox(
+                                                key: ValueKey('rty'),
+                                                height: 10)
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                            )),
+                      ),
                     ),
                     //BUTTON SHOW LAYER OF DECORATION
                     Positioned(
-                      bottom:17,
-                      left:12,
-                      child:
-                        ElevatedLayerButton(
-                          // isTapped: false,
-                          // toggleOnTap: true,
-                          subfac: 3,
-                          depth: 3,
-                          onClick: () {
-                            // Future.delayed(Duration.zero)
-                            //     .then((y) {
-                            //   appWindow.minimize();
-                            // });
-                            setState(() {
-                              showDecorationLayers = !showDecorationLayers;
-                              if (sheetListItem.id == 'yo') {
-                                _findSheetListItem();
-                              }
-                            });
-                          },
-                          buttonHeight: 35,
-                          buttonWidth: 35,
-                          borderRadius:
-                              BorderRadius.circular(30),
-                          animationDuration:
-                              const Duration(milliseconds: 10),
-                          animationCurve: Curves.ease,
-                          topDecoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(),
-                          ),
-                          topLayerChild: Icon(
-                            TablerIcons.stack_2,
-                            size: 18,
-                            // color: defaultPalette.tertiary
-                            // color: Colors.blue,
-                          ),
-                          baseDecoration: BoxDecoration(
-                            color: defaultPalette.extras[0],
-                            border: Border.all(),
-                          ),
+                      bottom: 17,
+                      left: 12,
+                      child: ElevatedLayerButton(
+                        // isTapped: false,
+                        // toggleOnTap: true,
+                        subfac: 3,
+                        depth: 3,
+                        onClick: () {
+                          // Future.delayed(Duration.zero)
+                          //     .then((y) {
+                          //   appWindow.minimize();
+                          // });
+                          setState(() {
+                            showDecorationLayers = !showDecorationLayers;
+                            if (sheetListItem.id == 'yo') {
+                              _findSheetListItem();
+                            }
+                          });
+                        },
+                        buttonHeight: 35,
+                        buttonWidth: 35,
+                        borderRadius: BorderRadius.circular(30),
+                        animationDuration: const Duration(milliseconds: 10),
+                        animationCurve: Curves.ease,
+                        topDecoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(),
                         ),
+                        topLayerChild: Icon(
+                          TablerIcons.stack_2,
+                          size: 18,
+                          // color: defaultPalette.tertiary
+                          // color: Colors.blue,
+                        ),
+                        baseDecoration: BoxDecoration(
+                          color: defaultPalette.extras[0],
+                          border: Border.all(),
+                        ),
+                      ),
                     ),
-                    
                   ],
                   // Positioned.fill(child: Center(child: Text(sheetListItem.id))),
                   // Left and Right adjustments
@@ -17855,7 +18892,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
- 
   Container buildDecoratedContainer(
     SuperDecoration superDecoration,
     Widget child,
@@ -17863,29 +18899,36 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   ) {
     Widget current = child;
 
-    List<SheetDecoration> stack = superDecoration.itemDecorationList;
+    List<SheetDecoration> stack =
+        decorationListIterator(superDecoration.itemDecorationList);
 
     for (int i = stack.length - 1; i >= 0; i--) {
       final deco = stack[i];
 
       if (deco is ItemDecoration) {
         BoxDecoration boxDecoration = deco.decoration;
-        Border border = ((boxDecoration.border ?? Border.all()) as Border);
+        Border border = ((boxDecoration.border ?? Border.all(color: defaultPalette.transparent)) as Border);
         // If dashLength > 0, apply dashed border
-         
 
         current = Container(
-          padding:  deco.padding,
-          margin:  deco.margin,
+          padding: deco.padding,
+          margin: deco.margin,
           alignment: deco.alignment,
           decoration: boxDecoration.copyWith(
-            border: Border(
-              top: border.top.copyWith(width: border.top.width.clamp(0, isPreview? 15:double.infinity)),
-              bottom: border.bottom.copyWith(width: border.bottom.width.clamp(0, isPreview? 15:double.infinity)),
-              left: border.left.copyWith(width: border.left.width.clamp(0, isPreview? 15:double.infinity)),
-              right: border.right.copyWith(width: border.right.width.clamp(0, isPreview? 15:double.infinity)),
-            )
-          ),
+              border: Border(
+            top: border.top.copyWith(
+                width: border.top.width
+                    .clamp(0, isPreview ? 15 : double.infinity)),
+            bottom: border.bottom.copyWith(
+                width: border.bottom.width
+                    .clamp(0, isPreview ? 15 : double.infinity)),
+            left: border.left.copyWith(
+                width: border.left.width
+                    .clamp(0, isPreview ? 15 : double.infinity)),
+            right: border.right.copyWith(
+                width: border.right.width
+                    .clamp(0, isPreview ? 15 : double.infinity)),
+          )),
           foregroundDecoration: deco.foregroundDecoration,
           transform: deco.transform,
           child: current,
@@ -17897,95 +18940,241 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     return Container(child: current);
   }
-  
+
+  List<Widget> buildSuperDecorationEditor(
+    SuperDecoration superDecoration
+  ){
+    // print('ya: ');
+    var index = -1;
+    return superDecoration.itemDecorationList.map((e) {
+      var itemDecoration = sheetDecorationList.firstWhere((element) => element.id ==e,);
+      index++;
+      // print('yo: '+index.toString());
+      if (itemDecoration is ItemDecoration) {
+      return 
+        Column(
+          children:[
+            GestureDetector(
+              onTap: () {
+               
+                setState(() {
+                  var i =sheetDecorationVariables.indexWhere((el) => el.id==itemDecoration.id,);
+                   print('LALALA: '+i.toString());
+                  sheetDecorationVariables[i].isExpanded = !sheetDecorationVariables[i].isExpanded;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4.0),
+                margin: const EdgeInsets.all(3.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  color: defaultPalette.tertiary,
+                  border: Border.all(color: defaultPalette.extras[0],),),
+                child: Row( 
+                  children: [
+                    Container(
+                      height:30,
+                      width:30, 
+                      alignment: Alignment(0, 0),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: defaultPalette.primary,
+                        border: Border.all(color: defaultPalette.extras[0],),),
+                      child: Text(
+                        index.toString(),
+                        style: GoogleFonts.lexend(
+                        fontSize: 20,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w600,
+                        color: defaultPalette.extras[0])
+                      ),              
+                    ),
+                    Expanded(
+                      child: Text(itemDecoration.name +' ',
+                      textAlign: TextAlign.end,
+                      style: GoogleFonts.lexend(
+                        fontSize: 20,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w600,
+                        color: defaultPalette.primary)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if(sheetDecorationVariables[index].isExpanded)
+            ...buildItemDecorationEditor(itemDecoration, index: index, shadowLayerIndex: sheetDecorationVariables[index].listShadowLayerSelectedIndex)
+          ]);
+      } else {
+        return GestureDetector(
+              onTap: () {
+               
+                setState(() {
+                  
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4.0),
+                margin: const EdgeInsets.all(3.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  color: defaultPalette.extras[1],
+                  border: Border.all(color: defaultPalette.extras[0],),),
+                child: Row( 
+                  children: [
+                    Container(
+                      height:30,
+                      width:30, 
+                      alignment: Alignment(0, 0),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: defaultPalette.primary,
+                        border: Border.all(color: defaultPalette.extras[0],),),
+                      child: Text(
+                        index.toString(),
+                        style: GoogleFonts.lexend(
+                        fontSize: 20,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w600,
+                        color: defaultPalette.extras[0])
+                      ),              
+                    ),
+                    Expanded(
+                      child: Text(itemDecoration.name +' ',
+                      textAlign: TextAlign.end,
+                      style: GoogleFonts.lexend(
+                        fontSize: 20,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w600,
+                        color: defaultPalette.extras[0])),
+                    ),
+                  ],
+                ),
+              ),
+            );
+      }
+    },).toList().reversed.toList();
+  }
+
+
   List<Widget> buildItemDecorationEditor(
-  ItemDecoration itemDecoration,
-) {
-  var pinned = itemDecoration.pinned;
-  List<TextEditingController> listPaddingControllers =[
-    TextEditingController()..text = itemDecoration.padding.top.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.padding.top.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.padding.bottom.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.padding.left.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.padding.right.toString().replaceAll(RegExp(r'\.0$'), ''),
-  ];
-  List<TextEditingController> listMarginControllers =[
-    TextEditingController()..text = itemDecoration.margin.top.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.margin.top.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.margin.bottom.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.margin.left.toString().replaceAll(RegExp(r'\.0$'), ''),
-    TextEditingController()..text = itemDecoration.margin.right.toString().replaceAll(RegExp(r'\.0$'), ''),
-  ];
-  
+    ItemDecoration itemDecoration,
+    {
+      int index = -1,
+      int shadowLayerIndex =-1,
+    }
+  ) {
+    index = index==-1? decorationIndex==-1?0: decorationIndex:index;
+    var pinned = itemDecoration.pinned;
+    List<TextEditingController> listPaddingControllers = [
+      TextEditingController()
+        ..text = itemDecoration.padding.top
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.padding.top
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.padding.bottom
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.padding.left
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.padding.right
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+    ];
+    List<TextEditingController> listMarginControllers = [
+      TextEditingController()
+        ..text = itemDecoration.margin.top
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.margin.top
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.margin.bottom
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.margin.left
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = itemDecoration.margin.right
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+    ];
 
-  return [
-    if(pinned['padding']['top'] ||
-    pinned['padding']['bottom'] ||
-    pinned['padding']['left'] ||
-    pinned['padding']['right']  
-    
-    )
-    Container( 
-       
-      child: buildListPaddingMarginEditor(
-        isMargin: false, itemDecoration: itemDecoration, 
-        listPaddingControllers: listPaddingControllers, 
-        marginControllers:listMarginControllers,
-        pinned: pinned
+    return [
+      if (pinned['padding']['top'] ||
+          pinned['padding']['bottom'] ||
+          pinned['padding']['left'] ||
+          pinned['padding']['right'])
+        Container(
+          child: buildListPaddingMarginEditor(
+              isMargin: false,
+              itemDecoration: itemDecoration,
+              listPaddingControllers: listPaddingControllers,
+              marginControllers: listMarginControllers,
+              pinned: pinned, index: index),
         ),
-    ),
-    SizedBox(height: 0,),
-    if(pinned['margin']['top'] ||
-    pinned['margin']['bottom'] ||
-    pinned['margin']['left'] ||
-    pinned['margin']['right']  
-    
-    )
-    Container(  
-      child: buildListPaddingMarginEditor(
-        isMargin: true, itemDecoration: itemDecoration, 
-        listPaddingControllers: listPaddingControllers, 
-        marginControllers:listMarginControllers,
-        pinned: pinned
+      SizedBox(
+        height: 0,
+      ),
+      if (pinned['margin']['top'] ||
+          pinned['margin']['bottom'] ||
+          pinned['margin']['left'] ||
+          pinned['margin']['right'])
+        Container(
+          child: buildListPaddingMarginEditor(
+              isMargin: true,
+              itemDecoration: itemDecoration,
+              listPaddingControllers: listPaddingControllers,
+              marginControllers: listMarginControllers,
+              pinned: pinned,
+              index: index
+              ),
         ),
-    ),
- 
-
-    SizedBox(height: 3,),
-    if(
-    pinned['decoration']['color'] ||
-    pinned['decoration']['border'] || 
-    pinned['decoration']['borderRadius']['topLeft'] ||
-    pinned['decoration']['borderRadius']['topRight'] ||
-    pinned['decoration']['borderRadius']['bottomLeft'] ||
-    pinned['decoration']['borderRadius']['bottomRight'] ||
-    pinned['decoration']['image']['bytes'] ||
-    pinned['decoration']['image']['fit'] ||
-    pinned['decoration']['image']['repeat'] ||
-    pinned['decoration']['image']['alignment'] ||
-    pinned['decoration']['image']['scale'] ||
-    pinned['decoration']['image']['opacity'] ||
-    pinned['decoration']['image']['filterQuality'] ||
-    pinned['decoration']['image']['invertColors'] ||
-    pinned['decoration']['boxShadow']  
-    )
-
-    buildDecorationEditor( ),
-  ];
-
-}
-
+      SizedBox(
+        height: 3,
+      ),
+      if (pinned['decoration']['color'] ||
+          pinned['decoration']['border'] ||
+          pinned['decoration']['borderRadius']['topLeft'] ||
+          pinned['decoration']['borderRadius']['topRight'] ||
+          pinned['decoration']['borderRadius']['bottomLeft'] ||
+          pinned['decoration']['borderRadius']['bottomRight'] ||
+          pinned['decoration']['image']['bytes'] ||
+          pinned['decoration']['image']['fit'] ||
+          pinned['decoration']['image']['repeat'] ||
+          pinned['decoration']['image']['alignment'] ||
+          pinned['decoration']['image']['scale'] ||
+          pinned['decoration']['image']['opacity'] ||
+          pinned['decoration']['image']['filterQuality'] ||
+          pinned['decoration']['image']['invertColors'] ||
+          pinned['decoration']['boxShadow'])
+        buildDecorationEditor(itemDecoration, index: index, shadowLayerIndex: shadowLayerIndex),
+    ];
+  }
 
   Widget buildListPaddingMarginEditor({
     required bool isMargin,
     required ItemDecoration itemDecoration,
     List<TextEditingController> listPaddingControllers = const [],
     List<TextEditingController> marginControllers = const [],
-    List<TextEditingController> borderRadiusControllers = const [], 
+    List<TextEditingController> borderRadiusControllers = const [],
     bool isBorderRadius = false,
     bool isBorder = false,
-    Map<String, dynamic> pinned=const {},
+    Map<String, dynamic> pinned = const {},
+    int index = -1
   }) {
+    index = index==-1? decorationIndex==-1?0: decorationIndex:index;
     // Choose the proper controller list based on the flag.
     var isExpanded = isBorderRadius
         ? isListBorderRadiusExpanded
@@ -17998,33 +19187,160 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             ? marginControllers
             : listPaddingControllers;
     final focusNodes = isBorderRadius
-        ? borderRadiusFocusNodes
+        ? sheetDecorationVariables[index].borderRadiusFocusNodes
         : isMargin
-            ? marginFocusNodes
-            : listPaddingFocusNodes;
-    String pinnedKey = isBorderRadius ? 'decoration' : (isMargin ? 'margin' : 'padding');
+            ? sheetDecorationVariables[index].marginFocusNodes
+            : sheetDecorationVariables[index].listPaddingFocusNodes;
+    String pinnedKey =
+        isBorderRadius ? 'decoration' : (isMargin ? 'margin' : 'padding');
     String subKey = isBorderRadius ? 'borderRadius' : '';
+     
+    ItemDecoration currentItemDecoration = decorationIterator(
+        sheetDecorationVariables[index].id,
+        sheetDecorationList) as ItemDecoration;
+    final pinnedMap = currentItemDecoration
+        .pinned[pinnedKey];
+    final topIsPinned =
+        isBorderRadius ? pinnedMap[subKey]['topLeft'] : pinnedMap['top'];
 
-    final pinnedMap = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).pinned[pinnedKey];
+    final bottomIsPinned =
+        isBorderRadius ? pinnedMap[subKey]['topRight'] : pinnedMap['bottom'];
 
-    final topIsPinned = isBorderRadius 
-        ? pinnedMap[subKey]['topLeft'] 
-        : pinnedMap['top'];
+    final leftIsPinned =
+        isBorderRadius ? pinnedMap[subKey]['bottomLeft'] : pinnedMap['left'];
 
-    final bottomIsPinned = isBorderRadius 
-        ? pinnedMap[subKey]['topRight'] 
-        : pinnedMap['bottom'];
+    final rightIsPinned =
+        isBorderRadius ? pinnedMap[subKey]['bottomRight'] : pinnedMap['right'];
+    final widthSmall =
+        ((sWidth * wH2DividerPosition) - (showDecorationLayers ? 76 : 40)) / 2;
+    final widthBig =
+        (sWidth * wH2DividerPosition) - (showDecorationLayers ? 76 : 40);
 
-    final leftIsPinned = isBorderRadius 
-        ? pinnedMap[subKey]['bottomLeft'] 
-        : pinnedMap['left'];
 
-    final rightIsPinned = isBorderRadius 
-        ? pinnedMap[subKey]['bottomRight'] 
-        : pinnedMap['right'];
-    final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40))/2;
-    final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 76:40);
-    final currentItemDecoration = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration);
+
+    void horizontalDragFunction (DragUpdateDetails details, {
+      String s ='all',
+      int side =0,
+    }) {
+      var multiplier =  HardwareKeyboard.instance.isControlPressed
+              ? 10
+              : HardwareKeyboard.instance.isShiftPressed
+                  ? 0.1
+                  : 1;
+      setState(() {
+        double currentValue = double.tryParse(controllers[side].text) ?? 0.0;
+        double newValue = (currentValue +
+                details.delta.dx * multiplier)
+            .clamp( 0,double.infinity); // Adjust sensitivity here
+
+        // controllers[0].text = newValue.toStringAsFixed(2);
+
+        double parsedValue =  double.parse(newValue.toStringAsFixed(2));
+        
+
+        if (isBorderRadius) {
+          currentItemDecoration =
+              (currentItemDecoration as ItemDecoration)
+                  .copyWith(decoration: currentItemDecoration
+                          .decoration
+                          .copyWith(
+            borderRadius: setBorderRadius(
+                s, parsedValue, itemDecoration),
+          ));
+          
+        } else if (isMargin) {
+          EdgeInsets inset = side == 0
+        ? EdgeInsets.all(parsedValue)
+        : side == 1
+        ?  currentItemDecoration.margin.copyWith(top: parsedValue)
+        : side == 2 
+        ? currentItemDecoration.margin.copyWith(bottom: parsedValue)
+        : side == 3
+        ? currentItemDecoration.margin.copyWith(left: parsedValue)
+        : currentItemDecoration.margin.copyWith(right: parsedValue);
+
+          currentItemDecoration =
+              currentItemDecoration.copyWith(
+                  margin: inset);
+        } else {
+            EdgeInsets inset = side == 0
+        ? EdgeInsets.all(parsedValue)
+        : side == 1
+        ?  currentItemDecoration.padding.copyWith(top: parsedValue)
+        : side == 2 
+        ? currentItemDecoration.padding.copyWith(bottom: parsedValue)
+        : side == 3
+        ? currentItemDecoration.padding.copyWith(left: parsedValue)
+        : currentItemDecoration.padding.copyWith(right: parsedValue);
+
+          currentItemDecoration =
+              currentItemDecoration.copyWith(
+                  padding: inset);
+        }
+        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+        if (index != -1) {
+          sheetDecorationList[index] = currentItemDecoration;
+        }
+      });
+    }
+
+    void fieldSubmitFunction (String value, {
+      String s ='all',
+      int side =0,
+    }) {
+      
+      setState(() {
+        double parsedValue = double.parse(value);
+        
+
+        if (isBorderRadius) {
+          currentItemDecoration =
+              (currentItemDecoration as ItemDecoration)
+                  .copyWith(decoration: currentItemDecoration
+                          .decoration
+                          .copyWith(
+            borderRadius: setBorderRadius(
+                s, parsedValue, itemDecoration),
+          ));
+          
+        } else if (isMargin) {
+          EdgeInsets inset = side == 0
+        ? EdgeInsets.all(parsedValue)
+        : side == 1
+        ?  currentItemDecoration.margin.copyWith(top: parsedValue)
+        : side == 2 
+        ? currentItemDecoration.margin.copyWith(bottom: parsedValue)
+        : side == 3
+        ? currentItemDecoration.margin.copyWith(left: parsedValue)
+        : currentItemDecoration.margin.copyWith(right: parsedValue);
+
+          currentItemDecoration =
+              currentItemDecoration.copyWith(
+                  margin: inset);
+        } else {
+            EdgeInsets inset = side == 0
+        ? EdgeInsets.all(parsedValue)
+        : side == 1
+        ?  currentItemDecoration.padding.copyWith(top: parsedValue)
+        : side == 2 
+        ? currentItemDecoration.padding.copyWith(bottom: parsedValue)
+        : side == 3
+        ? currentItemDecoration.padding.copyWith(left: parsedValue)
+        : currentItemDecoration.padding.copyWith(right: parsedValue);
+
+          currentItemDecoration =
+              currentItemDecoration.copyWith(
+                  padding: inset);
+        }
+        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+        if (index != -1) {
+          sheetDecorationList[index] = currentItemDecoration;
+        }
+      });
+    }
+
+
+    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -18044,10 +19360,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         });
       },
       child: Container(
-        decoration: BoxDecoration( 
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          ), 
-        margin: EdgeInsets.all(4).copyWith(bottom: 2, left: 3,top:2),
+        ),
+        margin: EdgeInsets.all(4).copyWith(bottom: 2, left: 3, top: 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -18055,264 +19371,240 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                  
                 // "Pad" field for all sides
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.only(left:2),
+                    padding: EdgeInsets.only(left: 2),
                     decoration: BoxDecoration(
-                      border: Border.all(),
-                      color:defaultPalette.primary,
-                      borderRadius: BorderRadius.circular(5)
-                    ),
+                        border: Border.all(),
+                        color: defaultPalette.primary,
+                        borderRadius: BorderRadius.circular(5)),
                     child: Row(
-                        children: [
-                          MouseRegion(
-                      cursor: SystemMouseCursors.resizeLeftRight,
-                      child: GestureDetector(
-                        onHorizontalDragCancel: () {
-                          focusNodes[0].requestFocus();
-                        },
-                        onHorizontalDragStart: (details) {
-                          dragBackupValue = double.parse(controllers[0].text);
-                        },
-                        onHorizontalDragUpdate: (details) {
-                          var multiplier = HardwareKeyboard.instance.isControlPressed
-                              ? 10
-                              : HardwareKeyboard.instance.isShiftPressed
-                                  ? 0.1
-                                  : 1;
-                          setState(() {
-                            double currentValue =
-                                double.tryParse(controllers[0].text) ?? 0.0;
-                            double newValue = (currentValue +
-                                    details.delta.dx * multiplier)
-                                .clamp(0, double.infinity); // Adjust sensitivity here
-                      
-                            // controllers[0].text = newValue.toStringAsFixed(2);
-                      
-                            double parsedValue =
-                                double.parse(newValue.toStringAsFixed(2));
-                      
-                            if (isBorderRadius) {
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                decoration: currentItemDecoration.decoration.copyWith(
-                                  borderRadius: setBorderRadius(
-                                      'all', parsedValue, itemDecoration),
-                                )
-                                );
-                               
-                            } else if (isMargin) {
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                margin: EdgeInsets.all(parsedValue)
-                                );
-                            } else {
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                              padding: EdgeInsets.all(parsedValue)
-                              );
-                            }
-                          });
-                        },
-                        child: Row(
-                          children: [
-                          Icon(
-                          isBorderRadius
-                              ?  TablerIcons.border_corners
-                              : isMargin
-                              ? TablerIcons.box_margin
-                              : TablerIcons.box_padding,
-                          size: 16,
-                          color: defaultPalette.extras[0]
-                          ),
-                          Text(isBorderRadius
-                            ? (sWidth * wH2DividerPosition)>220? ' borderRadius ': 'radius'
-                            : isMargin
-                            ? ' margin '
-                            : (sWidth * wH2DividerPosition)>220? ' padding ': ' pad ',
-                            style: GoogleFonts.lexend(
-                                  fontSize: 15,
-                                  letterSpacing: -1,
-                                  color: defaultPalette.extras[0]),),
-                          ],
-                        ),
+                      children: [
+                        MouseRegion(
+                          cursor: SystemMouseCursors.resizeLeftRight,
+                          child: GestureDetector(
+                            onHorizontalDragCancel: () {
+                              focusNodes[0].requestFocus();
+                            },
+                            onHorizontalDragStart: (details) {
+                              dragBackupValue =
+                                  double.parse(controllers[0].text);
+                            },
+                            onHorizontalDragUpdate: horizontalDragFunction,
+                            child: Row(
+                              children: [
+                                Icon(
+                                    isBorderRadius
+                                        ? TablerIcons.border_corners
+                                        : isMargin
+                                            ? TablerIcons.box_margin
+                                            : TablerIcons.box_padding,
+                                    size: 16,
+                                    color: defaultPalette.extras[0]),
+                                Text(
+                                  isBorderRadius
+                                      ? (sWidth * wH2DividerPosition) > 220
+                                          ? ' borderRadius '
+                                          : 'radius'
+                                      : isMargin
+                                          ? ' margin '
+                                          : (sWidth * wH2DividerPosition) > 220
+                                              ? ' padding '
+                                              : ' pad ',
+                                  style: GoogleFonts.lexend(
+                                      fontSize: 15,
+                                      letterSpacing: -1,
+                                      color: defaultPalette.extras[0]),
+                                ),
+                              ],
                             ),
                           ),
-                          Expanded(
-                            child: SizedBox(
-                             height: 20, 
-                             child: TextFormField(
-                               onTapOutside: (event) => focusNodes[0].unfocus(),
-                               focusNode: focusNodes[0],
-                               controller: controllers[0],
-                               inputFormatters: [
-                                 NumericInputFormatter( 
-                                 ),
-                               ], 
+                        ),
+                        Expanded(
+                          child: SizedBox(
+                            height: 20,
+                            child: TextFormField(
+                              onTapOutside: (event) => focusNodes[0].unfocus(),
+                              focusNode: focusNodes[0],
+                              controller: controllers[0],
+                              inputFormatters: [
+                                NumericInputFormatter(),
+                              ],
                               cursorColor: defaultPalette.tertiary,
                               selectionControls: NoMenuTextSelectionControls(),
                               textAlign: TextAlign.end,
-                               decoration: InputDecoration(
-                                 contentPadding: const EdgeInsets.all(2 ), 
-                                 labelStyle:
-                                     GoogleFonts.lexend(color: defaultPalette.black),
-                                
-                                 fillColor: defaultPalette.transparent,
-                                 border: InputBorder.none,
-                                 enabledBorder:OutlineInputBorder(
-                                  borderSide: BorderSide.none
-                                 ),
-                                 focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide.none
-                                 ), 
-                               ),
-                               keyboardType: TextInputType.number,
-                               style: GoogleFonts.mitr(
-                                   fontSize: 15, color: defaultPalette.extras[0],
-                                   letterSpacing: -1
-                                   ),
-                               onFieldSubmitted: (value) {
-                                 setState(() {
-                                   double parsedValue = double.parse(value);
-                                   if (isBorderRadius) {
-                                     itemDecoration = itemDecoration.copyWith(
-                                       decoration: itemDecoration.decoration.copyWith(
-                                           borderRadius: setBorderRadius(
-                                               'all', parsedValue, itemDecoration)),
-                                     );
-                                   } else if (isMargin) {
-                                     sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                   margin: EdgeInsets.all(parsedValue)
-                                   );
-                                   } else {
-                                     print(itemDecoration.padding.toString());
-                                     sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                   padding: EdgeInsets.all(parsedValue)
-                                   );
-                                   }
-                                 });
-                               },
-                             ),
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.all(2),
+                                labelStyle: GoogleFonts.lexend(
+                                    color: defaultPalette.black),
+                                fillColor: defaultPalette.transparent,
+                                border: InputBorder.none,
+                                enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
+                                focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
+                              ),
+                              keyboardType: TextInputType.number,
+                              style: GoogleFonts.mitr(
+                                  fontSize: 15,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1),
+                              onFieldSubmitted: fieldSubmitFunction,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                          const SizedBox(width: 2,),
+                const SizedBox(
+                  width: 2,
+                ),
                 //PIN isPinned
                 ClipRRect(
                   borderRadius: BorderRadius.circular(500),
                   child: Material(
-                    color: defaultPalette.transparent, 
+                    color: defaultPalette.transparent,
                     child: InkWell(
-                    
-                      hoverColor:  defaultPalette.tertiary,
+                      hoverColor: defaultPalette.tertiary,
                       splashColor: defaultPalette.tertiary,
-                      highlightColor:  defaultPalette.tertiary,
+                      highlightColor: defaultPalette.tertiary,
                       onTap: () {
-                      setState(() {
-                        final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                    
-                        // Toggle isPinned based on the condition
-                        if (isBorderRadius) {
-                          currentItemDecoration.pinned['decoration']['borderRadius']['isPinned'] = 
-                              !currentItemDecoration.pinned['decoration']['borderRadius']['isPinned'];
-                          currentItemDecoration.pinned['decoration']['borderRadius']['topLeft'] = false;
-                          currentItemDecoration.pinned['decoration']['borderRadius']['topRight'] = false;
-                          currentItemDecoration.pinned['decoration']['borderRadius']['bottomLeft'] = false;
-                          currentItemDecoration.pinned['decoration']['borderRadius']['bottomRight'] = false;
-                          expansionLevels[7]  = currentItemDecoration.pinned['decoration']['borderRadius']['isPinned'];
-                        } else 
-                        if (isMargin) {
-                          currentItemDecoration.pinned['margin']['isPinned'] = 
-                              !currentItemDecoration.pinned['margin']['isPinned'];
-                          if (currentItemDecoration.pinned['margin']['isPinned']) {
-                            currentItemDecoration.pinned['margin']['top'] = true;
-                            currentItemDecoration.pinned['margin']['bottom'] = true;
-                            currentItemDecoration.pinned['margin']['left'] = true;
-                            currentItemDecoration.pinned['margin']['right'] = true;
+                        setState(() {
+                          // Toggle isPinned based on the condition
+                          if (isBorderRadius) {
+                            currentItemDecoration.pinned['decoration']
+                                    ['borderRadius']['isPinned'] =
+                                !currentItemDecoration.pinned['decoration']
+                                    ['borderRadius']['isPinned'];
+                            currentItemDecoration.pinned['decoration']
+                                ['borderRadius']['topLeft'] = false;
+                            currentItemDecoration.pinned['decoration']
+                                ['borderRadius']['topRight'] = false;
+                            currentItemDecoration.pinned['decoration']
+                                ['borderRadius']['bottomLeft'] = false;
+                            currentItemDecoration.pinned['decoration']
+                                ['borderRadius']['bottomRight'] = false;
+                            expansionLevels[7] =
+                                currentItemDecoration.pinned['decoration']
+                                    ['borderRadius']['isPinned'];
+                          } else if (isMargin) {
+                            currentItemDecoration.pinned['margin']['isPinned'] =
+                                !currentItemDecoration.pinned['margin']
+                                    ['isPinned'];
+                            if (currentItemDecoration.pinned['margin']
+                                ['isPinned']) {
+                              currentItemDecoration.pinned['margin']['top'] =
+                                  true;
+                              currentItemDecoration.pinned['margin']['bottom'] =
+                                  true;
+                              currentItemDecoration.pinned['margin']['left'] =
+                                  true;
+                              currentItemDecoration.pinned['margin']['right'] =
+                                  true;
+                            } else {
+                              currentItemDecoration.pinned['margin']['top'] =
+                                  false;
+                              currentItemDecoration.pinned['margin']['bottom'] =
+                                  false;
+                              currentItemDecoration.pinned['margin']['left'] =
+                                  false;
+                              currentItemDecoration.pinned['margin']['right'] =
+                                  false;
+                            }
+                            // expansionLevels[1]  = currentItemDecoration.pinned['margin']['isPinned'];
                           } else {
-                            currentItemDecoration.pinned['margin']['top'] = false;
-                            currentItemDecoration.pinned['margin']['bottom'] = false;
-                            currentItemDecoration.pinned['margin']['left'] = false;
-                            currentItemDecoration.pinned['margin']['right'] = false;
+                            currentItemDecoration.pinned['padding']
+                                    ['isPinned'] =
+                                !currentItemDecoration.pinned['padding']
+                                    ['isPinned'];
+                            if (currentItemDecoration.pinned['padding']
+                                ['isPinned']) {
+                              currentItemDecoration.pinned['padding']['top'] =
+                                  true;
+                              currentItemDecoration.pinned['padding']
+                                  ['bottom'] = true;
+                              currentItemDecoration.pinned['padding']['left'] =
+                                  true;
+                              currentItemDecoration.pinned['padding']['right'] =
+                                  true;
+                            } else {
+                              currentItemDecoration.pinned['padding']['top'] =
+                                  false;
+                              currentItemDecoration.pinned['padding']
+                                  ['bottom'] = false;
+                              currentItemDecoration.pinned['padding']['left'] =
+                                  false;
+                              currentItemDecoration.pinned['padding']['right'] =
+                                  false;
+                            }
                           }
-                          // expansionLevels[1]  = currentItemDecoration.pinned['margin']['isPinned'];
-                          
-                        } else {
-                          currentItemDecoration.pinned['padding']['isPinned'] = 
-                              !currentItemDecoration.pinned['padding']['isPinned'];
-                          if (currentItemDecoration.pinned['padding']['isPinned']) {
-                            currentItemDecoration.pinned['padding']['top'] = true;
-                            currentItemDecoration.pinned['padding']['bottom'] = true;
-                            currentItemDecoration.pinned['padding']['left'] = true;
-                            currentItemDecoration.pinned['padding']['right'] = true;
-                          } else {
-                            currentItemDecoration.pinned['padding']['top'] = false;
-                            currentItemDecoration.pinned['padding']['bottom'] = false;
-                            currentItemDecoration.pinned['padding']['left'] = false;
-                            currentItemDecoration.pinned['padding']['right'] = false;
+                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                          if (index != -1) {
+                            sheetDecorationList[index] = currentItemDecoration;
                           }
-                        }
-                    
-                        // Update the list item with the modified currentItemDecoration
-                        sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                      });
+
+
+                        });
                       },
                       child: Icon(
-                        isBorderRadius
-                            ? pinned['decoration']['borderRadius']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
-                            : isMargin
-                            ? pinned['margin']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
-                            : pinned['padding']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin
-                            ,
-                          size: 16, color: defaultPalette.extras[0]),
+                          isBorderRadius
+                              ? pinned['decoration']['borderRadius']['isPinned']
+                                  ? TablerIcons.pin_filled
+                                  : TablerIcons.pin
+                              : isMargin
+                                  ? pinned['margin']['isPinned']
+                                      ? TablerIcons.pin_filled
+                                      : TablerIcons.pin
+                                  : pinned['padding']['isPinned']
+                                      ? TablerIcons.pin_filled
+                                      : TablerIcons.pin,
+                          size: 16,
+                          color: defaultPalette.extras[0]),
                     ),
                   ),
                 ),
-                        
               ],
-            ), 
+            ),
             if (!isExpanded) ...[
               const SizedBox(height: 4),
               Container(
                 padding: EdgeInsets.all(0),
                 decoration: BoxDecoration(
-                  border: Border.all(),
-                  borderRadius: BorderRadius.circular(5)
-                ),
+                    border: Border.all(),
+                    borderRadius: BorderRadius.circular(5)),
                 child: Column(
                   children: [
-                    
                     // Top and Bottom adjustments
                     Flex(
-                      direction:  (sWidth * wH2DividerPosition)>220?Axis.horizontal:Axis.vertical,
+                      direction: (sWidth * wH2DividerPosition) > 220
+                          ? Axis.horizontal
+                          : Axis.vertical,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        if(topIsPinned)
-                        // Top
-                        Container(
-                          width: (sWidth * wH2DividerPosition)>220&& bottomIsPinned?widthSmall:widthBig,
-                          padding: EdgeInsets.only(left:2),
-                        decoration: BoxDecoration(
-                          
-                          color:defaultPalette.primary,
-                          borderRadius: BorderRadius.circular(0).copyWith(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular((sWidth * wH2DividerPosition)>220&& bottomIsPinned?0:5)
-                            )
-                        ),
-                        
-                          child: SizedBox(
-                            height: 20,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.resizeLeftRight,
-                                  child: GestureDetector(
+                        if (topIsPinned)
+                          // Top
+                          Container(
+                            width: (sWidth * wH2DividerPosition) > 220 &&
+                                    bottomIsPinned
+                                ? widthSmall
+                                : widthBig,
+                            padding: EdgeInsets.only(left: 2),
+                            decoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                borderRadius: BorderRadius.circular(0).copyWith(topLeft: Radius.circular(5), topRight: Radius.circular((sWidth * wH2DividerPosition) > 220 &&
+                                                bottomIsPinned ? 0: 5))),
+                            child: SizedBox(
+                              height: 20,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.resizeLeftRight,
+                                    child: GestureDetector(
                                       onHorizontalDragCancel: () {
                                         focusNodes[1].requestFocus();
                                       },
@@ -18321,400 +19613,322 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             double.parse(controllers[1].text);
                                       },
                                       onHorizontalDragUpdate: (details) {
-                                        var multiplier = HardwareKeyboard
-                                                .instance.isControlPressed
-                                            ? 10
-                                            : HardwareKeyboard.instance.isShiftPressed
-                                                ? 0.1
-                                                : 1;
-                                        setState(() {
-                                          double currentValue =
-                                              double.tryParse(controllers[1].text) ??
-                                                  0.0;
-                                          double newValue = (currentValue +
-                                                  (details.delta.dx * multiplier))
-                                              .clamp(0, double.infinity);
-                                    
-                                          double val = double.parse(
-                                              newValue.toStringAsFixed(2));
-                                    
-                                          if (isBorderRadius) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              decoration: currentItemDecoration.decoration.copyWith(
-                                                borderRadius: setBorderRadius(
-                                                    'topLeft', val, itemDecoration),
-                                              )
-                                              );
-                                          } else if (isMargin) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(top: val)
-                                              );
-                                          } else {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(top: val)
-                                              );
-                                          }
-                                        });
+                                        horizontalDragFunction(details, s: 'topLeft', side: 1);
                                       },
-                                    child: Transform.rotate(
-                                        angle: isBorderRadius ? 0 : isMargin?0: -pi / 2,
+                                      child: Transform.rotate(
+                                          angle: isBorderRadius
+                                              ? 0
+                                              : isMargin
+                                                  ? 0
+                                                  : -pi / 2,
+                                          child: Icon(
+                                              isBorderRadius
+                                                  ? TablerIcons.radius_top_left
+                                                  : isMargin
+                                                      ? TablerIcons
+                                                          .box_align_bottom
+                                                      : TablerIcons
+                                                          .layout_sidebar_right_inactive,
+                                              size: 15,
+                                              color: defaultPalette.extras[0])),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: TextFormField(
+                                      onTapOutside: (event) =>
+                                          focusNodes[1].unfocus(),
+                                      focusNode: focusNodes[1],
+                                      controller: controllers[1],
+                                      inputFormatters: [
+                                        NumericInputFormatter()
+                                      ],
+                                      cursorColor: defaultPalette.tertiary,
+                                      selectionControls:
+                                          NoMenuTextSelectionControls(),
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 2),
+                                        filled: true,
+                                        fillColor: defaultPalette.transparent,
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        // suffix: Text('top',style: GoogleFonts.mitr(
+                                        //   fontSize: 10,
+                                        //   color: defaultPalette.primary),)
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      style: GoogleFonts.mitr(
+                                          fontSize: 12,
+                                          color: defaultPalette.extras[0]),
+                                      onFieldSubmitted: (value) {
+                                        fieldSubmitFunction(value, s: 'topLeft', side: 1);
+                                      },
+                                    ),
+                                  ),
+                                  //PIN isPinned
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(500),
+                                    child: Material(
+                                      color: defaultPalette.transparent,
+                                      child: InkWell(
+                                        hoverColor: defaultPalette.tertiary,
+                                        splashColor: defaultPalette.tertiary,
+                                        highlightColor: defaultPalette.tertiary,
+                                        onTap: () {
+                                          setState(() {
+                                            // Toggle isPinned based on the condition
+                                            if (isBorderRadius) {
+                                              currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['topLeft'] =
+                                                  !currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['topLeft'];
+                                            } else if (isMargin) {
+                                              currentItemDecoration
+                                                      .pinned['margin']['top'] =
+                                                  !currentItemDecoration
+                                                      .pinned['margin']['top'];
+                                             } else {
+                                              currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['top'] =
+                                                  !currentItemDecoration
+                                                      .pinned['padding']['top'];
+                                            }
+
+                                          });
+                                        },
                                         child: Icon(
                                             isBorderRadius
-                                                ? TablerIcons.radius_top_left
+                                                ? pinned['decoration']
+                                                            ['borderRadius']
+                                                        ['topLeft']
+                                                    ? TablerIcons.pin_filled
+                                                    : TablerIcons.pin
                                                 : isMargin
-                                                ? TablerIcons.box_align_bottom
-                                                : TablerIcons.layout_sidebar_right_inactive,
+                                                    ? pinned['margin']['top']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin
+                                                    : pinned['padding']['top']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin,
                                             size: 15,
-                                            color: defaultPalette.extras[0]
-                                            )),
-                                                             ),
-                                 ), 
-                                Expanded(  
-                                  child: TextFormField(
-                                    onTapOutside: (event) =>
-                                        focusNodes[1].unfocus(),
-                                    focusNode: focusNodes[1],
-                                    controller: controllers[1],
-                                    inputFormatters: [NumericInputFormatter()],
-                                    cursorColor: defaultPalette.tertiary,
-                                    selectionControls:
-                                        NoMenuTextSelectionControls(), 
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
-                                      filled: true,
-                                      fillColor: defaultPalette.transparent,
-                                      border: OutlineInputBorder( 
-                                        borderSide: BorderSide.none, 
+                                            color: defaultPalette.extras[0]),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      // suffix: Text('top',style: GoogleFonts.mitr(
-                                      //   fontSize: 10,
-                                      //   color: defaultPalette.primary),)
                                     ),
-                                    
-                                    keyboardType: TextInputType.number,
-                                    style: GoogleFonts.mitr(
-                                        fontSize: 12,
-                                        color: defaultPalette.extras[0]),
-                                    onFieldSubmitted: (value) {
-                                      setState(() {
-                                        double val = value.isEmpty
-                                            ? 0
-                                            : double.parse(value);
-                                        if (isBorderRadius) {
-                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'topLeft', val, itemDecoration),
-                                          )
-                                          );
-                                        } else if (isMargin) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            margin: itemDecoration.margin
-                                                .copyWith(top: val),
-                                          );
-                                        } else {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            padding: itemDecoration.padding
-                                                .copyWith(top: val),
-                                          );
-                                        }
-                                      });
-                                    },
                                   ),
-                                ), 
-                                //PIN isPinned
-                              ClipRRect(
-                        borderRadius: BorderRadius.circular(500),
-                        child: Material(
-                          color: defaultPalette.transparent, 
-                          child: InkWell(
-                          
-                            hoverColor:  defaultPalette.tertiary,
-                            splashColor: defaultPalette.tertiary,
-                            highlightColor:  defaultPalette.tertiary,
-                            onTap: () {
-                            setState(() {
-                              final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                          
-                              // Toggle isPinned based on the condition
-                              if (isBorderRadius) {
-                                currentItemDecoration.pinned['decoration']['borderRadius']['topLeft'] = 
-                                    !currentItemDecoration.pinned['decoration']['borderRadius']['topLeft']; 
-                              } else 
-                              if (isMargin) {
-                                currentItemDecoration.pinned['margin']['top'] = 
-                                    !currentItemDecoration.pinned['margin']['top'];
-                                // currentItemDecoration.pinned['margin']['top'] = false;
-                                // currentItemDecoration.pinned['margin']['bottom'] = false;
-                                // currentItemDecoration.pinned['margin']['left'] = false;
-                                // currentItemDecoration.pinned['margin']['right'] = false;
-                                // expansionLevels[1]  = currentItemDecoration.pinned['margin']['top'];
-                                 
-                              } else {
-                                currentItemDecoration.pinned['padding']['top'] = 
-                                    !currentItemDecoration.pinned['padding']['top'];
-                                // currentItemDecoration.pinned['padding']['top'] = false;
-                                // currentItemDecoration.pinned['padding']['bottom'] = false;
-                                // currentItemDecoration.pinned['padding']['left'] = false;
-                                // currentItemDecoration.pinned['padding']['right'] = false;
-                                // expansionLevels[0]  = currentItemDecoration.pinned['padding']['isPinned'];
-                              }
-                          
-                              // Update the list item with the modified currentItemDecoration
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                            });
-                            },
-                            child: Icon(
-                              isBorderRadius
-                                  ? pinned['decoration']['borderRadius']['topLeft']? TablerIcons.pin_filled : TablerIcons.pin
-                                  : isMargin
-                                  ? pinned['margin']['top']? TablerIcons.pin_filled : TablerIcons.pin
-                                  : pinned['padding']['top']? TablerIcons.pin_filled : TablerIcons.pin
-                                  ,
-                                size: 15, color:defaultPalette.extras[0]),
-                          ),
-                        ),
-                      ),
-                              const SizedBox(width: 2,),
-                              ],
+                                  const SizedBox(
+                                    width: 2,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ), 
-                        const SizedBox(
-                          width: 0, height: 0,),
-                        if(bottomIsPinned)
-                        // Bottom
-                        Container(
-                          height: 20,
-                          width:(sWidth * wH2DividerPosition)>220&& topIsPinned?widthSmall:widthBig,
-                          padding: EdgeInsets.only(left:2),
-                          decoration: BoxDecoration(
-                            color:defaultPalette.primary,
-                            borderRadius: BorderRadius.circular(0).copyWith(
-                              topLeft: Radius.circular(topIsPinned? 0:5),
-                              topRight: Radius.circular((sWidth * wH2DividerPosition)>220?5:0),)
-                          ),
-                          child: SizedBox(
+                        
+                        if (bottomIsPinned)
+                          // Bottom
+                          Container(
                             height: 20,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.resizeLeftRight,
-                                  child: GestureDetector(
-                                    onHorizontalDragCancel: () {
+                            width: (sWidth * wH2DividerPosition) > 220 &&
+                                    topIsPinned
+                                ? widthSmall
+                                : widthBig,
+                            padding: EdgeInsets.only(left: 2),
+                            decoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                borderRadius: BorderRadius.circular(0).copyWith(
+                                  topLeft: Radius.circular(topIsPinned ? 0 : 5),
+                                  topRight: Radius.circular(
+                                      (sWidth * wH2DividerPosition) > 220
+                                          ? 5
+                                          : 0),
+                                )),
+                            child: SizedBox(
+                              height: 20,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.resizeLeftRight,
+                                    child: GestureDetector(
+                                      onHorizontalDragCancel: () {
                                         focusNodes[2].requestFocus();
                                       },
-                                    onHorizontalDragStart: (details) {
+                                      onHorizontalDragStart: (details) {
                                         dragBackupValue =
                                             double.parse(controllers[2].text);
                                       },
-                                    onHorizontalDragUpdate: (details) {
-                                        var multiplier = HardwareKeyboard
-                                                .instance.isControlPressed
-                                            ? 10
-                                            : HardwareKeyboard.instance.isShiftPressed
-                                                ? 0.06
-                                                : 1;
-                                        setState(() {
-                                          double currentValue =
-                                              double.tryParse(controllers[2].text) ??
-                                                  0.0;
-                                          double newValue = (currentValue +
-                                                  (details.delta.dx * multiplier))
-                                              .clamp(0, double.infinity);
-                                    
-                                          double val = double.parse(
-                                              newValue.toStringAsFixed(2));
-                                    
-                                          if (isBorderRadius) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'topRight', val, itemDecoration),
-                                          )
-                                          );
-                                          } else if (isMargin) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(bottom: val)
-                                              );
-                                          } else {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(bottom: val)
-                                              );
-                                          }
-                                        });
+                                      onHorizontalDragUpdate: (details) {
+                                        horizontalDragFunction(details, s: 'topRight', side: 2);
                                       },
-                                    child: Transform.rotate(
-                          
-                                        angle:  0,
+                                      child: Transform.rotate(
+                                          angle: 0,
+                                          child: Icon(
+                                              isBorderRadius
+                                                  ? TablerIcons.radius_top_right
+                                                  : isMargin
+                                                      ? TablerIcons
+                                                          .box_align_top
+                                                      : TablerIcons
+                                                          .layout_bottombar_inactive,
+                                              size: 15,
+                                              color: defaultPalette.extras[0])),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 0),
+                                  Expanded(
+                                    child: TextFormField(
+                                      onTapOutside: (event) =>
+                                          focusNodes[2].unfocus(),
+                                      focusNode: focusNodes[2],
+                                      controller: controllers[2],
+                                      inputFormatters: [
+                                        NumericInputFormatter()
+                                      ],
+                                      selectionControls:
+                                          NoMenuTextSelectionControls(),
+                                      cursorColor: defaultPalette.tertiary,
+                                      textAlign: TextAlign.start,
+                                      textAlignVertical: TextAlignVertical.top,
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 2),
+                                        filled: true,
+                                        fillColor: defaultPalette.transparent,
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      style: GoogleFonts.mitr(
+                                          fontSize: 12,
+                                          color: defaultPalette.extras[0]),
+                                      onFieldSubmitted: (value) {
+                                        fieldSubmitFunction(value, s: 'topRight', side: 2);
+                                      },
+                                    ),
+                                  ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(500),
+                                    child: Material(
+                                      color: defaultPalette.transparent,
+                                      child: InkWell(
+                                        hoverColor: defaultPalette.tertiary,
+                                        splashColor: defaultPalette.tertiary,
+                                        highlightColor: defaultPalette.tertiary,
+                                        onTap: () {
+                                          setState(() {
+                                             
+
+                                            // Toggle isPinned based on the condition
+                                            if (isBorderRadius) {
+                                              currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['topRight'] =
+                                                  !currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['topRight'];
+                                            } else if (isMargin) {
+                                              currentItemDecoration
+                                                          .pinned['margin']
+                                                      ['bottom'] =
+                                                  !currentItemDecoration
+                                                          .pinned['margin']
+                                                      ['bottom'];
+                                            } else {
+                                              currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['bottom'] =
+                                                  !currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['bottom'];
+                                             }
+
+                                            // Update the list item with the modified currentItemDecoration
+                                          });
+                                        },
                                         child: Icon(
                                             isBorderRadius
-                                            ? TablerIcons.radius_top_right
-                                            : isMargin
-                                            ? TablerIcons.box_align_top
-                                            : TablerIcons.layout_bottombar_inactive,
-                                            size: 15, color: defaultPalette.extras[0])),
-                                  ),
-                                ),
-                                const SizedBox(width: 0),
-                                Expanded( 
-                                  child: TextFormField(
-                                    onTapOutside: (event) =>
-                                        focusNodes[2].unfocus(),
-                                    focusNode: focusNodes[2],
-                                    controller: controllers[2],
-                                    inputFormatters: [NumericInputFormatter()],
-                                    selectionControls:
-                                        NoMenuTextSelectionControls(),
-                                    cursorColor: defaultPalette.tertiary,
-                                    textAlign: TextAlign.start,
-                                    textAlignVertical: TextAlignVertical.top,
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
-                                      filled: true,
-                                      fillColor: defaultPalette.transparent,
-                                      border: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
+                                                ? pinned['decoration']
+                                                            ['borderRadius']
+                                                        ['topRight']
+                                                    ? TablerIcons.pin_filled
+                                                    : TablerIcons.pin
+                                                : isMargin
+                                                    ? pinned['margin']['bottom']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin
+                                                    : pinned['padding']
+                                                            ['bottom']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin,
+                                            size: 15,
+                                            color: defaultPalette.extras[0]),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      // suffix: Text('bottom',style: GoogleFonts.mitr(
-                                      //   fontSize: 9,
-                                      //   color: defaultPalette.primary),)
                                     ),
-                                    keyboardType: TextInputType.number,
-                                    style: GoogleFonts.mitr(
-                                        fontSize: 12,
-                                        color: defaultPalette.extras[0]),
-                                    onFieldSubmitted: (value) {
-                                      setState(() {
-                                        double val = value.isEmpty
-                                            ? 0
-                                            : double.parse(value);
-                                        if (isBorderRadius) {
-                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'topRight', val, itemDecoration),
-                                          )
-                                          );
-                                        } else if (isMargin) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            margin: itemDecoration.margin
-                                                .copyWith(bottom: val),
-                                          );
-                                        } else {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            padding: itemDecoration.padding
-                                                .copyWith(bottom: val),
-                                          );
-                                        }
-                                      });
-                                    },
                                   ),
-                                ), 
-                                ClipRRect(
-                        borderRadius: BorderRadius.circular(500),
-                        child: Material(
-                          color: defaultPalette.transparent, 
-                          child: InkWell(
-                          
-                            hoverColor:  defaultPalette.tertiary,
-                            splashColor: defaultPalette.tertiary,
-                            highlightColor:  defaultPalette.tertiary,
-                            onTap: () {
-                            setState(() {
-                              final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                          
-                              // Toggle isPinned based on the condition
-                              if (isBorderRadius) {
-                                currentItemDecoration.pinned['decoration']['borderRadius']['topRight'] = 
-                                    !currentItemDecoration.pinned['decoration']['borderRadius']['topRight']; 
-                              } else 
-                              if (isMargin) {
-                                currentItemDecoration.pinned['margin']['bottom'] = 
-                                    !currentItemDecoration.pinned['margin']['bottom'];
-                                // currentItemDecoration.pinned['margin']['top'] = false;
-                                // currentItemDecoration.pinned['margin']['bottom'] = false;
-                                // currentItemDecoration.pinned['margin']['left'] = false;
-                                // currentItemDecoration.pinned['margin']['right'] = false;
-                                // expansionLevels[1]  = currentItemDecoration.pinned['margin']['topRight'];
-                                 
-                              } else {
-                                currentItemDecoration.pinned['padding']['bottom'] = 
-                                    !currentItemDecoration.pinned['padding']['bottom'];
-                                // currentItemDecoration.pinned['padding']['top'] = false;
-                                // currentItemDecoration.pinned['padding']['bottom'] = false;
-                                // currentItemDecoration.pinned['padding']['left'] = false;
-                                // currentItemDecoration.pinned['padding']['right'] = false;
-                                // expansionLevels[0]  = currentItemDecoration.pinned['padding']['topRight'];
-                              }
-                          
-                              // Update the list item with the modified currentItemDecoration
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                            });
-                            },
-                            child: Icon(
-                              isBorderRadius
-                                  ? pinned['decoration']['borderRadius']['topRight']? TablerIcons.pin_filled : TablerIcons.pin
-                                  : isMargin
-                                  ? pinned['margin']['bottom']? TablerIcons.pin_filled : TablerIcons.pin
-                                  : pinned['padding']['bottom']? TablerIcons.pin_filled : TablerIcons.pin
-                                  ,
-                                size: 15, color:defaultPalette.extras[0] ),
-                          ),
-                        ),
-                      ),
-                                SizedBox(width: 2)
-                              ],
+                                  SizedBox(width: 2)
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 0),
                     // Left and Right adjustments
                     Flex(
-                      direction:  (sWidth * wH2DividerPosition)>220?Axis.horizontal:Axis.vertical,
+                      direction: (sWidth * wH2DividerPosition) > 220
+                          ? Axis.horizontal
+                          : Axis.vertical,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        if(leftIsPinned)
-                        // Left
-                        Container(
-                          width: (sWidth * wH2DividerPosition)>220&& rightIsPinned?widthSmall:widthBig,
-                          padding: EdgeInsets.only(left:2),
-                        decoration: BoxDecoration(
-                          color:defaultPalette.primary,
-                          borderRadius: BorderRadius.circular(0).copyWith(
-                            bottomLeft: Radius.circular((sWidth * wH2DividerPosition)>220?5:0),
-                            bottomRight: Radius.circular(rightIsPinned?0:5)
-                            )
-                        ),
-                          child: SizedBox(
-                            height: 20,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.resizeLeftRight,
-                                  child: GestureDetector(
+                        if (leftIsPinned)
+                          // Left
+                          Container(
+                            width: (sWidth * wH2DividerPosition) > 220 &&
+                                    rightIsPinned
+                                ? widthSmall
+                                : widthBig,
+                            padding: EdgeInsets.only(left: 2),
+                            decoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                borderRadius: BorderRadius.circular(0).copyWith(
+                                    bottomLeft: Radius.circular(
+                                        (sWidth * wH2DividerPosition) > 220
+                                            ? 5
+                                            : 0),
+                                    bottomRight: Radius.circular(
+                                        rightIsPinned ? 0 : 5))),
+                            child: SizedBox(
+                              height: 20,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.resizeLeftRight,
+                                    child: GestureDetector(
                                       onHorizontalDragCancel: () {
                                         focusNodes[3].requestFocus();
                                       },
@@ -18723,366 +19937,284 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             double.parse(controllers[3].text);
                                       },
                                       onHorizontalDragUpdate: (details) {
-                                        var multiplier = HardwareKeyboard
-                                                .instance.isControlPressed
-                                            ? 10
-                                            : HardwareKeyboard.instance.isShiftPressed
-                                                ? 0.1
-                                                : 1;
-                                        setState(() {
-                                          double currentValue =
-                                              double.tryParse(controllers[3].text) ??
-                                                  0.0;
-                                          double newValue = (currentValue +
-                                                  (details.delta.dx * multiplier))
-                                              .clamp(0, double.infinity);
-                                    
-                                          double val = double.parse(
-                                              newValue.toStringAsFixed(2));
-                                    
-                                          if (isBorderRadius) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'bottomLeft', val, itemDecoration),
-                                          )
-                                          );
-                                          } else if (isMargin) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(left: val)
-                                              );
-                                          } else {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(left: val)
-                                              );
-                                          }
-                                        });
+                                        horizontalDragFunction(details, s: 'bottomLeft', side: 3);
                                       },
-                                    child: Transform.rotate(
-                                        angle: isBorderRadius ? 0 : isMargin?0: 0,
+                                      child: Transform.rotate(
+                                          angle: isBorderRadius
+                                              ? 0
+                                              : isMargin
+                                                  ? 0
+                                                  : 0,
+                                          child: Icon(
+                                              isBorderRadius
+                                                  ? TablerIcons
+                                                      .radius_bottom_left
+                                                  : isMargin
+                                                      ? TablerIcons
+                                                          .box_align_right
+                                                      : TablerIcons
+                                                          .layout_sidebar_inactive,
+                                              size: 15,
+                                              color: defaultPalette.extras[0])),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: TextFormField(
+                                      onTapOutside: (event) =>
+                                          focusNodes[3].unfocus(),
+                                      focusNode: focusNodes[3],
+                                      controller: controllers[3],
+                                      inputFormatters: [
+                                        NumericInputFormatter()
+                                      ],
+                                      cursorColor: defaultPalette.tertiary,
+                                      selectionControls:
+                                          NoMenuTextSelectionControls(),
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 2),
+                                        filled: true,
+                                        fillColor: defaultPalette.transparent,
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      style: GoogleFonts.mitr(
+                                          fontSize: 12,
+                                          color: defaultPalette.extras[0]),
+                                      onFieldSubmitted: (value) {
+                                        fieldSubmitFunction(value, s: 'bottomLeft', side: 3);
+                                      },
+                                    ),
+                                  ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(500),
+                                    child: Material(
+                                      color: defaultPalette.transparent,
+                                      child: InkWell(
+                                        hoverColor: defaultPalette.tertiary,
+                                        splashColor: defaultPalette.tertiary,
+                                        highlightColor: defaultPalette.tertiary,
+                                        onTap: () {
+                                          setState(() {
+                                             
+
+                                            // Toggle isPinned based on the condition
+                                            if (isBorderRadius) {
+                                              currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['bottomLeft'] =
+                                                  !currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['bottomLeft'];
+                                            } else if (isMargin) {
+                                              currentItemDecoration
+                                                          .pinned['margin']
+                                                      ['left'] =
+                                                  !currentItemDecoration
+                                                      .pinned['margin']['left'];
+                                            } else {
+                                              currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['left'] =
+                                                  !currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['left'];
+                                            }
+                                          });
+                                        },
                                         child: Icon(
                                             isBorderRadius
-                                                ? TablerIcons.radius_bottom_left
+                                                ? pinned['decoration']
+                                                            ['borderRadius']
+                                                        ['bottomLeft']
+                                                    ? TablerIcons.pin_filled
+                                                    : TablerIcons.pin
                                                 : isMargin
-                                                ? TablerIcons.box_align_right
-                                                : TablerIcons.layout_sidebar_inactive,
+                                                    ? pinned['margin']['left']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin
+                                                    : pinned['padding']['left']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin,
                                             size: 15,
-                                            color: defaultPalette.extras[0]
-                                            )),
-                                                             ),
-                                 ), 
-                                Expanded(  
-                                  child: TextFormField(
-                                    onTapOutside: (event) =>
-                                        focusNodes[3].unfocus(),
-                                    focusNode: focusNodes[3],
-                                    controller: controllers[3],
-                                    inputFormatters: [NumericInputFormatter()],
-                                    cursorColor: defaultPalette.tertiary,
-                                    selectionControls:
-                                        NoMenuTextSelectionControls(), 
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
-                                      filled: true,
-                                      fillColor: defaultPalette.transparent,
-                                      border: OutlineInputBorder( 
-                                        borderSide: BorderSide.none, 
+                                            color: defaultPalette.extras[0]),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),  
                                     ),
-                                    
-                                    keyboardType: TextInputType.number,
-                                    style: GoogleFonts.mitr(
-                                        fontSize: 12,
-                                        color: defaultPalette.extras[0]),
-                                    onFieldSubmitted: (value) {
-                                      setState(() {
-                                        double val = value.isEmpty
-                                            ? 0
-                                            : double.parse(value);
-                                        if (isBorderRadius) {
-                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'bottomLeft', val, itemDecoration),
-                                          )
-                                          );
-                                        } else if (isMargin) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            margin: itemDecoration.margin
-                                                .copyWith(left: val),
-                                          );
-                                        } else {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            padding: itemDecoration.padding
-                                                .copyWith(left: val),
-                                          );
-                                        }
-                                      });
-                                    },
                                   ),
-                                ), 
-                                ClipRRect(
-                        borderRadius: BorderRadius.circular(500),
-                        child: Material(
-                          color: defaultPalette.transparent, 
-                          child: InkWell(
-                          
-                            hoverColor:  defaultPalette.tertiary,
-                            splashColor: defaultPalette.tertiary,
-                            highlightColor:  defaultPalette.tertiary,
-                            onTap: () {
-                            setState(() {
-                              final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                          
-                              // Toggle isPinned based on the condition
-                              if (isBorderRadius) {
-                                currentItemDecoration.pinned['decoration']['borderRadius']['bottomLeft'] = 
-                                    !currentItemDecoration.pinned['decoration']['borderRadius']['bottomLeft']; 
-                              } else 
-                              if (isMargin) {
-                                currentItemDecoration.pinned['margin']['left'] = 
-                                    !currentItemDecoration.pinned['margin']['left'];
-                                // currentItemDecoration.pinned['margin']['top'] = false;
-                                // currentItemDecoration.pinned['margin']['bottom'] = false;
-                                // currentItemDecoration.pinned['margin']['left'] = false;
-                                // currentItemDecoration.pinned['margin']['right'] = false;
-                                // expansionLevels[1]  = currentItemDecoration.pinned['margin']['bottomLeft'];
-                                 
-                              } else {
-                                currentItemDecoration.pinned['padding']['left'] = 
-                                    !currentItemDecoration.pinned['padding']['left'];
-                                // currentItemDecoration.pinned['padding']['top'] = false;
-                                // currentItemDecoration.pinned['padding']['bottom'] = false;
-                                // currentItemDecoration.pinned['padding']['left'] = false;
-                                // currentItemDecoration.pinned['padding']['right'] = false;
-                                // expansionLevels[0]  = currentItemDecoration.pinned['padding']['bottomLeft'];
-                              }
-                          
-                              // Update the list item with the modified currentItemDecoration
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                            });
-                            },
-                            child: Icon(
-                              isBorderRadius
-                                  ? pinned['decoration']['borderRadius']['bottomLeft']? TablerIcons.pin_filled : TablerIcons.pin
-                                  : isMargin
-                                  ? pinned['margin']['left']? TablerIcons.pin_filled : TablerIcons.pin
-                                  : pinned['padding']['left']? TablerIcons.pin_filled : TablerIcons.pin
-                                  ,
-                                size: 15, color:defaultPalette.extras[0]),
-                          ),
-                        ),
-                      ),
-                                SizedBox(width: 2)
-                              ],
+                                  SizedBox(width: 2)
+                                ],
+                              ),
                             ),
                           ),
-                        ), 
                         const SizedBox(
-                          width: 0, height: 0,),
-                        if(rightIsPinned)
-                        // RIGHT
-                        Container(
-                          height: 20,
-                          width:(sWidth * wH2DividerPosition)>220&& leftIsPinned?widthSmall:widthBig,
-                          padding: EdgeInsets.only(left:2),
-                          decoration: BoxDecoration(
-                            color:defaultPalette.primary,
-                            borderRadius: BorderRadius.circular(0).copyWith(
-                              bottomLeft: Radius.circular((sWidth * wH2DividerPosition)>220 && leftIsPinned?0:5),
-                              bottomRight: Radius.circular(5))
-                          ),
-                          child: SizedBox(
-                            height: 18,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.resizeLeftRight,
-                                  child: GestureDetector(
-                                    onHorizontalDragCancel: () {
+                          width: 0,
+                          height: 0,
+                        ),
+                        if (rightIsPinned)
+                          // RIGHT
+                          Container(
+                            height: 20,
+                            width: (sWidth * wH2DividerPosition) > 220 &&
+                                    leftIsPinned
+                                ? widthSmall
+                                : widthBig,
+                            padding: EdgeInsets.only(left: 2),
+                            decoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                borderRadius: BorderRadius.circular(0).copyWith(
+                                    bottomLeft: Radius.circular(
+                                        (sWidth * wH2DividerPosition) > 220 &&
+                                                leftIsPinned
+                                            ? 0
+                                            : 5),
+                                    bottomRight: Radius.circular(5))),
+                            child: SizedBox(
+                              height: 18,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.resizeLeftRight,
+                                    child: GestureDetector(
+                                      onHorizontalDragCancel: () {
                                         focusNodes[4].requestFocus();
                                       },
-                                    onHorizontalDragStart: (details) {
+                                      onHorizontalDragStart: (details) {
                                         dragBackupValue =
                                             double.parse(controllers[4].text);
                                       },
-                                    onHorizontalDragUpdate: (details) {
-                                        var multiplier = HardwareKeyboard
-                                                .instance.isControlPressed
-                                            ? 10
-                                            : HardwareKeyboard.instance.isShiftPressed
-                                                ? 0.06
-                                                : 1;
-                                        setState(() {
-                                          double currentValue =
-                                              double.tryParse(controllers[4].text) ??
-                                                  0.0;
-                                          double newValue = (currentValue +
-                                                  (details.delta.dx * multiplier))
-                                              .clamp(0, double.infinity);
-                                    
-                                          double val = double.parse(
-                                              newValue.toStringAsFixed(2));
-                                    
-                                          if (isBorderRadius) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'bottomRight', val, itemDecoration),
-                                          )
-                                          );
-                                          } else if (isMargin) {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              margin: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).margin.copyWith(right: val)
-                                              );
-                                          } else {
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                              padding: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).padding.copyWith(right: val)
-                                              );
-                                          }
-                                        });
+                                      onHorizontalDragUpdate: (details) {
+                                        horizontalDragFunction(details, s: 'bottomRight', side: 4);
                                       },
-                                    child: Transform.rotate(
-                          
-                                        angle:   0,
+                                      child: Transform.rotate(
+                                          angle: 0,
+                                          child: Icon(
+                                              isBorderRadius
+                                                  ? TablerIcons
+                                                      .radius_bottom_right
+                                                  : isMargin
+                                                      ? TablerIcons
+                                                          .box_align_left
+                                                      : TablerIcons
+                                                          .layout_sidebar_right_inactive,
+                                              size: 15,
+                                              color: defaultPalette.extras[0])),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 0),
+                                  Expanded(
+                                    child: TextFormField(
+                                      onTapOutside: (event) =>
+                                          focusNodes[4].unfocus(),
+                                      focusNode: focusNodes[4],
+                                      controller: controllers[4],
+                                      inputFormatters: [
+                                        NumericInputFormatter()
+                                      ],
+                                      selectionControls:
+                                          NoMenuTextSelectionControls(),
+                                      cursorColor: defaultPalette.tertiary,
+                                      textAlign: TextAlign.start,
+                                      textAlignVertical: TextAlignVertical.top,
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 2),
+                                        filled: true,
+                                        fillColor: defaultPalette.transparent,
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      style: GoogleFonts.mitr(
+                                          fontSize: 12,
+                                          color: defaultPalette.extras[0]),
+                                      onFieldSubmitted: (value) {
+                                        fieldSubmitFunction(value, s: 'bottomRight', side: 4);
+                                      },
+                                    ),
+                                  ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(500),
+                                    child: Material(
+                                      color: defaultPalette.transparent,
+                                      child: InkWell(
+                                        hoverColor: defaultPalette.tertiary,
+                                        splashColor: defaultPalette.tertiary,
+                                        highlightColor: defaultPalette.tertiary,
+                                        onTap: () {
+                                          setState(() {
+                                             
+
+                                            // Toggle isPinned based on the condition
+                                            if (isBorderRadius) {
+                                              currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['bottomRight'] =
+                                                  !currentItemDecoration.pinned[
+                                                              'decoration']
+                                                          ['borderRadius']
+                                                      ['bottomRight'];
+                                            } else if (isMargin) {
+                                              currentItemDecoration
+                                                          .pinned['margin']
+                                                      ['right'] =
+                                                  !currentItemDecoration
+                                                          .pinned['margin']
+                                                      ['right'];
+                                            } else {
+                                              currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['right'] =
+                                                  !currentItemDecoration
+                                                          .pinned['padding']
+                                                      ['right'];
+                                            }
+                                          });
+                                        },
                                         child: Icon(
                                             isBorderRadius
-                                            ? TablerIcons.radius_bottom_right
-                                            : isMargin
-                                            ? TablerIcons.box_align_left
-                                            : TablerIcons.layout_sidebar_right_inactive,
-                                            size: 15, color: defaultPalette.extras[0])),
-                                  ),
-                                ),
-                                const SizedBox(width: 0),
-                                Expanded( 
-                                  child: TextFormField(
-                                    onTapOutside: (event) =>
-                                        focusNodes[4].unfocus(),
-                                    focusNode: focusNodes[4],
-                                    controller: controllers[4],
-                                    inputFormatters: [NumericInputFormatter()],
-                                    selectionControls:
-                                        NoMenuTextSelectionControls(),
-                                    cursorColor: defaultPalette.tertiary,
-                                    textAlign: TextAlign.start,
-                                    textAlignVertical: TextAlignVertical.top,
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 2),
-                                      filled: true,
-                                      fillColor: defaultPalette.transparent,
-                                      border: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
+                                                ? pinned['decoration']
+                                                            ['borderRadius']
+                                                        ['bottomRight']
+                                                    ? TablerIcons.pin_filled
+                                                    : TablerIcons.pin
+                                                : isMargin
+                                                    ? pinned['margin']['right']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin
+                                                    : pinned['padding']['right']
+                                                        ? TablerIcons.pin_filled
+                                                        : TablerIcons.pin,
+                                            size: 15,
+                                            color: defaultPalette.extras[0]),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide.none, 
-                                      ),
-                                      // suffix: Text('right',style: GoogleFonts.mitr(
-                                      //   fontSize: 9,
-                                      //   color: defaultPalette.primary),)
                                     ),
-                                    keyboardType: TextInputType.number,
-                                    style: GoogleFonts.mitr(
-                                        fontSize: 12,
-                                        color: defaultPalette.extras[0]),
-                                    onFieldSubmitted: (value) {
-                                      setState(() {
-                                        double val = value.isEmpty
-                                            ? 0
-                                            : double.parse(value);
-                                        if (isBorderRadius) {
-                                          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            borderRadius: setBorderRadius(
-                                                'bottomRight', val, itemDecoration),
-                                          )
-                                          );
-                                        } else if (isMargin) {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            margin: itemDecoration.margin
-                                                .copyWith(right: val),
-                                          );
-                                        } else {
-                                          itemDecoration =
-                                              itemDecoration.copyWith(
-                                            padding: itemDecoration.padding
-                                                .copyWith(right: val),
-                                          );
-                                        }
-                                      });
-                                    },
                                   ),
-                                ), 
-                                ClipRRect(
-                                borderRadius: BorderRadius.circular(500),
-                                child: Material(
-                                  color: defaultPalette.transparent, 
-                                  child: InkWell(
-                                  
-                                    hoverColor:  defaultPalette.tertiary,
-                                    splashColor: defaultPalette.tertiary,
-                                    highlightColor:  defaultPalette.tertiary,
-                                    onTap: () {
-                                    setState(() {
-                                      final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                                  
-                                      // Toggle isPinned based on the condition
-                                      if (isBorderRadius) {
-                                        currentItemDecoration.pinned['decoration']['borderRadius']['bottomRight'] = 
-                                            !currentItemDecoration.pinned['decoration']['borderRadius']['bottomRight']; 
-                                      } else 
-                                      if (isMargin) {
-                                        currentItemDecoration.pinned['margin']['right'] = 
-                                            !currentItemDecoration.pinned['margin']['right'];
-                                        // currentItemDecoration.pinned['margin']['top'] = false;
-                                        // currentItemDecoration.pinned['margin']['bottom'] = false;
-                                        // currentItemDecoration.pinned['margin']['left'] = false;
-                                        // currentItemDecoration.pinned['margin']['right'] = false;
-                                        // expansionLevels[1]  = currentItemDecoration.pinned['margin']['bottomRight'];
-                                        
-                                      } else {
-                                        currentItemDecoration.pinned['padding']['right'] = 
-                                            !currentItemDecoration.pinned['padding']['right'];
-                                        // currentItemDecoration.pinned['padding']['top'] = false;
-                                        // currentItemDecoration.pinned['padding']['bottom'] = false;
-                                        // currentItemDecoration.pinned['padding']['left'] = false;
-                                        // currentItemDecoration.pinned['padding']['right'] = false;
-                                        // expansionLevels[0]  = currentItemDecoration.pinned['padding']['bottomRight'];
-                                      }
-                                  
-                                      // Update the list item with the modified currentItemDecoration
-                                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                                    });
-                                    },
-                                    child: Icon(
-                                      isBorderRadius
-                                          ? pinned['decoration']['borderRadius']['bottomRight']? TablerIcons.pin_filled : TablerIcons.pin
-                                          : isMargin
-                                          ? pinned['margin']['right']? TablerIcons.pin_filled : TablerIcons.pin
-                                          : pinned['padding']['right']? TablerIcons.pin_filled : TablerIcons.pin
-                                          ,
-                                        size: 15, color:defaultPalette.extras[0] ),
-                                  ),
-                                ),
+                                  SizedBox(width: 2)
+                                ],
                               ),
-                              SizedBox(width: 2)
-                              ],
                             ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 0),
@@ -19169,235 +20301,312 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     }
   }
 
-  Widget buildDecorationEditor( ) {
-    var currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-     Border currentBorder = (currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()) as Border;
+  Widget buildDecorationEditor(
+    ItemDecoration? itemDecoration,
+    {
+      int index =-1,
+      int shadowLayerIndex = -1,
+    }
+  ) {
+     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
+    ItemDecoration currentItemDecoration = itemDecoration ?? decorationIterator(
+        sheetDecorationVariables[index].id,
+        sheetDecorationList) as ItemDecoration;
+    Border currentBorder =
+        (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
     final borderRadiusControllers = [
-      TextEditingController()..text= ((currentItemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).topLeft.x.toString().replaceAll(RegExp(r'\.0$'), ''),
-      TextEditingController()..text= ((currentItemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).topLeft.x.toString().replaceAll(RegExp(r'\.0$'), ''),
-      TextEditingController()..text= ((currentItemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).topRight.x.toString().replaceAll(RegExp(r'\.0$'), ''),
-      TextEditingController()..text= ((currentItemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).bottomLeft.x.toString().replaceAll(RegExp(r'\.0$'), ''),
-      TextEditingController()..text= ((currentItemDecoration.decoration.borderRadius ?? BorderRadius.circular(0) )as BorderRadius).bottomRight.x.toString().replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.borderRadius ??
+                BorderRadius.circular(0)) as BorderRadius)
+            .topLeft
+            .x
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.borderRadius ??
+                BorderRadius.circular(0)) as BorderRadius)
+            .topLeft
+            .x
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.borderRadius ??
+                BorderRadius.circular(0)) as BorderRadius)
+            .topRight
+            .x
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.borderRadius ??
+                BorderRadius.circular(0)) as BorderRadius)
+            .bottomLeft
+            .x
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.borderRadius ??
+                BorderRadius.circular(0)) as BorderRadius)
+            .bottomRight
+            .x
+            .toString()
+            .replaceAll(RegExp(r'\.0$'), ''),
     ];
     final listBorderControllers = [
-      TextEditingController()..text= (currentItemDecoration
-                                      .decoration
-                                      .border ?? Border.all()).top.width.toString().replaceAll(RegExp(r'.0$'), ''),
-      TextEditingController()..text= (currentItemDecoration
-                                      .decoration
-                                      .border ?? Border.all()).top.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                      ,
-      TextEditingController()..text= (currentItemDecoration
-                                      .decoration
-                                      .border ?? Border.all()).bottom.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                      ,
-      TextEditingController()..text= ((currentItemDecoration
-                                      .decoration
-                                      .border ?? Border.all()) as Border).left.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                      ,
-      TextEditingController()..text= ((currentItemDecoration
-                                      .decoration
-                                      .border ?? Border.all()) as Border).right.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                      ,
+      TextEditingController()
+        ..text = (currentItemDecoration.decoration.border ?? Border.all())
+            .top
+            .width
+            .toString()
+            .replaceAll(RegExp(r'.0$'), ''),
+      TextEditingController()
+        ..text = (currentItemDecoration.decoration.border ?? Border.all())
+            .top
+            .width
+            .toString()
+            .replaceAll(RegExp(r'.0$'), ''),
+      TextEditingController()
+        ..text = (currentItemDecoration.decoration.border ?? Border.all())
+            .bottom
+            .width
+            .toString()
+            .replaceAll(RegExp(r'.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.border ?? Border.all())
+                as Border)
+            .left
+            .width
+            .toString()
+            .replaceAll(RegExp(r'.0$'), ''),
+      TextEditingController()
+        ..text = ((currentItemDecoration.decoration.border ?? Border.all())
+                as Border)
+            .right
+            .width
+            .toString()
+            .replaceAll(RegExp(r'.0$'), ''),
     ];
-    List<TextEditingController> colorHexControllers =[
-    TextEditingController()..text = colorToHex(currentItemDecoration.decoration.color ?? defaultPalette.transparent),
-    TextEditingController()..text = (((currentItemDecoration.decoration.border ?? Border.all()) as Border)).top.color.hexAlpha
+    List<TextEditingController> colorHexControllers = [
+      TextEditingController()
+        ..text = colorToHex(currentItemDecoration.decoration.color ??
+            defaultPalette.transparent),
+      TextEditingController()
+        ..text = (((currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent))
+                as Border))
+            .top
+            .color
+            .hexAlpha
     ];
-    final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 84:48))/2;
-    final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 74:40);  
-    final isSizeBigForBorderRow = (sWidth * wH2DividerPosition)>260;
+    final widthSmall =
+        ((sWidth * wH2DividerPosition) - (showDecorationLayers ? 84 : 47)) / 2;
+    final widthBig =
+        (sWidth * wH2DividerPosition) - (showDecorationLayers ? 74 : 40);
+    final isSizeBigForBorderRow = (sWidth * wH2DividerPosition) > 260;
 
-
-    Widget borderSideSelect(int s, String side, Color color, String width){
+    Widget borderSideSelect(int s, String side, Color color, String width) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(5),
         child: Material(
           color: defaultPalette.transparent,
           child: InkWell(
-            hoverColor:  defaultPalette.primary,
+            hoverColor: defaultPalette.primary,
             splashColor: defaultPalette.primary,
-            highlightColor:  defaultPalette.primary,
+            highlightColor: defaultPalette.primary,
             onTap: () {
-            setState(() {
-              whichListBorderSideIsSelected = s;
-            });
-            },child: Container(
-              width: isSizeBigForBorderRow? widthSmall: widthBig,
+              setState(() {
                 
+              });
+            },
+            child: Container(
+              width: isSizeBigForBorderRow ? widthSmall : widthBig,
               decoration: BoxDecoration(
-              border: 
-              Border.fromBorderSide(BorderSide.none), 
-              borderRadius: BorderRadius.circular(5),
-              color:  
-              defaultPalette.transparent
-              ),
-              child:Row(
+                  border: Border.fromBorderSide(BorderSide.none),
+                  borderRadius: BorderRadius.circular(5),
+                  color: defaultPalette.transparent),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   MouseRegion(
                     cursor: SystemMouseCursors.resizeLeftRight,
                     child: GestureDetector(
                       onHorizontalDragCancel: () {
-                          listBorderFocusNodes[s].requestFocus(); },
-                          onHorizontalDragStart: (details) {
-                          dragBackupValue = double.parse(listBorderControllers[s].text);
-                          },
-                          onHorizontalDragUpdate: (details) {
-                            var multiplier = HardwareKeyboard.instance.isControlPressed
+                        sheetDecorationVariables[index].listBorderFocusNodes[s].requestFocus();
+                      },
+                      onHorizontalDragStart: (details) {
+                        dragBackupValue =
+                            double.parse(listBorderControllers[s].text);
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        var multiplier =
+                            HardwareKeyboard.instance.isControlPressed
                                 ? 10
                                 : HardwareKeyboard.instance.isShiftPressed
                                     ? 0.1
                                     : 1;
-                            setState(() {
-                              double currentValue =
-                                  double.tryParse(listBorderControllers[s].text) ?? 0.0;
-                              double newValue = (currentValue + details.delta.dx * multiplier)
-                                  .clamp(0, double.infinity);
-                                  
-                              double parsedValue = double.parse(newValue.toStringAsFixed(2));
-                                  
-                              Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all()) as Border;
-                                  
-                              // Utility function to update border width based on selection
-                              BorderSide updateBorderSide(BorderSide side) {
-                                return side.copyWith(width: parsedValue);
-                              }
-                                  
-                              Border updatedBorder;
-                              if (s == 0) {
-                                // Update all sides
-                                updatedBorder = Border(
-                                  top: updateBorderSide(currentBorder.top),
-                                  bottom: updateBorderSide(currentBorder.bottom),
-                                  left: updateBorderSide(currentBorder.left),
-                                  right: updateBorderSide(currentBorder.right),
-                                );
-                              } else {
-                                // Update specific side
-                                updatedBorder = Border(
-                                  top: s == 1 ? updateBorderSide(currentBorder.top) : currentBorder.top,
-                                  bottom: s == 2 ? updateBorderSide(currentBorder.bottom) : currentBorder.bottom,
-                                  left: s == 3 ? updateBorderSide(currentBorder.left) : currentBorder.left,
-                                  right: s == 4 ? updateBorderSide(currentBorder.right) : currentBorder.right,
-                                );
-                              }
-                                  
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                                decoration: currentItemDecoration.decoration.copyWith(
-                                  border: ((currentItemDecoration.decoration.border ?? Border.all()) is DashedBorder)
-                                      ? DashedBorder(
-                                          top: updateBorderSide(currentBorder.top),
-                                          bottom: updateBorderSide(currentBorder.bottom),
-                                          left: updateBorderSide(currentBorder.left),
-                                          right: updateBorderSide(currentBorder.right),
-                                          dashLength: (currentBorder as DashedBorder).dashLength,
-                                          isOnlyCorner: (currentBorder as DashedBorder).isOnlyCorner,
-                                          spaceLength: (currentBorder as DashedBorder).spaceLength,
-                                          spaceRatio: (currentBorder as DashedBorder).spaceRatio,
-                                          strokeCap: (currentBorder as DashedBorder).strokeCap,
-                                        )
-                                      : updatedBorder,
-                                ),
-                              );
-                            });
-                          },
-                      child: Text(  '  $side ', 
-                      style: GoogleFonts.lexend(
-                        fontSize: 14,
-                        letterSpacing: -1,
-                        color: defaultPalette.extras[0]),),
+                        setState(() {
+                        double currentValue =
+                            double.tryParse(listBorderControllers[s].text) ?? 0.0;
+                        double newValue = (currentValue + details.delta.dx * multiplier)
+                            .clamp(0, double.infinity);
+
+                        double parsedValue = double.parse(newValue.toStringAsFixed(2));
+
+                        // Get the current border from the decoration or default to Border.all()
+                        Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
+
+                        // Utility function to update the border side with the new width
+                        BorderSide updateBorderSide(BorderSide side) {
+                          return side.copyWith(width: parsedValue);
+                        }
+
+                        // Update the border based on the selected side (s)
+                        Border updatedBorder;
+                        if (s == 0) {
+                          // Update all sides with the same value
+                          updatedBorder = Border.fromBorderSide( currentBorder.top.copyWith(width: parsedValue));
+                            
+                        } else {
+                          updatedBorder = Border(
+                            top: s == 1 ? updateBorderSide(currentBorder.top) : currentBorder.top,
+                            bottom: s == 2 ? updateBorderSide(currentBorder.bottom) : currentBorder.bottom,
+                            left: s == 3 ? updateBorderSide(currentBorder.left) : currentBorder.left,
+                            right: s == 4 ? updateBorderSide(currentBorder.right) : currentBorder.right,
+                          );
+                        }
+
+                        // Check if any side has a non-zero width
+                        bool hasNonZeroWidth = updatedBorder.top.width > 0 ||
+                                              updatedBorder.bottom.width > 0 ||
+                                              updatedBorder.left.width > 0 ||
+                                              updatedBorder.right.width > 0;
+
+                        // If any side has non-zero width, update zero-width sides to 1
+                        if (hasNonZeroWidth) {
+                          updatedBorder = Border(
+                            top: updatedBorder.top.width == 0 ? updatedBorder.top.copyWith(width: 1) : updatedBorder.top,
+                            bottom: updatedBorder.bottom.width == 0 ? updatedBorder.bottom.copyWith(width: 1) : updatedBorder.bottom,
+                            left: updatedBorder.left.width == 0 ? updatedBorder.left.copyWith(width: 1) : updatedBorder.left,
+                            right: updatedBorder.right.width == 0 ? updatedBorder.right.copyWith(width: 1) : updatedBorder.right,
+                          );
+                        }
+
+                        // Update the item decoration with the new border
+                        currentItemDecoration = currentItemDecoration.copyWith(
+                          decoration: currentItemDecoration.decoration.copyWith(
+                            border: updatedBorder,
+                          ),
+                        );
+
+                        // Update the decoration in the sheetDecorationList
+                        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                        if (index != -1) {
+                          sheetDecorationList[index] = currentItemDecoration;
+                        }
+ 
+                      });
+
+                      },
+                      child: Text(
+                        '  $side ',
+                        style: GoogleFonts.lexend(
+                            fontSize: 14,
+                            letterSpacing: -1,
+                            color: defaultPalette.extras[0]),
+                      ),
                     ),
                   ),
                   Expanded(
                     child: SizedBox(
-                           height: 20, 
-                           child: TextFormField(
-                             onTapOutside: (event) => listBorderFocusNodes[s].unfocus(),
-                             focusNode: listBorderFocusNodes[s],
-                             controller: listBorderControllers[s],
-                             inputFormatters: [
-                               NumericInputFormatter( 
-                               ),
-                             ], 
-                            cursorColor: defaultPalette.tertiary,
-                            selectionControls: NoMenuTextSelectionControls(),
-                            textAlign: TextAlign.end,
-                             decoration: InputDecoration(
-                               contentPadding: const EdgeInsets.all(0 ), 
-                               labelStyle:
-                                   GoogleFonts.lexend(color: defaultPalette.black),
-                              
-                               fillColor: defaultPalette.transparent,
-                               border: InputBorder.none,
-                               enabledBorder:OutlineInputBorder(
-                                borderSide: BorderSide.none
-                               ),
-                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide.none
-                               ), 
-                             ),
-                             keyboardType: TextInputType.number,
-                             style: GoogleFonts.mitr(
-                                 fontSize: 13, color: defaultPalette.extras[0],
-                                 letterSpacing: -1
-                                 ),
-                             onFieldSubmitted: (value) {
-                               setState(() {
-                                   double parsedValue = double.parse(value );
-                                  
-                              Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all()) as Border;
-                                  
-                              // Utility function to update border width based on selection
-                              BorderSide updateBorderSide(BorderSide side) {
-                                return side.copyWith(width: parsedValue);
-                              }
-                                  
-                              Border updatedBorder;
-                              if (s == 0) {
-                                // Update all sides
-                                updatedBorder = Border(
-                                  top: updateBorderSide(currentBorder.top),
-                                  bottom: updateBorderSide(currentBorder.bottom),
-                                  left: updateBorderSide(currentBorder.left),
-                                  right: updateBorderSide(currentBorder.right),
-                                );
-                              } else {
-                                // Update specific side
-                                updatedBorder = Border(
-                                  top: s == 1 ? updateBorderSide(currentBorder.top) : currentBorder.top,
-                                  bottom: s == 2 ? updateBorderSide(currentBorder.bottom) : currentBorder.bottom,
-                                  left: s == 3 ? updateBorderSide(currentBorder.left) : currentBorder.left,
-                                  right: s == 4 ? updateBorderSide(currentBorder.right) : currentBorder.right,
-                                );
-                              }
-                                  
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                                decoration: currentItemDecoration.decoration.copyWith(
-                                  border: ((currentItemDecoration.decoration.border ?? Border.all()) is DashedBorder)
-                                      ? DashedBorder(
-                                          top: updateBorderSide(currentBorder.top),
-                                          bottom: updateBorderSide(currentBorder.bottom),
-                                          left: updateBorderSide(currentBorder.left),
-                                          right: updateBorderSide(currentBorder.right),
-                                          dashLength: (currentBorder as DashedBorder).dashLength,
-                                          isOnlyCorner: (currentBorder as DashedBorder).isOnlyCorner,
-                                          spaceLength: (currentBorder as DashedBorder).spaceLength,
-                                          spaceRatio: (currentBorder as DashedBorder).spaceRatio,
-                                          strokeCap: (currentBorder as DashedBorder).strokeCap,
-                                        )
-                                      : updatedBorder,
-                                ),
+                      height: 20,
+                      child: TextFormField(
+                        onTapOutside: (event) =>
+                            sheetDecorationVariables[index].listBorderFocusNodes[s].unfocus(),
+                        focusNode: sheetDecorationVariables[index].listBorderFocusNodes[s],
+                        controller: listBorderControllers[s],
+                        inputFormatters: [
+                          NumericInputFormatter(),
+                        ],
+                        cursorColor: defaultPalette.tertiary,
+                        selectionControls: NoMenuTextSelectionControls(),
+                        textAlign: TextAlign.end,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(0),
+                          labelStyle:
+                              GoogleFonts.lexend(color: defaultPalette.black),
+                          fillColor: defaultPalette.transparent,
+                          border: InputBorder.none,
+                          enabledBorder:
+                              OutlineInputBorder(borderSide: BorderSide.none),
+                          focusedBorder:
+                              OutlineInputBorder(borderSide: BorderSide.none),
+                        ),
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.mitr(
+                            fontSize: 13,
+                            color: defaultPalette.extras[0],
+                            letterSpacing: -1),
+                        onFieldSubmitted: (value) {
+                          setState(() {
+                            double parsedValue = double.parse(value);
+
+                            // Get the current border from the decoration or default to Border.all()
+                            Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
+
+                            // Utility function to update the border side with the new width
+                            BorderSide updateBorderSide(BorderSide side) {
+                              return side.copyWith(width: parsedValue);
+                            }
+
+                            // Update the border based on the selected side (s)
+                            Border updatedBorder;
+                            if (s == 0) {
+                              // Update all sides with the same value
+                              updatedBorder = Border.fromBorderSide( currentBorder.top.copyWith(width: parsedValue));
+                            } else {
+                              updatedBorder = Border(
+                                top: s == 1 ? updateBorderSide(currentBorder.top) : currentBorder.top,
+                                bottom: s == 2 ? updateBorderSide(currentBorder.bottom) : currentBorder.bottom,
+                                left: s == 3 ? updateBorderSide(currentBorder.left) : currentBorder.left,
+                                right: s == 4 ? updateBorderSide(currentBorder.right) : currentBorder.right,
                               );
-                               });
-                             },
-                           ),
-                          ),
-                  ),  
-                  SizedBox(width: 2,),
-                   
+                            }
+
+                            // Check if any side has a non-zero width
+                            bool hasNonZeroWidth = updatedBorder.top.width > 0 ||
+                                                  updatedBorder.bottom.width > 0 ||
+                                                  updatedBorder.left.width > 0 ||
+                                                  updatedBorder.right.width > 0;
+
+                            // If any side has non-zero width, update zero-width sides to 1
+                            if (hasNonZeroWidth) {
+                              updatedBorder = Border(
+                                top: updatedBorder.top.width == 0 ? updatedBorder.top.copyWith(width: 1) : updatedBorder.top,
+                                bottom: updatedBorder.bottom.width == 0 ? updatedBorder.bottom.copyWith(width: 1) : updatedBorder.bottom,
+                                left: updatedBorder.left.width == 0 ? updatedBorder.left.copyWith(width: 1) : updatedBorder.left,
+                                right: updatedBorder.right.width == 0 ? updatedBorder.right.copyWith(width: 1) : updatedBorder.right,
+                              );
+                            }
+
+                            // Update the item decoration with the new border
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              decoration: currentItemDecoration.decoration.copyWith(
+                                border: updatedBorder,
+                              ),
+                            );
+
+                            // Update the decoration in the sheetDecorationList
+                            int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                            if (index != -1) {
+                              sheetDecorationList[index] = currentItemDecoration;
+                            }
+ 
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 2,
+                  ),
                 ],
               ),
             ),
@@ -19406,176 +20615,187 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       );
     }
 
-
-
     return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [ 
+          children: [
             //DECORATION Title this is the editable property title
             Expanded(
               child: Container(
-                padding: EdgeInsets.only(left:2),
-                margin: EdgeInsets.only(left:3, right:4),
+                padding: EdgeInsets.only(left: 2),
+                margin: EdgeInsets.only(left: 3, right: 4),
                 decoration: BoxDecoration(
-                  // border: Border.all(),
-                  // color:defaultPalette.primary,
-                  borderRadius: BorderRadius.circular(5)
-                ),
-                child:  Row(
-                    children: [
-                    Icon( TablerIcons.palette,
-                    size: 16,
-                    color: defaultPalette.extras[0]
-                    ),
+                    // border: Border.all(),
+                    // color:defaultPalette.primary,
+                    borderRadius: BorderRadius.circular(5)),
+                child: Row(
+                  children: [
+                    Icon(TablerIcons.palette,
+                        size: 16, color: defaultPalette.extras[0]),
                     Expanded(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        child: Text(  ' decor ',
+                        child: Text(
+                          ' decor ',
                           style: GoogleFonts.lexend(
-                                fontSize: 15,
-                                letterSpacing: -1,
-                                color: defaultPalette.extras[0]),),
+                              fontSize: 15,
+                              letterSpacing: -1,
+                              color: defaultPalette.extras[0]),
+                        ),
                       ),
                     ),
-                    ],
-                  ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(width: 2,),
+            const SizedBox(
+              width: 2,
+            ),
             //DECORATION isPinned
             ClipRRect(
               borderRadius: BorderRadius.circular(500),
               child: Material(
-                color: defaultPalette.transparent, 
-                child: InkWell( 
-                  hoverColor:  defaultPalette.tertiary,
+                color: defaultPalette.transparent,
+                child: InkWell(
+                  hoverColor: defaultPalette.tertiary,
                   splashColor: defaultPalette.tertiary,
-                  highlightColor:  defaultPalette.tertiary,
+                  highlightColor: defaultPalette.tertiary,
                   onTap: () {
-                  setState(() {
-                    final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                    currentItemDecoration.pinned['decoration'] = {
-                      'isPinned': false,
-                      'color': false,
-                      'border': false,
-                      'borderRadius': {
+                    setState(() {
+                      currentItemDecoration.pinned['decoration'] = {
                         'isPinned': false,
-                      'topLeft': false,
-                      'topRight': false,
-                      'bottomLeft': false, 
-                      'bottomRight': false,
-                      },
-                      'boxShadow': false,
-                      'image': {
-                        'isPinned': false,
-                        'bytes': false,
-                        'fit': false,
-                        'repeat': false,
-                        'alignment': false,
-                        'scale': false,
-                        'opacity': false,
-                        'filterQuality': false,
-                        'invertColors': false,
-                      }, 
-                      'backgroundBlendMode': false,
-                    }; 
-                    
-                    // Update the list item with the modified currentItemDecoration
-                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                  });
+                        'color': false,
+                        'border': false,
+                        'borderRadius': {
+                          'isPinned': false,
+                          'topLeft': false,
+                          'topRight': false,
+                          'bottomLeft': false,
+                          'bottomRight': false,
+                        },
+                        'boxShadow': false,
+                        'image': {
+                          'isPinned': false,
+                          'bytes': false,
+                          'fit': false,
+                          'repeat': false,
+                          'alignment': false,
+                          'scale': false,
+                          'opacity': false,
+                          'filterQuality': false,
+                          'invertColors': false,
+                        },
+                        'backgroundBlendMode': false,
+                      };
+
+                      // Update the list item with the modified currentItemDecoration
+                      currentItemDecoration = currentItemDecoration;
+                    });
                   },
-                  child: Icon( currentItemDecoration.pinned['decoration']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin,
-                      size: 16, color: defaultPalette.extras[0]),
+                  child: Icon(
+                      currentItemDecoration.pinned['decoration']['isPinned']
+                          ? TablerIcons.pin_filled
+                          : TablerIcons.pin,
+                      size: 16,
+                      color: defaultPalette.extras[0]),
                 ),
               ),
             ),
-             const SizedBox(width: 4,),       
+            const SizedBox(
+              width: 4,
+            ),
           ],
         ),
-        const SizedBox(width: 2,height:2,),
+        const SizedBox(
+          width: 2,
+          height: 2,
+        ),
+
         ///COLOR FOR THE DECORATION SECTION
-        if(currentItemDecoration.pinned['decoration']['color'])
-        Flex(
-          direction: Axis.vertical,
-          children: [
-            SizedBox(width: 2,height: 2),
-            //title and hex code of plain color title
-            Container(
-              height: 25,
-                padding: EdgeInsets.only(left:2),
-                margin: EdgeInsets.only(left:3, right:4),
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  color:defaultPalette.primary,
-                  borderRadius: BorderRadius.circular(5)
-                ),
-                child:  Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+        if (currentItemDecoration.pinned['decoration']['color'])
+          Flex(
+            direction: Axis.vertical,
+            children: [
+              SizedBox(width: 2, height: 2),
+              //title and hex code of plain color title
+              GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isListColorExpanded = !isListColorExpanded;
+                        });
+                      },
+                child: Container(
+                  height: 25,
+                  padding: EdgeInsets.only(left: 2),
+                  margin: EdgeInsets.only(left: 3, right: 4),
+                  decoration: BoxDecoration(
+                      border: Border.all(),
+                      color: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(5)),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                    Icon( TablerIcons.color_swatch,
-                    size: 16,
-                    color: defaultPalette.extras[0]
-                    ),
-                    if( (sWidth * wH2DividerPosition)>220)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Text(  ' color ' 
-                            ,
-                        style: GoogleFonts.lexend(
-                              fontSize: 15,
-                              letterSpacing: -1,
-                              color: defaultPalette.extras[0]),),
-                    ),
-                    Expanded(
-                      child: SizedBox(
-                        height: 25,
-                        child: TextField( 
-                        focusNode: colorHexFocusNodes[0],
-                        controller: colorHexControllers[0],
-                        onSubmitted: (value) {
-                          setState(() {
-                            sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                              decoration: currentItemDecoration.decoration.copyWith(
-                                color: hexToColor(value)
-                              )
-                            ); 
+                      Icon(TablerIcons.color_swatch,
+                          size: 16, color: defaultPalette.extras[0]),
+                      if ((sWidth * wH2DividerPosition) > 220)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            ' color ',
+                            style: GoogleFonts.lexend(
+                                fontSize: 15,
+                                letterSpacing: -1,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        ),
+                      Expanded(
+                        child: SizedBox(
+                          height: 25,
+                          child: TextField(
+                            focusNode: sheetDecorationVariables[index].colorHexFocusNodes[0],
+                            controller: colorHexControllers[0],
+                            onSubmitted: (value) {
+                              setState(() {
+                                currentItemDecoration =
+                                    currentItemDecoration.copyWith(
+                                        decoration: currentItemDecoration
+                                            .decoration
+                                            .copyWith(color: hexToColor(value)));
+                              int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                            if (index != -1) {
+                              sheetDecorationList[index] = currentItemDecoration;
+                            }
                               });
                             },
-                        textAlignVertical: TextAlignVertical.top,
-                        textAlign: TextAlign.end,
-                        cursorColor: defaultPalette.tertiary,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.only(left:2), 
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                          hoverColor: defaultPalette.transparent,
-                          filled: true,
-                          fillColor: defaultPalette.transparent, 
-                          border: InputBorder.none,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide.none, 
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide.none,
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                        ), 
-                        style: GoogleFonts.lexend(
-                          letterSpacing: -1, fontWeight: FontWeight.w500,
-                                  fontSize: 14, color: defaultPalette.black),
+                            textAlignVertical: TextAlignVertical.top,
+                            textAlign: TextAlign.end,
+                            cursorColor: defaultPalette.tertiary,
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.only(left: 2),
+                              labelStyle:
+                                  GoogleFonts.lexend(color: defaultPalette.black),
+                              hoverColor: defaultPalette.transparent,
+                              filled: true,
+                              fillColor: defaultPalette.transparent,
+                              border: InputBorder.none,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide.none,
                               ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide.none,
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                            ),
+                            style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                color: defaultPalette.black),
+                          ),
+                        ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                      setState(() {
-                        isListColorExpanded =
-                            !isListColorExpanded;
-                      });},
-                      child: Padding(
+                      Padding(
                         padding: const EdgeInsets.all(0.0),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -19583,674 +20803,793 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             border: Border.fromBorderSide(
                               BorderSide.none,
                             ),
-                            color: currentItemDecoration
-                        .decoration
-                        .color ??
-                        defaultPalette
-                        .transparent,
+                            color: currentItemDecoration.decoration.color ??
+                                defaultPalette.transparent,
                           ),
-                          child: SizedBox(width: 15,height: 15,),
+                          child: SizedBox(
+                            width: 15,
+                            height: 15,
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 2,),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(500),
-                      child: Material(
-                        color: defaultPalette.transparent, 
-                        child: InkWell( 
-                          hoverColor:  defaultPalette.tertiary,
-                          splashColor: defaultPalette.tertiary,
-                          highlightColor:  defaultPalette.tertiary,
-                          onTap: () {
-                          setState(() {
-                            final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                            currentItemDecoration.pinned['decoration']['color'] =  !currentItemDecoration.pinned['decoration']['color'];
-                            
-                            // Update the list item with the modified currentItemDecoration
-                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                          });
-                          },
-                          child: Icon( currentItemDecoration.pinned['decoration']['color']? TablerIcons.pin_filled : TablerIcons.pin,
-                              size: 16, color: defaultPalette.extras[0]),
+                      SizedBox(
+                        width: 2,
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(500),
+                        child: Material(
+                          color: defaultPalette.transparent,
+                          child: InkWell(
+                            hoverColor: defaultPalette.tertiary,
+                            splashColor: defaultPalette.tertiary,
+                            highlightColor: defaultPalette.tertiary,
+                            onTap: () {
+                              setState(() {
+                                currentItemDecoration.pinned['decoration']
+                                        ['color'] =
+                                    !currentItemDecoration.pinned['decoration']
+                                        ['color'];
+                
+                                // Update the list item with the modified currentItemDecoration
+                                currentItemDecoration = currentItemDecoration;
+                              });
+                            },
+                            child: Icon(
+                                currentItemDecoration.pinned['decoration']
+                                        ['color']
+                                    ? TablerIcons.pin_filled
+                                    : TablerIcons.pin,
+                                size: 16,
+                                color: defaultPalette.extras[0]),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 2,)
+                      SizedBox(
+                        width: 2,
+                      )
                     ],
                   ),
-              ), 
-            // List Decoration COLOR main
-            
-            if(isListColorExpanded)   
-            ...[//list COLOR PICKER Main    
-            SizedBox(width: 2,height: 4,),
-
-            Container( 
-              width: widthBig,
-              padding: EdgeInsets.only(left:3, right: 3),
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  color:defaultPalette.primary,
-                  borderRadius: BorderRadius.circular(5)
                 ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Text(  ' ${(fl.ColorTools.nameThatColor(currentItemDecoration.decoration
-                          .color ?? defaultPalette
-                          .transparent, )).toLowerCase()}'
-                          , 
-                      style: GoogleFonts.lexend(
-                            fontSize: 14,
-                            letterSpacing: -1,
-                            color: defaultPalette.extras[0]),),
-                  ),
-                           
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ),
+              // List Decoration COLOR main
+
+              if (isListColorExpanded) ...[
+                //list COLOR PICKER Main
+                SizedBox(
+                  width: 2,
+                  height: 4,
+                ),
+
+                Container(
+                  width: widthBig,
+                  padding: EdgeInsets.only(left: 3, right: 3),
+                  decoration: BoxDecoration(
+                      border: Border.all(),
+                      color: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(5)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if( (sWidth * wH2DividerPosition)>220)
-                      Expanded( 
-                        child: HSVPicker(
-                          color: HSVColor.fromColor(currentItemDecoration
-                          .decoration
-                          .color ?? defaultPalette
-                          .transparent,),
-                            onChanged: (value) {
-                              setState(() {
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                                decoration: currentItemDecoration.decoration.copyWith(
-                                  color: value.toColor().withAlpha(
-                                    (currentItemDecoration
-                                    .decoration
-                                    .color ?? defaultPalette
-                                    .transparent).alpha
-                                  )
-                                )
-                              );
-                              });
-                            },),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          ' ${(fl.ColorTools.nameThatColor(
+                            currentItemDecoration.decoration.color ??
+                                defaultPalette.transparent,
+                          )).toLowerCase()}',
+                          style: GoogleFonts.lexend(
+                              fontSize: 14,
+                              letterSpacing: -1,
+                              color: defaultPalette.extras[0]),
+                        ),
                       ),
-                      Expanded(
-                        child: IntrinsicHeight(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            // crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              
-                                //list Aplha COLOR
-                              WheelPicker(
-                              color: HSVColor.fromColor(currentItemDecoration
-                                        .decoration
-                                        .color ?? defaultPalette
-                                        .transparent,),
-                              onChanged: (HSVColor value) {
-                                setState(() {
-                                  sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                                    decoration: currentItemDecoration.decoration.copyWith(
-                                      color: value.toColor().withAlpha(
-                                        (currentItemDecoration
-                                        .decoration
-                                        .color ?? defaultPalette
-                                        .transparent).alpha
-                                      )
-                                    )
-                                  );
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if ((sWidth * wH2DividerPosition) > 220)
+                            Expanded(
+                              child: HSVPicker(
+                                color: HSVColor.fromColor(
+                                  currentItemDecoration.decoration.color ??
+                                      defaultPalette.transparent,
+                                ),
+                                onChanged: (value) {
+                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                    decoration: currentItemDecoration
+                                      .decoration
+                                      .copyWith(
+                                        color: value.toColor().withAlpha(
+                                          (currentItemDecoration
+                                            .decoration
+                                            .color ??defaultPalette.transparent).alpha)));
+                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                            
+                                  setState(() { 
+                                  if (index != -1) {
+                                    sheetDecorationList[index] = currentItemDecoration;
+                                  }
                                   });
                                 },
-                              ), 
-                              
-                               
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  //list COLOR WHEEL picker
-                  AlphaPicker(
-                    alpha: (currentItemDecoration
-                              .decoration
-                              .color ?? defaultPalette
-                              .transparent).alpha,
-                    onChanged: (int value) {
-                      setState(() {
-                        sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                        decoration: currentItemDecoration.decoration.copyWith(
-                          color:(  currentItemDecoration.decoration.color ?? defaultPalette
-                              .transparent).withAlpha(value)
-                        )
-                      ); 
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            
-            ],
-            SizedBox(width: 2,height: 4),
-             
-          ],
-        ), 
-        ///BORDER COLOR AND WIDTH SECTION FOR DECORATION
-      if(currentItemDecoration.pinned['decoration']['border'])
-       ...[
-        //title for border 
-        Container(
-          height: 25,
-          padding: EdgeInsets.only(left:2),
-          margin: EdgeInsets.only(left:3, right:4),
-          decoration: BoxDecoration(
-            border: Border.all(),
-            color:defaultPalette.primary,
-            borderRadius: BorderRadius.circular(5)
-          ),
-          child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                    Icon( TablerIcons.border_sides,
-                    size: 16,
-                    color: defaultPalette.extras[0]
-                    ),
-                    if( (sWidth * wH2DividerPosition)>220)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Text(  ' border ' 
-                            ,
-                        style: GoogleFonts.lexend(
-                              fontSize: 15,
-                              letterSpacing: -1,
-                              color: defaultPalette.extras[0]),),
-                    ),
-                    Expanded(
-                      child: SizedBox(
-                        height: 25,
-                        child: TextField( 
-                        focusNode: colorHexFocusNodes[1],
-                        controller: colorHexControllers[1],
-                        onSubmitted: (value) {
-                          setState(() {
-                            sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                              decoration: currentItemDecoration.decoration.copyWith(
-                                border:Border.all(
-                                  color: hexToColor(value)
-                                ) 
-                              )
-                            ); 
-                              });
-                            },
-                        textAlignVertical: TextAlignVertical.top,
-                        textAlign: TextAlign.end,
-                        cursorColor: defaultPalette.tertiary,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.only(left:2), 
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                          hoverColor: defaultPalette.transparent,
-                          filled: true,
-                          fillColor: defaultPalette.transparent, 
-                          border: InputBorder.none,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide.none, 
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide.none,
-                            borderRadius: BorderRadius.circular(5.0),
-                          ),
-                        ), 
-                        style: GoogleFonts.lexend(
-                          letterSpacing: -1, fontWeight: FontWeight.w500,
-                                  fontSize: 14, color: defaultPalette.black),
                               ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                      setState(() {
-                        isListBorderExpanded =
-                            !isListBorderExpanded; 
-                      });},
-                      child: Padding(
-                        padding: const EdgeInsets.all(0.0),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.fromBorderSide(
-                              BorderSide.none,
                             ),
-                            color: (currentItemDecoration
-                        .decoration
-                        .border ?? Border.all()).top.color,
+                          Expanded(
+                            child: IntrinsicHeight(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                // crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  //list COLOR WHEEL COLOR
+                                  WheelPicker(
+                                    color: HSVColor.fromColor(
+                                      currentItemDecoration.decoration.color ??
+                                          defaultPalette.transparent,
+                                    ),
+                                    onChanged: (HSVColor value) {
+                                      currentItemDecoration = currentItemDecoration.copyWith(
+                                            decoration: currentItemDecoration
+                                            .decoration
+                                            .copyWith(color: value.toColor().withAlpha((currentItemDecoration
+                                                    .decoration.color ??defaultPalette.transparent).alpha)));
+                                      int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                  
+                                      setState(() {
+                                      if (index != -1) {
+                                        sheetDecorationList[index] = currentItemDecoration;
+                                      }
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          child: SizedBox(width: 15,height: 15,),
-                        ),
+                        ],
                       ),
-                    ),
-                    SizedBox(width: 2,),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(500),
-                      child: Material(
-                        color: defaultPalette.transparent, 
-                        child: InkWell( 
-                          hoverColor:  defaultPalette.tertiary,
-                          splashColor: defaultPalette.tertiary,
-                          highlightColor:  defaultPalette.tertiary,
-                          onTap: () {
+                      //list alpha picker
+                      AlphaPicker(
+                        alpha: (currentItemDecoration.decoration.color ??
+                                defaultPalette.transparent)
+                            .alpha,
+                        onChanged: (int value) {
+                          currentItemDecoration =currentItemDecoration.copyWith(decoration: currentItemDecoration.decoration
+                                    .copyWith(color: (currentItemDecoration.decoration.color ??
+                                                defaultPalette.transparent).withAlpha(value)));
+                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                          
+                          
                           setState(() {
-                            final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                            currentItemDecoration.pinned['decoration']['border'] =  !currentItemDecoration.pinned['decoration']['border'];
-                            
-                            // Update the list item with the modified currentItemDecoration
-                            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
+                          if (index != -1) {
+                            sheetDecorationList[index] = currentItemDecoration;
+                          }
                           });
-                          },
-                          child: Icon( currentItemDecoration.pinned['decoration']['border']? TablerIcons.pin_filled : TablerIcons.pin,
-                              size: 16, color: defaultPalette.extras[0]),
-                        ),
+                        },
                       ),
-                    ),
-                    SizedBox(width: 2,)
                     ],
                   ),
-        ),
-        
-        
-        if(isListBorderExpanded)   
-            ...[    
-            SizedBox(width: 2,height: 4,),
-            //LINE or DASHED AND SIDES MENU
-            Container(  
-              margin: EdgeInsets.only(left:3, right: 3, ),
-              padding: EdgeInsets.only(left:4, right: 5, top:4,bottom: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  color:defaultPalette.primary,
-                  borderRadius: BorderRadius.circular(5)
                 ),
+              ],
+              SizedBox(width: 2, height: 4),
+            ],
+          ),
+
+        ///BORDER COLOR AND WIDTH SECTION FOR DECORATION
+        if (currentItemDecoration.pinned['decoration']['border']) ...[
+          //title for border
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isListBorderExpanded = !isListBorderExpanded;
+              });
+            },
+            child: Container(
+            height: 25,
+            padding: EdgeInsets.only(left: 2),
+            margin: EdgeInsets.only(left: 3, right: 4),
+            decoration: BoxDecoration(
+                border: Border.all(),
+                color: defaultPalette.primary,
+                borderRadius: BorderRadius.circular(5)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(TablerIcons.border_sides,
+                    size: 16, color: defaultPalette.extras[0]),
+                if ((sWidth * wH2DividerPosition) > 220)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(' border ',
+                      style: GoogleFonts.lexend(
+                          fontSize: 15,
+                          letterSpacing: -1,
+                          color: defaultPalette.extras[0]),
+                    ),
+                  ),
+                Expanded(
+                  child: SizedBox(
+                    height: 25,
+                    child: TextField(
+                      focusNode: sheetDecorationVariables[index].colorHexFocusNodes[1],
+                      controller: colorHexControllers[1],
+                      onSubmitted: (value) {
+                        setState(() {
+                          currentItemDecoration =
+                              currentItemDecoration.copyWith(
+                                  decoration: currentItemDecoration.decoration
+                                      .copyWith(
+                                          border: Border.all(
+                                              color: hexToColor(value))));
+                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                          if (index != -1) {
+                            sheetDecorationList[index] = currentItemDecoration;
+                          }                    
+                        });
+                      },
+                      textAlignVertical: TextAlignVertical.top,
+                      textAlign: TextAlign.end,
+                      cursorColor: defaultPalette.tertiary,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.only(left: 2),
+                        labelStyle:
+                            GoogleFonts.lexend(color: defaultPalette.black),
+                        hoverColor: defaultPalette.transparent,
+                        filled: true,
+                        fillColor: defaultPalette.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                      ),
+                      style: GoogleFonts.lexend(
+                          letterSpacing: -1,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color: defaultPalette.black),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(0.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.fromBorderSide(
+                        BorderSide.none,
+                      ),
+                      color: (currentItemDecoration.decoration.border ??
+                              Border.all(color: defaultPalette.transparent))
+                          .top
+                          .color,
+                    ),
+                    child: SizedBox(
+                      width: 15,
+                      height: 15,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 2,
+                ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(500),
+                  child: Material(
+                    color: defaultPalette.transparent,
+                    child: InkWell(
+                      hoverColor: defaultPalette.tertiary,
+                      splashColor: defaultPalette.tertiary,
+                      highlightColor: defaultPalette.tertiary,
+                      onTap: () {
+                        setState(() {
+                          currentItemDecoration.pinned['decoration']['border'] =
+                              !currentItemDecoration.pinned['decoration']
+                                  ['border'];
+          
+                          // Update the list item with the modified currentItemDecoration
+                          currentItemDecoration = currentItemDecoration;
+                        });
+                      },
+                      child: Icon(
+                          currentItemDecoration.pinned['decoration']['border']
+                              ? TablerIcons.pin_filled
+                              : TablerIcons.pin,
+                          size: 16,
+                          color: defaultPalette.extras[0]),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 2,
+                )
+              ],
+            ),
+          ),
+          ),
+
+          if (isListBorderExpanded) ...[
+            SizedBox(
+              width: 2,
+              height: 4,
+            ),
+            //LINE or DASHED AND SIDES MENU
+            Container(
+              margin: EdgeInsets.only(
+                left: 3,
+                right: 3,
+              ),
+              padding: EdgeInsets.only(left: 4, right: 5, top: 4, bottom: 4),
+              decoration: BoxDecoration(
+                  border: Border.all(),
+                  color: defaultPalette.primary,
+                  borderRadius: BorderRadius.circular(5)),
               child: Flex(
-                direction: isSizeBigForBorderRow? Axis.horizontal: Axis.vertical,
+                direction:
+                    isSizeBigForBorderRow ? Axis.horizontal : Axis.vertical,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   // SIDES MENU
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Container(
-                        width:isSizeBigForBorderRow? widthSmall-5: widthBig,
+                        width:
+                            isSizeBigForBorderRow ? widthSmall - 5 : widthBig,
                         padding: EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          border: Border.all(),
-                          color:defaultPalette.secondary,
-                          borderRadius: BorderRadius.circular(5)
-                        ),
+                            border: Border.all(),
+                            color: defaultPalette.secondary,
+                            borderRadius: BorderRadius.circular(5)),
                         child: Column(
                           children: [
                             Row(
-                            mainAxisAlignment: MainAxisAlignment.start, 
-                            crossAxisAlignment: CrossAxisAlignment.start, 
-                            children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(99999),
-                              child: Container(
-                                padding: EdgeInsets.all(2),
-                                decoration: BoxDecoration(border: Border.all(
-                                  color: defaultPalette.extras[0]
-                                ), borderRadius: BorderRadius.circular(99999),
-                                color: ((currentItemDecoration.decoration.border ?? Border.all()) is DashedBorder)?defaultPalette.transparent:defaultPalette.primary
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(99999),
+                                  child: Container(
+                                      padding: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: defaultPalette.extras[0]),
+                                          borderRadius:
+                                              BorderRadius.circular(99999),
+                                          color: defaultPalette.primary),
+                                      child: Icon(
+                                        TablerIcons.slash,
+                                        size: 13,
+                                      )),
                                 ),
-                                child:Icon(
-                                  TablerIcons.slash, size: 13,)
-                              ),
-                            ),
-                            SizedBox(width: 3,),
-                             
-                            
-                            Text(  'line ' , 
-                            style: GoogleFonts.lexend(
-                              fontSize: 14,
-                              letterSpacing: -1,
-                              color: defaultPalette.extras[0]),),  
-                                                  
-                            ],
+                                SizedBox(
+                                  width: 3,
+                                ),
+                                Text(
+                                  'line ',
+                                  style: GoogleFonts.lexend(
+                                      fontSize: 14,
+                                      letterSpacing: -1,
+                                      color: defaultPalette.extras[0]),
+                                ),
+                              ],
                             ),
                             // SizedBox(width: 2,height: 0,),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                 Text(  ' side' , 
-                            style: GoogleFonts.lexend(
-                              fontSize: 12,
-                              letterSpacing: -1,
-                              color: defaultPalette.extras[0]),), 
-                              Text(  'width' , 
-                            style: GoogleFonts.lexend(
-                              fontSize: 12,
-                              letterSpacing: -1,
-                              color: defaultPalette.extras[0]),), 
-                             
+                                Text(
+                                  ' side',
+                                  style: GoogleFonts.lexend(
+                                      fontSize: 12,
+                                      letterSpacing: -1,
+                                      color: defaultPalette.extras[0]),
+                                ),
+                                Text(
+                                  'width',
+                                  style: GoogleFonts.lexend(
+                                      fontSize: 12,
+                                      letterSpacing: -1,
+                                      color: defaultPalette.extras[0]),
+                                ),
                               ],
                             ),
                             //All Border Side Select
-                            borderSideSelect(0, 'all', (currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()).top.color, 
-                                  (currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()).top.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                  ),
-                            SizedBox(width: 2,height: 2,),
+                            borderSideSelect(
+                                0,
+                                'all',
+                                (currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent))
+                                    .top
+                                    .color,
+                                (currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent))
+                                    .top
+                                    .width
+                                    .toString()
+                                    .replaceAll(RegExp(r'.0$'), '')),
+                            SizedBox(
+                              width: 2,
+                              height: 2,
+                            ),
                             //top Border Side Select
-                            borderSideSelect(1, 'top',(currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()).top.color,
-                                  (currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()).top.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                  ),
-                            SizedBox(width: 2,height: 2,),
+                            borderSideSelect(
+                                1,
+                                'top',
+                                (currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent))
+                                    .top
+                                    .color,
+                                (currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent))
+                                    .top
+                                    .width
+                                    .toString()
+                                    .replaceAll(RegExp(r'.0$'), '')),
+                            SizedBox(
+                              width: 2,
+                              height: 2,
+                            ),
                             //top Border Side Select
-                            borderSideSelect(2, 'bottom',(currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()).bottom.color,
-                                  (currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()).bottom.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                  ),
-                            SizedBox(width: 2,height: 2,),
+                            borderSideSelect(
+                                2,
+                                'bottom',
+                                (currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent))
+                                    .bottom
+                                    .color,
+                                (currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent))
+                                    .bottom
+                                    .width
+                                    .toString()
+                                    .replaceAll(RegExp(r'.0$'), '')),
+                            SizedBox(
+                              width: 2,
+                              height: 2,
+                            ),
                             //top Border Side Select
-                            borderSideSelect(3, 'left',((currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()) as Border).left.color,
-                                  ((currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()) as Border).left.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                  ),
-                            SizedBox(width: 2,height: 2,),
+                            borderSideSelect(
+                                3,
+                                'left',
+                                ((currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent)) as Border)
+                                    .left
+                                    .color,
+                                ((currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent)) as Border)
+                                    .left
+                                    .width
+                                    .toString()
+                                    .replaceAll(RegExp(r'.0$'), '')),
+                            SizedBox(
+                              width: 2,
+                              height: 2,
+                            ),
                             //top Border Side Select
-                            borderSideSelect(4, 'right',((currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()) as Border).right.color,
-                                  ((currentItemDecoration
-                                  .decoration
-                                  .border ?? Border.all()) as Border).right.width.toString().replaceAll(RegExp(r'.0$'), '')
-                                  ),
+                            borderSideSelect(
+                                4,
+                                'right',
+                                ((currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent)) as Border)
+                                    .right
+                                    .color,
+                                ((currentItemDecoration.decoration.border ??
+                                        Border.all(color: defaultPalette.transparent)) as Border)
+                                    .right
+                                    .width
+                                    .toString()
+                                    .replaceAll(RegExp(r'.0$'), '')),
                           ],
                         ),
-                      ), 
-                            
-              
+                      ),
                     ],
                   ),
                   // if(isSizeBigForBorderRow)
                   //COLOR SELECTOR SECTION
                   SizedBox(
-                    width:isSizeBigForBorderRow?widthSmall: widthBig,
+                    width: isSizeBigForBorderRow ? widthSmall : widthBig,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,  
-                      children: [ 
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
                         SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Text(  ' ${(fl.ColorTools.nameThatColor(currentBorder.top
-                          .color  )).toLowerCase()}', 
-                        style: GoogleFonts.lexend(
-                          fontSize: 14,
-                          letterSpacing: -1,
-                          color: defaultPalette.extras[0]),),
-                        ),    
-                          //list Wheel COLOR
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            ' ${(fl.ColorTools.nameThatColor(currentBorder.top.color)).toLowerCase()}',
+                            style: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        ),
+                        //list Wheel COLOR
                         WheelPicker(
-                        color: HSVColor.fromColor( (currentItemDecoration
-                        .decoration
-                        .border ?? Border.all()).top.color,),
-                        onChanged: (HSVColor value) {
-                          Border currentBorder = (currentItemDecoration
-                          .decoration
-                          .border ?? Border.all()) as Border;
-                        setState(() {
-                        sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                          decoration: currentItemDecoration.decoration.copyWith(
-                            border:((currentItemDecoration.decoration.border ?? Border.all()) is DashedBorder)
-                            ? DashedBorder(
-                              bottom: currentBorder.bottom.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.bottom.color).alpha,) ),
-                              top: currentBorder.top.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.top.color).alpha,) ),
-                              left: currentBorder.left.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.left.color).alpha,) ),
-                              right: currentBorder.right.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.right.color).alpha,) ),
-                              dashLength: (currentBorder as DashedBorder).dashLength,
-                              isOnlyCorner: (currentBorder as DashedBorder).isOnlyCorner,
-                              spaceLength: (currentBorder as DashedBorder).spaceLength,
-                              spaceRatio: (currentBorder as DashedBorder).spaceRatio,
-                              strokeCap: (currentBorder as DashedBorder).strokeCap,
-                    
-                            )
-                            :  Border(
-                              bottom: currentBorder.bottom.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.bottom.color).alpha,) ),
-                              top: currentBorder.top.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.top.color).alpha,) ),
-                              left: currentBorder.left.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.left.color).alpha,) ),
-                              right: currentBorder.right.copyWith(color: value.toColor().withAlpha(
-                              (currentBorder.right.color).alpha,) ),
-                    
-                            ), 
-                          )
-                        );
-                        });
-                          },
-                        ), 
-                        //Alpha picker list decoration
-                        AlphaPicker(
-                          alpha:  (currentItemDecoration
-                              .decoration
-                              .border ?? Border.all()).top.color.alpha,
-                          onChanged: (int value) {
-                            Border currentBorder = (currentItemDecoration
-                                      .decoration
-                                      .border ?? Border.all()) as Border;
-                                    setState(() {
-                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                                      decoration: currentItemDecoration.decoration.copyWith(
-                                        border:  Border(
-                                          bottom: currentBorder.bottom.copyWith( color:currentBorder.bottom.color.withAlpha(value) ),
-                                          top: currentBorder.top.copyWith(color:currentBorder.top.color.withAlpha(value)),
-                                          left: currentBorder.left.copyWith(color:currentBorder.left.color.withAlpha(value) ),
-                                          right: currentBorder.right.copyWith(color:currentBorder.right.color.withAlpha(value)),
-                    
-                                        ), 
-                                      )
-                                    );
-                                    });
-                              
+                          color: HSVColor.fromColor(
+                            (currentItemDecoration.decoration.border ??
+                                    Border.all(color: defaultPalette.transparent))
+                                .top
+                                .color,
+                          ),
+                          onChanged: (HSVColor value) {
+                            Border currentBorder =
+                                (currentItemDecoration.decoration.border ??
+                                    Border.all(color: defaultPalette.transparent)) as Border;
+                            currentItemDecoration =currentItemDecoration.copyWith(
+                              decoration: currentItemDecoration
+                                  .decoration
+                                  .copyWith(
+                              border:Border(
+                                bottom: currentBorder.bottom.copyWith(
+                                    color: value.toColor().withAlpha(
+                                          (currentBorder.bottom.color)
+                                              .alpha,
+                                        )),
+                                top: currentBorder.top.copyWith(
+                                    color: value.toColor().withAlpha(
+                                          (currentBorder.top.color)
+                                              .alpha,
+                                        )),
+                                left: currentBorder.left.copyWith(
+                                    color: value.toColor().withAlpha(
+                                          (currentBorder.left.color)
+                                              .alpha,
+                                        )),
+                                right: currentBorder.right.copyWith(
+                                    color: value.toColor().withAlpha(
+                                          (currentBorder.right.color)
+                                              .alpha,
+                                        )),
+                                ),
+                              ));        
+                            setState(() {
+                              int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }
+                            });
                           },
                         ),
-                                    
-                         
+                        //Alpha picker list decoration
+                        AlphaPicker(
+                          alpha: (currentItemDecoration.decoration.border ??
+                                  Border.all(color: defaultPalette.transparent))
+                              .top
+                              .color
+                              .alpha,
+                          onChanged: (int value) {
+                            Border currentBorder =
+                                (currentItemDecoration.decoration.border ??
+                                    Border.all(color: defaultPalette.transparent)) as Border;
+                             currentItemDecoration =
+                                  currentItemDecoration.copyWith(
+                                      decoration: currentItemDecoration
+                                          .decoration
+                                          .copyWith(
+                                border: Border(
+                                  bottom: currentBorder.bottom.copyWith(
+                                      color: currentBorder.bottom.color
+                                          .withAlpha(value)),
+                                  top: currentBorder.top.copyWith(
+                                      color: currentBorder.top.color
+                                          .withAlpha(value)),
+                                  left: currentBorder.left.copyWith(
+                                      color: currentBorder.left.color
+                                          .withAlpha(value)),
+                                  right: currentBorder.right.copyWith(
+                                      color: currentBorder.right.color
+                                          .withAlpha(value)),
+                                ),
+                              ));        
+                            setState(() {
+                              int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }
+                            });
+                          },
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
-            ],
-        
-        SizedBox(width: 2,height: 3),
+          ],
+
+          SizedBox(width: 2, height: 3),
         ],
 
-        if(currentItemDecoration.pinned['decoration']['borderRadius']['isPinned'])
-       ...[ buildListPaddingMarginEditor(
-          isBorderRadius: true,
-          isMargin: false, 
-          itemDecoration: (sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration), 
-          pinned: currentItemDecoration.pinned,
-          borderRadiusControllers: borderRadiusControllers,
+        if (currentItemDecoration.pinned['decoration']['borderRadius']
+            ['isPinned']) ...[
+          buildListPaddingMarginEditor(
+            isBorderRadius: true,
+            isMargin: false,
+            itemDecoration: (currentItemDecoration as ItemDecoration),
+            pinned: currentItemDecoration.pinned,
+            borderRadiusControllers: borderRadiusControllers,
+            index: index
           ),
-        SizedBox(width: 2,height: 3),]  ,
-        if(currentItemDecoration.pinned['decoration']['boxShadow'])  
-        ...[buildShadowEditor(),
-        SizedBox(width: 2,height: 2),],
+          SizedBox(width: 2, height: 3),
+        ],
+        if (currentItemDecoration.pinned['decoration']['boxShadow']) ...[
+          buildShadowEditor(shadowLayerIndex: shadowLayerIndex, sIndex: index),
+          SizedBox(width: 2, height: 2),
+        ],
 
-        if(currentItemDecoration.pinned['decoration']['image']['bytes'] ||
-        currentItemDecoration.pinned['decoration']['image']['fit'] ||
-        currentItemDecoration.pinned['decoration']['image']['repeat'] ||
-        currentItemDecoration.pinned['decoration']['image']['alignment'] ||
-        currentItemDecoration.pinned['decoration']['image']['scale'] ||
-        currentItemDecoration.pinned['decoration']['image']['opacity'] ||
-        currentItemDecoration.pinned['decoration']['image']['filterQuality'] ||
-        currentItemDecoration.pinned['decoration']['image']['invertColors']       
-        )
-        buildDecorationImageEditor(),
-        SizedBox(width: 2,height: 10), 
-
-         
-
-
+        if (currentItemDecoration.pinned['decoration']['image']['bytes'] ||
+            currentItemDecoration.pinned['decoration']['image']['fit'] ||
+            currentItemDecoration.pinned['decoration']['image']['repeat'] ||
+            currentItemDecoration.pinned['decoration']['image']['alignment'] ||
+            currentItemDecoration.pinned['decoration']['image']['scale'] ||
+            currentItemDecoration.pinned['decoration']['image']['opacity'] ||
+            currentItemDecoration.pinned['decoration']['image']
+                ['filterQuality'] ||
+            currentItemDecoration.pinned['decoration']['image']['invertColors'])
+          buildDecorationImageEditor(index: index),
+        SizedBox(width: 2, height: 10),
       ],
     );
   }
 
-  Widget buildShadowEditor() {
-    final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-    List<BoxShadow> currentShadow = currentItemDecoration.decoration.boxShadow?? [
-      BoxShadow()
-    ];
-    currentShadow = currentShadow.isEmpty? [
-      BoxShadow()
-    ]: currentShadow;
-    List<List<TextEditingController>> listShadowControllers =[] ;
-    final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 84:50))/2;
-    final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 68:32);  
-    final isSizeBigForRow = (sWidth * wH2DividerPosition)>260;
+  Widget buildShadowEditor(
+    {
+      int sIndex = -1,
+      int shadowLayerIndex = -1,
+    }
+  ) {
+    sIndex = sIndex==-1? decorationIndex==-1?0: decorationIndex:sIndex;
+    shadowLayerIndex = shadowLayerIndex == -1
+    ?  0
+    : shadowLayerIndex;
+    ItemDecoration currentItemDecoration = decorationIterator(
+        sheetDecorationVariables[sIndex].id,
+        sheetDecorationList) as ItemDecoration;
+    List<BoxShadow> currentShadow =
+        currentItemDecoration.decoration.boxShadow ?? [BoxShadow()];
+    currentShadow = currentShadow.isEmpty ? [BoxShadow()] : currentShadow;
+    List<List<TextEditingController>> listShadowControllers = [];
+    final widthSmall =
+        ((sWidth * wH2DividerPosition) - (showDecorationLayers ? 84 : 50)) / 2;
+    final widthBig =
+        (sWidth * wH2DividerPosition) - (showDecorationLayers ? 68 : 32);
+    final isSizeBigForRow = (sWidth * wH2DividerPosition) > 260;
 
-    currentShadow.forEach((element) {
-      listShadowControllers.add(
-        [ 
-          TextEditingController()..text= element.spreadRadius.toString(),
-          TextEditingController()..text= element.blurRadius.toString(),
-          TextEditingController()..text= element.offset.dx.toString(),
-          TextEditingController()..text= element.offset.dy.toString(), 
-          TextEditingController()..text= element.color.hexAlpha,
-
-        ]
-      );
-    },);
-    List<Widget> shadowPropertyTile(int s, String name,){
+    currentShadow.forEach(
+      (element) {
+        listShadowControllers.add([
+          TextEditingController()..text = element.spreadRadius.toString(),
+          TextEditingController()..text = element.blurRadius.toString(),
+          TextEditingController()..text = element.offset.dx.toString(),
+          TextEditingController()..text = element.offset.dy.toString(),
+          TextEditingController()..text = element.color.hexAlpha,
+        ]);
+      },
+    );
+    List<Widget> shadowPropertyTile(
+      int s,
+      String name,
+    ) {
       return [
-          MouseRegion(
-            cursor: SystemMouseCursors.resizeLeftRight,
-            child: GestureDetector(
-              onHorizontalDragCancel: () {
-                  listShadowFocusNodes[whichListShadowLayerIsSelected][s].requestFocus(); }, 
-              onHorizontalDragUpdate: (details) {
-                var multiplier = HardwareKeyboard.instance.isControlPressed
-                    ? 10
-                    : HardwareKeyboard.instance.isShiftPressed
-                        ? 0.1
-                        : 1;
-                setState(() {
-                    double currentValue =
-                              double.tryParse(listShadowControllers[whichListShadowLayerIsSelected][s].text) ?? 0.0;
-                    double newValue = (currentValue + details.delta.dx * multiplier)
-                        .clamp(0, double.infinity);
-                        
-                    double parsedValue = double.parse(newValue.toStringAsFixed(2));
-                    currentShadow[whichListShadowLayerIsSelected] = currentShadow[whichListShadowLayerIsSelected].copyWith(
-                            spreadRadius: s==0? parsedValue:null,
-                            blurRadius: s==1?parsedValue:null,
-                            offset: s==2
-                            ? Offset(parsedValue,currentShadow[whichListShadowLayerIsSelected].offset.dy)
-                            : s==3
-                            ? Offset(currentShadow[whichListShadowLayerIsSelected].offset.dx,parsedValue)
-                            :  null,
-                          );
+        MouseRegion(
+          cursor: SystemMouseCursors.resizeLeftRight,
+          child: GestureDetector(
+            onHorizontalDragCancel: () {
+              sheetDecorationVariables[sIndex].listShadowFocusNodes[shadowLayerIndex][s]
+                  .requestFocus();
+            },
+            onHorizontalDragUpdate: (details) {
+              var multiplier = HardwareKeyboard.instance.isControlPressed
+                  ? 10
+                  : HardwareKeyboard.instance.isShiftPressed
+                      ? 0.1
+                      : 1;
+              setState(() {
+                double currentValue = double.tryParse(
+                        listShadowControllers[shadowLayerIndex][s]
+                            .text) ??
+                    0.0;
+                double newValue = (currentValue + details.delta.dx * multiplier)
+                    ;
 
-                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                        boxShadow: currentShadow
-                      )
-                    );
+                double parsedValue = double.parse(newValue.toStringAsFixed(2));
+                currentShadow[shadowLayerIndex] =
+                    currentShadow[shadowLayerIndex].copyWith(
+                  spreadRadius: s == 0 ? parsedValue.clamp(0, double.infinity) : null,
+                  blurRadius: s == 1 ? parsedValue.clamp(0, double.infinity) : null,
+                  offset: s == 2
+                      ? Offset(
+                          parsedValue,
+                          currentShadow[shadowLayerIndex]
+                              .offset
+                              .dy)
+                      : s == 3
+                          ? Offset(
+                              currentShadow[shadowLayerIndex]
+                                  .offset
+                                  .dx,
+                              parsedValue)
+                          : null,
+                );
 
-                });
-              },
-              child: Text(  ' $name ', 
+                currentItemDecoration = currentItemDecoration.copyWith(
+                    decoration: currentItemDecoration.decoration
+                        .copyWith(boxShadow: currentShadow));
+               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                if (index != -1) {
+                  sheetDecorationList[index] = currentItemDecoration;
+                }
+              });
+            },
+            child: Text(
+              ' $name ',
               style: GoogleFonts.lexend(
-                fontSize: 12,
-                letterSpacing: -1,
-                color: defaultPalette.extras[0]),),
+                  fontSize: 12,
+                  letterSpacing: -1,
+                  color: defaultPalette.extras[0]),
             ),
           ),
-          SizedBox(
-            height: 12, 
-            child: TextFormField(
-              onTapOutside: (event) => listShadowFocusNodes[whichListShadowLayerIsSelected][s].unfocus(),
-              focusNode: listShadowFocusNodes[whichListShadowLayerIsSelected][s],
-              controller: listShadowControllers[whichListShadowLayerIsSelected][s],
-              inputFormatters: [
-                NumericInputFormatter( 
-                ),
-              ], 
+        ),
+        SizedBox(
+          height: 12,
+          child: TextFormField(
+            onTapOutside: (event) =>
+                sheetDecorationVariables[sIndex].listShadowFocusNodes[shadowLayerIndex][s]
+                    .unfocus(),
+            focusNode: sheetDecorationVariables[sIndex].listShadowFocusNodes[shadowLayerIndex][s],
+            controller: listShadowControllers[shadowLayerIndex]
+                [s],
+            inputFormatters: [
+              NumericInputFormatter(),
+            ],
             cursorColor: defaultPalette.tertiary,
             selectionControls: NoMenuTextSelectionControls(),
             textAlign: TextAlign.end,
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.all(0 ), 
-                labelStyle:
-                    GoogleFonts.lexend(color: defaultPalette.black),
-              
-                fillColor: defaultPalette.transparent,
-                border: InputBorder.none,
-                enabledBorder:OutlineInputBorder(
-                borderSide: BorderSide.none
-                ),
-                focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide.none
-                ), 
-              ),
-              keyboardType: TextInputType.number,
-              style: GoogleFonts.mitr(
-                  fontSize: 13, color: defaultPalette.extras[0],
-                  letterSpacing: -1
-                  ),
-              onFieldSubmitted: (value) {
-                setState(() {
-                double parsedValue = double.parse(value );
-                Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all()) as Border;
-                  
-                  currentShadow[whichListShadowLayerIsSelected] = currentShadow[whichListShadowLayerIsSelected].copyWith(
-                          spreadRadius: s==0? parsedValue:null,
-                          blurRadius: s==1?parsedValue:null,
-                          offset: s==2
-                          ? Offset(parsedValue,currentShadow[whichListShadowLayerIsSelected].offset.dy)
-                          : s==3
-                          ? Offset(currentShadow[whichListShadowLayerIsSelected].offset.dx,parsedValue)
-                          :  null,
-                          
-                        );
-
-                  sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                    decoration: currentItemDecoration.decoration.copyWith(
-                      boxShadow: currentShadow
-                    )
-                  );
-                
-                });
-              },
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.all(0),
+              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+              fillColor: defaultPalette.transparent,
+              border: InputBorder.none,
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+              focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
             ),
-          ),  
-          // SizedBox(width: 2,),
-            
-        ];
+            keyboardType: TextInputType.number,
+            style: GoogleFonts.mitr(
+                fontSize: 13,
+                color: defaultPalette.extras[0],
+                letterSpacing: -1),
+            onFieldSubmitted: (value) {
+              setState(() {
+                double parsedValue = double.parse(value);
+                currentShadow[shadowLayerIndex] =
+                    currentShadow[shadowLayerIndex].copyWith(
+                  spreadRadius: s == 0 ? parsedValue : null,
+                  blurRadius: s == 1 ? parsedValue : null,
+                  offset: s == 2
+                  ? Offset(
+                    parsedValue,
+                    currentShadow[shadowLayerIndex].offset.dy)
+                  : s == 3
+                    ? Offset(
+                      currentShadow[shadowLayerIndex].offset.dx,
+                      parsedValue)
+                    : null,
+                );
+
+                currentItemDecoration = currentItemDecoration.copyWith(
+                    decoration: currentItemDecoration.decoration
+                        .copyWith(boxShadow: currentShadow));
+                int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                if (index != -1) {
+                  sheetDecorationList[index] = currentItemDecoration;
+                }        
+              });
+            },
+          ),
+        ),
+        // SizedBox(width: 2,),
+      ];
     }
 
     return Column(
@@ -20259,21 +21598,20 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         //Title for shadow
         Container(
           width: widthBig,
-          margin: EdgeInsets.only(left:3, right: 3, ),
-          padding: EdgeInsets.only(left:2, right: 2, top:0,bottom: 0),
-            decoration: BoxDecoration(
+          margin: EdgeInsets.only(
+            left: 3,
+            right: 3,
+          ),
+          padding: EdgeInsets.only(left: 2, right: 2, top: 0, bottom: 0),
+          decoration: BoxDecoration(
               border: Border.all(),
-              color:defaultPalette.primary,
-              borderRadius: BorderRadius.circular(5)
-            ),
+              color: defaultPalette.primary,
+              borderRadius: BorderRadius.circular(5)),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-              Icon( TablerIcons.shadow,
-              size: 16,
-              color: defaultPalette.extras[0]
-              ),
-              
+            children: [
+              Icon(TablerIcons.shadow,
+                  size: 16, color: defaultPalette.extras[0]),
               Expanded(
                 child: GestureDetector(
                   onTap: () {
@@ -20283,585 +21621,748 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   },
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Text(  ' shadow ' 
-                          ,
+                    child: Text(
+                      ' shadow ',
                       style: GoogleFonts.lexend(
-                            fontSize: 15,
-                            letterSpacing: -1,
-                            color: defaultPalette.extras[0]),),
+                          fontSize: 15,
+                          letterSpacing: -1,
+                          color: defaultPalette.extras[0]),
+                    ),
                   ),
                 ),
-              ), 
-                
-              SizedBox(width: 2,),
+              ),
+              SizedBox(
+                width: 2,
+              ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(500),
                 child: Material(
-                  color: defaultPalette.transparent, 
-                  child: InkWell( 
-                    hoverColor:  defaultPalette.tertiary,
+                  color: defaultPalette.transparent,
+                  child: InkWell(
+                    hoverColor: defaultPalette.tertiary,
                     splashColor: defaultPalette.tertiary,
-                    highlightColor:  defaultPalette.tertiary,
+                    highlightColor: defaultPalette.tertiary,
                     onTap: () {
-                    setState(() {
-                      final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                      currentItemDecoration.pinned['decoration']['boxShadow'] =  !currentItemDecoration.pinned['decoration']['boxShadow'];
-                      
-                      // Update the list item with the modified currentItemDecoration
-                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                    });
-                    },
-                    child: Icon( currentItemDecoration.pinned['decoration']['boxShadow']? TablerIcons.pin_filled : TablerIcons.pin,
-                        size: 16, color: defaultPalette.extras[0]),
-                  ),
-                ),
-              ), 
-              ],
-            ),
-        ),
-       
-        SizedBox(width: 2,height: 4), 
-        if(isListShadowExpanded)
-        ...[
-        Container(
-          width: widthBig,
-          margin: EdgeInsets.only(left:3, right: 3, ),
-          padding: EdgeInsets.only(left:4, right: 4, top:4,bottom: 4),
-            decoration: BoxDecoration(
-              border: Border.all(),
-              color:defaultPalette.primary,
-              borderRadius: BorderRadius.circular(5)
-            ),
-          child: Flex(
-            direction: isSizeBigForRow? Axis.horizontal: Axis.vertical,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  Container(  
-                    width: isSizeBigForRow?widthSmall:widthBig,
-                    height: 155,
-                    padding: EdgeInsets.only(left:1),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: defaultPalette.secondary,
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(5) ,
-                    ),  
-                  ),
-                  Positioned(
-                    left:3,
-                    top:3,
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(99999),
-                          child: Material(
-                            color: defaultPalette.transparent,
-                            child: InkWell(
-                              hoverColor:  defaultPalette.primary,
-                              splashColor: defaultPalette.primary,
-                              highlightColor:  defaultPalette.primary,
-                              onTap: () {
-                               setState(() {
-                                  currentShadow.add(
-                                    BoxShadow()
-                                  );
-                                   sheetListItem.listDecoration.itemDecorationList[decorationIndex] = ( sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                    decoration: currentItemDecoration.decoration.copyWith(
-                                      boxShadow: currentShadow
-                                    )
-                                   );
-                                   updateListDecorationVariables();
-                                  //  whichListShadowLayerIsSelected = currentShadow.length-1;
-
-                                });
-                              },child: Container(
-                                padding: EdgeInsets.all(2),
-                                decoration: BoxDecoration(border: Border.all(
-                                  color: defaultPalette.extras[0]
-                                ), borderRadius: BorderRadius.circular(99999),
-                                color: defaultPalette.primary
-                                ),
-                                child:Icon(
-                                  TablerIcons.plus, size: 15,)
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 2,),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(99999),
-                          child: Material(
-                            color: defaultPalette.transparent,
-                            child: Container(
-                              padding: EdgeInsets.all(2.2),
-                              decoration: BoxDecoration(border: Border.all(
-                                color: defaultPalette.extras[0]
-                              ), borderRadius: BorderRadius.circular(99999),
-                              color: defaultPalette.primary
-                              ),
-                              child:Icon(
-                                TablerIcons.stack, size: 15,)
-                            ),
-                          ),
-                        ),
-                        Text(  ' layers', 
-                        style: GoogleFonts.lexend(
-                          fontSize: 14,
-                          letterSpacing: -1,
-                          color: defaultPalette.extras[0]),),
-                          ],
-                    ),
-                  ), 
-                  //Properties of SHADOW editor, textfields  
-                  Positioned(
-                    left: 35,
-                    top: 28,
-                    child: Container(
-                    width: isSizeBigForRow?widthSmall-38:widthBig-52 ,
-                    height: 123,
-                    padding: EdgeInsets.only(left:1, ),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: defaultPalette.primary,
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(5),
-                    ),  
-                    child:  ScrollConfiguration(
-                        behavior: ScrollBehavior()
-                            .copyWith(scrollbars: false),
-                        child: DynMouseScroll(
-                            durationMS: 500,
-                            scrollSpeed: 1,
-                            builder: (context, controller, physics) {
-                          return SingleChildScrollView(
-                            controller: controller,
-                            physics: physics,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ...shadowPropertyTile(0,'spread'),
-                                ...shadowPropertyTile(1,'blur'),
-                                ...shadowPropertyTile(2,'offsetX'),
-                                ...shadowPropertyTile(3,'offsetY'),
-                                SizedBox(height:2),
-                                //Hex for shadow color editor 
-                                Row( 
-                                  children: [
-                                  Expanded(
-                                    child: Text(  ' color ', 
-                                      style: GoogleFonts.lexend(
-                                        fontSize: 12,
-                                        letterSpacing: -1,
-                                        color: defaultPalette.extras[0]),),
-                                  ),
-                                  DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.fromBorderSide(
-                                      BorderSide.none,
-                                    ),
-                                    color: currentShadow[whichListShadowLayerIsSelected].color,
-                                  ),
-                                  child: SizedBox(width: 12,height: 12,),
-                                ),
-                                SizedBox(width:2)
-                                  ],
-                                ),
-                                SizedBox(
-                                height: 18,
-                                child: TextField( 
-                                focusNode: listShadowFocusNodes[whichListShadowLayerIsSelected][4],
-                                controller: listShadowControllers[whichListShadowLayerIsSelected][4],
-                                onSubmitted: (value) {
-                                  setState(() {
-                                     currentShadow[whichListShadowLayerIsSelected] = currentShadow[whichListShadowLayerIsSelected].copyWith(
-                                      color: hexToColor(value)
-                                    );
-                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                                      decoration: currentItemDecoration.decoration.copyWith(
-                                        boxShadow:  currentShadow
-                                      )
-                                    ); 
-                                      });
-                                    },
-                                // textAlignVertical: TextAlignVertical.top,
-                                textAlign: TextAlign.end,
-                                cursorColor: defaultPalette.tertiary,
-                                decoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.only(left:2), 
-                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                  hoverColor: defaultPalette.transparent,
-                                  filled: true,
-                                  fillColor: defaultPalette.transparent, 
-                                  border: InputBorder.none,
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide.none, 
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide.none,
-                                    borderRadius: BorderRadius.circular(5.0),
-                                  ), 
-                                ), 
-                                style: GoogleFonts.lexend(
-                                  letterSpacing: -1, fontWeight: FontWeight.w500,
-                                          fontSize: 14, color: defaultPalette.black),
-                                      ),
-                              ),
-                            
-                              ],
-                            ),
-                          );
-                        }
-                      ),
-                    ),
-                  )),
-                  //THE LAYERS AND SCROLLBAR OF SHADOWLAYERS IN DECORATION EDITOR
-                  Positioned(
-                    top: 28,
-                    left: 3,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: 30,
-                          height: 105,
-                          child: ScrollConfiguration(
-                            behavior: ScrollBehavior()
-                                .copyWith(scrollbars: false),
-                            child: DynMouseScroll(
-                                durationMS: 500,
-                                scrollSpeed: 1,
-                                builder: (context, controller, physics) {
-                              return ScrollbarUltima(
-                                alwaysShowThumb: true, 
-                                controller: controller,
-                                scrollbarPosition: ScrollbarPosition.right, 
-                                backgroundColor: defaultPalette.primary,
-                                scrollbarLength: 105, 
-                                isDraggable: true,  
-                                maxDynamicThumbLength: 90,
-                                thumbBuilder: (context, animation, widgetStates) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                        border:Border.all() ,
-                                        color: defaultPalette.primary ,
-                                        borderRadius: BorderRadius.circular(2)
-                                      ),
-                                    width: 5, 
-                                        
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 0.0),
-                                  child: ReorderableListView(
-                                    onReorder: (oldIndex, newIndex) {
-                                      setState(() {
-                                        print(oldIndex.toString()+' ' + newIndex.toString());
-                                        final shadowList =  currentItemDecoration.decoration.boxShadow?? [];
-
-                                        final shadow = shadowList.removeAt(oldIndex);
-                                        if ((newIndex != shadowList.length+1)) {
-                                          print('hah'+shadowList.length.toString()+' ' + newIndex.toString());
-                                       
-                                          shadowList.insert( newIndex, shadow);
-                                          if (oldIndex<newIndex) {
-                                            whichListShadowLayerIsSelected = newIndex-1;
-                                          } else {
-                                            whichListShadowLayerIsSelected = newIndex;
-                                          }
-                                          print('hah'+whichListShadowLayerIsSelected.toString()+' ' + newIndex.toString());
-                                        } else {
-                                          shadowList.add(shadow);
-                                          whichListShadowLayerIsSelected = shadowList.length-1;
-                                          print(oldIndex.toString()+' ' + newIndex.toString());
-                                        }
-                                        sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                                          decoration: currentItemDecoration.decoration.copyWith(
-                                            boxShadow: shadowList
-                                          )
-                                        );
-                                      });
-                                    },
-                                    proxyDecorator: (child, index, animation) {
-                                      return child;
-                                    },
-                                    buildDefaultDragHandles: false,
-                                    physics: physics, 
-                                    scrollController: controller,
-                                    children: [
-                                      for(int index=0; index< currentShadow.length;index++)
-                                      ReorderableDragStartListener(
-                                        index: index,
-                                        key: ValueKey(index),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(5),
-                                          child: Padding(
-                                            padding: EdgeInsets.only(bottom: 2),
-                                            child: Material(
-                                              color: defaultPalette.transparent,
-                                              child: InkWell(
-                                                hoverColor:  defaultPalette.primary,
-                                                splashColor: defaultPalette.primary,
-                                                highlightColor:  defaultPalette.primary,
-                                                onTap: () {
-                                                setState(() { 
-                                                  whichListShadowLayerIsSelected = index;
-                                                });},
-                                                child: Container( 
-                                                  margin: EdgeInsets.only(right: 1),
-                                                padding: EdgeInsets.only(left:1, ),
-                                                decoration: BoxDecoration(
-                                                  border: whichListShadowLayerIsSelected == index? Border.all()
-                                                  //   top: BorderSide(), bottom: BorderSide(),left: BorderSide(), right: BorderSide.none
-                                                  // )
-                                                  : null,
-                                                  color: whichListShadowLayerIsSelected == index? defaultPalette.primary: null,
-                                                  borderRadius: BorderRadius.circular(5) 
-                                                ),
-                                                child:  Text(  ' ${index+1}', 
-                                                                        style: GoogleFonts.lexend(
-                                                                          fontSize: 14,
-                                                                          letterSpacing: -1,
-                                                                          color: defaultPalette.extras[0]),),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                       
-                                    ],),
-                                ),
-                              );
-                            }
-                          ),
-                         ),
-                        ),
-                        SizedBox(height: 2,),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: Material(
-                                color: defaultPalette.transparent,
-                                child: InkWell(
-                                  hoverColor:  defaultPalette.primary,
-                                  splashColor: defaultPalette.primary,
-                                  highlightColor:  defaultPalette.primary,
-                                  onTap: () {
-                                  setState(() {
-                                      currentShadow.removeAt(whichListShadowLayerIsSelected);
-                                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = ( sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                        decoration: currentItemDecoration.decoration.copyWith(
-                                          boxShadow: currentShadow
-                                        )
-                                      );
-                                      updateListDecorationVariables(whichListShadowLayer: (whichListShadowLayerIsSelected-1).clamp(0,double.infinity) as int);
-                                      //  whichListShadowLayerIsSelected = currentShadow.length-1;
-
-                                    });
-                                  },child: Container(
-                                    padding: EdgeInsets.all(0),
-                                    decoration: BoxDecoration( borderRadius: BorderRadius.circular(5),
-                                    color: defaultPalette.transparent
-                                    ),
-                                    child:Icon(
-                                      TablerIcons.trash, size: 14,)
-                                  ),
-                                ),
-                              ),
-                            ), 
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: Material(
-                                color: defaultPalette.transparent,
-                                child: InkWell(
-                                  hoverColor:  defaultPalette.primary,
-                                  splashColor: defaultPalette.primary,
-                                  highlightColor:  defaultPalette.primary,
-                                  onTap: () {
-                                  setState(() {
-                                      currentShadow.insert(whichListShadowLayerIsSelected,
-                                        currentShadow[whichListShadowLayerIsSelected]
-                                      );
-                                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = ( sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration).copyWith(
-                                        decoration: currentItemDecoration.decoration.copyWith(
-                                          boxShadow: currentShadow
-                                        )
-                                      );
-                                      updateListDecorationVariables(whichListShadowLayer: whichListShadowLayerIsSelected+1);
-                                      //  whichListShadowLayerIsSelected = currentShadow.length-1;
-
-                                    });
-                                  },child: Container(
-                                    padding: EdgeInsets.all(0),
-                                    decoration: BoxDecoration(  borderRadius: BorderRadius.circular(5),
-                                    color: defaultPalette.transparent
-                                    ),
-                                    child:Icon(
-                                      TablerIcons.copy, size: 14,)
-                                  ),
-                                ),
-                              ),
-                            ),
-                           
-                          ],
-                        )
-                      ],
-                    )),
-                   
-                ],
-              ),
-              //Wheel picker for SHADOW COLOR
-              SizedBox(
-                width:isSizeBigForRow?widthSmall-10: widthBig,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,  
-                  children: [  
-                    SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Text(  ' ${(fl.ColorTools.nameThatColor( currentShadow[whichListShadowLayerIsSelected].color )).toLowerCase()}', 
-                    style: GoogleFonts.lexend(
-                      fontSize: 14,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0]),),
-                    ),
-                    //list Wheel COLOR
-                    WheelPicker(
-                    color: HSVColor.fromColor( currentShadow[whichListShadowLayerIsSelected].color,),
-                    onChanged: (HSVColor value) {
-                        
-                    setState(() {
-                      currentShadow[whichListShadowLayerIsSelected] = currentShadow[whichListShadowLayerIsSelected].copyWith(
-                        color: value.toColor().withAlpha(currentShadow[whichListShadowLayerIsSelected].color.alpha)
-                      );
-                      sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                        decoration: currentItemDecoration.decoration.copyWith(
-                          boxShadow:  currentShadow
-                        )
-                      ); 
-                    });
-                      },
-                    ), 
-                    //Alpha picker list decoration
-                    AlphaPicker(
-                      alpha: currentShadow[whichListShadowLayerIsSelected].color.alpha,
-                      onChanged: (int value) {
-                        
                       setState(() {
-                        currentShadow[whichListShadowLayerIsSelected] = currentShadow[whichListShadowLayerIsSelected].copyWith(
-                                      color: currentShadow[whichListShadowLayerIsSelected].color.withAlpha(value)
-                                    );
-                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex]  = currentItemDecoration.copyWith(
-                                      decoration: currentItemDecoration.decoration.copyWith(
-                                        boxShadow:  currentShadow
-                                      )
-                                    ); 
+                        currentItemDecoration.pinned['decoration']
+                                ['boxShadow'] =
+                            !currentItemDecoration.pinned['decoration']
+                                ['boxShadow'];
+
+                        // Update the list item with the modified currentItemDecoration
+                        currentItemDecoration = currentItemDecoration;
                       });
-                          
-                      },
-                    ),
-                                
-                      
-                  ],
+                    },
+                    child: Icon(
+                        currentItemDecoration.pinned['decoration']['boxShadow']
+                            ? TablerIcons.pin_filled
+                            : TablerIcons.pin,
+                        size: 16,
+                        color: defaultPalette.extras[0]),
+                  ),
                 ),
               ),
             ],
           ),
         ),
+
+        SizedBox(width: 2, height: 4),
+        if (isListShadowExpanded) ...[
+          Container(
+            width: widthBig,
+            margin: EdgeInsets.only(
+              left: 3,
+              right: 3,
+            ),
+            padding: EdgeInsets.only(left: 4, right: 4, top: 4, bottom: 4),
+            decoration: BoxDecoration(
+                border: Border.all(),
+                color: defaultPalette.primary,
+                borderRadius: BorderRadius.circular(5)),
+            child: Flex(
+              direction: isSizeBigForRow ? Axis.horizontal : Axis.vertical,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    Container(
+                      width: isSizeBigForRow ? widthSmall : widthBig,
+                      height: 155,
+                      padding: EdgeInsets.only(left: 1),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: defaultPalette.secondary,
+                        border: Border.all(),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                    Positioned(
+                      left: 3,
+                      top: 3,
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(99999),
+                            child: Material(
+                              color: defaultPalette.transparent,
+                              child: InkWell(
+                                hoverColor: defaultPalette.primary,
+                                splashColor: defaultPalette.primary,
+                                highlightColor: defaultPalette.primary,
+                                onTap: () {
+                                  setState(() {
+                                    currentShadow.add(BoxShadow());
+                                    currentItemDecoration = currentItemDecoration
+                                        .copyWith(
+                                            decoration: currentItemDecoration
+                                                .decoration
+                                                .copyWith(
+                                                    boxShadow: currentShadow));
+                                    updateListDecorationVariables(sIndex: sIndex);
+                                    int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                    if (index != -1) {
+                                      sheetDecorationList[index] = currentItemDecoration;
+                                    } 
+                                    sheetDecorationVariables[sIndex].listShadowFocusNodes = List.generate( 
+                                      currentItemDecoration.decoration.boxShadow!.length,(index) => List.generate( 5,(index) => FocusNode(),)
+                                    ,);     
+                                  });
+                                },
+                                child: Container(
+                                    padding: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: defaultPalette.extras[0]),
+                                        borderRadius:
+                                            BorderRadius.circular(99999),
+                                        color: defaultPalette.primary),
+                                    child: Icon(
+                                      TablerIcons.plus,
+                                      size: 15,
+                                    )),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 2,
+                          ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(99999),
+                            child: Material(
+                              color: defaultPalette.transparent,
+                              child: Container(
+                                  padding: EdgeInsets.all(2.2),
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: defaultPalette.extras[0]),
+                                      borderRadius:
+                                          BorderRadius.circular(99999),
+                                      color: defaultPalette.primary),
+                                  child: Icon(
+                                    TablerIcons.stack,
+                                    size: 15,
+                                  )),
+                            ),
+                          ),
+                          Text(
+                            ' layers',
+                            style: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    //Properties of SHADOW editor, textfields
+                    Positioned(
+                        left: 35,
+                        top: 28,
+                        child: Container(
+                          width:
+                              isSizeBigForRow ? widthSmall - 38 : widthBig - 52,
+                          height: 123,
+                          padding: EdgeInsets.only(
+                            left: 1,
+                          ),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: ScrollConfiguration(
+                            behavior:
+                                ScrollBehavior().copyWith(scrollbars: false),
+                            child: DynMouseScroll(
+                                durationMS: 500,
+                                scrollSpeed: 1,
+                                builder: (context, controller, physics) {
+                                  return SingleChildScrollView(
+                                    controller: controller,
+                                    physics: physics,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ...shadowPropertyTile(0, 'spread'),
+                                        ...shadowPropertyTile(1, 'blur'),
+                                        ...shadowPropertyTile(2, 'offsetX'),
+                                        ...shadowPropertyTile(3, 'offsetY'),
+                                        SizedBox(height: 2),
+                                        //Hex for shadow color editor
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                ' color ',
+                                                style: GoogleFonts.lexend(
+                                                    fontSize: 12,
+                                                    letterSpacing: -1,
+                                                    color: defaultPalette
+                                                        .extras[0]),
+                                              ),
+                                            ),
+                                            DecoratedBox(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.fromBorderSide(
+                                                  BorderSide.none,
+                                                ),
+                                                color: currentShadow[
+                                                        shadowLayerIndex]
+                                                    .color,
+                                              ),
+                                              child: SizedBox(
+                                                width: 12,
+                                                height: 12,
+                                              ),
+                                            ),
+                                            SizedBox(width: 2)
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 18,
+                                          child: TextField(
+                                            focusNode: sheetDecorationVariables[sIndex].listShadowFocusNodes[
+                                                shadowLayerIndex][4],
+                                            controller: listShadowControllers[
+                                                shadowLayerIndex][4],
+                                            onSubmitted: (value) {
+                                              setState(() {
+                                                currentShadow[
+                                                        shadowLayerIndex] =
+                                                    currentShadow[
+                                                            shadowLayerIndex]
+                                                        .copyWith(
+                                                            color: hexToColor(
+                                                                value));
+                                                currentItemDecoration =
+                                                    currentItemDecoration.copyWith(
+                                                        decoration:
+                                                            currentItemDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    boxShadow:
+                                                                        currentShadow));
+                                              });
+                                            },
+                                            // textAlignVertical: TextAlignVertical.top,
+                                            textAlign: TextAlign.end,
+                                            cursorColor:
+                                                defaultPalette.tertiary,
+                                            decoration: InputDecoration(
+                                              contentPadding:
+                                                  const EdgeInsets.only(
+                                                      left: 2),
+                                              labelStyle: GoogleFonts.lexend(
+                                                  color: defaultPalette.black),
+                                              hoverColor:
+                                                  defaultPalette.transparent,
+                                              filled: true,
+                                              fillColor:
+                                                  defaultPalette.transparent,
+                                              border: InputBorder.none,
+                                              enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                                borderRadius:
+                                                    BorderRadius.circular(5.0),
+                                              ),
+                                            ),
+                                            style: GoogleFonts.lexend(
+                                                letterSpacing: -1,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                                color: defaultPalette.black),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                          ),
+                        )),
+                    //THE LAYERS AND SCROLLBAR OF SHADOWLAYERS IN DECORATION EDITOR
+                    Positioned(
+                        top: 28,
+                        left: 3,
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              width: 30,
+                              height: 105,
+                              child: ScrollConfiguration(
+                                behavior: ScrollBehavior()
+                                    .copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                    durationMS: 500,
+                                    scrollSpeed: 1,
+                                    builder: (context, controller, physics) {
+                                      return ScrollbarUltima(
+                                        alwaysShowThumb: true,
+                                        controller: controller,
+                                        scrollbarPosition:
+                                            ScrollbarPosition.right,
+                                        backgroundColor: defaultPalette.primary,
+                                        scrollbarLength: 105,
+                                        isDraggable: true,
+                                        maxDynamicThumbLength: 90,
+                                        thumbBuilder:
+                                            (context, animation, widgetStates) {
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                                border: Border.all(),
+                                                color: defaultPalette.primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(2)),
+                                            width: 5,
+                                          );
+                                        },
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 0.0),
+                                          child: ReorderableListView(
+                                            onReorder: (oldIndex, newIndex) {
+                                              setState(() {
+                                                print(oldIndex.toString() +
+                                                    ' ' +
+                                                    newIndex.toString());
+                                                final shadowList =
+                                                    currentItemDecoration
+                                                            .decoration
+                                                            .boxShadow ??
+                                                        [];
+
+                                                final shadow = shadowList
+                                                    .removeAt(oldIndex);
+                                                if ((newIndex !=
+                                                    shadowList.length + 1)) {
+                                                  print('hah' +
+                                                      shadowList.length
+                                                          .toString() +
+                                                      ' ' +
+                                                      newIndex.toString());
+
+                                                  shadowList.insert(
+                                                      newIndex, shadow);
+                                                  if (oldIndex < newIndex) {
+                                                    shadowLayerIndex =
+                                                        newIndex - 1;
+                                                  } else {
+                                                    shadowLayerIndex =
+                                                        newIndex;
+                                                  }
+                                                  print('hah' +
+                                                      shadowLayerIndex
+                                                          .toString() +
+                                                      ' ' +
+                                                      newIndex.toString());
+                                                } else {
+                                                  shadowList.add(shadow);
+                                                  shadowLayerIndex =
+                                                      shadowList.length - 1;
+                                                  print(oldIndex.toString() +
+                                                      ' ' +
+                                                      newIndex.toString());
+                                                }
+                                                currentItemDecoration =
+                                                    currentItemDecoration.copyWith(
+                                                        decoration:
+                                                            currentItemDecoration
+                                                                .decoration
+                                                                .copyWith(
+                                                                    boxShadow:
+                                                                        shadowList));
+                                              });
+                                            },
+                                            proxyDecorator:
+                                                (child, index, animation) {
+                                              return child;
+                                            },
+                                            buildDefaultDragHandles: false,
+                                            physics: physics,
+                                            scrollController: controller,
+                                            children: [
+                                              for (int i = 0;
+                                                  i < currentShadow.length;
+                                                  i++)
+                                                ReorderableDragStartListener(
+                                                  index: i,
+                                                  key: ValueKey(i),
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                    child: Padding(
+                                                      padding: EdgeInsets.only(
+                                                          bottom: 2),
+                                                      child: Material(
+                                                        color: defaultPalette
+                                                            .transparent,
+                                                        child: InkWell(
+                                                          hoverColor:
+                                                              defaultPalette
+                                                                  .primary,
+                                                          splashColor:
+                                                              defaultPalette
+                                                                  .primary,
+                                                          highlightColor:
+                                                              defaultPalette
+                                                                  .primary,
+                                                          onTap: () {
+                                                            setState(() {
+                                                              sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex =
+                                                                  i;
+                                                            });
+                                                          },
+                                                          child: Container(
+                                                            margin:
+                                                                EdgeInsets.only(
+                                                                    right: 1),
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                              left: 1,
+                                                            ),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                                    border: shadowLayerIndex ==
+                                                                            i
+                                                                        ? Border
+                                                                            .all()
+                                                                        //   top: BorderSide(), bottom: BorderSide(),left: BorderSide(), right: BorderSide.none
+                                                                        // )
+                                                                        : null,
+                                                                    color: shadowLayerIndex ==
+                                                                            i
+                                                                        ? defaultPalette
+                                                                            .primary
+                                                                        : null,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            5)),
+                                                            child: Text(
+                                                              ' ${i + 1}',
+                                                              style: GoogleFonts.lexend(
+                                                                  fontSize: 14,
+                                                                  letterSpacing:
+                                                                      -1,
+                                                                  color: defaultPalette
+                                                                      .extras[0]),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 2,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: Material(
+                                    color: defaultPalette.transparent,
+                                    child: InkWell(
+                                      hoverColor: defaultPalette.primary,
+                                      splashColor: defaultPalette.primary,
+                                      highlightColor: defaultPalette.primary,
+                                      onTap: () {
+                                        setState(() {
+                                          if (currentShadow.length>1) {
+                                            currentShadow.removeAt(
+                                                shadowLayerIndex);
+                                            currentItemDecoration = currentItemDecoration
+                                                .copyWith(
+                                                    decoration:
+                                                        currentItemDecoration
+                                                            .decoration
+                                                            .copyWith(
+                                                                boxShadow:
+                                                                    currentShadow));
+                                            updateListDecorationVariables(
+                                                whichListShadowLayer:
+                                                    (shadowLayerIndex -
+                                                                1)
+                                                            .clamp(0,
+                                                                double.infinity)
+                                                        as int, sIndex: sIndex);
+                                          }
+                                          //  shadowLayerIndex = currentShadow.length-1;
+                                        });
+                                      },
+                                      child: Container(
+                                          padding: EdgeInsets.all(0),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              color:
+                                                  defaultPalette.transparent),
+                                          child: Icon(
+                                            TablerIcons.trash,
+                                            size: 14,
+                                          )),
+                                    ),
+                                  ),
+                                ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: Material(
+                                    color: defaultPalette.transparent,
+                                    child: InkWell(
+                                      hoverColor: defaultPalette.primary,
+                                      splashColor: defaultPalette.primary,
+                                      highlightColor: defaultPalette.primary,
+                                      onTap: () {
+                                        setState(() {
+                                          currentShadow.insert(
+                                              shadowLayerIndex,
+                                              currentShadow[
+                                                  shadowLayerIndex]);
+                                          currentItemDecoration = currentItemDecoration
+                                              .copyWith(
+                                                  decoration:
+                                                      currentItemDecoration
+                                                          .decoration
+                                                          .copyWith(
+                                                              boxShadow:
+                                                                  currentShadow));
+                                          updateListDecorationVariables(
+                                              whichListShadowLayer:
+                                                  shadowLayerIndex +
+                                                      1, sIndex: sIndex);
+                                          //  shadowLayerIndex = currentShadow.length-1;
+                                        });
+                                      },
+                                      child: Container(
+                                          padding: EdgeInsets.all(0),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              color:
+                                                  defaultPalette.transparent),
+                                          child: Icon(
+                                            TablerIcons.copy,
+                                            size: 14,
+                                          )),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        )),
+                  ],
+                ),
+                //Wheel picker for SHADOW COLOR
+                SizedBox(
+                  width: isSizeBigForRow ? widthSmall - 10 : widthBig,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          ' ${(fl.ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
+                          style: GoogleFonts.lexend(
+                              fontSize: 14,
+                              letterSpacing: -1,
+                              color: defaultPalette.extras[0]),
+                        ),
+                      ),
+                      //list Wheel COLOR
+                      WheelPicker(
+                        color: HSVColor.fromColor(
+                          currentShadow[shadowLayerIndex].color,
+                        ),
+                        onChanged: (HSVColor value) {
+                          setState(() {
+                            currentShadow[
+                                shadowLayerIndex] = currentShadow[
+                                    shadowLayerIndex]
+                                .copyWith(
+                                    color: value.toColor().withAlpha(
+                                        currentShadow[
+                                                shadowLayerIndex]
+                                            .color
+                                            .alpha));
+                            currentItemDecoration =
+                                currentItemDecoration.copyWith(
+                                    decoration: currentItemDecoration.decoration
+                                        .copyWith(boxShadow: currentShadow));
+                          });
+                        },
+                      ),
+                      //Alpha picker list decoration
+                      AlphaPicker(
+                        alpha: currentShadow[shadowLayerIndex]
+                            .color
+                            .alpha,
+                        onChanged: (int value) {
+                          setState(() {
+                            currentShadow[shadowLayerIndex] =
+                                currentShadow[shadowLayerIndex]
+                                    .copyWith(
+                                        color: currentShadow[
+                                                shadowLayerIndex]
+                                            .color
+                                            .withAlpha(value));
+                            currentItemDecoration =
+                                currentItemDecoration.copyWith(
+                                    decoration: currentItemDecoration.decoration
+                                        .copyWith(boxShadow: currentShadow));
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ]
       ],
     );
   }
 
-  Widget buildDecorationImageEditor(){
-    var currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
+  Widget buildDecorationImageEditor(
+    {
+      int index = -1
+    }
+  ) {
+     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
+    ItemDecoration currentItemDecoration = decorationIterator(
+        sheetDecorationVariables[index].id,
+        sheetDecorationList) as ItemDecoration;
     final currentDecorationImage = currentItemDecoration.decoration.image;
     // final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 84:48))/2;
-    final widthBig =  (sWidth * wH2DividerPosition)-(showDecorationLayers? 74:40);  
+    final widthBig =
+        (sWidth * wH2DividerPosition) - (showDecorationLayers ? 74 : 40);
     // final isSizeBigForBorderRow = (sWidth * wH2DividerPosition)>260;
-    List<TextEditingController> listImageAlignControllers =[];
-    List<TextEditingController> listImagePropertyControllers =[];
-    if(currentDecorationImage !=null) {
-    listImageAlignControllers =[
-    TextEditingController()..text = (currentDecorationImage.alignment as Alignment).x.toString().replaceAll(RegExp(r'.0$'), ''),
-    TextEditingController()..text = (currentDecorationImage.alignment as Alignment).y.toString().replaceAll(RegExp(r'.0$'), ''),
-  
-  ];
-    listImagePropertyControllers =[
-    TextEditingController()..text = (currentDecorationImage.scale).toString().replaceAll(RegExp(r'.0$'), ''),
-    TextEditingController()..text = (currentDecorationImage.opacity).toString().replaceAll(RegExp(r'.0$'), ''),
-  
-  ];
-}
-     
+    List<TextEditingController> listImageAlignControllers = [];
+    List<TextEditingController> listImagePropertyControllers = [];
+    if (currentDecorationImage != null) {
+      listImageAlignControllers = [
+        TextEditingController()
+          ..text = (currentDecorationImage.alignment as Alignment)
+              .x
+              .toString()
+              .replaceAll(RegExp(r'.0$'), ''),
+        TextEditingController()
+          ..text = (currentDecorationImage.alignment as Alignment)
+              .y
+              .toString()
+              .replaceAll(RegExp(r'.0$'), ''),
+      ];
+      listImagePropertyControllers = [
+        TextEditingController()
+          ..text = (currentDecorationImage.scale)
+              .toString()
+              .replaceAll(RegExp(r'.0$'), ''),
+        TextEditingController()
+          ..text = (currentDecorationImage.opacity)
+              .toString()
+              .replaceAll(RegExp(r'.0$'), ''),
+      ];
+    }
 
-    Widget roundButton(void Function() onTap, Widget icon,{ 
+    Widget roundButton(
+      void Function() onTap,
+      Widget icon, {
       double borderRadius = 9999,
       bool isSelected = false,
-      EdgeInsets padding =const EdgeInsets.all(3),
-    } ){
+      EdgeInsets padding = const EdgeInsets.all(3),
+    }) {
       return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: Material(
-        color: isSelected? defaultPalette.primary: defaultPalette.secondary,
-        child: InkWell(
-      hoverColor:  defaultPalette.primary,
-      splashColor: defaultPalette.primary,
-      highlightColor:  defaultPalette.primary,
-      onTap: ()  { 
-      setState(() {
-        onTap();
-      }); 
-      },
-      child: Container(
-      padding: padding,
-      decoration: BoxDecoration(border:isSelected? Border.all(
-        color: defaultPalette.extras[0]
-      ):Border.fromBorderSide(BorderSide.none), borderRadius: BorderRadius.circular(borderRadius),
-      // color: defaultPalette.primary
-      ),
-      child:icon
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Material(
+          color: isSelected ? defaultPalette.primary : defaultPalette.secondary,
+          child: InkWell(
+            hoverColor: defaultPalette.primary,
+            splashColor: defaultPalette.primary,
+            highlightColor: defaultPalette.primary,
+            onTap: () {
+              setState(() {
+                onTap();
+              });
+            },
+            child: Container(
+                padding: padding,
+                decoration: BoxDecoration(
+                  border: isSelected
+                      ? Border.all(color: defaultPalette.extras[0])
+                      : Border.fromBorderSide(BorderSide.none),
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  // color: defaultPalette.primary
+                ),
+                child: icon),
           ),
         ),
-      ),
       );
     }
 
-    Widget titleTile(String name, IconData icon, {
+    Widget titleTile(
+      String name,
+      IconData icon, {
       double fontSize = 13,
-    }){
-      return Row(
-        children:[
-          Icon(icon, size:15),
-           
-          Expanded(
-            child: Text(name, 
+    }) {
+      return Row(children: [
+        Icon(icon, size: 15),
+        Expanded(
+          child: Text(
+            name,
             maxLines: 1,
             style: GoogleFonts.lexend(
-              fontSize: fontSize,
-                  letterSpacing: -1,
-              fontWeight:
-                  FontWeight.w500),),
-          )
-        ]
-      );
+                fontSize: fontSize,
+                letterSpacing: -1,
+                fontWeight: FontWeight.w500),
+          ),
+        )
+      ]);
     }
-    
+
     Widget toggleSelectionRow(
-      List<Widget> icons, 
+      List<Widget> icons,
       List<dynamic> values,
-    ){
+    ) {
       List<bool> selected = [];
 
-      for (var v = 0; v<values.length; v++) {
+      for (var v = 0; v < values.length; v++) {
         if (currentDecorationImage != null) {
-          if (values[v] is BoxFit){
+          if (values[v] is BoxFit) {
             if (currentDecorationImage.fit == values[v]) {
               selected.add(true);
             } else {
@@ -20873,30 +22374,39 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             } else {
               selected.add(false);
             }
-          } 
-          else if (values[v] is double){
-            if (values[v]==(currentDecorationImage.alignment as Alignment).x && values[v]<0){
+          } else if (values[v] is double) {
+            if (values[v] ==
+                    (currentDecorationImage.alignment as Alignment).x &&
+                values[v] < 0) {
               selected.add(true);
-            } else if (values[v] == 0 && values[v]==(currentDecorationImage.alignment as Alignment).x){
+            } else if (values[v] == 0 &&
+                values[v] ==
+                    (currentDecorationImage.alignment as Alignment).x) {
               selected.add(true);
-            } else if (values[v]==(currentDecorationImage.alignment as Alignment).x && values[v]>0){
-              selected.add(true);
-            } else {
-              selected.add(false);
-            }
-          } else if (values[v] is Alignment){
-            if (values[v].y==(currentDecorationImage.alignment as Alignment).y && values[v].y<0){
-              selected.add(true);
-            } else if (values[v].y == 0 && values[v].y==(currentDecorationImage.alignment as Alignment).y){
-              selected.add(true);
-            } else if (values[v].y==(currentDecorationImage.alignment as Alignment).y && values[v].y>0){
+            } else if (values[v] ==
+                    (currentDecorationImage.alignment as Alignment).x &&
+                values[v] > 0) {
               selected.add(true);
             } else {
               selected.add(false);
             }
-          }
-          
-          else {
+          } else if (values[v] is Alignment) {
+            if (values[v].y ==
+                    (currentDecorationImage.alignment as Alignment).y &&
+                values[v].y < 0) {
+              selected.add(true);
+            } else if (values[v].y == 0 &&
+                values[v].y ==
+                    (currentDecorationImage.alignment as Alignment).y) {
+              selected.add(true);
+            } else if (values[v].y ==
+                    (currentDecorationImage.alignment as Alignment).y &&
+                values[v].y > 0) {
+              selected.add(true);
+            } else {
+              selected.add(false);
+            }
+          } else {
             if (currentDecorationImage.repeat == values[v]) {
               selected.add(true);
             } else {
@@ -20906,786 +22416,877 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         }
       }
 
-      Function() switchFunction(dynamic value){
-
+      Function() switchFunction(dynamic value) {
         if (value is BoxFit) {
-          return (){
-            if (currentDecorationImage !=null) {
-            sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-            decoration: currentItemDecoration.decoration.copyWith(
-              image: DecorationImage(image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                fit:value,
+          return () {
+            if (currentDecorationImage != null) {
+              currentItemDecoration = currentItemDecoration.copyWith(
+                  decoration: currentItemDecoration.decoration.copyWith(
+                      image: DecorationImage(
+                image: MemoryImage(
+                    (currentDecorationImage.image as MemoryImage).bytes),
+                fit: value,
                 repeat: currentDecorationImage.repeat,
                 alignment: currentDecorationImage.alignment,
                 scale: currentDecorationImage.scale,
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-              )
-              
-            ));
+              )));
+               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+              if (index != -1) {
+                sheetDecorationList[index] = currentItemDecoration;
+              }
             }
           };
         } else if (value is FilterQuality) {
-          return (){
-            if (currentDecorationImage !=null)
-          {
-          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-          decoration: currentItemDecoration.decoration.copyWith(
-            image: DecorationImage(
-              image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-              fit:currentDecorationImage.fit,
-              repeat: currentDecorationImage.repeat,
-              alignment: currentDecorationImage.alignment,
-              scale: currentDecorationImage.scale,
-              opacity: currentDecorationImage.opacity,
-              filterQuality: value,
-              invertColors: currentDecorationImage.invertColors,
-              )
-            
-          ));
-          }
-          };
-        } else if (value is double){
-                    
           return () {
-            Alignment newAlignment = Alignment(value.clamp(-1, 1), (currentDecorationImage!.alignment as Alignment).y) ;
-          
-            if (currentDecorationImage !=null) {
-            currentItemDecoration =currentItemDecoration.copyWith(
-            decoration: currentItemDecoration.decoration.copyWith(
-              image: DecorationImage(
-                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                fit:currentDecorationImage.fit,
+            if (currentDecorationImage != null) {
+              currentItemDecoration = currentItemDecoration.copyWith(
+                  decoration: currentItemDecoration.decoration.copyWith(
+                      image: DecorationImage(
+                image: MemoryImage(
+                    (currentDecorationImage.image as MemoryImage).bytes),
+                fit: currentDecorationImage.fit,
                 repeat: currentDecorationImage.repeat,
-                alignment:newAlignment,
+                alignment: currentDecorationImage.alignment,
+                scale: currentDecorationImage.scale,
+                opacity: currentDecorationImage.opacity,
+                filterQuality: value,
+                invertColors: currentDecorationImage.invertColors,
+              )));
+               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }
+            }
+          };
+        } else if (value is double) {
+          return () {
+            Alignment newAlignment = Alignment(value.clamp(-1, 1),
+                (currentDecorationImage!.alignment as Alignment).y);
+
+            if (currentDecorationImage != null) {
+              currentItemDecoration = currentItemDecoration.copyWith(
+                  decoration: currentItemDecoration.decoration.copyWith(
+                      image: DecorationImage(
+                image: MemoryImage(
+                    (currentDecorationImage.image as MemoryImage).bytes),
+                fit: currentDecorationImage.fit,
+                repeat: currentDecorationImage.repeat,
+                alignment: newAlignment,
                 scale: currentDecorationImage.scale,
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-                )
-            )
-            );
-          }
+              )));
+               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }
+            }
 
-          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-            decoration: currentItemDecoration.decoration
-          );
+            currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: currentItemDecoration.decoration);
           };
-        } else if (value is Alignment){
-                    
+        } else if (value is Alignment) {
           return () {
-            Alignment newAlignment = Alignment((currentDecorationImage!.alignment as Alignment).x, value.y) ;
-          
-            if (currentDecorationImage !=null) {
-            currentItemDecoration =currentItemDecoration.copyWith(
-            decoration: currentItemDecoration.decoration.copyWith(
-              image: DecorationImage(
-                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                fit:currentDecorationImage.fit,
+            Alignment newAlignment = Alignment(
+                (currentDecorationImage!.alignment as Alignment).x, value.y);
+
+            if (currentDecorationImage != null) {
+              currentItemDecoration = currentItemDecoration.copyWith(
+                  decoration: currentItemDecoration.decoration.copyWith(
+                      image: DecorationImage(
+                image: MemoryImage(
+                    (currentDecorationImage.image as MemoryImage).bytes),
+                fit: currentDecorationImage.fit,
                 repeat: currentDecorationImage.repeat,
-                alignment:newAlignment,
+                alignment: newAlignment,
                 scale: currentDecorationImage.scale,
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-                )
-            )
-            );
-          }
+              )));
+               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }
+            }
 
-          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-            decoration: currentItemDecoration.decoration
-          );
+            currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: currentItemDecoration.decoration);
           };
-        }
-        
-        else {
-          return (){
-          if (currentDecorationImage !=null)
-          {
-          sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-          decoration: currentItemDecoration.decoration.copyWith(
-            image: DecorationImage(
-              image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-              fit:currentDecorationImage.fit,
-              repeat: value,
-              alignment: currentDecorationImage.alignment,
-              scale: currentDecorationImage.scale,
-              opacity: currentDecorationImage.opacity,
-              filterQuality: currentDecorationImage.filterQuality,
-              invertColors: currentDecorationImage.invertColors,
-              )
-            
-          ));
-          }
+        } else {
+          return () {
+            if (currentDecorationImage != null) {
+              currentItemDecoration = currentItemDecoration.copyWith(
+                  decoration: currentItemDecoration.decoration.copyWith(
+                      image: DecorationImage(
+                image: MemoryImage(
+                    (currentDecorationImage.image as MemoryImage).bytes),
+                fit: currentDecorationImage.fit,
+                repeat: value,
+                alignment: currentDecorationImage.alignment,
+                scale: currentDecorationImage.scale,
+                opacity: currentDecorationImage.opacity,
+                filterQuality: currentDecorationImage.filterQuality,
+                invertColors: currentDecorationImage.invertColors,
+              )));
+               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }
+            }
           };
         }
       }
-      
+
       return Container(
         padding: EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: defaultPalette.secondary,
-          border: Border.all(),
-          borderRadius: BorderRadius.circular(5)
-        ),
+            color: defaultPalette.secondary,
+            border: Border.all(),
+            borderRadius: BorderRadius.circular(5)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            for(int i =0; i<icons.length;i++)
-            ...[Expanded(child: roundButton(switchFunction(values[i]), icons[i], isSelected: selected[i], borderRadius: 5)),
-                if(i!=icons.length-1)
-                SizedBox(width: 2,)]
+            for (int i = 0; i < icons.length; i++) ...[
+              Expanded(
+                  child: roundButton(switchFunction(values[i]), icons[i],
+                      isSelected: selected[i], borderRadius: 5)),
+              if (i != icons.length - 1)
+                SizedBox(
+                  width: 2,
+                )
+            ]
           ],
         ),
       );
     }
 
-    List<Widget> imageAlignPropertyTile(int s,  ){
+    List<Widget> imageAlignPropertyTile(
+      int s,
+    ) {
       return [
-          MouseRegion(
-            cursor: SystemMouseCursors.resizeLeftRight,
-            child: GestureDetector(
-              onHorizontalDragCancel: () {
-                  listImageAlignFocusNodes[s].requestFocus(); }, 
-              onHorizontalDragUpdate: (details) {
-                var multiplier = HardwareKeyboard.instance.isControlPressed
-                    ? 0.5
-                    : HardwareKeyboard.instance.isShiftPressed
-                        ? 0.01
-                        : 0.1;
-                setState(() {
-                    double currentValue =
-                              double.tryParse(listImageAlignControllers[s].text) ?? 0.0;
-                    double newValue = (currentValue + details.delta.dx * multiplier) ;
-                        
-                    double parsedValue = double.parse(newValue.toStringAsFixed(4));
-                    Alignment newAlignment = s==0? Alignment(parsedValue, (currentDecorationImage!.alignment as Alignment).y):Alignment( (currentDecorationImage!.alignment as Alignment).x,parsedValue ,);
-                    
-                     if (currentDecorationImage !=null) {
-                      currentItemDecoration =currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                        image: DecorationImage(
-                          image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                          fit:currentDecorationImage.fit,
-                          repeat: currentDecorationImage.repeat,
-                          alignment:newAlignment,
-                          scale: currentDecorationImage.scale,
-                          opacity: currentDecorationImage.opacity,
-                          filterQuality: currentDecorationImage.filterQuality,
-                          invertColors: currentDecorationImage.invertColors,
-                          )
-                      )
+        MouseRegion(
+          cursor: SystemMouseCursors.resizeLeftRight,
+          child: GestureDetector(
+            onHorizontalDragCancel: () {
+              sheetDecorationVariables[index].listImageAlignFocusNodes[s].requestFocus();
+            },
+            onHorizontalDragUpdate: (details) {
+              var multiplier = HardwareKeyboard.instance.isControlPressed
+                  ? 0.5
+                  : HardwareKeyboard.instance.isShiftPressed
+                      ? 0.01
+                      : 0.1;
+              setState(() {
+                double currentValue =
+                    double.tryParse(listImageAlignControllers[s].text) ?? 0.0;
+                double newValue =
+                    (currentValue + details.delta.dx * multiplier);
+
+                double parsedValue = double.parse(newValue.toStringAsFixed(4));
+                Alignment newAlignment = s == 0
+                    ? Alignment(parsedValue,
+                        (currentDecorationImage!.alignment as Alignment).y)
+                    : Alignment(
+                        (currentDecorationImage!.alignment as Alignment).x,
+                        parsedValue,
                       );
-                    }
 
-                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration
-                    );
+                if (currentDecorationImage != null) {
+                  currentItemDecoration = currentItemDecoration.copyWith(
+                      decoration: currentItemDecoration.decoration.copyWith(
+                          image: DecorationImage(
+                    image: MemoryImage(
+                        (currentDecorationImage.image as MemoryImage).bytes),
+                    fit: currentDecorationImage.fit,
+                    repeat: currentDecorationImage.repeat,
+                    alignment: newAlignment,
+                    scale: currentDecorationImage.scale,
+                    opacity: currentDecorationImage.opacity,
+                    filterQuality: currentDecorationImage.filterQuality,
+                    invertColors: currentDecorationImage.invertColors,
+                  )));
+                }
 
-                });
-              },
-              child: Icon(s==0? TablerIcons.arrows_horizontal:TablerIcons.arrows_vertical,  
-                size: 16, ),
+                currentItemDecoration = currentItemDecoration.copyWith(
+                    decoration: currentItemDecoration.decoration);
+                 int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }    
+              });
+            },
+            child: Icon(
+              s == 0
+                  ? TablerIcons.arrows_horizontal
+                  : TablerIcons.arrows_vertical,
+              size: 16,
             ),
           ),
-          Expanded(
-            flex: 10,
-            child: SizedBox(
-              height: 12, 
-              child: TextFormField(
-                onTapOutside: (event) => listImageAlignFocusNodes[s].unfocus(),
-                focusNode: listImageAlignFocusNodes[s],
-                controller: listImageAlignControllers[s],
-                inputFormatters: [
-                  NumericInputFormatter( allowNegative: true
-                  ),
-                ], 
+        ),
+        Expanded(
+          flex: 10,
+          child: SizedBox(
+            height: 12,
+            child: TextFormField(
+              onTapOutside: (event) => sheetDecorationVariables[index].listImageAlignFocusNodes[s].unfocus(),
+              focusNode: sheetDecorationVariables[index].listImageAlignFocusNodes[s],
+              controller: listImageAlignControllers[s],
+              inputFormatters: [
+                NumericInputFormatter(allowNegative: true),
+              ],
               cursorColor: defaultPalette.tertiary,
               selectionControls: NoMenuTextSelectionControls(),
               textAlign: TextAlign.end,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(0 ), 
-                  labelStyle:
-                      GoogleFonts.lexend(color: defaultPalette.black),
-                
-                  fillColor: defaultPalette.transparent,
-                  border: InputBorder.none,
-                  enabledBorder:OutlineInputBorder(
-                  borderSide: BorderSide.none
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide.none
-                  ), 
-                ),
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.mitr(
-                    fontSize: 13, color: defaultPalette.extras[0],
-                    letterSpacing: -1
-                    ),
-                onFieldSubmitted: (value) {
-                  setState(() {
-                  double parsedValue = double.parse(value );
-                   
-                  Alignment newAlignment = s==0? Alignment(parsedValue.clamp(-1, 1), (currentDecorationImage!.alignment as Alignment).y):Alignment( (currentDecorationImage!.alignment as Alignment).x,parsedValue.clamp(-1, 1),);
-                    
-                     if (currentDecorationImage !=null) {
-                      currentItemDecoration =currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                        image: DecorationImage(
-                          image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                          fit:currentDecorationImage.fit,
-                          repeat: currentDecorationImage.repeat,
-                          alignment:newAlignment,
-                          scale: currentDecorationImage.scale,
-                          opacity: currentDecorationImage.opacity,
-                          filterQuality: currentDecorationImage.filterQuality,
-                          invertColors: currentDecorationImage.invertColors,
-                          )
-                      )
-                      );
-                    }
-
-                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration
-                    );
-                  
-                  });
-                },
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(0),
+                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                fillColor: defaultPalette.transparent,
+                border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
               ),
-            ),
-          ),  
-          SizedBox(width: 2,),
-          Expanded(
-            flex: 25,
-            child: SizedBox(
-              height: 30,
-              child: toggleSelectionRow(
-              s==0?[
-                Icon(TablerIcons.layout_align_left, size:16),
-                Icon(TablerIcons.layout_align_center, size:16),
-                Icon(TablerIcons.layout_align_right, size:16),
-              
-              ]:[
-                Icon(TablerIcons.layout_align_top, size:16),
-                Icon(TablerIcons.layout_align_middle, size:16),
-                Icon(TablerIcons.layout_align_bottom, size:16),
-              ], 
-              s==0?[
-                -1.0,0.0,1.0
-              
-              ]:[
-                Alignment(0, -1),
-                Alignment(0, 0),
-                Alignment(0, 1),
-              ]
-              ),
-            ),
-          )
-            
-        ];
-    }
-
-    List<Widget> imagePropertyTile(int s ){
-      return [
-          MouseRegion(
-            cursor: SystemMouseCursors.resizeLeftRight,
-            child: GestureDetector(
-              onHorizontalDragCancel: () {
-                  listImagePropertyFocusNodes[s].requestFocus(); }, 
-              onHorizontalDragUpdate: (details) {
-                var multiplier = HardwareKeyboard.instance.isControlPressed
-                    ? 0.5
-                    : HardwareKeyboard.instance.isShiftPressed
-                        ? 0.01
-                        : 0.1;
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.mitr(
+                  fontSize: 13,
+                  color: defaultPalette.extras[0],
+                  letterSpacing: -1),
+              onFieldSubmitted: (value) {
                 setState(() {
-                    double currentValue =
-                              double.tryParse(listImagePropertyControllers[s].text) ?? 0.0;
-                    double newValue = (currentValue + details.delta.dx * multiplier)
-                        .clamp(-1, double.infinity);
-                        
-                    double parsedValue = double.parse(newValue.toStringAsFixed(4));
-                     
-                     if (currentDecorationImage !=null) {
-                      currentItemDecoration =currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                        image: DecorationImage(
-                          image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                          fit:currentDecorationImage.fit,
-                          repeat: currentDecorationImage.repeat,
-                          alignment:currentDecorationImage.alignment,
-                          scale:s==0?parsedValue: currentDecorationImage.scale,
-                          opacity:s==1?parsedValue.clamp(0, 1): currentDecorationImage.opacity,
-                          filterQuality: currentDecorationImage.filterQuality,
-                          invertColors: currentDecorationImage.invertColors,
-                          )
-                      )
-                      );
-                    }
+                  double parsedValue = double.parse(value);
 
-                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration
-                    );
+                  Alignment newAlignment = s == 0
+                      ? Alignment(parsedValue.clamp(-1, 1),
+                          (currentDecorationImage!.alignment as Alignment).y)
+                      : Alignment(
+                          (currentDecorationImage!.alignment as Alignment).x,
+                          parsedValue.clamp(-1, 1),
+                        );
 
+                  if (currentDecorationImage != null) {
+                    currentItemDecoration = currentItemDecoration.copyWith(
+                        decoration: currentItemDecoration.decoration.copyWith(
+                            image: DecorationImage(
+                      image: MemoryImage(
+                          (currentDecorationImage.image as MemoryImage).bytes),
+                      fit: currentDecorationImage.fit,
+                      repeat: currentDecorationImage.repeat,
+                      alignment: newAlignment,
+                      scale: currentDecorationImage.scale,
+                      opacity: currentDecorationImage.opacity,
+                      filterQuality: currentDecorationImage.filterQuality,
+                      invertColors: currentDecorationImage.invertColors,
+                    )));
+                  }
+
+                  currentItemDecoration = currentItemDecoration.copyWith(
+                      decoration: currentItemDecoration.decoration);
+                   int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }    
                 });
               },
-              child: Row(
-                children: [
-                  Icon(s==0? TablerIcons.scale:TablerIcons.square_toggle,  
-                    size: 16, ),
-                  Text( s==0? ' scale ' : ' opacity '
-                          ,
-                      style: GoogleFonts.lexend(
-                            fontSize: 14,
-                            letterSpacing: -1,
-                            color: defaultPalette.extras[0]),),
-                ],
-              ),
             ),
           ),
-          Expanded(
-            flex: 10,
-            child: SizedBox(
-              height: 12, 
-              child: TextFormField(
-                onTapOutside: (event) => listImagePropertyFocusNodes[s].unfocus(),
-                focusNode: listImagePropertyFocusNodes[s],
-                controller: listImagePropertyControllers[s],
-                inputFormatters: [
-                  NumericInputFormatter( allowNegative: true
-                  ),
-                ], 
+        ),
+        SizedBox(
+          width: 2,
+        ),
+        Expanded(
+          flex: 25,
+          child: SizedBox(
+            height: 30,
+            child: toggleSelectionRow(
+                s == 0
+                    ? [
+                        Icon(TablerIcons.layout_align_left, size: 16),
+                        Icon(TablerIcons.layout_align_center, size: 16),
+                        Icon(TablerIcons.layout_align_right, size: 16),
+                      ]
+                    : [
+                        Icon(TablerIcons.layout_align_top, size: 16),
+                        Icon(TablerIcons.layout_align_middle, size: 16),
+                        Icon(TablerIcons.layout_align_bottom, size: 16),
+                      ],
+                s == 0
+                    ? [-1.0, 0.0, 1.0]
+                    : [
+                        Alignment(0, -1),
+                        Alignment(0, 0),
+                        Alignment(0, 1),
+                      ]),
+          ),
+        )
+      ];
+    }
+
+    List<Widget> imagePropertyTile(int s) {
+      return [
+        MouseRegion(
+          cursor: SystemMouseCursors.resizeLeftRight,
+          child: GestureDetector(
+            onHorizontalDragCancel: () {
+              sheetDecorationVariables[index].listImagePropertyFocusNodes[s].requestFocus();
+            },
+            onHorizontalDragUpdate: (details) {
+              var multiplier = HardwareKeyboard.instance.isControlPressed
+                  ? 0.5
+                  : HardwareKeyboard.instance.isShiftPressed
+                      ? 0.01
+                      : 0.1;
+              setState(() {
+                double currentValue =
+                    double.tryParse(listImagePropertyControllers[s].text) ??
+                        0.0;
+                double newValue = (currentValue + details.delta.dx * multiplier)
+                    .clamp(-1, double.infinity);
+
+                double parsedValue = double.parse(newValue.toStringAsFixed(4));
+
+                if (currentDecorationImage != null) {
+                  currentItemDecoration = currentItemDecoration.copyWith(
+                      decoration: currentItemDecoration.decoration.copyWith(
+                          image: DecorationImage(
+                    image: MemoryImage(
+                        (currentDecorationImage.image as MemoryImage).bytes),
+                    fit: currentDecorationImage.fit,
+                    repeat: currentDecorationImage.repeat,
+                    alignment: currentDecorationImage.alignment,
+                    scale: s == 0 ? parsedValue : currentDecorationImage.scale,
+                    opacity: s == 1
+                        ? parsedValue.clamp(0, 1)
+                        : currentDecorationImage.opacity,
+                    filterQuality: currentDecorationImage.filterQuality,
+                    invertColors: currentDecorationImage.invertColors,
+                  )));
+                }
+
+                currentItemDecoration = currentItemDecoration.copyWith(
+                    decoration: currentItemDecoration.decoration);
+                 int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }    
+              });
+            },
+            child: Row(
+              children: [
+                Icon(
+                  s == 0 ? TablerIcons.scale : TablerIcons.square_toggle,
+                  size: 16,
+                ),
+                Text(
+                  s == 0 ? ' scale ' : ' opacity ',
+                  style: GoogleFonts.lexend(
+                      fontSize: 14,
+                      letterSpacing: -1,
+                      color: defaultPalette.extras[0]),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 10,
+          child: SizedBox(
+            height: 12,
+            child: TextFormField(
+              onTapOutside: (event) => sheetDecorationVariables[index].listImagePropertyFocusNodes[s].unfocus(),
+              focusNode: sheetDecorationVariables[index].listImagePropertyFocusNodes[s],
+              controller: listImagePropertyControllers[s],
+              inputFormatters: [
+                NumericInputFormatter(allowNegative: true),
+              ],
               cursorColor: defaultPalette.tertiary,
               selectionControls: NoMenuTextSelectionControls(),
               textAlign: TextAlign.end,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(0 ), 
-                  labelStyle:
-                      GoogleFonts.lexend(color: defaultPalette.black),
-                
-                  fillColor: defaultPalette.transparent,
-                  border: InputBorder.none,
-                  enabledBorder:OutlineInputBorder(
-                  borderSide: BorderSide.none
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide.none
-                  ), 
-                ),
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.mitr(
-                    fontSize: 13, color: defaultPalette.extras[0],
-                    letterSpacing: -1
-                    ),
-                onFieldSubmitted: (value) {
-                  setState(() {
-                  double parsedValue = double.parse(value );
-                      
-                     if (currentDecorationImage !=null) {
-                      currentItemDecoration =currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                        image: DecorationImage(
-                          image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                          fit:currentDecorationImage.fit,
-                          repeat: currentDecorationImage.repeat,
-                          alignment:currentDecorationImage.alignment,
-                          scale:s==0?parsedValue: currentDecorationImage.scale,
-                          opacity:s==1?parsedValue: currentDecorationImage.opacity,
-                          filterQuality: currentDecorationImage.filterQuality,
-                          invertColors: currentDecorationImage.invertColors,
-                          )
-                      )
-                      );
-                    }
-
-                    sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration
-                    );
-                  
-                  });
-                },
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(0),
+                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                fillColor: defaultPalette.transparent,
+                border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
               ),
-            ),
-          ),  
-          SizedBox(width: 2,),
-           
-            
-        ];
-    }
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.mitr(
+                  fontSize: 13,
+                  color: defaultPalette.extras[0],
+                  letterSpacing: -1),
+              onFieldSubmitted: (value) {
+                setState(() {
+                  double parsedValue = double.parse(value);
 
+                  if (currentDecorationImage != null) {
+                    currentItemDecoration = currentItemDecoration.copyWith(
+                        decoration: currentItemDecoration.decoration.copyWith(
+                            image: DecorationImage(
+                      image: MemoryImage(
+                          (currentDecorationImage.image as MemoryImage).bytes),
+                      fit: currentDecorationImage.fit,
+                      repeat: currentDecorationImage.repeat,
+                      alignment: currentDecorationImage.alignment,
+                      scale:
+                          s == 0 ? parsedValue : currentDecorationImage.scale,
+                      opacity:
+                          s == 1 ? parsedValue : currentDecorationImage.opacity,
+                      filterQuality: currentDecorationImage.filterQuality,
+                      invertColors: currentDecorationImage.invertColors,
+                    )));
+                  }
+
+                  currentItemDecoration = currentItemDecoration.copyWith(
+                      decoration: currentItemDecoration.decoration);
+                   int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }    
+                });
+              },
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 2,
+        ),
+      ];
+    }
 
     return Column(
       children: [
         //Title for Decoration Image Editor
         Container(
           width: widthBig,
-          margin: EdgeInsets.only(left:3, right: 3, ),
-          padding: EdgeInsets.only(left:2, right: 2, top:0,bottom: 0),
-            decoration: BoxDecoration(
+          margin: EdgeInsets.only(
+            left: 3,
+            right: 3,
+          ),
+          padding: EdgeInsets.only(left: 2, right: 2, top: 0, bottom: 0),
+          decoration: BoxDecoration(
               border: Border.all(),
-              color:defaultPalette.primary,
-              borderRadius: BorderRadius.circular(5)
-            ),
+              color: defaultPalette.primary,
+              borderRadius: BorderRadius.circular(5)),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-              Icon( TablerIcons.photo,
-              size: 16,
-              color: defaultPalette.extras[0]
-              ), 
+            children: [
+              Icon(TablerIcons.photo,
+                  size: 16, color: defaultPalette.extras[0]),
               Expanded(
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      isListDecorationImageExpanded = !isListDecorationImageExpanded;
+                      isListDecorationImageExpanded =
+                          !isListDecorationImageExpanded;
                     });
                   },
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Text(  ' image ' 
-                          ,
+                    child: Text(
+                      ' image ',
                       style: GoogleFonts.lexend(
-                            fontSize: 15,
-                            letterSpacing: -1,
-                            color: defaultPalette.extras[0]),),
+                          fontSize: 15,
+                          letterSpacing: -1,
+                          color: defaultPalette.extras[0]),
+                    ),
                   ),
                 ),
-              ), 
-                
-              SizedBox(width: 2,),
+              ),
+              SizedBox(
+                width: 2,
+              ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(500),
                 child: Material(
-                  color: defaultPalette.transparent, 
-                  child: InkWell( 
-                    hoverColor:  defaultPalette.tertiary,
+                  color: defaultPalette.transparent,
+                  child: InkWell(
+                    hoverColor: defaultPalette.tertiary,
                     splashColor: defaultPalette.tertiary,
-                    highlightColor:  defaultPalette.tertiary,
+                    highlightColor: defaultPalette.tertiary,
                     onTap: () {
-                    setState(() {
-                      final currentItemDecoration = sheetListItem.listDecoration.itemDecorationList[decorationIndex] as ItemDecoration;
-                      currentItemDecoration.pinned['decoration']['image']['isPinned'] =  !currentItemDecoration.pinned['decoration']['image']['isPinned'];
-                      
-                      // Update the list item with the modified currentItemDecoration
-                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration;
-                    });
+                      setState(() {
+                        currentItemDecoration.pinned['decoration']['image']
+                                ['isPinned'] =
+                            !currentItemDecoration.pinned['decoration']['image']
+                                ['isPinned'];
+
+                        // Update the list item with the modified currentItemDecoration
+                        currentItemDecoration = currentItemDecoration;
+                      });
                     },
-                    child: Icon( currentItemDecoration.pinned['decoration']['image']['isPinned']? TablerIcons.pin_filled : TablerIcons.pin,
-                        size: 16, color: defaultPalette.extras[0]),
+                    child: Icon(
+                        currentItemDecoration.pinned['decoration']['image']
+                                ['isPinned']
+                            ? TablerIcons.pin_filled
+                            : TablerIcons.pin,
+                        size: 16,
+                        color: defaultPalette.extras[0]),
                   ),
                 ),
-              ), 
-              ],
-            ),
-        ),
-        SizedBox(width: 2,height: 4), 
-        if(isListDecorationImageExpanded)
-        ...[
-          Container(
-          width: widthBig,
-          margin: EdgeInsets.only(left:3, right: 3, ),
-          padding: EdgeInsets.only(left:4, right: 4, top:4,bottom: 4),
-          decoration: BoxDecoration(
-            border: Border.all(),
-            color:defaultPalette.primary,
-            borderRadius: BorderRadius.circular(5)
-          ),
-          child: Column(
-            children: [ 
-            GestureDetector(
-              onTap: () async{
-                if (currentDecorationImage ==null) {
-                  FilePickerResult? result = await FilePicker.platform.pickFiles( 
-                    type: FileType.custom,
-                    allowedExtensions: ['jpg', 'png',],
-                    withData: true
-                  );
-                  print(result);
-                  if (result !=null) {
-                    setState(() {
-                      sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                        decoration: currentItemDecoration.decoration.copyWith(
-                          image: DecorationImage(
-                            image: MemoryImage(result.files[0].bytes!), fit:currentDecorationImage !=null?currentDecorationImage.fit:BoxFit.fitWidth  )
-                        )
-                      );
-                    });
-                  }
-                }
-              },
-              child: Container(
-                  decoration: BoxDecoration( 
-                  color: defaultPalette
-                      .secondary,
-                      border: Border.all(),
-                  borderRadius:
-                      BorderRadius
-                          .circular(
-                              5)),
-                  padding: EdgeInsets.all(2),
-                child: Column(
-                  children: [
-                    Container(
-                      width: sWidth,
-                      height:50,
-                      decoration: BoxDecoration(
-                      image: currentDecorationImage??null,
-                      color: defaultPalette
-                          .secondary,
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                                  5)), 
-                      child:currentDecorationImage !=null?null: Icon(TablerIcons.photo_plus, size: 16,),
-                    ),
-                      if(currentDecorationImage !=null)
-                      Padding(
-                        padding: const EdgeInsets.only(top:2.0),
-                        child: Row(
-                        // mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            roundButton(
-                              () async {
-                              FilePickerResult? result = await FilePicker.platform.pickFiles( 
-                                type: FileType.custom,
-                                allowedExtensions: ['jpg', 'png',],
-                                withData: true
-                              );
-                              print(result);
-                              if (result !=null) {
-                                setState(() {
-                                   
-                                  sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                                  decoration: currentItemDecoration.decoration.copyWith(
-                                    image: DecorationImage(
-                                      image: MemoryImage(result.files[0].bytes!), fit:currentDecorationImage !=null?currentDecorationImage.fit:BoxFit.fitWidth  )
-                                  )
-                                );
-                                });
-                              }
-                            },  
-                            Icon(TablerIcons.photo_plus, size:15),
-                            isSelected: true
-                            ),
-                            SizedBox(width:2),
-                            roundButton(
-                              (){
-                              sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                                decoration: BoxDecoration(
-                                  image: null,
-                                  border: currentItemDecoration.decoration.border,
-                                  borderRadius: currentItemDecoration.decoration.borderRadius,
-                                  boxShadow: currentItemDecoration.decoration.boxShadow,
-                                  color: currentItemDecoration.decoration.color,
-                                  gradient: currentItemDecoration.decoration.gradient,
-                                  backgroundBlendMode: currentItemDecoration.decoration.backgroundBlendMode
-                                ));
-                            }, 
-                            Icon(TablerIcons.trash, size:15),
-                            isSelected: true
-
-                            ),
-                             
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
               ),
-            ),
-            SizedBox(height:4),
-            
-            
-            
-          if(currentDecorationImage !=null)
-           ...[ 
-            ////The setup for BoxFit
-            if(currentItemDecoration.pinned['decoration']['image']['fit'])
-            ...[titleTile(' ${currentDecorationImage.fit!.name }', TablerIcons.artboard),
-            SizedBox(height:1),
-            toggleSelectionRow(
-            [
-            Icon(TablerIcons.arrow_autofit_content, size: 20,),
-            Icon(TablerIcons.arrow_autofit_height, size: 20,),
-            Icon(TablerIcons.arrow_autofit_width, size: 20,),
-            Icon(TablerIcons.arrows_maximize, size: 20,),
-            Icon(TablerIcons.input_x, size: 20,),
-            ], 
-            [
-              BoxFit.contain,
-              BoxFit.fitHeight,
-              BoxFit.fitWidth,
-              BoxFit.fill, 
-              BoxFit.none
-            ]),
-            SizedBox(height:2),],
-
-            ////The setup for Repeating Image
-            if(currentItemDecoration.pinned['decoration']['image']['repeat'])
-            ...[titleTile(' ${currentDecorationImage.repeat.name}', TablerIcons.layout_grid),
-            SizedBox(height:1),
-            toggleSelectionRow(
-            [
-            Icon(TablerIcons.layout_grid, size: 18,),
-            Icon(TablerIcons.columns_3, size: 18,),
-            Transform.rotate(
-              angle: pi/2,
-              child: Icon(TablerIcons.columns_3, size: 18,)),
-            Icon(TablerIcons.input_x, size: 18,), 
-            ], 
-            [
-              ImageRepeat.repeat ,
-              ImageRepeat.repeatX,
-              ImageRepeat.repeatY,
-              ImageRepeat.noRepeat ,
-            ]),
-            SizedBox(height:3),],
-            
-            ///The setup for Aligning Image 
-            if(currentItemDecoration.pinned['decoration']['image']['alignment'])
-            ...[titleTile(' ${currentDecorationImage.alignment.toString()}'.replaceAll(RegExp(r'\)'), '').replaceAll(RegExp(r'Alignment.'), ''), TablerIcons.align_box_left_stretch, fontSize: 13),
-            SizedBox(height:2),
-            Row(
-              children: [
-                ...imageAlignPropertyTile(1 ),
-                
-              ],
-            ),
-            SizedBox(height:3),
-            Row(
-              children: [
-                ...imageAlignPropertyTile(0)
-              ],
-            ),
             ],
-            ////The setup for Scale Image
-            if(currentItemDecoration.pinned['decoration']['image']['scale'])
-            ...[SizedBox(height:4),
-            Row(
-              children: [
-                ...imagePropertyTile(0)
-              ],
-            ),
-            ],
-            ////The setup for Opacity of Image
-            if(currentItemDecoration.pinned['decoration']['image']['opacity'])
-            ...[SizedBox(height:3),
-            Row(
-              children: [
-                ...imagePropertyTile(1)
-              ],
-            ),
-            SizedBox(height:4),
-            ],
-            ////The setup for Quality of Image
-            if(currentItemDecoration.pinned['decoration']['image']['filterQuality'])
-            ...[titleTile(' ${ currentDecorationImage.filterQuality.name }', TablerIcons.michelin_star),
-            SizedBox(height:1),
-            toggleSelectionRow(
-            [
-            Icon(TablerIcons.antenna_bars_2, size: 18,),
-            Icon(TablerIcons.antenna_bars_3, size: 18,),
-            Icon(TablerIcons.antenna_bars_4, size: 18,),
-            Icon(TablerIcons.antenna_bars_5, size: 18,), 
-            ], 
-            [ 
-              FilterQuality.none ,
-              FilterQuality.low,
-              FilterQuality.medium,
-              FilterQuality.high,
-            ]),
-            ],
-            ////The setup for Inversion of Image
-            if(currentItemDecoration.pinned['decoration']['image']['invertColors'])
-            ...[SizedBox(height:4),
-            titleTile(' invert', TablerIcons.brightness_2), 
-            SizedBox(height:1),
-            AnimatedToggleSwitch<bool>.dual(
-              current:currentDecorationImage.invertColors,
-              first: false,
-              second: true,
-              onChanged: (value) {
-                setState(() {
-                  currentItemDecoration =currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                        image: DecorationImage(
-                          image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes  ), 
-                          fit:currentDecorationImage.fit,
-                          repeat: currentDecorationImage.repeat,
-                          alignment:currentDecorationImage.alignment,
-                          scale:currentDecorationImage.scale,
-                          opacity:currentDecorationImage.opacity,
-                          filterQuality: currentDecorationImage.filterQuality,
-                          invertColors: value,
-                          )
-                      )
-                      );
-                       sheetListItem.listDecoration.itemDecorationList[decorationIndex] = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration
-                    );
-                });
-              },
-              animationCurve:
-                  Curves.easeInOutExpo,
-              animationDuration:
-                  Durations.medium4,
-              borderWidth:
-                  2, // backgroundColor is set independently of the current selection
-              styleBuilder: (value) =>
-                  ToggleStyle(
-                      borderRadius:
-                          BorderRadius
-                              .circular(10), 
-                      indicatorBorderRadius:
-                          BorderRadius
-                              .circular(15),
-                      borderColor:
-                          defaultPalette
-                              .secondary,
-                      backgroundColor:
-                          defaultPalette
-                              .secondary,
-                      indicatorBorder: Border.all(color: defaultPalette.extras[0]),
-                      indicatorColor:
-                          defaultPalette
-                                  .primary), // indicatorColor changes and animates its value with the selection
-              iconBuilder: (value) {
-                return Icon(
-                    value == false
-                        ? TablerIcons
-                            .blob
-                        : TablerIcons
-                            .blob_filled,
-                    size: 12,
-                    color: defaultPalette
-                        .extras[0]);
-              },
-              textBuilder: (value) {
-                return Text(
-                  value == false
-                      ? 'unInverted'
-                      : 'inverted',
-                  style: GoogleFonts.lexend(
-                      letterSpacing: -1,
-                      fontSize: 14),
-                );
-              },
-              height: 25,
-              spacing: (widthBig) - 100, 
-            ),
-             ],
-            ],
-            ],
-          ) ,
           ),
-           
+        ),
+        SizedBox(width: 2, height: 4),
+        if (isListDecorationImageExpanded) ...[
+          Container(
+            width: widthBig,
+            margin: EdgeInsets.only(
+              left: 3,
+              right: 3,
+            ),
+            padding: EdgeInsets.only(left: 4, right: 4, top: 4, bottom: 4),
+            decoration: BoxDecoration(
+                border: Border.all(),
+                color: defaultPalette.primary,
+                borderRadius: BorderRadius.circular(5)),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    if (currentDecorationImage == null) {
+                      FilePickerResult? result =
+                        await FilePicker.platform.pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: [
+                              'jpg',
+                              'png',
+                            ],
+                            withData: true);
+                              
+                      if (result != null) {
+                        setState(() {
+                          currentItemDecoration = currentItemDecoration
+                            .copyWith(
+                              decoration: currentItemDecoration.decoration
+                              .copyWith(
+                                image: DecorationImage(
+                                  image: MemoryImage(
+                                    result.files[0].bytes!),
+                                  fit: currentDecorationImage !=null
+                                    ? currentDecorationImage.fit
+                                    : BoxFit.fitWidth)));
+                         int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                          if (index != -1) {
+                            sheetDecorationList[index] = currentItemDecoration;
+                          }                          
+                        });
+                      }
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: defaultPalette.secondary,
+                        border: Border.all(),
+                        borderRadius: BorderRadius.circular(5)),
+                    padding: EdgeInsets.all(2),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: sWidth,
+                          height: 50,
+                          decoration: BoxDecoration(
+                              image: currentDecorationImage ?? null,
+                              color: defaultPalette.secondary,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: currentDecorationImage != null
+                              ? null
+                              : Icon(
+                                  TablerIcons.photo_plus,
+                                  size: 16,
+                                ),
+                        ),
+                        if (currentDecorationImage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Row(
+                              // mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                roundButton(() async {
+                                  FilePickerResult? result =
+                                      await FilePicker.platform.pickFiles(
+                                          type: FileType.custom,
+                                          allowedExtensions: [
+                                            'jpg',
+                                            'png',
+                                          ],
+                                          withData: true);
+                                  if (result != null) {
+                                    setState(() {
+                                      currentItemDecoration =
+                                          currentItemDecoration.copyWith(
+                                              decoration: currentItemDecoration
+                                              .decoration .copyWith(
+                                                image: DecorationImage(
+                                                image: MemoryImage( result.files[0].bytes!),
+                                                fit: currentDecorationImage !=null
+                                                ? currentDecorationImage
+                                                    .fit
+                                                : BoxFit
+                                                    .fitWidth)));
+                                      int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                      if (index != -1) {
+                                        sheetDecorationList[index] = currentItemDecoration;
+                                      }               
+                                    });
+                                  }
+                                }, Icon(TablerIcons.photo_plus, size: 15),
+                                    isSelected: true),
+                                SizedBox(width: 2),
+                                roundButton(() {
+                                  currentItemDecoration =
+                                      currentItemDecoration.copyWith(
+                                          decoration: BoxDecoration(
+                                              image: null,
+                                              border: currentItemDecoration
+                                                  .decoration.border,
+                                              borderRadius:
+                                                  currentItemDecoration
+                                                      .decoration.borderRadius,
+                                              boxShadow: currentItemDecoration
+                                                  .decoration.boxShadow,
+                                              color: currentItemDecoration
+                                                  .decoration.color,
+                                              gradient: currentItemDecoration
+                                                  .decoration.gradient,
+                                              backgroundBlendMode:
+                                                  currentItemDecoration
+                                                      .decoration
+                                                      .backgroundBlendMode));
+                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                                  if (index != -1) {
+                                    sheetDecorationList[index] = currentItemDecoration;
+                                  }                    
+                                }, Icon(TablerIcons.trash, size: 15),
+                                    isSelected: true),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 4),
+                if (currentDecorationImage != null) ...[
+                  ////The setup for BoxFit
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['fit']) ...[
+                    titleTile(' ${currentDecorationImage.fit!.name}',
+                        TablerIcons.artboard),
+                    SizedBox(height: 1),
+                    toggleSelectionRow([
+                      Icon(
+                        TablerIcons.arrow_autofit_content,
+                        size: 20,
+                      ),
+                      Icon(
+                        TablerIcons.arrow_autofit_height,
+                        size: 20,
+                      ),
+                      Icon(
+                        TablerIcons.arrow_autofit_width,
+                        size: 20,
+                      ),
+                      Icon(
+                        TablerIcons.arrows_maximize,
+                        size: 20,
+                      ),
+                      Icon(
+                        TablerIcons.input_x,
+                        size: 20,
+                      ),
+                    ], [
+                      BoxFit.contain,
+                      BoxFit.fitHeight,
+                      BoxFit.fitWidth,
+                      BoxFit.fill,
+                      BoxFit.none
+                    ]),
+                    SizedBox(height: 2),
+                  ],
+
+                  ////The setup for Repeating Image
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['repeat']) ...[
+                    titleTile(' ${currentDecorationImage.repeat.name}',
+                        TablerIcons.layout_grid),
+                    SizedBox(height: 1),
+                    toggleSelectionRow([
+                      Icon(
+                        TablerIcons.layout_grid,
+                        size: 18,
+                      ),
+                      Icon(
+                        TablerIcons.columns_3,
+                        size: 18,
+                      ),
+                      Transform.rotate(
+                          angle: pi / 2,
+                          child: Icon(
+                            TablerIcons.columns_3,
+                            size: 18,
+                          )),
+                      Icon(
+                        TablerIcons.input_x,
+                        size: 18,
+                      ),
+                    ], [
+                      ImageRepeat.repeat,
+                      ImageRepeat.repeatX,
+                      ImageRepeat.repeatY,
+                      ImageRepeat.noRepeat,
+                    ]),
+                    SizedBox(height: 3),
+                  ],
+
+                  ///The setup for Aligning Image
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['alignment']) ...[
+                    titleTile(
+                        ' ${currentDecorationImage.alignment.toString()}'
+                            .replaceAll(RegExp(r'\)'), '')
+                            .replaceAll(RegExp(r'Alignment.'), ''),
+                        TablerIcons.align_box_left_stretch,
+                        fontSize: 13),
+                    SizedBox(height: 2),
+                    Row(
+                      children: [
+                        ...imageAlignPropertyTile(1),
+                      ],
+                    ),
+                    SizedBox(height: 3),
+                    Row(
+                      children: [...imageAlignPropertyTile(0)],
+                    ),
+                  ],
+                  ////The setup for Scale Image
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['scale']) ...[
+                    SizedBox(height: 4),
+                    Row(
+                      children: [...imagePropertyTile(0)],
+                    ),
+                  ],
+                  ////The setup for Opacity of Image
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['opacity']) ...[
+                    SizedBox(height: 3),
+                    Row(
+                      children: [...imagePropertyTile(1)],
+                    ),
+                    SizedBox(height: 4),
+                  ],
+                  ////The setup for Quality of Image
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['filterQuality']) ...[
+                    titleTile(' ${currentDecorationImage.filterQuality.name}',
+                        TablerIcons.michelin_star),
+                    SizedBox(height: 1),
+                    toggleSelectionRow([
+                      Icon(
+                        TablerIcons.antenna_bars_2,
+                        size: 18,
+                      ),
+                      Icon(
+                        TablerIcons.antenna_bars_3,
+                        size: 18,
+                      ),
+                      Icon(
+                        TablerIcons.antenna_bars_4,
+                        size: 18,
+                      ),
+                      Icon(
+                        TablerIcons.antenna_bars_5,
+                        size: 18,
+                      ),
+                    ], [
+                      FilterQuality.none,
+                      FilterQuality.low,
+                      FilterQuality.medium,
+                      FilterQuality.high,
+                    ]),
+                  ],
+                  ////The setup for Inversion of Image
+                  if (currentItemDecoration.pinned['decoration']['image']
+                      ['invertColors']) ...[
+                    SizedBox(height: 4),
+                    titleTile(' invert', TablerIcons.brightness_2),
+                    SizedBox(height: 1),
+                    AnimatedToggleSwitch<bool>.dual(
+                      current: currentDecorationImage.invertColors,
+                      first: false,
+                      second: true,
+                      onChanged: (value) {
+                        setState(() {
+                          currentItemDecoration =
+                              currentItemDecoration.copyWith(
+                                  decoration:
+                                      currentItemDecoration.decoration.copyWith(
+                                          image: DecorationImage(
+                            image: MemoryImage(
+                                (currentDecorationImage.image as MemoryImage)
+                                    .bytes),
+                            fit: currentDecorationImage.fit,
+                            repeat: currentDecorationImage.repeat,
+                            alignment: currentDecorationImage.alignment,
+                            scale: currentDecorationImage.scale,
+                            opacity: currentDecorationImage.opacity,
+                            filterQuality: currentDecorationImage.filterQuality,
+                            invertColors: value,
+                          )));
+                          currentItemDecoration =
+                              currentItemDecoration.copyWith(
+                                  decoration: currentItemDecoration.decoration);
+                           int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
+                              if (index != -1) {
+                                sheetDecorationList[index] = currentItemDecoration;
+                              }        
+                        });
+                      },
+                      animationCurve: Curves.easeInOutExpo,
+                      animationDuration: Durations.medium4,
+                      borderWidth:
+                          2, // backgroundColor is set independently of the current selection
+                      styleBuilder: (value) => ToggleStyle(
+                          borderRadius: BorderRadius.circular(10),
+                          indicatorBorderRadius: BorderRadius.circular(15),
+                          borderColor: defaultPalette.secondary,
+                          backgroundColor: defaultPalette.secondary,
+                          indicatorBorder:
+                              Border.all(color: defaultPalette.extras[0]),
+                          indicatorColor: defaultPalette
+                              .primary), // indicatorColor changes and animates its value with the selection
+                      iconBuilder: (value) {
+                        return Icon(
+                            value == false
+                                ? TablerIcons.blob
+                                : TablerIcons.blob_filled,
+                            size: 12,
+                            color: defaultPalette.extras[0]);
+                      },
+                      textBuilder: (value) {
+                        return Text(
+                          value == false ? 'unInverted' : 'inverted',
+                          style: GoogleFonts.lexend(
+                              letterSpacing: -1, fontSize: 14),
+                        );
+                      },
+                      height: 25,
+                      spacing: (widthBig) - 100,
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
         ]
       ],
     );
   }
-
 }
 
 class WordSpacingAttribute extends Attribute<String?> {
@@ -21948,4 +23549,77 @@ class SmoothScrollBehavior extends MaterialScrollBehavior {
       BouncingScrollPhysics(), // or ClampingScrollPhysics()
     );
   }
+}
+
+class SheetDecorationVariables {
+  String id ='';
+  bool isExpanded = false;
+  bool isListMarginExpanded = false;
+  bool isListPaddingExpanded = false;
+  bool isListBorderRadiusExpanded = false;
+  bool isListBorderExpanded = true;
+  bool isListColorExpanded = true;
+  bool isListShadowExpanded = true;
+  bool isListDecorationImageExpanded = true;
+  List<FocusNode> marginFocusNodes = [
+    FocusNode(),
+    FocusNode(),
+    FocusNode(),
+    FocusNode(),
+    FocusNode()
+  ];
+  List<FocusNode> listPaddingFocusNodes = [
+    FocusNode(),
+    FocusNode(),
+    FocusNode(),
+    FocusNode(),
+    FocusNode()
+  ];
+  List<FocusNode> colorHexFocusNodes = [
+    FocusNode(),
+    FocusNode(),
+  ];
+  List<FocusNode> borderFocusNodes = [
+    FocusNode(),
+    FocusNode(),
+    FocusNode(),
+  ];
+  List<FocusNode> borderRadiusFocusNodes = List.generate(
+    5,
+    (index) {
+      return FocusNode();
+    },
+  );
+  List<FocusNode> listBorderFocusNodes = List.generate(
+    5,
+    (index) {
+      return FocusNode();
+    },
+  );
+  List<List<FocusNode>> listShadowFocusNodes = [];
+  List<FocusNode> listImageAlignFocusNodes = [FocusNode(), FocusNode()];
+  List<FocusNode> listImagePropertyFocusNodes = [FocusNode(), FocusNode()];
+  int listShadowLayerSelectedIndex =0;
+  SheetDecorationVariables({
+    this.id ='',
+    this.isExpanded = false,
+    this.isListMarginExpanded = false,
+    this.isListPaddingExpanded = false,
+    this.isListBorderRadiusExpanded = false,
+    this.isListBorderExpanded = false,
+    this.isListColorExpanded = false,
+    this.isListShadowExpanded = false,
+    this.isListDecorationImageExpanded = false,
+    this.marginFocusNodes = const [],
+    this.listPaddingFocusNodes = const [],
+    this.colorHexFocusNodes = const [],
+    this.borderFocusNodes = const [],
+    this.borderRadiusFocusNodes = const [],
+    this.listBorderFocusNodes = const [],
+    this.listShadowFocusNodes = const [],
+    this.listImageAlignFocusNodes = const [],
+    this.listImagePropertyFocusNodes = const [],
+    this.listShadowLayerSelectedIndex = 0
+  });
+  
 }
