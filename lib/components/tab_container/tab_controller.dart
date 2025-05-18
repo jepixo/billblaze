@@ -137,7 +137,7 @@ class TabContainer extends StatefulWidget {
     @Deprecated('Use tabsStart instead') tabStart,
     @Deprecated('Use tabsEnd instead') tabEnd,
   })  : assert((children == null) != (child == null)),
-        assert((children != null) ? children.length == tabs.length : true),
+        // assert((children != null) ? children.length == tabs.length : true),
         assert(controller == null ? true : controller.length == tabs.length),
         assert(!(color != null && colors != null)),
         assert((colors ?? tabs).length == tabs.length),

@@ -19,7 +19,10 @@ part 'text_editor_item.g.dart';
 class TextEditorItemBox extends SheetItem {
   @HiveField(2)
   final List<Map<String, dynamic>> textEditorController;
+  @HiveField(3)
+  final List<String>? linkedTextEditors;
   TextEditorItemBox({
+    this.linkedTextEditors = null,
     required this.textEditorController,
     required super.id,
     required super.parentId,
@@ -32,12 +35,14 @@ class TextEditorItem extends SheetItem {
   final FocusNode focusNode;
   final ScrollController scrollController;
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
+  List<String>? linkedTextEditors;
   //
   TextEditorItem._({
     required super.id,
     required super.parentId,
     required this.textEditorController,
     required this.textEditorConfigurations,
+    this.linkedTextEditors,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -54,6 +59,7 @@ class TextEditorItem extends SheetItem {
     ScrollController? scrollController,
     QuillSimpleToolbar? toolBarConfigurations,
     QuillEditorConfigurations? textEditorConfigurations,
+    List<String>? linkedTextEditors,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -70,11 +76,11 @@ class TextEditorItem extends SheetItem {
         );
 
     return TextEditorItem._(
-      textEditorController: controller,
-      id: id,
-      parentId: parentId,
-      textEditorConfigurations: configurations,
-    );
+        textEditorController: controller,
+        id: id,
+        parentId: parentId,
+        textEditorConfigurations: configurations,
+        linkedTextEditors: linkedTextEditors);
   }
 
   Delta getTextEditorDocumentAsDelta() {
@@ -97,6 +103,7 @@ class TextEditorItem extends SheetItem {
     QuillSimpleToolbarConfigurations? toolBarConfigurations,
     String? id,
     String? parentId,
+    List<String>? linkedTextEditors,
   }) {
     return TextEditorItem._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -104,6 +111,18 @@ class TextEditorItem extends SheetItem {
           textEditorConfigurations ?? this.textEditorConfigurations,
       id: id ?? this.id,
       parentId: parentId ?? this.parentId,
+      linkedTextEditors: linkedTextEditors ?? this.linkedTextEditors,
     );
+  }
+
+  TextEditorItemBox toTEItemBox(TextEditorItem item) {
+    print(
+        'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
+    return TextEditorItemBox(
+        textEditorController:
+            textEditorController.document.toDelta().toJson(),
+        id: item.id,
+        parentId: item.parentId,
+        linkedTextEditors: item.linkedTextEditors);
   }
 }

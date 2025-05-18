@@ -17,6 +17,7 @@ class TextEditorItemBoxAdapter extends TypeAdapter<TextEditorItemBox> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return TextEditorItemBox(
+      linkedTextEditors: (fields[3] as List?)?.cast<String>(),
       textEditorController: (fields[2] as List)
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
@@ -28,9 +29,11 @@ class TextEditorItemBoxAdapter extends TypeAdapter<TextEditorItemBox> {
   @override
   void write(BinaryWriter writer, TextEditorItemBox obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(2)
       ..write(obj.textEditorController)
+      ..writeByte(3)
+      ..write(obj.linkedTextEditors)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

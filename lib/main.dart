@@ -1,17 +1,19 @@
 import 'dart:io';
 
 import 'package:billblaze/Home.dart';
+import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/text_editor_item.dart';
 import 'package:billblaze/screens/LoginSignUp.dart';
-import 'package:billblaze/screens/layout_designer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,20 +31,29 @@ Future<void> main() async {
   Hive.registerAdapter(SheetListBoxAdapter());
   Hive.registerAdapter(TextEditorItemBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
-  // await Hive.deleteBoxFromDisk('layouts');
+  Hive.registerAdapter(SheetDecorationAdapter());
+  Hive.registerAdapter(SuperDecorationBoxAdapter());
+  Hive.registerAdapter(AccessAdapter());
+  Hive.registerAdapter(ItemDecorationBoxAdapter());
+
   await Hive.openBox<LayoutModel>('layouts');
-  // await Hive.box<LayoutModel>('layouts').clear();
+  await Hive.openBox<SheetDecoration>('decorations');
+  // await Hive.deleteBoxFromDisk('decorations');
+  // await Hive.box<LayoutModel>('decorations').clear();
+  debugPaintSizeEnabled = false; // Disable size debug outlines.
+  debugPaintBaselinesEnabled = false; // Disable baseline rendering.
+  debugPaintPointersEnabled = false;
   runApp(const ProviderScope(child: MainApp()));
   if (Platform.isWindows) {
-  doWhenWindowReady(() {
-    final win = appWindow;
-    win.minSize = Size(700, 400);
-    
-    win.size = Size(800, 600);
-    win.alignment = Alignment.center;
-    win.show();
-  });
-}
+    doWhenWindowReady(() {
+      final win = appWindow;
+      win.minSize = Size(800, 500);
+
+      win.size = Size(800, 600);
+      win.alignment = Alignment.center;
+      win.show();
+    });
+  }
 }
 
 class MainApp extends StatefulWidget {
@@ -62,6 +73,15 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: defaultPalette.extras[0], // Cursor color
+          selectionColor:
+              defaultPalette.tertiary.withOpacity(0.5), // Text highlight color
+          selectionHandleColor:
+              Colors.blue, // Handle color when dragging selection
+        ),
+      ),
       home: Consumer(builder: (context, ref, c) {
         return StreamBuilder(
             stream: FirebaseAuth.instance.authStateChanges(),

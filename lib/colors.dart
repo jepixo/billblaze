@@ -24,7 +24,7 @@ class ColorPalette {
       {required this.primary,
       required this.secondary,
       required this.tertiary,
-      this.extras=const[],
+      this.extras = const [],
       this.quaternary,
       this.white = Colors.white,
       this.black = Colors.black,
@@ -126,8 +126,22 @@ ColorPalette darkPalette = ColorPalette(
 
 ColorPalette againPalette = ColorPalette(
     primary: Colors.white,
-    secondary: Color(0xFFfcfcfc),
+    secondary: Color(0xFFEAEAEA),
     tertiary: Colors.green,
     quaternary: Color(0xFF1C110A),
-    extras: [Color(0xff293132), Color(0xffF9DC5C), Color(0xffC4D7F2), Color(0xffFDE8E9) ]
-    );
+    extras: [
+      Color(0xff293132),//0
+      Color(0xffF9DC5C),//1
+      Color(0xffEB5E28),//2
+      Color(0xffe94f37),//3
+      Color(0xffFF8C61),//4
+      Color(0xffE54B4B),//5
+      Color(0xffD62828),//6
+      
+      Color(0xff664C43),//7
+      
+      Color(0xffC4D7F2),//8
+      Color(0xff4D7EA8),//9
+      Color(0xff3C91E6),//10
+      Color(0xff916953),//11
+    ]);

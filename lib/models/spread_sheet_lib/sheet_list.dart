@@ -1,7 +1,7 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:math';
-
-import 'package:flutter/material.dart';
+// ignore_for_file: public_member_api_docs, sort_constructors_first 
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/providers/box_provider.dart';
+import 'package:flutter/material.dart'; 
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
@@ -13,44 +13,71 @@ class SheetListBox extends SheetItem {
   @HiveField(2)
   List<SheetItem> sheetList;
   @HiveField(3)
-  bool direction;
-  SheetListBox({
-    required this.sheetList,
-    required this.direction,
-    required super.id,
-    required super.parentId,
-  });
+  bool direction; 
+  @HiveField(4)
+  int mainAxisAlignment;
+  @HiveField(5)
+  int crossAxisAlignment;  
+  @HiveField(6)
+  String decorationId;
+
+  SheetListBox(
+      {
+      required this.sheetList,
+      required this.direction,
+      required super.id,
+      required super.parentId, 
+      this.mainAxisAlignment = 0,
+      this.crossAxisAlignment = 0,
+      required this.decorationId, 
+      });
+
   SheetList toSheetList() {
     return SheetList(
-        sheetList: sheetList,
+        sheetList: [],
         direction: direction == true ? Axis.vertical : Axis.horizontal,
         id: id,
-        parentId: parentId);
+        parentId: parentId,
+        listDecoration: Boxes.getSuperDecoration(decorationId).toSuperDecoration(),
+        );
   }
 }
 
 class SheetList extends SheetItem {
   List<SheetItem> sheetList;
   Axis direction;
-  SheetList({
-    required String id,
-    required String parentId,
-    required this.sheetList,
-    this.direction = Axis.vertical,
-  }) : super(id: id, parentId: parentId) {
-    // Assign the parentId to each item in the sheetList
+  Size size;
+  SuperDecoration listDecoration;
+  MainAxisAlignment mainAxisAlignment;
+  CrossAxisAlignment crossAxisAlignment;
+
+  SheetList(
+      {required String id,
+      required String parentId,
+      required this.sheetList,
+      this.direction = Axis.vertical,
+      required this.listDecoration,
+      this.mainAxisAlignment = MainAxisAlignment.start,
+      this.crossAxisAlignment = CrossAxisAlignment.start,
+      this.size = const Size(0, 0)})
+      : super(id: id, parentId: parentId) { 
     for (var item in sheetList) {
       item.parentId = id;
     }
   }
 
   SheetListBox toSheetListBox() {
-    
+    print('found A SUPERDECORATION: '+ listDecoration.id );
+    // Boxes.getDecorations().put(listDecoration.id, listDecoration.toSuperDecorationBox());
     return SheetListBox(
-        sheetList: sheetList,
+        sheetList: [],
         direction: direction == Axis.vertical ? true : false,
         id: id,
-        parentId: parentId);
+        parentId: parentId,
+        decorationId: listDecoration.id,
+        crossAxisAlignment: crossAxisAlignment.index,
+        mainAxisAlignment: mainAxisAlignment.index,
+         );
   }
 
   // Adding an item to the list
@@ -122,44 +149,30 @@ class SheetList extends SheetItem {
     sheetList.addAll(items);
   }
 
-  // Checking if the list contains a specific item
-  bool contains(SheetItem item) {
-    return sheetList.contains(item);
-  }
-
   // Finding the index of a specific item
   int indexOf(SheetItem item) {
     return sheetList.indexOf(item);
   }
 
-  // Sorting the list
-  void sort([int Function(SheetItem a, SheetItem b)? compare]) {
-    sheetList.sort(compare);
-  }
-
-  // Shuffling the list
-  void shuffle([Random? random]) {
-    sheetList.shuffle(random);
-  }
-
-  // Reversing the list
-  Iterable<SheetItem> get reversed {
-    return sheetList.reversed;
-  }
-
-  // Getting a sublist
-  List<SheetItem> sublist(int start, [int? end]) {
-    return sheetList.sublist(start, end);
-  }
-
-  // Getting a list iterator
-  Iterator<SheetItem> get iterator {
-    return sheetList.iterator;
-  }
-
-  // Finding the first item that matches the given condition
-  SheetItem firstWhere(bool Function(SheetItem item) test,
-      {SheetItem Function()? orElse}) {
-    return sheetList.firstWhere(test, orElse: orElse);
+  SheetList copyWith(
+      {List<SheetItem>? sheetList,
+      Axis? direction,
+      Size? size, 
+      MainAxisAlignment? mainAxisAlignment,
+      CrossAxisAlignment? crossAxisAlignment,
+      SuperDecoration? listDecoration}) {
+    return SheetList(
+      id: super.id,
+      parentId: super.parentId,
+      sheetList: sheetList ?? this.sheetList,
+      direction: direction ?? this.direction,
+      size: size ?? this.size,
+      mainAxisAlignment: mainAxisAlignment ?? this.mainAxisAlignment,
+      crossAxisAlignment: crossAxisAlignment ?? this.crossAxisAlignment,
+      listDecoration: listDecoration ?? this.listDecoration,
+    );
   }
 }
+
+
+ 

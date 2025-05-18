@@ -2,80 +2,81 @@ import 'package:flutter/services.dart';
 
 class NumericInputFormatter extends TextInputFormatter {
   final double? maxValue; // Maximum allowed numeric value (optional)
+  final bool allowNegative; // Toggle for allowing negative numbers
 
-  NumericInputFormatter({this.maxValue});
+  NumericInputFormatter({this.maxValue, this.allowNegative = false});
 
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    final RegExp regex = RegExp(r'^\d*\.?\d*$');
+    final text = newValue.text;
 
-    // If the new value contains only legal characters
-    if (regex.hasMatch(newValue.text)) {
-      // Handle leading zero
-      if (newValue.text.length > 1 &&
-          newValue.text.startsWith('0') &&
-          newValue.text[1] != '.') {
-        final newText = newValue.text.substring(1);
-        return TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: newText.length),
-        );
-      }
-      // Allow empty value
-      if (newValue.text.isEmpty) {
-        return TextEditingValue(
-          text: '',
-          selection: TextSelection.collapsed(offset: 0),
-        );
-      }
-
-      // Handle case where last character is a dot
-      if (newValue.text.endsWith('.')) {
-        return newValue;
-      }
-
-      // Parse the new value as double
-      double parsedValue;
-      try {
-        parsedValue = double.parse(newValue.text);
-      } catch (e) {
-        // If parsing fails, return oldValue
-        return oldValue;
-      }
-
-      // Limit the value to maxValue if provided
-      if (maxValue != null && parsedValue > maxValue!) {
-        parsedValue = maxValue!;
-      }
-
-      // Round parsedValue to 3 decimals and remove trailing zeros
-      String formattedText = _formatNumber(parsedValue);
-
-      // Calculate the new selection offset
-      int offset = newValue.selection.end;
-      if (newValue.text.contains('.') && !formattedText.contains('.')) {
-        offset -= 1; // Adjust for removed dot
-      }
-
+    // 1) Empty → “0”
+    if (text.isEmpty) {
       return TextEditingValue(
-        text: formattedText,
-        selection: TextSelection.collapsed(offset: offset),
+        text: '0',
+        selection: TextSelection.collapsed(offset: 1),
       );
     }
 
-    // If the new value contains illegal characters, return the old value
-    return oldValue;
-  }
+    // 2) Check for negative sign if allowed
+    final regex = allowNegative 
+        ? RegExp(r'^-?\d*\.?\d*$') 
+        : RegExp(r'^\d*\.?\d*$');
 
-  String _formatNumber(double value) {
-    String formattedText = value.toStringAsFixed(3); // Format to 3 decimals
-    // Remove trailing zeros and decimal point if all decimals are zeros
-    formattedText = formattedText.contains('.')
-        ? formattedText
-            .replaceAll(RegExp(r'0*$'), '')
-            .replaceAll(RegExp(r'\.$'), '')
-        : formattedText;
-    return formattedText;
+    // 3) Only allow digits and at most one dot (and negative if enabled)
+    if (!regex.hasMatch(text)) {
+      return oldValue;
+    }
+
+    // 4) Remove leading zeros unless it’s "0." or "-0."
+    if ((text.length > 1 && text.startsWith('0') && !text.startsWith('0.')) ||
+        (text.length > 2 && text.startsWith('-0') && !text.startsWith('-0.'))) {
+      final stripped = text.startsWith('-') ? '-${text.substring(2)}' : text.substring(1);
+      return TextEditingValue(
+        text: stripped,
+        selection: TextSelection.collapsed(offset: stripped.length),
+      );
+    }
+
+    // 5) If it ends in a dot, let them type the fraction
+    if (text.endsWith('.')) {
+      return newValue;
+    }
+
+    // 6) No decimal point, echo integer typed (no trailing .0)
+    if (!text.contains('.')) {
+      final intVal = int.tryParse(text) ?? 0;
+      final clamped = (maxValue != null && intVal.abs() > maxValue!)
+          ? (intVal.isNegative ? -maxValue!.toInt() : maxValue!.toInt()).toString()
+          : text;
+      return TextEditingValue(
+        text: clamped,
+        selection: TextSelection.collapsed(offset: clamped.length),
+      );
+    }
+
+    // 7) For decimal numbers, parse, clamp, and trim unnecessary zeros
+    double value;
+    try {
+      value = double.parse(text);
+    } catch (_) {
+      return oldValue;
+    }
+
+    if (maxValue != null && value.abs() > maxValue!) {
+      value = value.isNegative ? -maxValue! : maxValue!;
+    }
+
+    // Format the value without trailing ".0"
+    String formatted = value.toString();
+    if (formatted.endsWith('.0')) {
+      formatted = formatted.substring(0, formatted.length - 2);
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }

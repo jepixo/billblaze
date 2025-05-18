@@ -26,13 +26,14 @@ class DocumentPropertiesBoxAdapter extends TypeAdapter<DocumentPropertiesBox> {
       orientationController: fields[6] as bool,
       pageFormatController: fields[7] as String,
       useIndividualMargins: fields[8] as bool,
+      pageColor: fields[9] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, DocumentPropertiesBox obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.pageNumberController)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class DocumentPropertiesBoxAdapter extends TypeAdapter<DocumentPropertiesBox> {
       ..writeByte(7)
       ..write(obj.pageFormatController)
       ..writeByte(8)
-      ..write(obj.useIndividualMargins);
+      ..write(obj.useIndividualMargins)
+      ..writeByte(9)
+      ..write(obj.pageColor);
   }
 
   @override
