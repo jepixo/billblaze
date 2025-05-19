@@ -23,6 +23,7 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       parentId: fields[1] as String,
       mainAxisAlignment: fields[4] as int,
       crossAxisAlignment: fields[5] as int,
+      mainAxisSize: fields[7] as int,
       decorationId: fields[6] as String,
     );
   }
@@ -30,7 +31,7 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
   @override
   void write(BinaryWriter writer, SheetListBox obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(2)
       ..write(obj.sheetList)
       ..writeByte(3)
@@ -41,6 +42,8 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       ..write(obj.crossAxisAlignment)
       ..writeByte(6)
       ..write(obj.decorationId)
+      ..writeByte(7)
+      ..write(obj.mainAxisSize)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

@@ -35,10 +35,10 @@ Future<void> main() async {
   Hive.registerAdapter(SuperDecorationBoxAdapter());
   Hive.registerAdapter(AccessAdapter());
   Hive.registerAdapter(ItemDecorationBoxAdapter());
-
+// await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
   await Hive.openBox<SheetDecoration>('decorations');
-  // await Hive.deleteBoxFromDisk('decorations');
+  
   // await Hive.box<LayoutModel>('decorations').clear();
   debugPaintSizeEnabled = false; // Disable size debug outlines.
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.

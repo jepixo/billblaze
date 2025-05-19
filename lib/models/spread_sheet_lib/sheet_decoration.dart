@@ -72,6 +72,7 @@ class ItemDecorationBox extends SheetDecoration {
 }
 
 class ItemDecoration extends SheetDecoration {
+  
   final EdgeInsets padding;
   final EdgeInsets margin;
   final BoxDecoration decoration;

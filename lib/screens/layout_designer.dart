@@ -354,7 +354,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool isListDecorationImageExpanded = true;
   bool isListDecorationPropertiesToggled = false;
   bool isListDecorationLibraryToggled = false;
-
+  List<String> listDecorationPath =[];
   late TextEditorItem item;
   late SheetList sheetListItem;
   var dragBackupValue;
@@ -437,7 +437,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     globalKeys = List.generate(1000, (_) => GlobalKey());
     fetchFonts();
     _findItem();
-    _findSheetListItem();
     _unfocusAll();
     Boxes.getDecorations().values.toList().forEach(
       (element) {
@@ -488,6 +487,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       setState(() {
         whichListPropertyTabIsClicked =
             listPropertyTabContainerController.index;
+         listPropertyCardsController
+              .setCardIndex(whichListPropertyTabIsClicked);
+          listPropertyCardsController.animateTo(Offset(0.1, 0.1),
+              duration: Durations.short2, curve: Curves.ease);    
         whichPropertyTabIsClicked = 3;
         // propertyTabController.jumpToPage(2);
       });
@@ -1577,23 +1580,43 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               child: GestureDetector(
                 onTap: () async {
                   setState(() {
-                    currentPageIndex = i;
-                    _renderPagePreviewOnProperties();
-                    propertyCardsController.setCardIndex(currentPageIndex);
-                    propertyCardsController.animateTo(Offset(1, 1),
-                        duration: Durations.short1, curve: Curves.linear);
-                    currentPageIndex = i;
-                    _findItem();
+                    if (currentPageIndex != i ) {
+                      currentPageIndex = i;
+                      _renderPagePreviewOnProperties();
+                      
+                      whichPropertyTabIsClicked = 1;
+                      
+                      
+                      _findItem();
+                      panelIndex.id ='';
+                      panelIndex.parentId='';
+                      panelIndex.panelIndex = -1;
+                      whichPropertyTabIsClicked = 1;
+                      Future.delayed(Durations.short1).then(
+                        (value) {
+                          print("YUHUUUUUUUU");
+                          propertyCardsController.setCardIndex(currentPageIndex);
+                          propertyCardsController.animateTo(Offset(1, 1),
+                          duration: Durations.short1, curve: Curves.linear);
+                        },
+                      );
+                    } else {
+                      propertyCardsController.swipeDefault();
+                      
+                    }
+                  
+
                   });
                   await _unfocusAll();
                 },
                 child: Container(
                   decoration: BoxDecoration(
                     border: currentPageIndex == i
-                        ? Border.all(
-                            color: defaultPalette.tertiary.withOpacity(0.8),
+                        ? DashedBorder.fromBorderSide(
+                          side: BorderSide(color: defaultPalette.tertiary.withOpacity(0.8),
                             strokeAlign: BorderSide.strokeAlignOutside,
-                            width: 6)
+                            width: 6), dashLength:40, spaceLength:20
+                            )
                         : null,
                   ),
                   child: RepaintBoundary(
@@ -1654,6 +1677,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
   Widget _buildSheetListWidget(SheetList sheetList, double width,
       {double? docWidth = null, double? docHeight = null}) {
+        // print(sheetList.mainAxisSize.name);
     return buildDecoratedContainer(
         sheetList.listDecoration,
         IntrinsicHeight(
@@ -1664,6 +1688,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     direction: Axis.vertical,
                     mainAxisAlignment: sheetList.mainAxisAlignment,
                     crossAxisAlignment: sheetList.crossAxisAlignment,
+                    mainAxisSize: sheetList.mainAxisSize, 
                     children:
                         List.generate(sheetList.sheetList.length, (index) {
                       final item = sheetList.sheetList[index];
@@ -1756,10 +1781,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               //For Rows in the pdf side of things
               : SizedBox(
                   width: docWidth,
-                  child: Flex(
-                    direction: Axis.horizontal,
+                  child: Row(
+                    // direction: Axis.horizontal,
                     mainAxisAlignment: sheetList.mainAxisAlignment,
                     crossAxisAlignment: sheetList.crossAxisAlignment,
+                    mainAxisSize: sheetList.mainAxisSize,
                     children:
                         List.generate(sheetList.sheetList.length, (index) {
                       final item = sheetList.sheetList[index];
@@ -1787,82 +1813,45 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         // print('in buildSheetListWidget item is: $item');
                         return IgnorePointer(
                           key: ValueKey(item),
-                          child: CustomBorder(
-                            gradientBuilder: (progress) => LinearGradient(
-                              colors: const [
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.transparent
-                              ],
-                              transform: GradientRotation(progress * 6),
-                            ),
-                            // animateBorder: true,
-                            // animateDuration: Durations.short1,
-                            // color: Colors.green,
-                            // size: const Size(100, 100),
-                            // radius: Radius.circular(50),
-                            // dashPattern: [5.6,1],
-                            // dashRadius: Radius.circular(2),
-                            strokeCap: StrokeCap.round,
-                            // style: PaintingStyle.stroke,
-                            // pathStrategy: PathStrategy.aroundLine,
-                            size: Size(1, 1),
-                            dashPattern: [10, 15],
-                            // dashRadius: Radius.circular(20),
-                            // pathStrategy: PathStrategy.horizontalLine, // or PathStrategy.horizontalLine
-                            strokeWidth: 3,
-
-                            child: Container(
-                              width: docWidth,
-                              alignment: containerAlignment,
-                              // alignment: Alignment.center,
-                              // decoration: BoxDecoration(
-                              //   image: DecorationImage(
-                              //     image: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStND_j06Kvfw2Y-eBSOlOC060f8DIL5-gs8w&s',),fit: BoxFit.fitWidth)
-                              //   ,
-                              //  ),
-
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 20),
-                                child: IntrinsicWidth(
-                                  child: QuillEditor(
-                                    key: ValueKey(item.id),
-                                    configurations: QuillEditorConfigurations(
-                                      scrollable: false,
-                                      showCursor: false,
-                                      enableInteractiveSelection: false,
-                                      enableSelectionToolbar: false,
-                                      requestKeyboardFocusOnCheckListChanged:
-                                          false,
-                                      customStyleBuilder: (attribute) {
-                                        return customStyleBuilder(attribute);
-                                      },
-                                      disableClipboard: true,
-                                      controller: QuillController(
-                                        document:
-                                            item.textEditorController.document,
-                                        selection:
-                                            item.textEditorController.selection,
-                                        readOnly: true,
-                                        onSelectionChanged: (textSelection) {
-                                          setState(() {});
-                                        },
-                                        onReplaceText: (index, len, data) {
-                                          setState(() {});
-                                          return false;
-                                        },
-                                        onSelectionCompleted: () {
-                                          setState(() {});
-                                        },
-                                        onDelete: (cursorPosition, forward) {
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ),
-                                    focusNode: FocusNode(),
-                                    scrollController: ScrollController(),
+                          child: SizedBox(
+                            width: docWidth,
+                            child: IntrinsicWidth(
+                              child: QuillEditor(
+                                key: ValueKey(item.id),
+                                configurations: QuillEditorConfigurations(
+                                  scrollable: false,
+                                  showCursor: false,
+                                  enableInteractiveSelection: false,
+                                  enableSelectionToolbar: false,
+                                  requestKeyboardFocusOnCheckListChanged:
+                                      false,
+                                  customStyleBuilder: (attribute) {
+                                    return customStyleBuilder(attribute);
+                                  },
+                                  disableClipboard: true,
+                                  controller: QuillController(
+                                    document:
+                                        item.textEditorController.document,
+                                    selection:
+                                        item.textEditorController.selection,
+                                    readOnly: true,
+                                    onSelectionChanged: (textSelection) {
+                                      setState(() {});
+                                    },
+                                    onReplaceText: (index, len, data) {
+                                      setState(() {});
+                                      return false;
+                                    },
+                                    onSelectionCompleted: () {
+                                      setState(() {});
+                                    },
+                                    onDelete: (cursorPosition, forward) {
+                                      setState(() {});
+                                    },
                                   ),
                                 ),
+                                focusNode: FocusNode(),
+                                scrollController: ScrollController(),
                               ),
                             ),
                           ),
@@ -2354,6 +2343,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     try {
       sheetListItem = _sheetListIterator(
           panelIndex.parentId, spreadSheetList[currentPageIndex]);
+          print('sheetDecorationVariables hello.');
     } on Exception catch (e) {
       sheetListItem = SheetList(
           id: 'yo',
@@ -2364,29 +2354,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     setState(() {
       decorationNameController.text = sheetListItem.listDecoration.name;
       decorationIndex = -1;
-    sheetDecorationVariables =  sheetListItem.listDecoration.itemDecorationList.map((e) {
-      return SheetDecorationVariables(
-        id:e,
-        marginFocusNodes : List.generate( 5,(index) => FocusNode(),),
-        listPaddingFocusNodes : List.generate( 5,(index) => FocusNode(),),
-        colorHexFocusNodes : List.generate( 2,(index) => FocusNode(),),
-        borderFocusNodes : List.generate( 3,(index) => FocusNode(),),
-        borderRadiusFocusNodes : List.generate( 5,(index) => FocusNode(),),
-        listBorderFocusNodes : List.generate( 5,(index) => FocusNode(),),
-        listShadowFocusNodes : List.generate(
-        sheetDecorationList.firstWhere((element) => element.id == e,) is ItemDecoration
-        ? (sheetDecorationList.firstWhere((element) => element.id == e,) as ItemDecoration).decoration.boxShadow?.length??1
-        : 1,
-        (i) {
-           return List.generate( 5,(index) => FocusNode(),);
-        },
-      ),
-      listImageAlignFocusNodes : [FocusNode(), FocusNode()],
-      listImagePropertyFocusNodes : [FocusNode(), FocusNode()],
-      listShadowLayerSelectedIndex : 0,
-      );
-    },).toList();
-    print(sheetDecorationVariables);
+      updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id) as SuperDecoration);
+      print('sheetDecorationVariables initiated.');
+      print(sheetListItem.listDecoration.id);
+      print(sheetListItem.listDecoration.itemDecorationList);
+      print(sheetDecorationVariables);
+      print(sheetDecorationVariables[0].isExpanded);
+      listDecorationPath = [sheetListItem.listDecoration.id];
     });
   }
 
@@ -2425,6 +2399,56 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = whichListShadowLayer;
       }
       
+    });
+  }
+
+  void updateSheetDecorationvariables(SuperDecoration superDecoration){
+    setState((){
+      sheetDecorationVariables = superDecoration.itemDecorationList.map((e) {
+        return SheetDecorationVariables(
+          id:e,
+          marginFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          listPaddingFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          colorHexFocusNodes : List.generate( 2,(index) => FocusNode(),),
+          borderFocusNodes : List.generate( 3,(index) => FocusNode(),),
+          borderRadiusFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          listBorderFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          listShadowFocusNodes :sheetDecorationList.firstWhere((element) => element.id == e, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?[ List.generate( 5,(index) => FocusNode(),)]: List.generate(
+          sheetDecorationList.firstWhere((element) => element.id == e,) is ItemDecoration
+          ? (sheetDecorationList.firstWhere((element) => element.id == e,) as ItemDecoration).decoration.boxShadow?.length??1
+          : 1,
+          (i) {
+            return List.generate( 5,(index) => FocusNode(),);
+          },
+        ),
+        listImageAlignFocusNodes : [FocusNode(), FocusNode()],
+        listImagePropertyFocusNodes : [FocusNode(), FocusNode()],
+        listShadowLayerSelectedIndex : 0,
+        );
+      },).toList();
+      sheetDecorationVariables = sheetDecorationVariables.isEmpty? [
+        SheetDecorationVariables(
+          id:'yo',
+          marginFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          listPaddingFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          colorHexFocusNodes : List.generate( 2,(index) => FocusNode(),),
+          borderFocusNodes : List.generate( 3,(index) => FocusNode(),),
+          borderRadiusFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          listBorderFocusNodes : List.generate( 5,(index) => FocusNode(),),
+          listShadowFocusNodes :sheetDecorationList.firstWhere((element) => element.id == e, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?[ List.generate( 5,(index) => FocusNode(),)]: List.generate(
+          sheetDecorationList.firstWhere((element) => element.id == e,) is ItemDecoration
+          ? (sheetDecorationList.firstWhere((element) => element.id == e,) as ItemDecoration).decoration.boxShadow?.length??1
+          : 1,
+          (i) {
+            return List.generate( 5,(index) => FocusNode(),);
+          },
+        ),
+        listImageAlignFocusNodes : [FocusNode(), FocusNode()],
+        listImagePropertyFocusNodes : [FocusNode(), FocusNode()],
+        listShadowLayerSelectedIndex : 0,
+        )
+      ]: sheetDecorationVariables;
+    
     });
   }
 
@@ -2864,863 +2888,806 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ),
                                       ),
                                       //Main SpreadSheet //Desktop WEB
-                                      ReorderableListView.builder(
-                                        buildDefaultDragHandles: false,
-                                        // scrollController: annoyingController,
-                                        proxyDecorator:
-                                            (child, index, animation) {
-                                          return child;
-                                        },
-                                        padding: const EdgeInsets.all(0),
-                                        onReorder:
-                                            (int oldIndex, int newIndex) {
-                                          setState(() {
-                                            if (newIndex > oldIndex) {
-                                              newIndex -= 1;
-                                            }
-                                            final item = spreadSheetList[
-                                                    currentPageIndex]
-                                                .removeAt(oldIndex);
-                                            spreadSheetList[currentPageIndex]
-                                                .insert(newIndex, item);
-                                          });
-                                        },
-                                        itemCount:
-                                            spreadSheetList[currentPageIndex]
-                                                .length,
-                                        itemBuilder: (context, index) {
-                                          // print(
-                                          //     'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
-
-                                          if (spreadSheetList[currentPageIndex]
-                                              [index] is TextEditorItem) {
-                                            var textEditorItem =
-                                                spreadSheetList[
-                                                        currentPageIndex][index]
-                                                    as TextEditorItem;
-
-                                            //check if the linkeditems list is nul or not
-                                            if (textEditorItem
-                                                    .linkedTextEditors !=
-                                                null) {
-                                              //if not null then iterate throught the list and assign configurations to it.
-                                              for (var i = 0;
-                                                  i <
-                                                      textEditorItem
-                                                          .linkedTextEditors!
-                                                          .length;
-                                                  i++) {
-                                                (_sheetItemIterator(
-                                                            textEditorItem
-                                                                    .linkedTextEditors![
-                                                                i],
-                                                            spreadSheetList[
-                                                                currentPageIndex])
-                                                        as TextEditorItem)
-                                                    .copyWith(
-                                                  textEditorConfigurations:
-                                                      QuillEditorConfigurations(
-                                                    scrollable: false,
-                                                    showCursor: false,
-                                                    enableInteractiveSelection:
-                                                        false,
-                                                    enableSelectionToolbar:
-                                                        false,
-                                                    requestKeyboardFocusOnCheckListChanged:
-                                                        false,
-                                                    customStyleBuilder:
-                                                        (attribute) {
-                                                      return customStyleBuilder(
-                                                          attribute);
-                                                    },
-                                                    disableClipboard: true,
-                                                    controller: QuillController(
-                                                      document: textEditorItem
-                                                          .textEditorController
-                                                          .document,
-                                                      selection: textEditorItem
-                                                          .textEditorController
-                                                          .selection,
-                                                      readOnly: true,
-                                                      onSelectionChanged:
-                                                          (textSelection) {
-                                                        setState(() {});
-                                                      },
-                                                      onReplaceText:
-                                                          (index, len, data) {
-                                                        setState(() {});
-                                                        return false;
-                                                      },
-                                                      onSelectionCompleted: () {
-                                                        setState(() {});
-                                                      },
-                                                      onDelete: (cursorPosition,
-                                                          forward) {
-                                                        setState(() {});
-                                                      },
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                            return ReorderableDelayedDragStartListener(
-                                              index: index,
-                                              key: ValueKey(textEditorItem.id),
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  FocusScope.of(context)
-                                                      .unfocus();
-
-                                                  var isTrue = false;
-                                                  SheetItem? itemE;
-                                                  if (panelIndex.id ==
-                                                      textEditorItem.id) {
-                                                    isTrue = true;
-                                                  }
-                                                  setState(() {
-                                                    _findSheetListItem();
-                                                    itemE = _sheetItemIterator(
-                                                        textEditorItem.id,
-                                                        spreadSheetList[
-                                                            currentPageIndex]);
-
-                                                    if (itemE != null) {
-                                                      index = _sheetListIterator(
-                                                              itemE!.parentId,
-                                                              spreadSheetList[
-                                                                  currentPageIndex])
-                                                          .indexOf(itemE!);
-                                                      panelIndex = PanelIndex(
-                                                          id: itemE!.id,
-                                                          panelIndex: index,
-                                                          parentId:
-                                                              itemE?.parentId ??
-                                                                  '');
-                                                    } else {
-                                                      panelIndex = PanelIndex(
-                                                          id: textEditorItem.id,
-                                                          panelIndex: index,
-                                                          parentId:
-                                                              textEditorItem
-                                                                  .parentId);
-                                                    }
-                                                  });
-
-                                                  print('clicked');
-
-                                                  print(panelIndex);
-                                                },
-                                                //
-                                                //
-                                                onSecondaryLongPressDown: (d) {
-                                                  setState(() {
-                                                    panelIndex.id =
-                                                        textEditorItem.id;
-                                                  });
-                                                  print('secondaryyyTapppppp');
-                                                  bool hasSelection(
-                                                      textEditorController) {
-                                                    var selection =
-                                                        textEditorController
-                                                            .selection;
-                                                    return selection != null &&
-                                                        !selection.isCollapsed;
-                                                  }
-
-                                                  Future<bool>
-                                                      hasClipboardData() async {
-                                                    var data =
-                                                        await Clipboard.getData(
-                                                            'text/plain');
-                                                    return data != null &&
-                                                        data.text!.isNotEmpty;
-                                                  }
-
-                                                  bool canUndo(
-                                                      textEditorController) {
-                                                    return textEditorController
-                                                        .hasUndo;
-                                                  }
-
-                                                  bool canRedo(
-                                                      textEditorController) {
-                                                    return textEditorController
-                                                        .hasRedo;
-                                                  }
-
-                                                  List<ContextMenuEntry>
-                                                      buildContextMenuEntries(
-                                                          QuillController
-                                                              textEditorController) {
-                                                    var entries =
-                                                        <ContextMenuEntry>[];
-
-                                                    bool hasSelection =
-                                                        textEditorController
-                                                                .selection
-                                                                .start !=
-                                                            textEditorController
-                                                                .selection.end;
-
-                                                    // Cut
-                                                    if (hasSelection) {
-                                                      entries.add(MenuItem(
-                                                        label: 'Cut',
-                                                        icon: TablerIcons.cut,
-                                                        onSelected: () {
-                                                          var selectedText =
-                                                              textEditorController
-                                                                  .document
-                                                                  .getPlainText(
-                                                            textEditorController
-                                                                .selection
-                                                                .start,
-                                                            textEditorController
-                                                                .selection.end,
-                                                          );
-                                                          Clipboard.setData(
-                                                              ClipboardData(
-                                                                  text:
-                                                                      selectedText));
-                                                          textEditorController
-                                                              .replaceText(
-                                                            textEditorController
-                                                                .selection
-                                                                .start,
-                                                            textEditorController
-                                                                    .selection
-                                                                    .end -
-                                                                textEditorController
-                                                                    .selection
-                                                                    .start,
-                                                            '',
-                                                            null,
-                                                          );
-                                                        },
-                                                      ));
-                                                    }
-
-                                                    // Copy
-                                                    if (hasSelection) {
-                                                      entries.add(MenuItem(
-                                                        label: 'Copy',
-                                                        icon: TablerIcons.copy,
-                                                        onSelected: () {
-                                                          var selectedText =
-                                                              textEditorController
-                                                                  .document
-                                                                  .getPlainText(
-                                                            textEditorController
-                                                                .selection
-                                                                .start,
-                                                            textEditorController
-                                                                .selection.end,
-                                                          );
-                                                          Clipboard.setData(
-                                                              ClipboardData(
-                                                                  text:
-                                                                      selectedText));
-                                                        },
-                                                      ));
-                                                    }
-
-                                                    // Paste
-                                                    entries.add(MenuItem(
-                                                      label: 'Paste',
-                                                      icon:
-                                                          TablerIcons.clipboard,
-                                                      onSelected: () async {
-                                                        var data = await Clipboard
-                                                            .getData(
-                                                                'text/plain');
-                                                        if (data != null) {
-                                                          int baseOffset =
-                                                              textEditorController
-                                                                  .selection
-                                                                  .baseOffset;
-                                                          if (textEditorController
-                                                              .selection
-                                                              .isCollapsed) {
-                                                            textEditorController
-                                                                .replaceText(
-                                                              baseOffset,
-                                                              0, // No text to replace
-                                                              data.text!,
-                                                              null,
-                                                            );
-                                                          } else {
-                                                            textEditorController
-                                                                .replaceText(
-                                                              baseOffset,
-                                                              textEditorController
-                                                                      .selection
-                                                                      .extentOffset -
-                                                                  baseOffset,
-                                                              data.text!,
-                                                              null,
-                                                            );
-                                                          }
-                                                        }
-                                                      },
-                                                    ));
-
-                                                    // Select All
-                                                    entries.add(MenuItem(
-                                                      label: 'Select All',
-                                                      icon: TablerIcons
-                                                          .select_all,
-                                                      onSelected: () {
-                                                        textEditorController
-                                                            .updateSelection(
-                                                                TextSelection(
-                                                                  baseOffset: 0,
-                                                                  extentOffset:
-                                                                      textEditorController
-                                                                          .document
-                                                                          .length,
-                                                                ),
-                                                                ChangeSource
-                                                                    .local);
-                                                      },
-                                                    ));
-
-                                                    entries.add(
-                                                        const MenuDivider());
-
-                                                    // Undo
-                                                    if (textEditorController
-                                                        .hasUndo) {
-                                                      entries.add(MenuItem(
-                                                        label: 'Undo',
-                                                        icon: TablerIcons
-                                                            .corner_up_left,
-                                                        onSelected: () {
-                                                          textEditorController
-                                                              .undo();
-                                                        },
-                                                      ));
-                                                    } else {
-                                                      entries
-                                                          .add(const MenuItem(
-                                                        label: 'Undo',
-                                                        icon: TablerIcons
-                                                            .corner_up_left,
-                                                        onSelected: null,
-                                                      ));
-                                                    }
-
-                                                    // Redo
-                                                    if (textEditorController
-                                                        .hasRedo) {
-                                                      entries.add(MenuItem(
-                                                        label: 'Redo',
-                                                        icon: TablerIcons
-                                                            .corner_down_right,
-                                                        onSelected: () {
-                                                          textEditorController
-                                                              .redo();
-                                                        },
-                                                      ));
-                                                    } else {
-                                                      entries
-                                                          .add(const MenuItem(
-                                                        label: 'Redo',
-                                                        icon: TablerIcons
-                                                            .corner_down_right,
-                                                        onSelected: null,
-                                                      ));
-                                                    }
-                                                    entries.addAll([
-                                                      const MenuHeader(
-                                                          text: 'ops'),
-                                                      //ADD ITEMS
-                                                      MenuItem.submenu(
-                                                          label: 'Add',
-                                                          icon: TablerIcons
-                                                              .new_section,
-                                                          items: [
-                                                            MenuItem.submenu(
-                                                                label: 'Text',
-                                                                icon: TablerIcons
-                                                                    .text_recognition,
-                                                                items: [
-                                                                  MenuItem(
-                                                                    label:
-                                                                        'Above',
-                                                                    icon: TablerIcons
-                                                                        .border_top_plus,
-                                                                    onSelected:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        var newItem =
-                                                                            _addTextField(shouldReturn: true);
-                                                                        spreadSheetList[currentPageIndex].insert(
-                                                                            index,
-                                                                            newItem);
-                                                                        index++;
-                                                                      });
-                                                                    },
-                                                                  ),
-                                                                  MenuItem(
-                                                                    label:
-                                                                        'Below',
-                                                                    icon: TablerIcons
-                                                                        .border_bottom_plus,
-                                                                    onSelected:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        var newItem =
-                                                                            _addTextField(shouldReturn: true);
-                                                                        spreadSheetList[currentPageIndex].insert(
-                                                                            index +
-                                                                                1,
-                                                                            newItem);
-                                                                      });
-                                                                    },
-                                                                  ),
-                                                                  MenuItem(
-                                                                    label:
-                                                                        'Left',
-                                                                    icon: TablerIcons
-                                                                        .border_left_plus,
-                                                                    onSelected:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        var newId =
-                                                                            Uuid().v4();
-                                                                        var decoId =
-                                                                            const Uuid().v4();
-                                                                        var item =
-                                                                            spreadSheetList[currentPageIndex].removeAt(index);
-                                                                        spreadSheetList[currentPageIndex].insert(
-                                                                            index,
-                                                                            SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, listDecoration: SuperDecoration(id: decoId), sheetList: [
-                                                                              _addTextField(shouldReturn: true),
-                                                                              item
-                                                                            ]));
-                                                                      });
-                                                                    },
-                                                                  ),
-                                                                  MenuItem(
-                                                                    label:
-                                                                        'Right',
-                                                                    icon: TablerIcons
-                                                                        .border_right_plus,
-                                                                    onSelected:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        var newId =
-                                                                            Uuid().v4();
-                                                                        var decoId =
-                                                                            const Uuid().v4();
-                                                                        var item =
-                                                                            spreadSheetList[currentPageIndex].removeAt(index);
-                                                                        spreadSheetList[currentPageIndex].insert(
-                                                                            index,
-                                                                            SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, listDecoration: SuperDecoration(id: decoId), sheetList: [
-                                                                              item,
-                                                                              _addTextField(shouldReturn: true),
-                                                                            ]));
-                                                                      });
-                                                                    },
-                                                                  )
-                                                                ])
-                                                          ]),
-                                                      //MOVE ITEMS
-                                                      MenuItem.submenu(
-                                                          label: 'Move',
-                                                          icon: TablerIcons
-                                                              .arrows_move,
-                                                          items: [
-                                                            MenuItem.submenu(
-                                                                label: 'Text',
-                                                                icon: TablerIcons
-                                                                    .text_resize,
-                                                                items: [
-                                                                  MenuItem(
-                                                                    label: 'Up',
-                                                                    icon: TablerIcons
-                                                                        .arrow_up_square,
-                                                                    onSelected:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        if (index !=
-                                                                            0) {
-                                                                          var item =
-                                                                              spreadSheetList[currentPageIndex].removeAt(index);
-                                                                          spreadSheetList[currentPageIndex].insert(
-                                                                              index - 1,
-                                                                              item);
-
-                                                                          index--;
-                                                                          panelIndex = PanelIndex(
-                                                                              id: panelIndex.id,
-                                                                              panelIndex: panelIndex.panelIndex + 1,
-                                                                              parentId: panelIndex.parentId);
-                                                                          print(
-                                                                              'Updated index of text editor: $index');
-                                                                        }
-                                                                        print(
-                                                                            'Current index of text editor: $index');
-                                                                      });
-                                                                    },
-                                                                  ),
-                                                                  MenuItem(
-                                                                    label:
-                                                                        'Down',
-                                                                    icon: TablerIcons
-                                                                        .arrow_down_square,
-                                                                    onSelected:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        if (index !=
-                                                                            spreadSheetList[currentPageIndex].length -
-                                                                                1) {
-                                                                          var item =
-                                                                              spreadSheetList[currentPageIndex].removeAt(index);
-                                                                          spreadSheetList[currentPageIndex].insert(
-                                                                              index + 1,
-                                                                              item);
-                                                                          index++;
-                                                                          print(
-                                                                              'index of texteditor DT: $index');
-                                                                        }
-                                                                      });
-                                                                    },
-                                                                  ),
-                                                                ])
-                                                          ]),
-                                                      //Export
-                                                      MenuItem(
-                                                        label:
-                                                            'Export Field As..',
-                                                        icon: TablerIcons
-                                                            .message_forward,
-                                                        onSelected: () async {
-                                                          await pushExportField(
-                                                              context,
-                                                              textEditorItem,
-                                                              documentPropertiesList,
-                                                              currentPageIndex);
-                                                        },
-                                                      ),
-                                                      //Clear Field
-                                                      MenuItem(
-                                                        label: 'Clear',
-                                                        icon: TablerIcons
-                                                            .square_rounded_x,
-                                                        onSelected: () async {
-                                                          await showAdaptiveDialog(
-                                                            context: context,
-                                                            builder: (context) {
-                                                              return AlertDialog(
-                                                                title: Text(
-                                                                    'Confirm Clear'),
-                                                                content: Text(
-                                                                    'This will clear the text from current Text Field. Are you sure?'),
-                                                                actions: [
-                                                                  TextButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          textEditorItem
-                                                                              .textEditorController
-                                                                              .document = Document();
-                                                                        });
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'Yes')),
-                                                                  TextButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'No')),
-                                                                ],
-                                                              );
-                                                            },
-                                                          );
-                                                        },
-                                                      ),
-                                                      //Delete
-                                                      MenuItem(
-                                                        label: 'Delete',
-                                                        icon: TablerIcons.trash,
-                                                        onSelected: () async {
-                                                          await showAdaptiveDialog(
-                                                            context: context,
-                                                            builder: (context) {
-                                                              return AlertDialog(
-                                                                title: Text(
-                                                                    'Confirm Delete'),
-                                                                content: Text(
-                                                                    'This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                                actions: [
-                                                                  TextButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          spreadSheetList[currentPageIndex]
-                                                                              .removeAt(index);
-                                                                          panelIndex.id =
-                                                                              '';
-                                                                          panelIndex.panelIndex =
-                                                                              -1;
-                                                                        });
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'Yes')),
-                                                                  TextButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'No')),
-                                                                ],
-                                                              );
-                                                            },
-                                                          );
-                                                        },
-                                                      )
-                                                    ]);
-
-                                                    return entries;
-                                                  }
-
-                                                  final entries =
-                                                      buildContextMenuEntries(
-                                                          textEditorItem
-                                                              .textEditorController);
-                                                  ContextMenu(
-                                                          entries: entries,
-                                                          boxDecoration: BoxDecoration(
-                                                              boxShadow: [
-                                                                BoxShadow(
-                                                                  color: defaultPalette
-                                                                      .black
-                                                                      .withOpacity(
-                                                                          0.3),
-                                                                  blurRadius: 2,
-                                                                  // spreadRadius: 10
-                                                                )
-                                                              ],
-                                                              color:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10)),
-                                                          position: Offset(
-                                                              d.globalPosition
-                                                                  .dx,
-                                                              d.globalPosition
-                                                                  .dy))
-                                                      .show(context);
-                                                },
-                                                child: Stack(
-                                                  children: [
-                                                    GestureDetector(
-                                                      child: Padding(
-                                                        padding: EdgeInsets.only(
-                                                            bottom: (index ==
-                                                                    (spreadSheetList[currentPageIndex]
-                                                                                as SheetList)
-                                                                            .length -
-                                                                        1)
-                                                                ? 9
-                                                                : 0,
-                                                            left: 2,
-                                                            top: 3,
-                                                            right: 3),
-                                                        child: CustomBorder(
-                                                          color: panelIndex
-                                                                      .id ==
-                                                                  textEditorItem
-                                                                      .id
-                                                              ? defaultPalette
-                                                                  .tertiary
-                                                              : defaultPalette
-                                                                  .black,
-                                                          animateDuration:
-                                                              const Duration(
-                                                                  seconds: 10),
-                                                          animateBorder: true,
-                                                          radius: const Radius
-                                                              .circular(10),
-                                                          dashPattern: [10, 3],
-                                                          strokeWidth: panelIndex
-                                                                      .id ==
-                                                                  textEditorItem
-                                                                      .id
-                                                              ? 2
-                                                              : 1.2,
-                                                          strokeCap:
-                                                              StrokeCap.square,
-                                                          child: Container(
-                                                            height: null,
-                                                            width: sWidth,
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 4,
-                                                                    bottom: 4,
-                                                                    left: 0,
-                                                                    right: 4),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              border:
-                                                                  Border.all(
-                                                                strokeAlign:
-                                                                    BorderSide
-                                                                        .strokeAlignInside,
-                                                                width: panelIndex
-                                                                            .id ==
-                                                                        textEditorItem
-                                                                            .id
-                                                                    ? 2
-                                                                    : 1.2,
-                                                                color: panelIndex
-                                                                            .id ==
-                                                                        textEditorItem
-                                                                            .id
-                                                                    ? defaultPalette
-                                                                        .tertiary
-                                                                    : defaultPalette
-                                                                        .black,
-                                                              ),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                            ),
-                                                            child:
-                                                                AnimatedOpacity(
-                                                              duration:
-                                                                  Durations
-                                                                      .short2,
-                                                              opacity: 1,
-                                                              child: Row(
-                                                                children: [
-                                                                  Container(
-                                                                    child:
-                                                                        const Icon(
-                                                                      TablerIcons
-                                                                          .cursor_text,
-                                                                      size: 15,
-                                                                    ),
-                                                                  ),
-                                                                  Expanded(
-                                                                    child:
-                                                                        QuillEditor(
-                                                                      configurations:
-                                                                          textEditorItem
-                                                                              .textEditorConfigurations,
-                                                                      focusNode:
-                                                                          textEditorItem
-                                                                              .focusNode,
-                                                                      scrollController:
-                                                                          ScrollController(),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    //
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 8,
-                                                              left: 4,
-                                                              right: 8,
-                                                              bottom: 4),
-                                                      child: Row(
-                                                        children: [
-                                                          IgnorePointer(
-                                                            child: Container(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(0),
-                                                              decoration:
-                                                                  const BoxDecoration(),
-                                                              child: Icon(
-                                                                TablerIcons
-                                                                    .cursor_text,
-                                                                size: 15,
-                                                                color: defaultPalette
-                                                                    .transparent,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          Expanded(
-                                                            child: QuillEditor(
-                                                              configurations:
-                                                                  textEditorItem
-                                                                      .textEditorConfigurations,
-                                                              focusNode:
-                                                                  textEditorItem
-                                                                      .focusNode,
-                                                              scrollController:
-                                                                  ScrollController(),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
-                                          } else if (spreadSheetList[
-                                                  currentPageIndex][index]
-                                              is SheetList) {
-                                            return ReorderableDelayedDragStartListener(
-                                              index: index,
-                                              key: ValueKey(spreadSheetList[
-                                                      currentPageIndex][index]
-                                                  .id),
-                                              child: Container(
-                                                margin: EdgeInsets.only(
-                                                    top: 6, left: 2, right: 5),
-                                                // height: findSheetListBuildHeight(spreadSheetList[
-                                                //             currentPageIndex][index] as SheetList),
-                                                child: _buildListWidget(
-                                                    spreadSheetList[
-                                                            currentPageIndex]
-                                                        [index] as SheetList),
-                                              ),
-                                            );
-                                          }
-                                          return Container(
-                                              key: ValueKey(const Uuid().v4()),
-                                              color: Colors.amberAccent,
-                                              height: 12,
-                                              width: 12);
-                                        },
-                                      ),
+                                      _buildListWidget(spreadSheetList[currentPageIndex])
+                                      // ReorderableListView.builder(
+                                      //   buildDefaultDragHandles: false,
+                                      //   // scrollController: annoyingController,
+                                      //   proxyDecorator:
+                                      //       (child, index, animation) {
+                                      //     return child;
+                                      //   },
+                                      //   padding: const EdgeInsets.all(0),
+                                      //   onReorder:
+                                      //       (int oldIndex, int newIndex) {
+                                      //     setState(() {
+                                      //       if (newIndex > oldIndex) {
+                                      //         newIndex -= 1;
+                                      //       }
+                                      //       final item = spreadSheetList[
+                                      //               currentPageIndex]
+                                      //           .removeAt(oldIndex);
+                                      //       spreadSheetList[currentPageIndex]
+                                      //           .insert(newIndex, item);
+                                      //     });
+                                      //   },
+                                      //   itemCount:
+                                      //       spreadSheetList[currentPageIndex]
+                                      //           .length,
+                                      //   itemBuilder: (context, index) {
+                                      //     // print(
+                                      //     //     'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
+//
+                                      //     if (spreadSheetList[currentPageIndex]
+                                      //         [index] is TextEditorItem) {
+                                      //       var textEditorItem =
+                                      //           spreadSheetList[
+                                      //                   currentPageIndex][index]
+                                      //               as TextEditorItem;
+//
+                                      //       //check if the linkeditems list is nul or not
+                           //                
+                                      //       return ReorderableDelayedDragStartListener(
+                                      //         index: index,
+                                      //         key: ValueKey(textEditorItem.id),
+                                      //         child: GestureDetector(
+                                      //           onTap: () {
+                                      //             FocusScope.of(context)
+                                      //                 .unfocus();
+//
+                                      //             // var isTrue = false;
+                                      //             SheetItem? itemE;
+ //                                                 
+                                      //             setState(() {
+                                      //               itemE = _sheetItemIterator(
+                                      //                   textEditorItem.id,
+                                      //                   spreadSheetList[
+                                      //                       currentPageIndex]);
+//
+                                      //               if (itemE != null) {
+                                      //                 index = _sheetListIterator(
+                                      //                         itemE!.parentId,
+                                      //                         spreadSheetList[
+                                      //                             currentPageIndex])
+                                      //                     .indexOf(itemE!);
+                                      //                 panelIndex = PanelIndex(
+                                      //                     id: itemE!.id,
+                                      //                     panelIndex: index,
+                                      //                     parentId:
+                                      //                         itemE?.parentId ??
+                                      //                             '');
+                                      //               _findSheetListItem();            
+                                      //               } else {
+                                      //                 panelIndex = PanelIndex(
+                                      //                     id: textEditorItem.id,
+                                      //                     panelIndex: index,
+                                      //                     parentId:
+                                      //                         textEditorItem
+                                      //                             .parentId);
+     //                                                 
+                                      //               _findSheetListItem();            
+                                      //               }
+                                      //             });
+//
+                                      //             print('clicked');
+//
+                                      //             print(panelIndex);
+                                      //           },
+                                      //           //
+                                      //           //
+                                      //           onSecondaryLongPressDown: (d) {
+                                      //             setState(() {
+                                      //               panelIndex.id =
+                                      //                   textEditorItem.id;
+                                      //               panelIndex.parentId=textEditorItem.parentId;    
+                                      //             });
+                                      //             print('secondaryyyTapppppp');
+                                      //             bool hasSelection(
+                                      //                 textEditorController) {
+                                      //               var selection =
+                                      //                   textEditorController
+                                      //                       .selection;
+                                      //               return selection != null &&
+                                      //                   !selection.isCollapsed;
+                                      //             }
+//
+                                      //             Future<bool>
+                                      //                 hasClipboardData() async {
+                                      //               var data =
+                                      //                   await Clipboard.getData(
+                                      //                       'text/plain');
+                                      //               return data != null &&
+                                      //                   data.text!.isNotEmpty;
+                                      //             }
+//
+                                      //             bool canUndo(
+                                      //                 textEditorController) {
+                                      //               return textEditorController
+                                      //                   .hasUndo;
+                                      //             }
+//
+                                      //             bool canRedo(
+                                      //                 textEditorController) {
+                                      //               return textEditorController
+                                      //                   .hasRedo;
+                                      //             }
+//
+                                      //             List<ContextMenuEntry>
+                                      //                 buildContextMenuEntries(
+                                      //                     QuillController
+                                      //                         textEditorController) {
+                                      //               var entries =
+                                      //                   <ContextMenuEntry>[];
+//
+                                      //               bool hasSelection =
+                                      //                   textEditorController
+                                      //                           .selection
+                                      //                           .start !=
+                                      //                       textEditorController
+                                      //                     .selection.end;
+//
+                                      //               // Cut
+                                      //               if (hasSelection) {
+                                      //                 entries.add(MenuItem(
+                                      //                   label: 'Cut',
+                                      //                   icon: TablerIcons.cut,
+                                      //                   onSelected: () {
+                                      //                     var selectedText =
+                                      //                         textEditorController
+                                      //                             .document
+                                      //                             .getPlainText(
+                                      //                       textEditorController
+                                      //                           .selection
+                                      //                           .start,
+                                      //                       textEditorController
+                                      //                           .selection.end,
+                                      //                     );
+                                      //                     Clipboard.setData(
+                                      //                         ClipboardData(
+                                      //                             text:
+                                      //                                 selectedText));
+                                      //                     textEditorController
+                                      //                         .replaceText(
+                                      //                       textEditorController
+                                      //                           .selection
+                                      //                           .start,
+                                      //                       textEditorController
+                                      //                               .selection
+                                      //                               .end -
+                                      //                           textEditorController
+                                      //                               .selection
+                                      //                               .start,
+                                      //                       '',
+                                      //                       null,
+                                      //                     );
+                                      //                   },
+                                      //                 ));
+                                      //               }
+//
+                                      //               // Copy
+                                      //               if (hasSelection) {
+                                      //                 entries.add(MenuItem(
+                                      //                   label: 'Copy',
+                                      //                   icon: TablerIcons.copy,
+                                      //                   onSelected: () {
+                                      //                     var selectedText =
+                                      //                         textEditorController
+                                      //                             .document
+                                      //                             .getPlainText(
+                                      //                       textEditorController
+                                      //                           .selection
+                                      //                           .start,
+                                      //                       textEditorController
+                                      //                           .selection.end,
+                                      //                     );
+                                      //                     Clipboard.setData(
+                                      //                         ClipboardData(
+                                      //                             text:
+                                      //                                 selectedText));
+                                      //                   },
+                                      //                 ));
+                                      //               }
+//
+                                      //               // Paste
+                                      //               entries.add(MenuItem(
+                                      //                 label: 'Paste',
+                                      //                 icon:
+                                      //                     TablerIcons.clipboard,
+                                      //                 onSelected: () async {
+                                      //                   var data = await Clipboard
+                                      //                       .getData(
+                                      //                           'text/plain');
+                                      //                   if (data != null) {
+                                      //                     int baseOffset =
+                                      //                         textEditorController
+                                      //                             .selection
+                                      //                             .baseOffset;
+                                      //                     if (textEditorController
+                                      //                         .selection
+                                      //                         .isCollapsed) {
+                                      //                       textEditorController
+                                      //                           .replaceText(
+                                      //                         baseOffset,
+                                      //                         0, // No text to replace
+                                      //                         data.text!,
+                                      //                         null,
+                                      //                       );
+                                      //                     } else {
+                                      //                       textEditorController
+                                      //                           .replaceText(
+                                      //                         baseOffset,
+                                      //                         textEditorController
+                                      //                                 .selection
+                                      //                                 .extentOffset -
+                                      //                             baseOffset,
+                                      //                         data.text!,
+                                      //                         null,
+                                      //                       );
+                                      //                     }
+                                      //                   }
+                                      //                 },
+                                      //               ));
+//
+                                      //               // Select All
+                                      //               entries.add(MenuItem(
+                                      //                 label: 'Select All',
+                                      //                 icon: TablerIcons
+                                      //                     .select_all,
+                                      //                 onSelected: () {
+                                      //                   textEditorController
+                                      //                       .updateSelection(
+                                      //                           TextSelection(
+                                      //                             baseOffset: 0,
+                                      //                             extentOffset:
+                                      //                                 textEditorController
+                                      //                                     .document
+                                      //                                     .length,
+                                      //                           ),
+                                      //                           ChangeSource
+                                      //                               .local);
+                                      //                 },
+                                      //               ));
+//
+                                      //               entries.add(
+                                      //                   const MenuDivider());
+//
+                                      //               // Undo
+                                      //               if (textEditorController
+                                      //                   .hasUndo) {
+                                      //                 entries.add(MenuItem(
+                                      //                   label: 'Undo',
+                                      //                   icon: TablerIcons
+                                      //                       .corner_up_left,
+                                      //                   onSelected: () {
+                                      //                     textEditorController
+                                      //                         .undo();
+                                      //                   },
+                                      //                 ));
+                                      //               } else {
+                                      //                 entries
+                                      //                     .add(const MenuItem(
+                                      //                   label: 'Undo',
+                                      //                   icon: TablerIcons
+                                      //                       .corner_up_left,
+                                      //                   onSelected: null,
+                                      //                 ));
+                                      //               }
+//
+                                      //               // Redo
+                                      //               if (textEditorController
+                                      //                   .hasRedo) {
+                                      //                 entries.add(MenuItem(
+                                      //                   label: 'Redo',
+                                      //                   icon: TablerIcons
+                                      //                       .corner_down_right,
+                                      //                   onSelected: () {
+                                      //                     textEditorController
+                                      //                         .redo();
+                                      //                   },
+                                      //                 ));
+                                      //               } else {
+                                      //                 entries
+                                      //                     .add(const MenuItem(
+                                      //                   label: 'Redo',
+                                      //                   icon: TablerIcons
+                                      //                       .corner_down_right,
+                                      //                   onSelected: null,
+                                      //                 ));
+                                      //               }
+                                      //               entries.addAll([
+                                      //                 const MenuHeader(
+                                      //                     text: 'ops'),
+                                      //                 //ADD ITEMS
+                                      //                 MenuItem.submenu(
+                                      //                     label: 'Add',
+                                      //                     icon: TablerIcons
+                                      //                         .new_section,
+                                      //                     items: [
+                                      //                       MenuItem.submenu(
+                                      //                           label: 'Text',
+                                      //                           icon: TablerIcons
+                                      //                               .text_recognition,
+                                      //                           items: [
+                                      //                             MenuItem(
+                                      //                               label:
+                                      //                                   'Above',
+                                      //                               icon: TablerIcons
+                                      //                                   .border_top_plus,
+                                      //                               onSelected:
+                                      //                                   () {
+                                      //                                 setState(
+                                      //                                     () {
+                                      //                                   var newItem =
+                                      //                                       _addTextField(shouldReturn: true);
+                                      //                                   spreadSheetList[currentPageIndex].insert(
+                                      //                                       index,
+                                      //                                       newItem);
+                                      //                                   index++;
+                                      //                                 });
+                                      //                               },
+                                      //                             ),
+                                      //                             MenuItem(
+                                      //                               label:
+                                      //                                   'Below',
+                                      //                               icon: TablerIcons
+                                      //                                   .border_bottom_plus,
+                                      //                               onSelected:
+                                      //                                   () {
+                                      //                                 setState(
+                                      //                                     () {
+                                      //                                   var newItem =
+                                      //                                       _addTextField(shouldReturn: true);
+                                      //                                   spreadSheetList[currentPageIndex].insert(
+                                      //                                       index +
+                                      //                                           1,
+                                      //                                       newItem);
+                                      //                                 });
+                                      //                               },
+                                      //                             ),
+                                      //                             MenuItem(
+                                      //                               label:
+                                      //                                   'Left',
+                                      //                               icon: TablerIcons
+                                      //                                   .border_left_plus,
+                                      //                               onSelected:
+                                      //                                   () {
+                                      //                                 setState(
+                                      //                                     () {
+                                      //                                   var newId =
+                                      //                                       Uuid().v4();
+                                      //                                   var decoId =
+                                      //                                       const Uuid().v4();
+                                      //                                   var item =
+                                      //                                       spreadSheetList[currentPageIndex].removeAt(index);
+                                      //                                   var newDeco = SuperDecoration(id: decoId);
+                                      //                                   sheetDecorationList.add(newDeco);    
+                                      //                                   spreadSheetList[currentPageIndex].insert(
+                                      //                                       index,
+                                      //                                       SheetList(
+                                      //                                         direction: Axis.horizontal, 
+                                      //                                         id: newId, parentId: spreadSheetList[currentPageIndex].id, 
+                                      //                                         listDecoration:newDeco, 
+                                      //                                         sheetList: [
+                                      //                                         _addTextField(shouldReturn: true),
+                                      //                                         item
+                                      //                                       ]));
+                                      //                                 });
+                                      //                               },
+                                      //                             ),
+                                      //                             MenuItem(
+                                      //                               label:
+                                      //                                   'Right',
+                                      //                               icon: TablerIcons
+                                      //                                   .border_right_plus,
+                                      //                               onSelected:
+                                      //                                   () {
+                                      //                                 setState(
+                                      //                                     () {
+                                      //                                   var newId =
+                                      //                                       Uuid().v4();
+                                      //                                   var decoId =
+                                      //                                       const Uuid().v4();
+                                      //                                   var newDeco = SuperDecoration(id: decoId);
+                                      //                                   sheetDecorationList.add(newDeco);        
+                                      //                                   var item =
+                                      //                                       spreadSheetList[currentPageIndex].removeAt(index);
+                                      //                                   spreadSheetList[currentPageIndex].insert(
+                                      //                                       index,
+                                      //                                       SheetList(direction: Axis.horizontal, id: newId, parentId: spreadSheetList[currentPageIndex].id, listDecoration: newDeco, sheetList: [
+                                      //                                         item,
+                                      //                                         _addTextField(shouldReturn: true),
+                                      //                                       ]));
+                                      //                                 });
+                                      //                               },
+                                      //                             )
+                                      //                           ])
+                                      //                     ]),
+                                      //                 //MOVE ITEMS
+                                      //                 MenuItem.submenu(
+                                      //                     label: 'Move',
+                                      //                     icon: TablerIcons
+                                      //                         .arrows_move,
+                                      //                     items: [
+                                      //                       MenuItem.submenu(
+                                      //                           label: 'Text',
+                                      //                           icon: TablerIcons
+                                      //                               .text_resize,
+                                      //                           items: [
+                                      //                             MenuItem(
+                                      //                               label: 'Up',
+                                      //                               icon: TablerIcons
+                                      //                                   .arrow_up_square,
+                                      //                               onSelected:
+                                      //                                   () {
+                                      //                                 setState(
+                                      //                                     () {
+                                      //                                   if (index !=
+                                      //                                       0) {
+                                      //                                     var item =
+                                      //                                         spreadSheetList[currentPageIndex].removeAt(index);
+                                      //                                     spreadSheetList[currentPageIndex].insert(
+                                      //                                         index - 1,
+                                      //                                         item);
+//
+                                      //                                     index--;
+                                      //                                     panelIndex = PanelIndex(
+                                      //                                         id: panelIndex.id,
+                                      //                                         panelIndex: panelIndex.panelIndex + 1,
+                                      //                                         parentId: panelIndex.parentId);
+                                      //                                     print(
+                                      //                                         'Updated index of text editor: $index');
+                                      //                                   }
+                                      //                                   print(
+                                      //                                       'Current index of text editor: $index');
+                                      //                                 });
+                                      //                               },
+                                      //                             ),
+                                      //                             MenuItem(
+                                      //                               label:
+                                      //                                   'Down',
+                                      //                               icon: TablerIcons
+                                      //                                   .arrow_down_square,
+                                      //                               onSelected:
+                                      //                                   () {
+                                      //                                 setState(
+                                      //                                     () {
+                                      //                                   if (index !=
+                                      //                                       spreadSheetList[currentPageIndex].length -
+                                      //                                           1) {
+                                      //                                     var item =
+                                      //                                         spreadSheetList[currentPageIndex].removeAt(index);
+                                      //                                     spreadSheetList[currentPageIndex].insert(
+                                      //                                         index + 1,
+                                      //                                         item);
+                                      //                                     index++;
+                                      //                                     print(
+                                      //                                         'index of texteditor DT: $index');
+                                      //                                   }
+                                      //                                 });
+                                      //                               },
+                                      //                             ),
+                                      //                           ])
+                                      //                     ]),
+                                      //                 //Export
+                                      //                 MenuItem(
+                                      //                   label:
+                                      //                       'Export Field As..',
+                                      //                   icon: TablerIcons
+                                      //                       .message_forward,
+                                      //                   onSelected: () async {
+                                      //                     await pushExportField(
+                                      //                         context,
+                                      //                         textEditorItem,
+                                      //                         documentPropertiesList,
+                                      //                         currentPageIndex);
+                                      //                   },
+                                      //                 ),
+                                      //                 //Clear Field
+                                      //                 MenuItem(
+                                      //                   label: 'Clear',
+                                      //                   icon: TablerIcons
+                                      //                       .square_rounded_x,
+                                      //                   onSelected: () async {
+                                      //                     await showAdaptiveDialog(
+                                      //                       context: context,
+                                      //                       builder: (context) {
+                                      //                         return AlertDialog(
+                                      //                           title: Text(
+                                      //                               'Confirm Clear'),
+                                      //                           content: Text(
+                                      //                               'This will clear the text from current Text Field. Are you sure?'),
+                                      //                           actions: [
+                                      //                             TextButton(
+                                      //                                 onPressed:
+                                      //                                     () {
+                                      //                                   setState(
+                                      //                                       () {
+                                      //                                     textEditorItem
+                                      //                                         .textEditorController
+                                      //                                         .document = Document();
+                                      //                                   });
+                                      //                                   Navigator.pop(
+                                      //                                       context);
+                                      //                                 },
+                                      //                                 child: Text(
+                                      //                                     'Yes')),
+                                      //                             TextButton(
+                                      //                                 onPressed:
+                                      //                                     () {
+                                      //                                   Navigator.pop(
+                                      //                                       context);
+                                      //                                 },
+                                      //                                 child: Text(
+                                      //                                     'No')),
+                                      //                           ],
+                                      //                         );
+                                      //                       },
+                                      //                     );
+                                      //                   },
+                                      //                 ),
+                                      //                 //Delete
+                                      //                 MenuItem(
+                                      //                   label: 'Delete',
+                                      //                   icon: TablerIcons.trash,
+                                      //                   onSelected: () async {
+                                      //                     await showAdaptiveDialog(
+                                      //                       context: context,
+                                      //                       builder: (context) {
+                                      //                         return AlertDialog(
+                                      //                           title: Text(
+                                      //                               'Confirm Delete'),
+                                      //                           content: Text(
+                                      //                               'This will DELETE the current Text Field with its contents. Are you sure?'),
+                                      //                           actions: [
+                                      //                             TextButton(
+                                      //                                 onPressed:
+                                      //                                     () {
+                                      //                                   setState(
+                                      //                                       () {
+                                      //                                     spreadSheetList[currentPageIndex]
+                                      //                                         .removeAt(index);
+                                      //                                     panelIndex.id =
+                                      //                                         '';
+                                      //                                     panelIndex.panelIndex =
+                                      //                                         -1;
+                                      //                                   });
+                                      //                                   Navigator.pop(
+                                      //                                       context);
+                                      //                                 },
+                                      //                                 child: Text(
+                                      //                                     'Yes')),
+                                      //                             TextButton(
+                                      //                                 onPressed:
+                                      //                                     () {
+                                      //                                   Navigator.pop(
+                                      //                                       context);
+                                      //                                 },
+                                      //                                 child: Text(
+                                      //                                     'No')),
+                                      //                           ],
+                                      //                         );
+                                      //                       },
+                                      //                     );
+                                      //                   },
+                                      //                 )
+                                      //               ]);
+//
+                                      //               return entries;
+                                      //             }
+//
+                                      //             final entries =
+                                      //                 buildContextMenuEntries(
+                                      //                     textEditorItem
+                                      //                         .textEditorController);
+                                      //             ContextMenu(
+                                      //                     entries: entries,
+                                      //                     boxDecoration: BoxDecoration(
+                                      //                         boxShadow: [
+                                      //                           BoxShadow(
+                                      //                             color: defaultPalette
+                                      //                                 .black
+                                      //                                 .withOpacity(
+                                      //                                     0.3),
+                                      //                             blurRadius: 2,
+                                      //                             // spreadRadius: 10
+                                      //                           )
+                                      //                         ],
+                                      //                         color:
+                                      //                             defaultPalette
+                                      //                                 .primary,
+                                      //                         borderRadius:
+                                      //                             BorderRadius
+                                      //                                 .circular(
+                                      //                                     10)),
+                                      //                     position: Offset(
+                                      //                         d.globalPosition
+                                      //                             .dx,
+                                      //                         d.globalPosition
+                                      //                             .dy))
+                                      //                 .show(context);
+                                      //           },
+                                      //           child: Stack(
+                                      //             children: [
+                                      //               GestureDetector(
+                                      //                 child: Padding(
+                                      //                   padding: EdgeInsets.only(
+                                      //                       bottom: (index ==
+                                      //                               (spreadSheetList[currentPageIndex]
+                                      //                                           as SheetList)
+                                      //                                       .length -
+                                      //                                   1)
+                                      //                           ? 9
+                                      //                           : 0,
+                                      //                       left: 2,
+                                      //                       top: 3,
+                                      //                       right: 3),
+                                      //                   child: CustomBorder(
+                                      //                     color: panelIndex
+                                      //                                 .id ==
+                                      //                             textEditorItem
+                                      //                                 .id
+                                      //                         ? defaultPalette
+                                      //                             .tertiary
+                                      //                         : defaultPalette
+                                      //                             .black,
+                                      //                     animateDuration:
+                                      //                         const Duration(
+                                      //                             seconds: 10),
+                                      //                     animateBorder: true,
+                                      //                     radius: const Radius
+                                      //                         .circular(10),
+                                      //                     dashPattern: [10, 3],
+                                      //                     strokeWidth: panelIndex
+                                      //                                 .id ==
+                                      //                             textEditorItem
+                                      //                                 .id
+                                      //                         ? 2
+                                      //                         : 1.2,
+                                      //                     strokeCap:
+                                      //                         StrokeCap.square,
+                                      //                     child: Container(
+                                      //                       height: null,
+                                      //                       width: sWidth,
+                                      //                       padding:
+                                      //                           const EdgeInsets
+                                      //                               .only(
+                                      //                               top: 4,
+                                      //                               bottom: 4,
+                                      //                               left: 0,
+                                      //                               right: 4),
+                                      //                       decoration:
+                                      //                           BoxDecoration(
+                                      //                         color:
+                                      //                             defaultPalette
+                                      //                                 .primary,
+                                      //                         border:
+                                      //                             Border.all(
+                                      //                           strokeAlign:
+                                      //                               BorderSide
+                                      //                                   .strokeAlignInside,
+                                      //                           width: panelIndex
+                                      //                                       .id ==
+                                      //                                   textEditorItem
+                                      //                                       .id
+                                      //                               ? 2
+                                      //                               : 1.2,
+                                      //                           color: panelIndex
+                                      //                                       .id ==
+                                      //                                   textEditorItem
+                                      //                                       .id
+                                      //                               ? defaultPalette
+                                      //                                   .tertiary
+                                      //                               : defaultPalette
+                                      //                                   .black,
+                                      //                         ),
+                                      //                         borderRadius:
+                                      //                             BorderRadius
+                                      //                                 .circular(
+                                      //                                     10),
+                                      //                       ),
+                                      //                       child:
+                                      //                           Row(
+                                      //                             children: [
+                                      //                               Container(
+                                      //                                 child:
+                                      //                                     const Icon(
+                                      //                                   TablerIcons
+                                      //                                       .cursor_text,
+                                      //                                   size: 15,
+                                      //                                 ),
+                                      //                               ),
+                                      //                               Expanded(
+                                      //                                 child:
+                                      //                                     QuillEditor(
+                                      //                                   configurations:
+                                      //                                       textEditorItem
+                                      //                                           .textEditorConfigurations,
+                                      //                                   focusNode:
+                                      //                                       textEditorItem
+                                      //                                           .focusNode,
+                                      //                                   scrollController:
+                                      //                                       ScrollController(),
+                                      //                                 ),
+                                      //                               ),
+                                      //                             ],
+                                      //                           ),
+                                      //                     ),
+                                      //                   ),
+                                      //                 ),
+                                      //               ),
+                                      //               //
+                                      //               Padding(
+                                      //                 padding:
+                                      //                     const EdgeInsets.only(
+                                      //                         top: 8,
+                                      //                         left: 4,
+                                      //                         right: 8,
+                                      //                         bottom: 4),
+                                      //                 child: Row(
+                                      //                   children: [
+                                      //                     IgnorePointer(
+                                      //                       child: Container(
+                                      //                         padding:
+                                      //                             const EdgeInsets
+                                      //                                 .all(0),
+                                      //                         decoration:
+                                      //                             const BoxDecoration(),
+                                      //                         child: Icon(
+                                      //                           TablerIcons
+                                      //                               .cursor_text,
+                                      //                           size: 15,
+                                      //                           color: defaultPalette
+                                      //                               .transparent,
+                                      //                         ),
+                                      //                       ),
+                                      //                     ),
+                                      //                     Expanded(
+                                      //                       child: QuillEditor(
+                                      //                         configurations:
+                                      //                             textEditorItem
+                                      //                                 .textEditorConfigurations,
+                                      //                         focusNode:
+                                      //                             textEditorItem
+                                      //                                 .focusNode,
+                                      //                         scrollController:
+                                      //                             ScrollController(),
+                                      //                       ),
+                                      //                     ),
+                                      //                   ],
+                                      //                 ),
+                                      //               ),
+                                      //             ],
+                                      //           ),
+                                      //         ),
+                                      //       );
+                                      //     } else if (spreadSheetList[
+                                      //             currentPageIndex][index]
+                                      //         is SheetList) {
+                                      //       return ReorderableDelayedDragStartListener(
+                                      //         index: index,
+                                      //         key: ValueKey(spreadSheetList[
+                                      //                 currentPageIndex][index]
+                                      //             .id),
+                                      //         child: Container(
+                                      //           margin: EdgeInsets.only(
+                                      //               top: 6, left: 2, right: 5),
+                                      //           // height: findSheetListBuildHeight(spreadSheetList[
+                                      //           //             currentPageIndex][index] as SheetList),
+                                      //           child: _buildListWidget(
+                                      //               spreadSheetList[
+                                      //                       currentPageIndex]
+                                      //                   [index] as SheetList),
+                                      //         ),
+                                      //       );
+                                      //     }
+                                      //     return Container(
+                                      //         key: ValueKey(const Uuid().v4()),
+                                      //         color: Colors.amberAccent,
+                                      //         height: 12,
+                                      //         width: 12);
+                                      //   },
+                                      // ),
+                                   
+                                   
                                     ],
                                   ),
                                 ),
@@ -4361,57 +4328,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 padding: EdgeInsets.only(top: 73),
                                 child: FadeInLeft(child: _getProperTiesCards()),
                               ),
-                              // if(decorationIndex == -1 && !isListDecorationLibraryToggled)
-                              if(false)
-                              Positioned(
-                              left: showDecorationLayers ? 48 : 12,
-                              top: 210,
-                              right: 16,
-                              bottom: 18,
-                              child: Builder(builder: (context) {
-                                var style = GoogleFonts.lexend(
-                                    fontSize: 13, color: defaultPalette.extras[0]);
-                                var childStyle = style.copyWith(fontSize: 11);
-                                var iconColor = defaultPalette.extras[0];
-                                double childPinSize = 18;
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(9).copyWith(
-                                      bottomLeft: Radius.circular(
-                                          showDecorationLayers ? 10 : 25),
-                                      bottomRight: Radius.circular(20)),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: defaultPalette.secondary,
-                                      border: Border.all(),
-                                      borderRadius: BorderRadius.circular(9).copyWith(
-                                          bottomLeft: Radius.circular(
-                                              showDecorationLayers ? 10 : 25),
-                                          bottomRight: Radius.circular(20)),
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(0).copyWith(top: isListDecorationLibraryToggled? 35:0),
-                                          child: ScrollConfiguration(
-                                            behavior:
-                                                ScrollBehavior().copyWith(scrollbars: false),
-                                            child: DynMouseScroll(
-                                                durationMS: 500,
-                                                scrollSpeed: 1,
-                                                builder: (context, controller, physics) {
-                                                  SheetDecoration currentItemDecoration = SuperDecoration(id: 'yo', name: 'name');
-                                                  
-                                                  if (decorationIndex != -1 ) {
-                                                  currentItemDecoration = decorationIterator(
-                                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex],
-                                                    sheetDecorationList);
-                                                  }
-                                                  return SingleChildScrollView(
-                                                    controller: controller,
-                                                    physics: physics,
-                                                    child: Column(
-                                                      children:buildSuperDecorationEditor(sheetListItem.listDecoration)
-                                                      ),);})))])));}))
                               
                               //the place to render the preview for decoration before displaying
                               // Positioned(
@@ -9025,28 +8941,645 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   Widget _buildListWidget(SheetList sheetList) {
-    // sheetList = sheetList as SheetList;
+
+   bool hasSelection(textEditorController) {
+    var selection =
+      textEditorController.selection;
+    return selection != null &&
+      !selection.isCollapsed;
+    }
+
+    Future<bool> hasClipboardData() async {
+    var data = await Clipboard.getData(
+      'text/plain');
+    return data != null &&
+      data.text!.isNotEmpty;
+    }
+
+    bool canUndo(textEditorController) {
+    return textEditorController.hasUndo;
+    }
+
+    bool canRedo(textEditorController) {
+    return textEditorController.hasRedo;
+    }
+
+    List<ContextMenuEntry>
+    buildContextMenuEntries(
+        QuillController
+            textEditorController, int index, TextEditorItem textEditorItem) {
+    var entries = <ContextMenuEntry>[];
+
+    bool hasSelection = textEditorController
+          .selection.start !=
+      textEditorController.selection.end;
+
+    // Cut
+    if (hasSelection) {
+    entries.add(MenuItem(
+      label: 'Cut',
+      icon: TablerIcons.cut,
+      onSelected: () {
+        var selectedText =
+            textEditorController.document
+                .getPlainText(
+          textEditorController
+              .selection.start,
+          textEditorController
+              .selection.end,
+        );
+        Clipboard.setData(ClipboardData(
+            text: selectedText));
+        textEditorController.replaceText(
+          textEditorController
+              .selection.start,
+          textEditorController
+                  .selection.end -
+              textEditorController
+                  .selection.start,
+          '',
+          null,
+        );
+      },
+    ));
+    }
+
+    // Copy
+    if (hasSelection) {
+    entries.add(MenuItem(
+      label: 'Copy',
+      icon: TablerIcons.copy,
+      onSelected: () {
+        var selectedText =
+            textEditorController.document
+                .getPlainText(
+          textEditorController
+              .selection.start,
+          textEditorController
+              .selection.end,
+        );
+        Clipboard.setData(ClipboardData(
+            text: selectedText));
+      },
+    ));
+    }
+
+    // Paste
+    entries.add(MenuItem(
+    label: 'Paste',
+    icon: TablerIcons.clipboard,
+    onSelected: () async {
+      var data = await Clipboard.getData(
+          'text/plain');
+      if (data != null) {
+        int baseOffset =
+            textEditorController
+                .selection.baseOffset;
+        if (textEditorController
+            .selection.isCollapsed) {
+          textEditorController
+              .replaceText(
+            baseOffset,
+            0, // No text to replace
+            data.text!,
+            null,
+          );
+        } else {
+          textEditorController
+              .replaceText(
+            baseOffset,
+            textEditorController.selection
+                    .extentOffset -
+                baseOffset,
+            data.text!,
+            null,
+          );
+        }
+      }
+    },
+    ));
+
+    // Select All
+    entries.add(MenuItem(
+    label: 'Select All',
+    icon: TablerIcons.select_all,
+    onSelected: () {
+      textEditorController
+          .updateSelection(
+              TextSelection(
+                baseOffset: 0,
+                extentOffset:
+                    textEditorController
+                        .document.length,
+              ),
+              ChangeSource.local);
+    },
+    ));
+
+    entries.add(const MenuDivider());
+
+    // Undo
+    if (textEditorController.hasUndo) {
+    entries.add(MenuItem(
+      label: 'Undo',
+      icon: TablerIcons.corner_up_left,
+      onSelected: () {
+        textEditorController.undo();
+      },
+    ));
+    } else {
+    entries.add(const MenuItem(
+      label: 'Undo',
+      icon: TablerIcons.corner_up_left,
+      onSelected: null,
+    ));
+    }
+
+    // Redo
+    if (textEditorController.hasRedo) {
+    entries.add(MenuItem(
+      label: 'Redo',
+      icon: TablerIcons.corner_down_right,
+      onSelected: () {
+        textEditorController.redo();
+      },
+    ));
+    } else {
+    entries.add(const MenuItem(
+      label: 'Redo',
+      icon: TablerIcons.corner_down_right,
+      onSelected: null,
+    ));
+    }
+    entries.addAll([
+    const MenuHeader(text: 'ops'),
+    //ADD ITEMS
+    MenuItem.submenu(
+        label: 'Add',
+        icon: TablerIcons.new_section,
+        items: [
+          MenuItem.submenu(
+              label: 'Text',
+              icon: TablerIcons
+                  .text_recognition,
+              items: [
+                //add text before the selected one
+                MenuItem(
+                  label: 'Before',
+                  icon: TablerIcons
+                      .row_insert_top,
+                  onSelected: () {
+                    setState(() {
+                    var newItem = _addTextField( shouldReturn:  true);
+                    sheetList.insert( index, newItem);
+                    });
+                  },
+                ),
+                //add text after the selected one
+                MenuItem(
+                  label: 'After',
+                  icon: TablerIcons
+                      .row_insert_bottom,
+                  onSelected: () {
+                    setState(() {
+                    var newItem =
+                          _addTextField(
+                              shouldReturn:
+                                  true);  
+                    if (index<sheetList.length) {
+                      
+                      sheetList.insert(
+                          index+1,
+                          newItem);
+                    } else {
+                      sheetList.add(
+                          newItem);
+                    }
+                      
+                    });
+                  },
+                ),
+                //add a new row with a new textfield inside at the current index
+                MenuItem(
+                  label: 'In a New List',
+                  icon: TablerIcons
+                      .code_plus,
+                  onSelected: () {
+                    setState(() {
+                        var newId =
+                            const Uuid()
+                                .v4();
+                        var decoId =
+                            const Uuid()
+                                .v4();
+                        var newDeco = SuperDecoration(id: decoId);
+                        sheetDecorationList.add(newDeco);       
+                        sheetList.insert(
+                        index,
+                        SheetList(
+                        direction:
+                          Axis.vertical,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration: newDeco,
+                        sheetList: [
+                          _addTextField( shouldReturn:true)
+                        ]
+                        ));
+                    });
+                  },
+                ),
+              ]),
+          MenuItem.submenu(
+              label: 'List',
+              icon: TablerIcons
+                  .brackets_contain_start,
+              items: [
+                //add row before the selected one
+                MenuItem(
+                  label: 'Row Before',
+                  icon: TablerIcons
+                      .row_insert_top,
+                  onSelected: () {
+                    setState(() {
+                    var newId =
+                            const Uuid()
+                                .v4();
+                    var decoId =
+                        const Uuid()
+                            .v4();
+                    var newDeco = SuperDecoration(id: decoId);
+                    sheetDecorationList.add(newDeco);       
+                    sheetList.insert(
+                    index,
+                    SheetList(
+                    direction:
+                      Axis.horizontal,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newDeco,
+                    sheetList: [
+                    ]
+                    ));
+
+                    });
+                  },
+                ),
+                //add row after the selected one
+                MenuItem(
+                  label: 'Row After',
+                  icon: TablerIcons
+                      .row_insert_bottom,
+                  onSelected: () {
+                    setState(() {
+                    var newId =
+                            const Uuid()
+                                .v4();
+                    var decoId =
+                        const Uuid()
+                            .v4();
+                    var newDeco = SuperDecoration(id: decoId);
+                    sheetDecorationList.add(newDeco);       
+                    
+
+                    if (index<sheetList.length) {
+                      
+                      sheetList.insert(
+                      index+1,
+                      SheetList(
+                      direction:
+                        Axis.horizontal,
+                      id: newId,
+                      parentId: sheetList.id,
+                      listDecoration: newDeco,
+                      sheetList: []
+                      ));    
+                    } else {
+                      sheetList.add(
+                        SheetList(
+                        direction:
+                          Axis.vertical,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration: newDeco,
+                        sheetList: [
+                        ]
+                        ));
+                        }
+                      
+                    });
+                  },
+                ),
+                
+                //add column before the selected one
+                MenuItem(
+                  label: 'Column Before',
+                  icon: TablerIcons
+                      .row_insert_top,
+                  onSelected: () {
+                    setState(() {
+                    var newId =
+                            const Uuid()
+                                .v4();
+                    var decoId =
+                        const Uuid()
+                            .v4();
+                    var newDeco = SuperDecoration(id: decoId);
+                    sheetDecorationList.add(newDeco);       
+                    sheetList.insert(
+                    index,
+                    SheetList(
+                    direction:
+                      Axis.vertical,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newDeco,
+                    sheetList: [
+                    ]
+                    ));
+
+                    });
+                  },
+                ),
+                //add column after the selected one
+                MenuItem(
+                  label: 'Column After',
+                  icon: TablerIcons
+                      .row_insert_bottom,
+                  onSelected: () {
+                    setState(() {
+                    var newId =
+                            const Uuid()
+                                .v4();
+                    var decoId =
+                        const Uuid()
+                            .v4();
+                    var newDeco = SuperDecoration(id: decoId);
+                    sheetDecorationList.add(newDeco);       
+                    
+
+                    if (index<sheetList.length) {
+                      
+                      sheetList.insert(
+                      index+1,
+                      SheetList(
+                      direction:
+                        Axis.vertical,
+                      id: newId,
+                      parentId: sheetList.id,
+                      listDecoration: newDeco,
+                      sheetList: []
+                      ));    
+                    } else {
+                      sheetList.add(
+                        SheetList(
+                        direction:
+                          Axis.vertical,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration: newDeco,
+                        sheetList: [
+                        ]
+                        ));
+                        }
+                      
+                    });
+                  },
+                ),
+                
+              ])    
+        ]),
+    //Wrap ITEMS
+    MenuItem.submenu(
+        label: 'Wrap',
+        icon: TablerIcons.brackets_contain,
+        items: [
+          MenuItem(
+            label: 'In a Row',
+            icon: TablerIcons.layout_rows ,
+            onSelected: () {
+              setState(() {
+                
+                  var item = sheetList.removeAt(index);
+                  var decoId = const Uuid()
+                                .v4();
+                  var newId = const Uuid()
+                                .v4();              
+                  var newDeco = SuperDecoration(id: decoId);
+                  item.parentId = newId;
+                  sheetDecorationList.add(newDeco);       
+                  sheetList.insert(
+                  index,
+                  SheetList(
+                  direction:
+                    Axis.horizontal,
+                  id: newId,
+                  parentId: sheetList.id,
+                  listDecoration: newDeco,
+                  sheetList: [
+                    item
+                  ]
+                  ));
+
+                  panelIndex.id = item.id;
+                  panelIndex.parentId = item.parentId;
+                  print(
+                      'Updated index of text editor: $index');
+                
+              });
+            },
+          ),
+          MenuItem(
+            label: 'In a Column',
+            icon: TablerIcons
+                .layout_columns,
+            onSelected: () {
+              setState(() {
+                
+                  var item = sheetList.removeAt(index);
+                  var decoId = const Uuid()
+                                .v4();
+                  var newId = const Uuid()
+                                .v4();              
+                  var newDeco = SuperDecoration(id: decoId);
+                  item.parentId = newId;
+                  sheetDecorationList.add(newDeco);       
+                  sheetList.insert(
+                  index,
+                  SheetList(
+                  direction:
+                    Axis.vertical,
+                  id: newId,
+                  parentId: sheetList.id,
+                  listDecoration: newDeco,
+                  sheetList: [
+                    item
+                  ]
+                  ));
+
+                  panelIndex.id = item.id;
+                  panelIndex.parentId = item.parentId;
+                  _findSheetListItem();
+                  print(
+                      'Updated index of text editor: $index');
+                
+              });
+            },
+          ),
+              
+        ]),
+    //Clear Field
+    MenuItem(
+      label: 'Clear',
+      icon: TablerIcons.square_rounded_x,
+      onSelected: () async {
+        await showAdaptiveDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title:
+                  Text('Confirm Clear'),
+              content: Text(
+                  'This will clear the text from current Text Field. Are you sure?'),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      setState(() {
+                        textEditorItem
+                                .textEditorController
+                                .document =
+                            Document();
+                      });
+                      Navigator.pop(
+                          context);
+                    },
+                    child: Text('Yes')),
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(
+                          context);
+                    },
+                    child: Text('No')),
+              ],
+            );
+          },
+        );
+      },
+    ),
+    //Delete
+    MenuItem(
+      label: 'Delete',
+      icon: TablerIcons.trash,
+      onSelected: () async {
+        await showAdaptiveDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text(
+                  'Confirm Delete'),
+              content: const Text(
+                  'This will DELETE the current Text Field with its contents. Are you sure?'),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      setState(() {
+                        sheetList
+                            .removeAt(
+                                index);
+                        panelIndex.id =
+                            '';
+                        panelIndex
+                            .panelIndex = -1;
+                      });
+                      Navigator.pop(
+                          context);
+                    },
+                    child: const Text(
+                        'Yes')),
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(
+                          context);
+                    },
+                    child:
+                        const Text('No')),
+              ],
+            );
+          },
+        );
+      },
+    )
+    ]);
+
+    return entries;
+    }
+
+    void onRightClick(TextEditorItem textEditorItem, LongPressDownDetails d, int index) {
+      setState(() {
+    panelIndex.id = textEditorItem.id;
+    panelIndex.parentId = textEditorItem.id;
+    });
+    print('secondaryyyTapppppp');
+    
+    final entries = buildContextMenuEntries(
+    textEditorItem.textEditorController, index, textEditorItem);
+    ContextMenu(
+        entries: entries,
+        boxDecoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: defaultPalette
+                    .black
+                    .withOpacity(0.3),
+                blurRadius: 2,
+              )
+            ],
+            color: defaultPalette.primary,
+            borderRadius:
+                BorderRadius.circular(
+                    10)),
+        position: Offset(
+            d.globalPosition.dx,
+            d.globalPosition.dy))
+    .show(context);
+    }
+
     return Stack(
       children: [
         GestureDetector(
           behavior: HitTestBehavior.deferToChild,
           onTap: () {
-            setState(() {
+            setState(() async {
               panelIndex.parentId = sheetList.id;
               _findSheetListItem();
               whichPropertyTabIsClicked = 3;
-              // propertyTabController.jumpToPage(2);
+              Future.delayed(Durations.short1).then(
+                (value) async {
+                  print("YUHUUUUUUUU");
+                  listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
+                  await listPropertyCardsController.animateTo(Offset(1, 1),
+                  duration: Durations.short1, curve: Curves.linear);
+                  // listPropertyTabContainerController.animateTo(whichListPropertyTabIsClicked);
+                  // listPropertyCardsController.swipeDefault();
+                  // listPropertyCardsController.swipeDefault();
+                },
+              );
+             
             });
           },
           child: Padding(
-            padding: const EdgeInsets.only(
+            padding: spreadSheetList[currentPageIndex].id == sheetList.id
+                    ? EdgeInsets.all(0)
+                    : const EdgeInsets.only(
               right: 2,
-              bottom: 4,
+              bottom: 0,
               left: 4,
             ),
             child: CustomBorder(
               color: panelIndex.parentId == sheetList.id
-                  ? defaultPalette.extras[1]
+                  ? spreadSheetList[currentPageIndex].id == sheetList.id
+                    ? defaultPalette.transparent
+                    : defaultPalette.extras[1]
                   : defaultPalette.transparent,
               radius: Radius.circular(15),
               strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
@@ -9069,8 +9602,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   border: Border.all(
                       width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
                       color: panelIndex.parentId == sheetList.id
-                          ? defaultPalette.extras[1]
-                          : ui.Color(0xFFFFFFFF)),
+                          ?  spreadSheetList[currentPageIndex].id == sheetList.id
+                            ? defaultPalette.transparent
+                            :defaultPalette.extras[1]
+                          : spreadSheetList[currentPageIndex].id == sheetList.id
+                    ? defaultPalette.transparent
+                    :Color(0xFFFFFFFF)),
                   color: defaultPalette.transparent,
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -9121,565 +9658,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       print(panelIndex);
                                     },
                                     onSecondaryLongPressDown: (d) {
-                                      setState(() {
-                                        panelIndex.id = textEditorItem.id;
-                                      });
-                                      print('secondaryyyTapppppp');
-                                      bool hasSelection(textEditorController) {
-                                        var selection =
-                                            textEditorController.selection;
-                                        return selection != null &&
-                                            !selection.isCollapsed;
-                                      }
-
-                                      Future<bool> hasClipboardData() async {
-                                        var data = await Clipboard.getData(
-                                            'text/plain');
-                                        return data != null &&
-                                            data.text!.isNotEmpty;
-                                      }
-
-                                      bool canUndo(textEditorController) {
-                                        return textEditorController.hasUndo;
-                                      }
-
-                                      bool canRedo(textEditorController) {
-                                        return textEditorController.hasRedo;
-                                      }
-
-                                      List<ContextMenuEntry>
-                                          buildContextMenuEntries(
-                                              QuillController
-                                                  textEditorController) {
-                                        var entries = <ContextMenuEntry>[];
-
-                                        bool hasSelection = textEditorController
-                                                .selection.start !=
-                                            textEditorController.selection.end;
-
-                                        // Cut
-                                        if (hasSelection) {
-                                          entries.add(MenuItem(
-                                            label: 'Cut',
-                                            icon: TablerIcons.cut,
-                                            onSelected: () {
-                                              var selectedText =
-                                                  textEditorController.document
-                                                      .getPlainText(
-                                                textEditorController
-                                                    .selection.start,
-                                                textEditorController
-                                                    .selection.end,
-                                              );
-                                              Clipboard.setData(ClipboardData(
-                                                  text: selectedText));
-                                              textEditorController.replaceText(
-                                                textEditorController
-                                                    .selection.start,
-                                                textEditorController
-                                                        .selection.end -
-                                                    textEditorController
-                                                        .selection.start,
-                                                '',
-                                                null,
-                                              );
-                                            },
-                                          ));
-                                        }
-
-                                        // Copy
-                                        if (hasSelection) {
-                                          entries.add(MenuItem(
-                                            label: 'Copy',
-                                            icon: TablerIcons.copy,
-                                            onSelected: () {
-                                              var selectedText =
-                                                  textEditorController.document
-                                                      .getPlainText(
-                                                textEditorController
-                                                    .selection.start,
-                                                textEditorController
-                                                    .selection.end,
-                                              );
-                                              Clipboard.setData(ClipboardData(
-                                                  text: selectedText));
-                                            },
-                                          ));
-                                        }
-
-                                        // Paste
-                                        entries.add(MenuItem(
-                                          label: 'Paste',
-                                          icon: TablerIcons.clipboard,
-                                          onSelected: () async {
-                                            var data = await Clipboard.getData(
-                                                'text/plain');
-                                            if (data != null) {
-                                              int baseOffset =
-                                                  textEditorController
-                                                      .selection.baseOffset;
-                                              if (textEditorController
-                                                  .selection.isCollapsed) {
-                                                textEditorController
-                                                    .replaceText(
-                                                  baseOffset,
-                                                  0, // No text to replace
-                                                  data.text!,
-                                                  null,
-                                                );
-                                              } else {
-                                                textEditorController
-                                                    .replaceText(
-                                                  baseOffset,
-                                                  textEditorController.selection
-                                                          .extentOffset -
-                                                      baseOffset,
-                                                  data.text!,
-                                                  null,
-                                                );
-                                              }
-                                            }
-                                          },
-                                        ));
-
-                                        // Select All
-                                        entries.add(MenuItem(
-                                          label: 'Select All',
-                                          icon: TablerIcons.select_all,
-                                          onSelected: () {
-                                            textEditorController
-                                                .updateSelection(
-                                                    TextSelection(
-                                                      baseOffset: 0,
-                                                      extentOffset:
-                                                          textEditorController
-                                                              .document.length,
-                                                    ),
-                                                    ChangeSource.local);
-                                          },
-                                        ));
-
-                                        entries.add(const MenuDivider());
-
-                                        // Undo
-                                        if (textEditorController.hasUndo) {
-                                          entries.add(MenuItem(
-                                            label: 'Undo',
-                                            icon: TablerIcons.corner_up_left,
-                                            onSelected: () {
-                                              textEditorController.undo();
-                                            },
-                                          ));
-                                        } else {
-                                          entries.add(const MenuItem(
-                                            label: 'Undo',
-                                            icon: TablerIcons.corner_up_left,
-                                            onSelected: null,
-                                          ));
-                                        }
-
-                                        // Redo
-                                        if (textEditorController.hasRedo) {
-                                          entries.add(MenuItem(
-                                            label: 'Redo',
-                                            icon: TablerIcons.corner_down_right,
-                                            onSelected: () {
-                                              textEditorController.redo();
-                                            },
-                                          ));
-                                        } else {
-                                          entries.add(const MenuItem(
-                                            label: 'Redo',
-                                            icon: TablerIcons.corner_down_right,
-                                            onSelected: null,
-                                          ));
-                                        }
-                                        entries.addAll([
-                                          const MenuHeader(text: 'ops'),
-                                          //ADD ITEMS
-                                          MenuItem.submenu(
-                                              label: 'Add',
-                                              icon: TablerIcons.new_section,
-                                              items: [
-                                                MenuItem.submenu(
-                                                    label: 'Text',
-                                                    icon: TablerIcons
-                                                        .text_recognition,
-                                                    items: [
-                                                      MenuItem(
-                                                        label: 'Above',
-                                                        icon: TablerIcons
-                                                            .border_top_plus,
-                                                        onSelected: () {
-                                                          setState(() {
-                                                            if (sheetList
-                                                                    .direction ==
-                                                                Axis.vertical) {
-                                                              var newItem =
-                                                                  _addTextField(
-                                                                      shouldReturn:
-                                                                          true);
-                                                              sheetList.insert(
-                                                                  index,
-                                                                  newItem);
-                                                            } else {
-                                                              setState(() {
-                                                                var newId =
-                                                                    const Uuid()
-                                                                        .v4();
-                                                                var decoId =
-                                                                    const Uuid()
-                                                                        .v4();
-                                                                var item = sheetList
-                                                                    .removeAt(
-                                                                        index);
-                                                                sheetList.insert(
-                                                                    index,
-                                                                    SheetList(
-                                                                        direction:
-                                                                            Axis.vertical,
-                                                                        id: newId,
-                                                                        parentId: sheetList.id,
-                                                                        listDecoration: SuperDecoration(id: decoId),
-                                                                        sheetList: [
-                                                                          _addTextField(
-                                                                              shouldReturn: true),
-                                                                          item
-                                                                        ]));
-                                                              });
-                                                            }
-                                                          });
-                                                        },
-                                                      ),
-                                                      MenuItem(
-                                                        label: 'Below',
-                                                        icon: TablerIcons
-                                                            .border_bottom_plus,
-                                                        onSelected: () {
-                                                          setState(() {
-                                                            if (sheetList
-                                                                    .direction ==
-                                                                Axis.vertical) {
-                                                              var newItem =
-                                                                  _addTextField(
-                                                                      shouldReturn:
-                                                                          true);
-                                                              sheetList.insert(
-                                                                  index + 1,
-                                                                  newItem);
-                                                            } else {
-                                                              setState(() {
-                                                                var newId =
-                                                                    const Uuid()
-                                                                        .v4();
-                                                                var decoId =
-                                                                    const Uuid()
-                                                                        .v4();
-                                                                var item = sheetList
-                                                                    .removeAt(
-                                                                        index);
-                                                                sheetList
-                                                                    .insert(
-                                                                        index,
-                                                                        SheetList(
-                                                                            direction:
-                                                                                Axis.vertical,
-                                                                            id: newId,
-                                                                            parentId: sheetList.id,
-                                                                            listDecoration: SuperDecoration(id: decoId),
-                                                                            sheetList: [
-                                                                              item,
-                                                                              _addTextField(shouldReturn: true),
-                                                                            ]));
-                                                              });
-                                                            }
-                                                          });
-                                                        },
-                                                      ),
-                                                      MenuItem(
-                                                        label: 'Left',
-                                                        icon: TablerIcons
-                                                            .border_left_plus,
-                                                        onSelected: () {
-                                                          setState(() {
-                                                            if (sheetList
-                                                                    .direction ==
-                                                                Axis.vertical) {
-                                                              var newId =
-                                                                  const Uuid()
-                                                                      .v4();
-                                                              var decoId =
-                                                                  const Uuid()
-                                                                      .v4();
-                                                              var item =
-                                                                  sheetList
-                                                                      .removeAt(
-                                                                          index);
-                                                              sheetList.insert(
-                                                                  index,
-                                                                  SheetList(
-                                                                      direction:
-                                                                          Axis.horizontal,
-                                                                      id: newId,
-                                                                      parentId: sheetList.id,
-                                                                      listDecoration: SuperDecoration(id: decoId),
-                                                                      sheetList: [
-                                                                        _addTextField(
-                                                                            shouldReturn:
-                                                                                true),
-                                                                        item
-                                                                      ]));
-                                                            } else {
-                                                              var newItem =
-                                                                  _addTextField(
-                                                                      shouldReturn:
-                                                                          true);
-                                                              sheetList.insert(
-                                                                  index,
-                                                                  newItem);
-                                                            }
-                                                          });
-                                                        },
-                                                      ),
-                                                      MenuItem(
-                                                        label: 'Right',
-                                                        icon: TablerIcons
-                                                            .border_right_plus,
-                                                        onSelected: () {
-                                                          setState(() {
-                                                            if (sheetList
-                                                                    .direction ==
-                                                                Axis.vertical) {
-                                                              var newId =
-                                                                  const Uuid()
-                                                                      .v4();
-                                                              var decoId =
-                                                                  const Uuid()
-                                                                      .v4();
-                                                              var item =
-                                                                  sheetList
-                                                                      .removeAt(
-                                                                          index);
-                                                              sheetList.insert(
-                                                                  index,
-                                                                  SheetList(
-                                                                      direction:
-                                                                          Axis.horizontal,
-                                                                      id: newId,
-                                                                      parentId: sheetList.id,
-                                                                      listDecoration: SuperDecoration(id: decoId),
-                                                                      sheetList: [
-                                                                        _addTextField(
-                                                                            shouldReturn:
-                                                                                true),
-                                                                        item
-                                                                      ]));
-                                                            } else {
-                                                              var newItem =
-                                                                  _addTextField(
-                                                                      shouldReturn:
-                                                                          true);
-                                                              sheetList.insert(
-                                                                  index + 1,
-                                                                  newItem);
-                                                            }
-                                                          });
-                                                        },
-                                                      )
-                                                    ])
-                                              ]),
-                                          //MOVE ITEMS
-                                          MenuItem.submenu(
-                                              label: 'Move',
-                                              icon: TablerIcons.arrows_move,
-                                              items: [
-                                                MenuItem.submenu(
-                                                    label: 'Text',
-                                                    icon:
-                                                        TablerIcons.text_resize,
-                                                    items: [
-                                                      MenuItem(
-                                                        label: 'Up',
-                                                        icon: TablerIcons
-                                                            .arrow_up_square,
-                                                        onSelected: () {
-                                                          setState(() {
-                                                            if (index != 0) {
-                                                              var item =
-                                                                  sheetList
-                                                                      .removeAt(
-                                                                          index);
-                                                              sheetList.insert(
-                                                                  index - 1,
-                                                                  item);
-
-                                                              // Update the index to reflect the new position of the item
-                                                              index--; // Decrement index to reflect the item's new position
-
-                                                              panelIndex = PanelIndex(
-                                                                  parentId:
-                                                                      panelIndex
-                                                                          .parentId,
-                                                                  id: panelIndex
-                                                                      .id,
-                                                                  panelIndex:
-                                                                      panelIndex
-                                                                              .panelIndex +
-                                                                          1);
-                                                              print(
-                                                                  'Updated index of text editor: $index');
-                                                            }
-                                                            print(
-                                                                'Current index of text editor: $index');
-                                                          });
-                                                        },
-                                                      ),
-                                                      MenuItem(
-                                                        label: 'Down',
-                                                        icon: TablerIcons
-                                                            .arrow_down_square,
-                                                        onSelected: () {
-                                                          setState(() {
-                                                            if (index !=
-                                                                sheetList
-                                                                        .length -
-                                                                    1) {
-                                                              var item =
-                                                                  sheetList
-                                                                      .removeAt(
-                                                                          index);
-                                                              sheetList.insert(
-                                                                  index + 1,
-                                                                  item);
-                                                              index++;
-                                                              print(
-                                                                  'index of texteditor DT: $index');
-                                                            }
-                                                          });
-                                                        },
-                                                      ),
-                                                    ])
-                                              ]),
-                                          //Export
-                                          MenuItem(
-                                            label: 'Export Field As..',
-                                            icon: TablerIcons.message_forward,
-                                            onSelected: () async {
-                                              await pushExportField(
-                                                  context,
-                                                  textEditorItem,
-                                                  documentPropertiesList,
-                                                  currentPageIndex);
-                                            },
-                                          ),
-                                          //Clear Field
-                                          MenuItem(
-                                            label: 'Clear',
-                                            icon: TablerIcons.square_rounded_x,
-                                            onSelected: () async {
-                                              await showAdaptiveDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title:
-                                                        Text('Confirm Clear'),
-                                                    content: Text(
-                                                        'This will clear the text from current Text Field. Are you sure?'),
-                                                    actions: [
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              textEditorItem
-                                                                      .textEditorController
-                                                                      .document =
-                                                                  Document();
-                                                            });
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          child: Text('Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          child: Text('No')),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          ),
-                                          //Delete
-                                          MenuItem(
-                                            label: 'Delete',
-                                            icon: TablerIcons.trash,
-                                            onSelected: () async {
-                                              await showAdaptiveDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: const Text(
-                                                        'Confirm Delete'),
-                                                    content: const Text(
-                                                        'This will DELETE the current Text Field with its contents. Are you sure?'),
-                                                    actions: [
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              sheetList
-                                                                  .removeAt(
-                                                                      index);
-                                                              panelIndex.id =
-                                                                  '';
-                                                              panelIndex
-                                                                  .panelIndex = -1;
-                                                            });
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          child: const Text(
-                                                              'Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          child:
-                                                              const Text('No')),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          )
-                                        ]);
-
-                                        return entries;
-                                      }
-
-                                      final entries = buildContextMenuEntries(
-                                          textEditorItem.textEditorController);
-                                      ContextMenu(
-                                              entries: entries,
-                                              boxDecoration: BoxDecoration(
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: defaultPalette
-                                                          .black
-                                                          .withOpacity(0.3),
-                                                      blurRadius: 2,
-                                                      // spreadRadius: 10
-                                                    )
-                                                  ],
-                                                  color: defaultPalette.primary,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
-                                              position: Offset(
-                                                  d.globalPosition.dx,
-                                                  d.globalPosition.dy))
-                                          .show(context);
+                                      onRightClick(textEditorItem, d, index);
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.only(
@@ -9796,7 +9775,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             ),
           ),
         ),
-        if (panelIndex.parentId == sheetList.id)
+        if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
           Positioned(
             top: 0,
             child: SlideInLeft(
@@ -9833,79 +9812,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           parentId: parentId,
                           listDecoration: SuperDecoration(id: decoId),
                           sheetList: transformData(item.sheetList, newid),
-                        );
-                      } else {
-                        throw Exception("Unknown SheetItem type");
-                      }
-                    }).toList();
-                  }
-
-                  List<SheetItem> transformLinkedData(
-                      List<SheetItem> data, String parentId) {
-                    return data.map((item) {
-                      if (item is TextEditorItem) {
-                        print("PASTE LINKED transformed.");
-                        var newId = Uuid().v4();
-
-                        if (item.linkedTextEditors != null) {
-                          item = item.copyWith(linkedTextEditors: [
-                            ...item.linkedTextEditors!,
-                            newId
-                          ]);
-                        } else {
-                          item = item.copyWith(linkedTextEditors: [newId]);
-                        }
-
-                        var newTextField = _addTextField(
-                            id: newId,
-                            parentId: parentId,
-                            docString: item.textEditorController.document
-                                .toDelta()
-                                .toJson(),
-                            linkedTextFields: item.linkedTextEditors!,
-                            shouldReturn: true);
-
-                        newTextField = newTextField.copyWith(
-                            textEditorConfigurations: QuillEditorConfigurations(
-                              customStyleBuilder: (attribute) {
-                                return customStyleBuilder(attribute);
-                              },
-                              disableClipboard: false,
-                              onTapDown: newTextField
-                                  .textEditorConfigurations.onTapDown,
-                              builder:
-                                  newTextField.textEditorConfigurations.builder,
-                              controller: QuillController(
-                                document: item.textEditorController.document,
-                                selection: item.textEditorController.selection,
-                                readOnly: false,
-                                onSelectionChanged: (textSelection) {
-                                  setState(() {});
-                                },
-                                onSelectionCompleted: () {
-                                  setState(() {});
-                                },
-                                onDelete: (cursorPosition, forward) {
-                                  setState(() {});
-                                },
-                              ),
-                            ),
-                            linkedTextEditors: [
-                              ...?newTextField.linkedTextEditors,
-                              item.id
-                            ]);
-                        print("newtextfield ke linkedEditors after: " +
-                            newTextField.linkedTextEditors.toString());
-                        return newTextField;
-                      } else if (item is SheetList) {
-                        var newid = Uuid().v4();
-                        var decoId = const Uuid().v4();
-                        return SheetList(
-                          direction: item.direction,
-                          id: newid,
-                          parentId: parentId,
-                          listDecoration: SuperDecoration(id: decoId),
-                          sheetList: transformLinkedData(item.sheetList, newid),
                         );
                       } else {
                         throw Exception("Unknown SheetItem type");
@@ -9954,7 +9860,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     ));
 
                     // Copy
-
                     entries.add(MenuItem(
                       label: 'Copy',
                       icon: TablerIcons.copy,
@@ -9997,34 +9902,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       },
                     ));
 
-                    // Paste Linked
-                    // entries.add(MenuItem(
-                    //   label: 'Paste Linked',
-                    //   icon: TablerIcons.clipboard,
-                    //   onSelected: () {
-                    //     var data = sheetListClipboard.data;
-                    //     var newSheetListId = Uuid()
-                    //         .v4(); // Generate id for the new parent SheetList
-                    //     var newData = transformLinkedData(
-                    //         data as List<SheetItem>, newSheetListId);
-
-                    //     sheetList.sheetList.insert(
-                    //       0,
-                    //       SheetList(
-                    //         direction: sheetListClipboard.direction,
-                    //         id: newSheetListId,
-                    //         parentId:
-                    //             sheetList.id, // Parent id of the main list
-                    //         sheetList: newData,
-                    //       ),
-                    //     );
-                    //     print('pastedLinked!');
-
-                    //     setState(() {});
-                    //     saveLayout();
-                    //   },
-                    // ));
-
                     // Paste
                     entries.add(MenuItem(
                       label: 'Paste',
@@ -10059,16 +9936,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                     entries.addAll([
                       const MenuHeader(text: 'ops'),
-
-                      //Export
-                      MenuItem(
-                        label: 'Export Field As..',
-                        icon: TablerIcons.message_forward,
-                        onSelected: () async {
-                          // await pushExportField(context, textEditorItem,
-                          //     documentPropertiesList, currentPageIndex);
-                        },
-                      ),
                       //Clear Field
                       MenuItem(
                         label: 'Empty The List',
@@ -10086,20 +9953,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   TextButton(
                                       onPressed: () {
                                         setState(() {
-                                          _sheetListIterator(
-                                                  sheetList.parentId,
-                                                  spreadSheetList[
-                                                      currentPageIndex])
-                                              .sheetList
-                                              .forEach((element) {
-                                            if (element is SheetList &&
-                                                element.id == sheetList.id) {
-                                              print(
-                                                  'Clearing sheetList for id: ${element.id}');
-                                              element.sheetList
-                                                  .clear(); // Clear only the nested sheetList
-                                            }
-                                          });
+                                          var temp = spreadSheetList[currentPageIndex].sheetList
+                                          .firstWhere((element) => element.id == sheetListItem.id,);
+                                          
+                                          (temp as SheetList).sheetList.clear();
+
+                                          var i = spreadSheetList[currentPageIndex].sheetList
+                                          .indexWhere((element) => element.id == sheetListItem.id,);
+                                          spreadSheetList[currentPageIndex].sheetList[i] = temp;
                                           saveLayout(); // Save changes after clearing
                                         });
                                         Navigator.pop(
@@ -10128,7 +9989,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               return AlertDialog(
                                 title: const Text('Confirm Delete'),
                                 content: const Text(
-                                    'This will DELETE the current Text Field with its contents. Are you sure?'),
+                                    'This will DELETE the current List with its contents. Are you sure?'),
                                 actions: [
                                   TextButton(
                                       onPressed: () {
@@ -10137,31 +9998,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           panelIndex.id = '';
                                           panelIndex.panelIndex = -1;
                                         });
-                                        _sheetListIterator(
-                                                sheetList.parentId,
-                                                spreadSheetList[
-                                                    currentPageIndex])
-                                            .sheetList
-                                            .removeWhere(
-                                          (element) {
-                                            // print(sheetList.id);
-
-                                            print('id jo chaiye: ' +
-                                                sheetList.id);
-                                            print('id jo mila: ' + element.id);
-
-                                            print('MILA KE NAHI? ' +
-                                                (element is SheetList &&
-                                                        element == sheetList)
-                                                    .toString());
-                                            if (element is SheetList &&
-                                                element == sheetList) {
-                                              setState(() {});
-                                            }
-                                            return element is SheetList &&
-                                                element == sheetList;
-                                          },
-                                        );
+                                        spreadSheetList[currentPageIndex].sheetList
+                                          .removeWhere((element) => element.id == sheetListItem.id,);
+                                        
                                         // });
                                         saveLayout();
                                         Navigator.pop(context);
@@ -10268,7 +10107,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       }
     }
 
-    return height + 12;
+    return height + 25;
   }
 
   double findSheetListBuildWidth(SheetList sheetList) {
@@ -10281,26 +10120,26 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       ':': 5.0,
       '!': 5.0,
       '?': 7.0,
-      'a': 8.0,
+      'a': 11,
       'b': 8.5,
       'c': 7.5,
       'd': 8.5,
       'e': 8.0,
-      'f': 7.0,
+      'f': 11,
       'g': 9,
       'h': 8.5,
       'i': 7.0,
-      'j': 7.0,
+      'j': 11,
       'k': 9,
       'l': 7.5,
       'm': 11.0,
-      'n': 8.5,
-      'o': 8.5,
+      'n': 11,
+      'o': 11,
       'p': 8.5,
       'q': 8.5,
       'r': 8.5,
       's': 8.0,
-      't': 7.0,
+      't': 11,
       'u': 8.5,
       'v': 8.5,
       'w': 15.0,
@@ -10310,10 +10149,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       ' ': 9.0,
       '@': 12.0,
       '#': 10.0,
-      '\$': 10.0
+      '\$': 10.0,
+
     };
 
-    const double fallbackWidth = 8.0;
+    const double fallbackWidth = 11.0;
 
     double calculateLineWidth(String line, double fontSize) {
       return line.runes.fold(0.0, (sum, ch) {
@@ -14253,7 +14093,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             cardCount: 2,
             allowUnSwipe: true,
             allowUnlimitedUnSwipe: true,
-            initialIndex: 0,
+            initialIndex: whichListPropertyTabIsClicked,
             maxAngle: 50,
             threshold: 100,
             onCardPositionChanged: (position) {
@@ -14352,6 +14192,120 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 );
               }
 
+              Widget roundButton2(
+                void Function() onTap,
+                Widget icon, {
+                double borderRadius = 9999,
+                bool isSelected = false,
+                EdgeInsets padding = const EdgeInsets.all(3),
+              }) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  child: Material(
+                    color: isSelected ? defaultPalette.primary : defaultPalette.secondary,
+                    child: InkWell(
+                      hoverColor: defaultPalette.primary,
+                      splashColor: defaultPalette.primary,
+                      highlightColor: defaultPalette.primary,
+                      onTap: () {
+                        setState(() {
+                          onTap();
+                        });
+                      },
+                      child: Container(
+                          padding: padding,
+                          decoration: BoxDecoration(
+                            border: isSelected
+                                ? Border.all(color: defaultPalette.extras[0])
+                                : Border.fromBorderSide(BorderSide.none),
+                            borderRadius: BorderRadius.circular(borderRadius),
+                            // color: defaultPalette.primary
+                          ),
+                          child: icon),
+                    ),
+                  ),
+                );
+              }
+
+
+              Widget titleTile(
+              String name,
+              IconData icon, {
+              double fontSize = 13,
+            }) {
+              return Row(children: [
+                Icon(icon, size: 15),
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    style: GoogleFonts.lexend(
+                        fontSize: fontSize,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w500),
+                  ),
+                )
+              ]);
+            }
+
+              Widget toggleSelectionRow(
+                List<Widget> icons,
+                List<dynamic> values,
+              ) {
+                List<bool> selected = [];
+
+                for (var v = 0; v < values.length; v++) {
+                   {
+                    if (values[v] is MainAxisAlignment) {
+                      if (sheetListItem.mainAxisAlignment == values[v]) {
+                        selected.add(true);
+                      } else {
+                        selected.add(false);
+                      }
+                    } else if (values[v] is CrossAxisAlignment) {
+                      if (sheetListItem.crossAxisAlignment == values[v]) {
+                        selected.add(true);
+                      } else {
+                        selected.add(false);
+                      }
+                    } 
+                  }
+                }
+
+                Function() switchFunction(dynamic value) {
+                  if (value is CrossAxisAlignment) {
+                    return () {
+                      sheetListItem.crossAxisAlignment = value;
+                    };
+                  } else {
+                    return () {
+                      sheetListItem.mainAxisAlignment = value;
+                    };
+                  }
+                }
+
+                return Container(
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                      color: defaultPalette.secondary,
+                      border: Border.all(),
+                      borderRadius: BorderRadius.circular(5)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      for (int i = 0; i < icons.length; i++) ...[
+                        Expanded(
+                            child: roundButton2(switchFunction(values[i]), icons[i], isSelected: selected[i], borderRadius: 5, ),),
+                        if (i != icons.length - 1)
+                          SizedBox(
+                            width: 2,
+                          )
+                      ]
+                    ],
+                  ),
+                );
+              }
+
               return Stack(
                 children: [
                   Positioned.fill(
@@ -14391,11 +14345,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     ),
                   ),
 
+                  //List Properties
                   if (index == 0) ...[
                     Positioned.fill(
                       child: Padding(
                         padding:
-                            EdgeInsets.all(15).copyWith(left: 10, right: 12),
+                            EdgeInsets.all(15).copyWith(left: 12, right: 14),
                         child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: ScrollConfiguration(
@@ -14409,91 +14364,195 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           controller: controller,
                                           physics: physics,
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
                                             children: [
-                                              Column(
-                                                children: [
-                                                  Text(
-                                                    'direction',
-                                                    style: GoogleFonts.prompt(
-                                                        fontSize: 10,
-                                                        fontWeight:
-                                                            FontWeight.w500),
-                                                  ),
-                                                  AnimatedToggleSwitch<
-                                                      Axis>.dual(
-                                                    current:
-                                                        sheetListItem.direction,
-                                                    first: Axis.vertical,
-                                                    second: Axis.horizontal,
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        sheetListItem
-                                                            .direction = value;
-                                                      });
-                                                    },
-                                                    animationCurve:
-                                                        Curves.easeInOutExpo,
-                                                    animationDuration:
-                                                        Durations.medium4,
-                                                    borderWidth:
-                                                        2, // backgroundColor is set independently of the current selection
-                                                    styleBuilder: (value) =>
-                                                        ToggleStyle(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10),
-                                                            indicatorBorderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15),
-                                                            borderColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            backgroundColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            indicatorColor:
-                                                                defaultPalette
-                                                                        .extras[
-                                                                    0]), // indicatorColor changes and animates its value with the selection
-                                                    iconBuilder: (value) {
-                                                      return Icon(
-                                                          value ==
-                                                                  Axis
-                                                                      .horizontal
-                                                              ? TablerIcons
-                                                                  .grip_horizontal
-                                                              : TablerIcons
-                                                                  .grip_vertical,
-                                                          size: 12,
-                                                          color: defaultPalette
-                                                              .primary);
-                                                    },
-                                                    textBuilder: (value) {
-                                                      return Text(
-                                                        value == Axis.horizontal
-                                                            ? 'Horizontal'
-                                                            : 'Vertical',
-                                                        style:
-                                                            GoogleFonts.bungee(
-                                                                fontSize: 12),
-                                                      );
-                                                    },
-                                                    height: 25,
-                                                    spacing: (width) - 100,
-                                                  ),
-                                                ],
+                                               Text(
+                                                'listProperties',
+                                                maxLines: 1,
+                                                style: GoogleFonts.lexend(
+                                                    fontSize: 20,
+                                                    height:2,
+                                                    letterSpacing: -1,
+                                                    fontWeight: FontWeight.w500),
                                               ),
+                                              titleTile( 
+                                                'direction',
+                                                TablerIcons.directions),
+                                              
+                                              AnimatedToggleSwitch<Axis>.dual(
+                                                current:
+                                                    sheetListItem.direction,
+                                                first: Axis.vertical,
+                                                second: Axis.horizontal,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    sheetListItem
+                                                        .direction = value;
+                                                  });
+                                                },
+                                                animationCurve:
+                                                    Curves.easeInOutExpo,
+                                                animationDuration:
+                                                    Durations.medium4,
+                                                borderWidth:
+                                                    2, // backgroundColor is set independently of the current selection
+                                                styleBuilder: (value) =>
+                                                    ToggleStyle(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    5),
+                                                        indicatorBorderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    5),
+                                                        borderColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        backgroundColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        indicatorColor:
+                                                            defaultPalette
+                                                                    .extras[
+                                                                0]), // indicatorColor changes and animates its value with the selection
+                                                iconBuilder: (value) {
+                                                  return Icon(
+                                                      value ==
+                                                              Axis
+                                                                  .horizontal
+                                                          ? TablerIcons
+                                                              .grip_horizontal
+                                                          : TablerIcons
+                                                              .grip_vertical,
+                                                      size: 12,
+                                                      color: defaultPalette
+                                                          .primary);
+                                                },
+                                                textBuilder: (value) {
+                                                  return Text(
+                                                    value == Axis.horizontal
+                                                        ? 'Horizontal'
+                                                        : 'Vertical',
+                                                    style:
+                                                        GoogleFonts.bungee(
+                                                            fontSize: 12),
+                                                  );
+                                                },
+                                                height: 25,
+                                                spacing: (width) - 100,
+                                              ),
+                                              SizedBox(height:4),
+                                              titleTile( 
+                                                '${sheetListItem.mainAxisAlignment.name}',
+                                                sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
+                                              
+                                              toggleSelectionRow([
+                                                Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_top:TablerIcons.layout_align_left, size:18),
+                                                Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_center:TablerIcons.layout_align_middle, size:18),
+                                                Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_bottom:TablerIcons.layout_align_right, size:18),
+                                                Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_distribute_horizontal:TablerIcons.layout_distribute_vertical, size:18),
+                                                Icon(sheetListItem.direction == Axis.vertical?TablerIcons.dots_vertical:TablerIcons.dots, size:18),
+                                                Icon(sheetListItem.direction == Axis.vertical?TablerIcons.separator_horizontal:TablerIcons.separator_vertical, size:18),
+                                                
+                                              ], [
+                                                MainAxisAlignment.start,
+                                                MainAxisAlignment.center,
+                                                MainAxisAlignment.end,
+                                                MainAxisAlignment.spaceAround,
+                                                MainAxisAlignment.spaceEvenly,
+                                                MainAxisAlignment.spaceBetween
+                                              ]),
+                                           
+                                              SizedBox(height:4),
+                                              titleTile(
+                                                '${sheetListItem.crossAxisAlignment.name}',
+                                                sheetListItem.direction == Axis.vertical? TablerIcons.caret_left_right: TablerIcons.caret_up_down),
+                                              toggleSelectionRow([
+                                                Icon(TablerIcons.sign_left, size:18),
+                                                Icon(TablerIcons.float_center, size:18),
+                                                Icon(TablerIcons.sign_right, size:18),
+                                                
+                                              ], [
+                                                CrossAxisAlignment.start,
+                                                CrossAxisAlignment.center,
+                                                CrossAxisAlignment.end
+                                              ]),
+                                              
+                                              SizedBox(height:4),
+                                              titleTile( ' mainAxisSize',
+                                                TablerIcons.ruler_measure),
+                                              
+                                              AnimatedToggleSwitch<MainAxisSize>.dual(
+                                                current:
+                                                    sheetListItem.mainAxisSize,
+                                                first: MainAxisSize.min,
+                                                second: MainAxisSize.max,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    sheetListItem
+                                                        .mainAxisSize = value;
+                                                  });
+                                                },
+                                                animationCurve:
+                                                    Curves.easeInOutExpo,
+                                                animationDuration:
+                                                    Durations.medium4,
+                                                borderWidth:
+                                                    2, // backgroundColor is set independently of the current selection
+                                                styleBuilder: (value) =>
+                                                    ToggleStyle(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    5),
+                                                        indicatorBorderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    5),
+                                                        borderColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        backgroundColor:
+                                                            defaultPalette
+                                                                .secondary,
+                                                        indicatorColor:
+                                                            defaultPalette
+                                                                    .extras[
+                                                                0]), // indicatorColor changes and animates its value with the selection
+                                                iconBuilder: (value) {
+                                                  return Icon(
+                                                      value ==
+                                                              MainAxisSize.min
+                                                          ? TablerIcons
+                                                              .viewport_narrow
+                                                          : TablerIcons
+                                                              .viewport_wide,
+                                                      size: 12,
+                                                      color: defaultPalette
+                                                          .primary);
+                                                },
+                                                textBuilder: (value) {
+                                                  return Text(
+                                                    value ==MainAxisSize.min
+                                                        ? 'min'
+                                                        : 'max',
+                                                    style:
+                                                        GoogleFonts.bungee(
+                                                            fontSize: 12),
+                                                  );
+                                                },
+                                                height: 25,
+                                                spacing: (width) - 100,
+                                              ),
+                                              
+                                              
                                             ],
                                           ));
                                     }))),
                       ),
                     )
                   ],
-
+                  //List Decoration
                   if (index == 1) ...[
                     Positioned.fill(
                       child: AnimatedPadding(
@@ -14524,7 +14583,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               isListDecorationLibraryToggled = false;
                                               isListDecorationPropertiesToggled = false;
                                               showDecorationLayers = false;
-                                              _findSheetListItem();
+                                              updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration);
+                                              decorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration).name;
                                             });
                                           },
                                           child: AnimatedContainer(
@@ -14549,38 +14609,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           subfac: 2,
                                           depth: 2,
                                           onClick: () {
-                                            // setState(() {
-                                            //   var superDecoId = Uuid().v4();
-                                            //   var superDecoration = SuperDecoration(id: superDecoId);
-                                            //   if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
-                                            //     // Add the new decoration to the main list
-                                            //     sheetDecorationList.add(superDecoration);
-                                            //     // Get the reference to the SuperDecoration from the list
-                                            //     var currentItemDecoration = decorationIterator(sheetListItem.listDecoration.id, sheetDecorationList);
-                                            //     if (currentItemDecoration is SuperDecoration) {
-                                            //       // Create a new list with the updated decoration IDs
-                                            //       var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
-                                            //       updatedList.add(superDecoId);
-                                            //       // Create the updated decoration using copyWith
-                                            //       var updatedDecoration = currentItemDecoration.copyWith(
-                                            //         itemDecorationList: updatedList,
-                                            //       );
-                                            //       // Find the index and update the list with the new decoration
-                                            //       int index = sheetDecorationList.indexWhere((deco) => deco.id == currentItemDecoration.id);
-                                            //       if (index != -1) {
-                                            //         sheetDecorationList[index] = updatedDecoration;
-                                            //       }
-                                            //       // Also update the decoration reference in the item itself
-                                            //       sheetListItem.listDecoration = updatedDecoration;
-                                            //       print('New decoration added');
-                                            //       print(updatedDecoration.itemDecorationList);
-                                            //     } else {
-                                            //       print('Error: Decoration is not a SuperDecoration');
-                                            //     }
-                                            //   } else {
-                                            //     print('Guys come on, turn this into a super now');
-                                            //   }
-                                            // });
+                                            
                                          
                                             setState(() {
                                               isListDecorationLibraryToggled = !isListDecorationLibraryToggled;
@@ -14648,13 +14677,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               var itemDecoId = Uuid().v4();
                                               var itemDecoration = ItemDecoration(id: itemDecoId);
 
-                                              if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
+                                              if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length < 70) {
                                                 // Add the new decoration to the main list
                                                 sheetDecorationList.add(itemDecoration);
 
                                                 // Get the reference to the SuperDecoration from the list
-                                                var currentItemDecoration = decorationIterator(sheetListItem.listDecoration.id, sheetDecorationList);
-
+                                                var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration);
                                                 if (currentItemDecoration is SuperDecoration) {
                                                   // Create a new list with the updated decoration IDs
                                                   var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
@@ -14672,11 +14700,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   }
 
                                                   // Also update the decoration reference in the item itself
-                                                  sheetListItem.listDecoration = updatedDecoration;
+                                                  // sheetListItem.listDecoration = updatedDecoration;
 
                                                   print('New decoration added');
                                                   print(updatedDecoration.itemDecorationList);
-                                                  _findSheetListItem();
+                                                  updateSheetDecorationvariables(sheetDecorationList[index] as  SuperDecoration);
                                                 } else {
                                                   print('Error: Decoration is not a SuperDecoration');
                                                 }
@@ -14724,13 +14752,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 BorderRadius.circular(50),
                                             child: Stack(
                                               children: [
-                                                SizedBox(
+                                                Container(
+                                                  color:defaultPalette.extras[0],
                                                   height: 30,
-                                                  child: MatrixRainAnimation(
-                                                    backgroundColor:
-                                                        defaultPalette
-                                                            .extras[0],
-                                                  ),
+                                                  // child: MatrixRainAnimation(
+                                                  //   backgroundColor:
+                                                  //       defaultPalette
+                                                  //           .extras[0],
+                                                  // ),
                                                 ),
                                                 Positioned(
                                                   right: 0,
@@ -14765,20 +14794,22 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     children:  !isListDecorationPropertiesToggled
                                                     ? [
                                                       // Title saying "SUPER"
-                                                      RichText(
-                                                          maxLines:
-                                                              1,
-                                                          text: TextSpan(
-                                                              style: GoogleFonts.rockSalt(
-                                                                color: defaultPalette.extras[0],
-                                                                height: 1.5,
-                                                                fontSize: 16,
-                                                              ),
-                                                              children: [
-                                                                TextSpan(
-                                                                  text: ' ' + (decorationIndex == -1 ? sheetListItem.listDecoration : decorationIterator(sheetListItem.listDecoration.itemDecorationList[decorationIndex], sheetDecorationList)).runtimeType.toString().replaceAll(RegExp(r'Decoration'), '').replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()),
-                                                                ),
-                                                              ])),
+                                                      Padding(
+                                                        padding: const EdgeInsets.only(left:2.0),
+                                                        child: Text(
+                                                            '' +sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?'': (decorationIndex == -1  ? 
+                                                          (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration) 
+                                                          : decorationIterator((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                            .itemDecorationList[decorationIndex], sheetDecorationList)).runtimeType.toString()
+                                                            .replaceAll(RegExp(r'Decoration'), '')
+                                                            .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()), maxLines:1,
+                                                        style: GoogleFonts.rockSalt(
+                                                        color: defaultPalette.extras[0],
+                                                        height: 1.5,
+                                                        fontSize: 16,
+                                                          ),
+                                                        ),
+                                                      ),
                                                       //Name of Decoration Editing Field.
                                                       SizedBox(
                                                         height:
@@ -14829,7 +14860,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           onChanged:
                                                               (value) {
                                                             setState(() {
-                                                            var currentItemDecoration = decorationIterator(sheetListItem.listDecoration.id, sheetDecorationList);
+                                                            var currentItemDecoration = decorationIterator((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id, sheetDecorationList);
 
                                                             if (decorationIndex == -1) {
                                                               if (currentItemDecoration is SuperDecoration) {
@@ -14839,11 +14870,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 if (index != -1) {
                                                                   sheetDecorationList[index] = updatedDecoration;
                                                                   // Update the name in the sheetListItem as well
-                                                                  sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(name: value);
+                                                                  // sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(name: value);
                                                                 }
                                                               }
                                                             } else {
-                                                              currentItemDecoration = decorationIterator(sheetListItem.listDecoration.itemDecorationList[decorationIndex], sheetDecorationList);
+                                                              currentItemDecoration = decorationIterator((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex], sheetDecorationList);
 
                                                               try {
                                                                 if (currentItemDecoration is SuperDecoration) {
@@ -14891,7 +14922,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 children: [
                                                                   TextSpan(text: 'id: '),
                                                                   TextSpan(
-                                                                    text: decorationIndex == -1 ? sheetListItem.listDecoration.id : sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                                    text:sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?'': decorationIndex == -1 ? (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                                                     style: GoogleFonts.lexend(color: defaultPalette.extras[0], fontSize: 6, fontWeight: FontWeight.normal),
                                                                   ),
                                                                 ])),
@@ -14910,24 +14941,22 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   width: 58,
                                                   padding: EdgeInsets.only(
                                                       right: 3),
-                                                  child:
+                                                  child:sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?null:
                                                       buildDecoratedContainer(
                                                           decorationIndex ==
                                                                   -1
-                                                              ? sheetListItem
-                                                                  .listDecoration
+                                                              ? (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                               : SuperDecoration(
                                                                   id: 'yo',
                                                                   itemDecorationList: [
-                                                                      ...sheetListItem
-                                                                          .listDecoration
+                                                                      ...(sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                                           .itemDecorationList
-                                                                          .sublist(0, (decorationIndex + 1).clamp(0, sheetListItem.listDecoration.itemDecorationList.length))
+                                                                          .sublist(0, (decorationIndex + 1).clamp(0, (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length))
                                                                     ]),
                                                           SizedBox(
                                                               width: 30,
                                                               height: 30),
-                                                          true),
+                                                          true, maxDepth: 5),
                                                 )
                                               ]),
                                               // Layer Functions
@@ -14991,12 +15020,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               if (decorationIndex != -1) {
                                                              
                                                                 var decoId = Uuid().v4();
-                                                                print('Generated new ID: $decoId');
-                                                                print('Parent decoration ID: ${sheetListItem.listDecoration.id}');
+                                                                // print('Generated new ID: $decoId');
+                                                                // print('Parent decoration ID: ${sheetListItem.listDecoration.id}');
                                                       
                                                                 // Step 1: Get the parent decoration safely
                                                                 var parentItemDecoration = decorationIterator(
-                                                                    sheetListItem.listDecoration.id, sheetDecorationList);
+                                                                    (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id, sheetDecorationList);
                                                       
                                                                 if (parentItemDecoration == null) {
                                                                   print('Error: Could not find parent decoration.');
@@ -15011,7 +15040,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       
                                                                 // Step 2: Create a new decoration based on the current one
                                                                 var currentItemDecoration = decorationIterator(
-                                                                    sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                                    (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                                                     sheetDecorationList);
                                                       
                                                                 if (currentItemDecoration == null) {
@@ -15060,10 +15089,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   print('Error: Could not update parent decoration.');
                                                                 }
                                                       
-                                                                // Also update the list decoration in the sheetListItem
-                                                                sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(
-                                                                  itemDecorationList: updatedItemDecorationList,
-                                                                );
                                                             }
                                                       
                                                       
@@ -15094,13 +15119,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                             roundButton(() {
                                                               if (decorationIndex !=
                                                                         -1) {
-                                                                if (sheetListItem
-                                                                        .listDecoration
+                                                                if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                                         .itemDecorationList
                                                                         .length >
-                                                                    1) {
-                                                                  sheetListItem
-                                                                      .listDecoration
+                                                                    1) {(sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                                       .itemDecorationList
                                                                       .removeAt(
                                                                           decorationIndex);
@@ -15126,8 +15148,55 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         right:0,
                                                         child: roundButton((){
                                                           isListDecorationPropertiesToggled = !isListDecorationPropertiesToggled; 
-                                                        }, Icon(TablerIcons.x, size:14), ''))
+                                                        }, Icon(TablerIcons.x, size:14), '')),
                                                     ],
+                                                  ),
+                                                ),
+                                              ),
+                                              //the path display
+                                              SizedBox(
+                                                width: width-102,
+                                                child: SingleChildScrollView(
+                                                  scrollDirection: Axis.horizontal,
+                                                  child: Row(
+                                                    children: listDecorationPath.map((e) {
+                                                      return 
+                                                        Wrap(
+                                                          children: [
+                                                            Material(
+                                                              color: defaultPalette.transparent,
+                                                              child: InkWell(
+                                                                hoverColor:  defaultPalette.secondary,
+                                                                  highlightColor:  defaultPalette.secondary,
+                                                                  splashColor:  defaultPalette.secondary,
+                                                                  onTap: () {
+                                                                    setState(() {
+                                                                      listDecorationPath = listDecorationPath.sublist(0, listDecorationPath.indexOf(e)+1);
+                                                                      decorationIndex =-1;
+                                                                      updateSheetDecorationvariables(sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration);
+                                                                    });
+                                                                  },
+                                                                child:listDecorationPath.indexOf(e)==0
+                                                              ? Icon(TablerIcons.smart_home, size:15)
+                                                              :  Container(
+                                                                  padding: EdgeInsets.symmetric(horizontal: 2),
+                                                                  decoration: BoxDecoration(
+                                                                    shape: BoxShape.circle,),
+                                                                  child: Text(
+                                                                    (sheetDecorationList.firstWhere((el)=> el.id == listDecorationPath[listDecorationPath.indexOf(e)-1]) as SuperDecoration).itemDecorationList.indexOf(e).toString(),
+                                                                    style: GoogleFonts.lexend(
+                                                                    fontSize: 12,
+                                                                    letterSpacing: -1,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.extras[0])
+                                                                  ),              
+                                                                ),),
+                                                            ),
+                                                            Icon(TablerIcons.chevron_compact_right, size:15),
+                                                          ],
+                                                        )
+                                                      ;
+                                                    },).toList(),
                                                   ),
                                                 ),
                                               )
@@ -15184,9 +15253,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         builder: (context, controller, physics) {
                                           SheetDecoration currentItemDecoration = SuperDecoration(id: 'yo', name: 'name');
                                           
-                                          if (decorationIndex != -1 ) {
+                                          if (decorationIndex != -1) {
                                           currentItemDecoration = decorationIterator(
-                                            sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                            (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                             sheetDecorationList);
                                           }
                                           return SingleChildScrollView(
@@ -15217,7 +15286,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       // print(p0);
                                                       setState(() {
                                                       var selectedItemDecoration = decorationIterator(
-                                                        sheetListItem.listDecoration.itemDecorationList[decorationIndex],
+                                                        (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                                         sheetDecorationList,
                                                       ) as ItemDecoration;
                                   
@@ -15623,36 +15692,82 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 ),
                                                 //ALL THE EDITOR UIs
                                                 if (decorationIndex != -1 && !isListDecorationLibraryToggled)
-                                                  if (decorationIterator(sheetListItem.listDecoration.itemDecorationList[
+                                                  if (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration).itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                     is ItemDecoration)
                                                   ...buildItemDecorationEditor(
-                                                      (decorationIterator(sheetListItem.listDecoration
+                                                      (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration)
                                                             .itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                           as ItemDecoration), shadowLayerIndex: sheetDecorationVariables[decorationIndex].listShadowLayerSelectedIndex),
                                                 //If selected layer is superdecoration
                                                 if (decorationIndex != -1 && !isListDecorationLibraryToggled)
-                                                  if (decorationIterator(sheetListItem.listDecoration.itemDecorationList[
+                                                  if (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration).itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                     is SuperDecoration)
-                                                      ...buildSuperDecorationEditor(decorationIterator(sheetListItem.listDecoration
+                                                      ...buildSuperDecorationEditor(decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration)
                                                             .itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                           as SuperDecoration),
-
-                                                
+                                                if(decorationIndex == -1 && !isListDecorationLibraryToggled )
+                                                ...buildSuperDecorationEditor(sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration),
+                                                          
                                                 if(isListDecorationLibraryToggled)
                                                 Padding(
                                                   padding: const EdgeInsets.all(4.0),
                                                   child: Column(
                                                     mainAxisAlignment: MainAxisAlignment.start,
                                                     children: [
+                                                      Row(
+                                                            mainAxisAlignment: MainAxisAlignment.start,
+                                                            children: [
+                                                              
+                                                            UtilityWidgets.maybeTooltip(
+                                                              message: 'add a SuperDecoration.',
+                                                              child: roundButton(
+                                                                () { 
+                                                                  var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration); 
+                                                                   
+                                                                setState(() {
+                                                                  var superDecoId = Uuid().v4();
+                                                                  var superDecoration = SuperDecoration(id: superDecoId);
+                                                                  if (currentItemDecoration.itemDecorationList.length < 70) {
+                                                                    // Add the new decoration to the main list
+                                                                    sheetDecorationList.add(superDecoration);
+                                                                    // Get the reference to the SuperDecoration from the list
+                                                                     if (currentItemDecoration is SuperDecoration) {
+                                                                      // Create a new list with the updated decoration IDs
+                                                                      var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
+                                                                      updatedList.add(superDecoId);
+                                                                      // Create the updated decoration using copyWith
+                                                                      var updatedDecoration = currentItemDecoration.copyWith(
+                                                                        itemDecorationList: updatedList,
+                                                                      );
+                                                                      // Find the index and update the list with the new decoration
+                                                                      int index = sheetDecorationList.indexWhere((deco) => deco.id == currentItemDecoration.id);
+                                                                      if (index != -1) {
+                                                                        sheetDecorationList[index] = updatedDecoration;
+                                                                      }
+                                                                      print('New decoration added');
+                                                                      print(updatedDecoration.itemDecorationList);
+                                                                      sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+
+                                                                    } else {
+                                                                      print('Error: Decoration is not a SuperDecoration');
+                                                                    }
+                                                                  } else {
+                                                                    print('Guys come on, turn this into a super now');
+                                                                  }
+                                                                });
+                                                                },
+                                                                Icon(TablerIcons.plus,size: 14,), 'add',padding: EdgeInsets.all(2), showText: false),
+                                                            ),
+                                                             
+                                                            ],
+                                                          ), 
                                                       // SizedBox(height:4),
                                                        ...filteredDecorations.map((e) {
-                                                        if(e.id == sheetListItem.listDecoration.id){
-                                                          return SizedBox();
-                                                        }
+                                                        
                                                     return Container(
                                                       width: width,
                                                       margin: EdgeInsets.only(bottom: 4),
@@ -15681,7 +15796,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                    !(e is ItemDecoration)? e: SuperDecoration(id: 'yo', itemDecorationList: [e.id]), 
                                                                   SizedBox(
                                                                     height: 20, width:20
-                                                                  ), true),
+                                                                  ), true, maxDepth: 2),
                                                                 ),
                                                                 SizedBox(  width:3),
 
@@ -15743,11 +15858,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                               message: 'add this as a layer to the current SuperDecoration.',
                                                               child: roundButton(
                                                                 () { 
-                                                                if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
-                                                                  var currentItemDecoration = decorationIterator(
-                                                                  sheetListItem.listDecoration.id,
-                                                                  sheetDecorationList); 
-                                                                    
+                                                                  var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration); 
+                                                                   
+                                                                if (currentItemDecoration.itemDecorationList.length < 70) {
+                                                                   
                                                                   if (currentItemDecoration is SuperDecoration) {
                                                                     // Create a new list with the updated decoration IDs
                                                                     var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
@@ -15764,9 +15878,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                       sheetDecorationList[index] = updatedDecoration;
                                                                     }
                                                                                                             
-                                                                    // Also update the decoration reference in the item itself
-                                                                    sheetListItem.listDecoration = updatedDecoration;
-                                                                                                            
+                                                                    updateSheetDecorationvariables(currentItemDecoration);
+                                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                        
                                                                     print('New decoration added');
                                                                     print(updatedDecoration.itemDecorationList);
                                                                   } else {
@@ -15795,46 +15909,46 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 .toList();
                                                                 },Icon(TablerIcons.trash,size: 14,), 'delete',padding: EdgeInsets.all(2), showText: false),
                                                             ),
-                                                            if(e is SuperDecoration)
+                                                            if(e is SuperDecoration && listDecorationPath.length ==1)
                                                             UtilityWidgets.maybeTooltip(
                                                               message: 'switch the current SuperDecoration with this one.',
                                                               child: roundButton(() {
-                                                              
+                                                                
                                                                 sheetListItem.listDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
-                                                                updateListDecorationVariables(sIndex: -1);
+                                                                updateSheetDecorationvariables(e);
                                                                 decorationIndex =-1;
-                                                                filteredDecorations = sheetDecorationList
-                                                                .where((decoration) =>
-                                                                    decoration.name.toLowerCase().contains(decorationSearchController.text.toLowerCase()))
-                                                                .toList();
+                                                                sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                listDecorationPath =[e.id];
                                                                 },Icon(TablerIcons.replace,size: 14,), 'switchTo',padding: EdgeInsets.all(2), showText: false),
+                                                                
                                                             ),
                                                             
                                                             if(e is SuperDecoration)
                                                             UtilityWidgets.maybeTooltip(
                                                               message: '''add it's child layers to the current SuperDecoration.''',
                                                               child: roundButton(() {
-                                                                if (sheetListItem.listDecoration.itemDecorationList.length < 70) {
+                                                                if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length < 70) {
                                                                   
                                                                   
-                                                                  if (sheetListItem.listDecoration is SuperDecoration) {
+                                                                  if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,)) is SuperDecoration) {
                                                                     // Create a new list with the updated decoration IDs
-                                                                    var updatedList = List<String>.from(sheetListItem.listDecoration.itemDecorationList);
+                                                                    var updatedList = List<String>.from((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList);
                                                                     updatedList.addAll(e.itemDecorationList);
                                                                                                             
                                                                     // Create the updated decoration using copyWith
-                                                                    var updatedDecoration = sheetListItem.listDecoration.copyWith(
+                                                                    var updatedDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).copyWith(
                                                                       itemDecorationList: updatedList,
                                                                     );
                                                                                                             
                                                                     // Find the index and update the list with the new decoration
-                                                                    int index = sheetDecorationList.indexWhere((deco) => deco.id == sheetListItem.listDecoration.id);
+                                                                    int index = sheetDecorationList.indexWhere((deco) => deco.id == (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id);
                                                                     if (index != -1) {
                                                                       sheetDecorationList[index] = updatedDecoration;
                                                                     }
-                                                                                                            
+                                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                                                        
                                                                     // Also update the decoration reference in the item itself
-                                                                    sheetListItem.listDecoration = updatedDecoration;
+                                                                    // sheetListItem.listDecoration = updatedDecoration;
                                                                                                             
                                                                     print('New decoration added');
                                                                     print(updatedDecoration.itemDecorationList);
@@ -15856,8 +15970,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     ],
                                                   ),
                                                 ),
-                                                if(decorationIndex == -1 && !isListDecorationLibraryToggled)
-                                                ...buildSuperDecorationEditor(sheetListItem.listDecoration)
                                                 
                                                 ],
                                             ),
@@ -15963,8 +16075,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             decoration: BoxDecoration(
                               // color: defaultPalette.secondary,
                               borderRadius: BorderRadius.circular(50).copyWith(
-                                  bottomLeft: Radius.circular(0),
-                                  bottomRight: Radius.circular(0)),
+                                bottomLeft: Radius.circular(0),
+                                bottomRight: Radius.circular(0)),
                             ),
                             child: ScrollConfiguration(
                               behavior:
@@ -15973,7 +16085,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   durationMS: 500,
                                   scrollSpeed: 1,
                                   builder: (context, controller, physics) {
-                                    final decorationEntries = sheetListItem.listDecoration.itemDecorationList
+                                    List<MapEntry<int, SheetDecoration>> decorationEntries = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList
                                     .asMap().entries.toList().reversed.map((entry) {
                                       // Get the actual decoration using the ID
                                       final decoration = decorationIterator(entry.value, sheetDecorationList);
@@ -15995,35 +16107,48 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         child: ReorderableListView(
                                           onReorder: (oldIndex, newIndex) {
                                             setState(() {
-                                              final itemList = sheetListItem
-                                                  .listDecoration
-                                                  .itemDecorationList;
-
-                                              final int reversedOldIndex =
-                                                  itemList.length -
-                                                      1 -
-                                                      oldIndex;
-                                              int reversedNewIndex =
-                                                  itemList.length -
-                                                      1 -
-                                                      newIndex;
-
-                                              // Fix: clamp new index to minimum 0
-                                              if (reversedOldIndex <
-                                                  reversedNewIndex) {
-                                                reversedNewIndex =
-                                                    reversedNewIndex.clamp(
-                                                        0, itemList.length);
-                                              } else {
-                                                reversedNewIndex =
-                                                    reversedNewIndex.clamp(
-                                                        0, itemList.length);
-                                              }
+                                              final itemList = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                  .itemDecorationList.reversed.toList();
 
                                               final item = itemList
-                                                  .removeAt(reversedOldIndex);
-                                              itemList.insert(
-                                                  reversedNewIndex, item);
+                                                    .removeAt(oldIndex);
+                                                if ((newIndex !=
+                                                    itemList.length + 2)) {
+                                                  print('hah' +
+                                                      itemList.length
+                                                          .toString() +
+                                                      ' ' +
+                                                      newIndex.toString());
+
+                                                  
+                                                  if (oldIndex < newIndex) {
+                                                    itemList.insert(newIndex-1,item);
+                                                    // decorationIndex =
+                                                    //     (newIndex - 1);
+                                                  } else {
+                                                    // decorationIndex =
+                                                    //     newIndex;
+                                                    itemList.insert(
+                                                      newIndex, item);
+                                                  }
+                                                  print('hah' +
+                                                      oldIndex
+                                                          .toString() +
+                                                      ' ' +
+                                                      newIndex.toString());
+                                                } else {
+                                                  itemList.add(item);
+                                                  // decorationIndex =
+                                                  //     itemList.length - 1;
+                                                  print(oldIndex.toString() +
+                                                      ' ' +
+                                                      newIndex.toString());
+                                                }
+                                                (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                  .itemDecorationList = itemList.reversed.toList();
+                                                sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+
+                                              updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration));
                                             });
                                           },
                                           proxyDecorator:
@@ -16036,12 +16161,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           children: [
                                             for (final entry in decorationEntries)
                                               ReorderableDragStartListener(
-                                                index: sheetListItem
-                                                        .listDecoration
+                                                index: (((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                         .itemDecorationList
                                                         .length -
-                                                    1 -
-                                                    entry.key,
+                                                    1) -
+                                                    entry.key),
                                                 key: ValueKey(entry.key),
                                                 child: Stack(
                                                   children: [
@@ -16049,9 +16173,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     AnimatedContainer(
                                                       duration: Duration(
                                                           milliseconds: (500 +
-                                                                  (300 /((sheetListItem.listDecoration.itemDecorationList.length == 1 
+                                                                  (300 /(((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 
                                                                   ? 2 
-                                                                  : sheetListItem.listDecoration.itemDecorationList.length) - 1)) * entry.key)
+                                                                  : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length) - 1)) * entry.key)
                                                               .round()),
                                                       curve: Curves.easeIn,
                                                       height: (((sHeight * 0.9) - 250) / (decorationIndex == entry.key ? 8 : 10.3))
@@ -16094,7 +16218,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       duration: Duration(
                                                           milliseconds: (500 +
                                                                   (300 /
-                                                                          ((sheetListItem.listDecoration.itemDecorationList.length == 1 ? 2 : sheetListItem.listDecoration.itemDecorationList.length) -
+                                                                          (((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length) -
                                                                               1)) *
                                                                       entry.key)
                                                               .round()),
@@ -16182,20 +16306,19 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 SuperDecoration(
                                                                     id: 'id',
                                                                     itemDecorationList: [
-                                                                      sheetListItem
-                                                                          .listDecoration
+                                                                      (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                                           .itemDecorationList[entry.key]
                                                                     ]),
                                                                 SizedBox(
                                                                   height: 10,
                                                                   width: 10,
                                                                 ),
-                                                                true),
+                                                                true, maxDepth: 2),
                                                       ),
                                                     ),
 
                                                     //onTap onHover Functions
-                                                    if(decorationIndex != entry.key)
+                                                    // if(decorationIndex != entry.key)
                                                     Padding(
                                                       padding:
                                                           const EdgeInsets.all(
@@ -16221,99 +16344,47 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   : defaultPalette.tertiary,
                                                               onTap: () {
                                                                 setState(() {
-                                                                  if (decorationIndex !=
-                                                                        entry
-                                                                            .key) {
-                                                                      decorationIndex =
-                                                                          entry
-                                                                              .key;
+                                                                  if (decorationIndex !=entry.key) {
+                                                                      decorationIndex =entry.key;
+                                                                      print(decorationIndex);
                                                                       var itemDecoration = decorationIterator(
-                                                                          sheetListItem
-                                                                              .listDecoration
-                                                                              .itemDecorationList[decorationIndex],
+                                                                          (sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration).itemDecorationList[decorationIndex],
                                                                           sheetDecorationList);
-                                                                      decorationNameController
-                                                                              .text =
-                                                                          itemDecoration
-                                                                              .name;
-                                                                      isListDecorationLibraryToggled =
-                                                                          false;
-                                                                      
-                                                                      updateListDecorationVariables(
-                                                                          sIndex:
-                                                                              -1);
+                                                                      decorationNameController .text =itemDecoration.name;
+                                                                      isListDecorationLibraryToggled =false;
+                                                                      print(decorationIndex);
+                                                                      // updateListDecorationVariables(sIndex: -1);
 
                                                                       if (itemDecoration
                                                                           is SuperDecoration) {
-                                                                        sheetDecorationVariables = itemDecoration
-                                                                            .itemDecorationList
-                                                                            .map(
-                                                                          (e) {
-                                                                            return SheetDecorationVariables(
-                                                                              id: e,
-                                                                              marginFocusNodes: List.generate(
-                                                                                5,
-                                                                                (index) => FocusNode(),
-                                                                              ),
-                                                                              listPaddingFocusNodes: List.generate(
-                                                                                5,
-                                                                                (index) => FocusNode(),
-                                                                              ),
-                                                                              colorHexFocusNodes: List.generate(
-                                                                                2,
-                                                                                (index) => FocusNode(),
-                                                                              ),
-                                                                              borderFocusNodes: List.generate(
-                                                                                3,
-                                                                                (index) => FocusNode(),
-                                                                              ),
-                                                                              borderRadiusFocusNodes: List.generate(
-                                                                                5,
-                                                                                (index) => FocusNode(),
-                                                                              ),
-                                                                              listBorderFocusNodes: List.generate(
-                                                                                5,
-                                                                                (index) => FocusNode(),
-                                                                              ),
-                                                                              listShadowFocusNodes: List.generate(
-                                                                                sheetDecorationList.firstWhere(
-                                                                                  (element) => element.id == e,
-                                                                                ) is ItemDecoration
-                                                                                    ? (sheetDecorationList.firstWhere(
-                                                                                          (element) => element.id == e,
-                                                                                        ) as ItemDecoration)
-                                                                                            .decoration
-                                                                                            .boxShadow
-                                                                                            ?.length ??
-                                                                                        1
-                                                                                    : 1,
-                                                                                (i) {
-                                                                                  return List.generate(
-                                                                                    5,
-                                                                                    (index) => FocusNode(),
-                                                                                  );
-                                                                                },
-                                                                              ),
-                                                                              listImageAlignFocusNodes: [
-                                                                                FocusNode(),
-                                                                                FocusNode()
-                                                                              ],
-                                                                              listImagePropertyFocusNodes: [
-                                                                                FocusNode(),
-                                                                                FocusNode()
-                                                                              ],
-                                                                              listShadowLayerSelectedIndex: 0,
-                                                                            );
-                                                                          },
-                                                                        ).toList();
+                                                                            print(decorationIndex);
+                                                                        updateSheetDecorationvariables(itemDecoration);
+                                                                        return;
                                                                       } else{
-                                                                        _findSheetListItem();
-                                                                        decorationIndex =
-                                                                          entry
-                                                                              .key;
+                                                                        print(decorationIndex);
+                                                                        // _findSheetListItem();
+                                                                        updateSheetDecorationvariables((sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration));
+                                                                        
+                                                                        decorationIndex = entry.key;
                                                                         }
-
                                                                     }
+                                                                });
+                                                              },
+                                                              onDoubleTap: () {
+                                                                setState(() {
+                                                                  var itemDecoration = decorationIterator(
+                                                                      (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[entry.key],
+                                                                      sheetDecorationList);
+                                                                  if (itemDecoration is SuperDecoration) {    
+                                                                  decorationNameController.text = itemDecoration.name;
+                                                                  isListDecorationLibraryToggled = false;
+
+                                                                  updateSheetDecorationvariables(itemDecoration);
+                                                                  listDecorationPath.add(itemDecoration.id);
+                                                                  print(listDecorationPath);
+                                                                  decorationIndex = -1;
+                                                                  }
+
                                                                 });
                                                               },
                                                               child: SizedBox(
@@ -16331,7 +16402,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                       duration: Duration(
                                                           milliseconds: (500 +
                                                                   (300 /
-                                                                          ((sheetListItem.listDecoration.itemDecorationList.length == 1 ? 2 : sheetListItem.listDecoration.itemDecorationList.length) -
+                                                                          (((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length) -
                                                                               1)) *
                                                                       entry.key)
                                                               .round()),
@@ -16358,19 +16429,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 if (decorationIndex !=
                                                                     -1) {
                                                                   setState(() {
-                                                                    if (sheetListItem
-                                                                            .listDecoration
+                                                                    if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                                             .itemDecorationList
                                                                             .length >
                                                                         1) {
-                                                                      sheetListItem
-                                                                          .listDecoration
+                                                                      (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                                           .itemDecorationList
                                                                           .removeAt(
                                                                               decorationIndex);
-                                                                      decorationIndex -=
-                                                                          1;
+                                                                      decorationIndex =-1;
+                                                                      updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration));
                                                                     }
+
                                                                   });
                                                                 }
                                                               },
@@ -18892,49 +18962,73 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
-  Container buildDecoratedContainer(
+  Widget buildDecoratedContainer(
     SuperDecoration superDecoration,
     Widget child,
-    bool isPreview,
-  ) {
+    bool isPreview, {
+    List<String> visitedIds = const [],
+    int depth = 0,
+    int maxDepth = 10, // Adjustable depth limit for cycles
+  }) {
+    // Add current ID to visited list if not already present
+    List<String> newVisitedIds = List.from(visitedIds);
+
+    // Check for cycle and update visited list only if not already in it
+    if (visitedIds.contains(superDecoration.id)) {
+      // print('Cycle detected');
+      // If already visited and depth limit reached, break
+      if (depth >= maxDepth) {
+        print('Max depth reached at ${superDecoration.id}. Stopping further nesting.');
+        return child;
+      }
+    } else {
+      // Add to visited list since it is not yet visited
+      newVisitedIds.add(superDecoration.id);
+    }
+
     Widget current = child;
 
-    List<SheetDecoration> stack =
-        decorationListIterator(superDecoration.itemDecorationList);
+    // Get the decorations stack (direct descendants)
+    List<SheetDecoration> stack = decorationListIterator(superDecoration.itemDecorationList);
 
     for (int i = stack.length - 1; i >= 0; i--) {
       final deco = stack[i];
 
-      if (deco is ItemDecoration) {
-        BoxDecoration boxDecoration = deco.decoration;
-        Border border = ((boxDecoration.border ?? Border.all(color: defaultPalette.transparent)) as Border);
-        // If dashLength > 0, apply dashed border
+      // Continue building the decoration if within depth limit
+      if (depth < maxDepth) {
+        if (deco is ItemDecoration) {
+          BoxDecoration boxDecoration = deco.decoration;
+          Border border = ((boxDecoration.border ?? Border.all(color: Colors.transparent)) as Border);
 
-        current = Container(
-          padding: deco.padding,
-          margin: deco.margin,
-          alignment: deco.alignment,
-          decoration: boxDecoration.copyWith(
+          current = Container(
+            padding: deco.padding,
+            margin: deco.margin,
+            alignment: null,
+            decoration: boxDecoration.copyWith(
               border: Border(
-            top: border.top.copyWith(
-                width: border.top.width
-                    .clamp(0, isPreview ? 15 : double.infinity)),
-            bottom: border.bottom.copyWith(
-                width: border.bottom.width
-                    .clamp(0, isPreview ? 15 : double.infinity)),
-            left: border.left.copyWith(
-                width: border.left.width
-                    .clamp(0, isPreview ? 15 : double.infinity)),
-            right: border.right.copyWith(
-                width: border.right.width
-                    .clamp(0, isPreview ? 15 : double.infinity)),
-          )),
-          foregroundDecoration: deco.foregroundDecoration,
-          transform: deco.transform,
-          child: current,
-        );
-      } else if (deco is SuperDecoration) {
-        current = buildDecoratedContainer(deco, current, isPreview);
+                top: border.top.copyWith(width: border.top.width.clamp(0, isPreview ? 15 : double.infinity)),
+                bottom: border.bottom.copyWith(width: border.bottom.width.clamp(0, isPreview ? 15 : double.infinity)),
+                left: border.left.copyWith(width: border.left.width.clamp(0, isPreview ? 15 : double.infinity)),
+                right: border.right.copyWith(width: border.right.width.clamp(0, isPreview ? 15 : double.infinity)),
+              ),
+            ),
+            foregroundDecoration: deco.foregroundDecoration,
+            transform: deco.transform,
+            child: current,
+          );
+        } else if (deco is SuperDecoration) {
+          // Recursive call with updated visited list and increased depth
+          current = buildDecoratedContainer(
+            deco,
+            current,
+            isPreview,
+            // visitedIds: newVisitedIds,
+            depth: depth + 1,
+            maxDepth: maxDepth,
+          );
+        }
+      } else {
+        // print('Depth limit reached, stopping recursion.');
       }
     }
 
@@ -18944,7 +19038,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   List<Widget> buildSuperDecorationEditor(
     SuperDecoration superDecoration
   ){
-    // print('ya: ');
+    if(superDecoration.itemDecorationList.isEmpty){
+      return [];
+    }
     var index = -1;
     return superDecoration.itemDecorationList.map((e) {
       var itemDecoration = sheetDecorationList.firstWhere((element) => element.id ==e,);
@@ -19008,9 +19104,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       } else {
         return GestureDetector(
               onTap: () {
-               
                 setState(() {
-                  
+                  var itemDecoration =  (sheetDecorationList.firstWhere((el) => el.id == e) as SuperDecoration);
+                  if (itemDecoration is SuperDecoration) {    
+                  decorationNameController.text = itemDecoration.name;
+                  isListDecorationLibraryToggled = false;
+
+                  updateSheetDecorationvariables(itemDecoration);
+                  listDecorationPath.add(itemDecoration.id);
+                  print(listDecorationPath);
+                  decorationIndex = -1;
+                  }
+
                 });
               },
               child: Container(
@@ -19055,7 +19160,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       }
     },).toList().reversed.toList();
   }
-
 
   List<Widget> buildItemDecorationEditor(
     ItemDecoration itemDecoration,
@@ -23366,180 +23470,6 @@ class NoMenuTextSelectionControls extends MaterialTextSelectionControls {
     // Return null or an empty container to disable the right-click context menu
     return Container();
   }
-}
-
-dynamic pushExportField(BuildContext context, TextEditorItem textEditorItem,
-    documentPropertiesList, currentPageIndex) async {
-  GlobalKey repaintBoundaryKey = GlobalKey();
-  await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => Scaffold(
-        appBar: AppBar(
-          title: Text('PDF Preview'),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.image),
-              onPressed: () async {
-                RenderRepaintBoundary boundary =
-                    repaintBoundaryKey.currentContext!.findRenderObject()
-                        as RenderRepaintBoundary;
-                ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                ByteData? byteData =
-                    await image.toByteData(format: ui.ImageByteFormat.png);
-                Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                // Get the directory to save the image
-                final directory = await getApplicationDocumentsDirectory();
-                final imagePath = '${directory.path}/captured_image.png';
-                File(imagePath).writeAsBytesSync(pngBytes);
-
-                print('Image saved at: $imagePath');
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.print),
-              onPressed: () async {
-                RenderRepaintBoundary boundary =
-                    repaintBoundaryKey.currentContext!.findRenderObject()
-                        as RenderRepaintBoundary;
-                ui.Image image = await boundary.toImage(pixelRatio: 6.0);
-                ByteData? byteData =
-                    await image.toByteData(format: ui.ImageByteFormat.png);
-                Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                // Get the directory to save the image
-                final directory = await getApplicationDocumentsDirectory();
-                final imagePath = '${directory.path}/captured_image.png';
-                File(imagePath).writeAsBytesSync(pngBytes);
-
-                // Prepare the PDF document
-                final pdf = pw.Document();
-                final imageProvider = pw.MemoryImage(pngBytes);
-
-                pdf.addPage(
-                  pw.Page(
-                    pageFormat: documentPropertiesList[currentPageIndex]
-                        .pageFormatController,
-                    margin: pw.EdgeInsets.only(
-                      top: double.parse(documentPropertiesList[currentPageIndex]
-                          .marginTopController
-                          .text),
-                      bottom: double.parse(
-                          documentPropertiesList[currentPageIndex]
-                              .marginBottomController
-                              .text),
-                      left: double.parse(
-                          documentPropertiesList[currentPageIndex]
-                              .marginLeftController
-                              .text),
-                      right: double.parse(
-                          documentPropertiesList[currentPageIndex]
-                              .marginRightController
-                              .text),
-                    ),
-                    build: (pw.Context context) {
-                      return pw.Center(
-                        child: pw.Image(imageProvider),
-                      ); // Center the image on the page
-                    },
-                  ),
-                );
-
-                // Save the PDF to a file
-                final pdfPath = '${directory.path}/document.pdf';
-                final file = File(pdfPath);
-                await file.writeAsBytes(await pdf.save());
-
-                print('PDF saved at: $pdfPath');
-              },
-            ),
-          ],
-        ),
-        body: RepaintBoundary(
-          key: repaintBoundaryKey,
-          child: Container(
-            width:
-                documentPropertiesList[currentPageIndex].pageFormatController ==
-                        PdfPageFormat.a4
-                    ? 793.7
-                    : documentPropertiesList[currentPageIndex]
-                                .pageFormatController ==
-                            PdfPageFormat.a3
-                        ? 812.8
-                        : documentPropertiesList[currentPageIndex]
-                                    .pageFormatController ==
-                                PdfPageFormat.a5
-                            ? 559.4
-                            : documentPropertiesList[currentPageIndex]
-                                        .pageFormatController ==
-                                    PdfPageFormat.a6
-                                ? 396.9
-                                : documentPropertiesList[currentPageIndex]
-                                            .pageFormatController ==
-                                        PdfPageFormat.letter
-                                    ? 816
-                                    : documentPropertiesList[currentPageIndex]
-                                                .pageFormatController ==
-                                            PdfPageFormat.legal
-                                        ? 816
-                                        : 1240, // Default width
-            height:
-                documentPropertiesList[currentPageIndex].pageFormatController ==
-                        PdfPageFormat.a4
-                    ? 1122.5
-                    : documentPropertiesList[currentPageIndex]
-                                .pageFormatController ==
-                            PdfPageFormat.a3
-                        ? 1122.5
-                        : documentPropertiesList[currentPageIndex]
-                                    .pageFormatController ==
-                                PdfPageFormat.a5
-                            ? 793.7
-                            : documentPropertiesList[currentPageIndex]
-                                        .pageFormatController ==
-                                    PdfPageFormat.a6
-                                ? 559.4
-                                : documentPropertiesList[currentPageIndex]
-                                            .pageFormatController ==
-                                        PdfPageFormat.letter
-                                    ? 1056
-                                    : documentPropertiesList[currentPageIndex]
-                                                .pageFormatController ==
-                                            PdfPageFormat.legal
-                                        ? 1344
-                                        : 3508, // Default height
-            padding: EdgeInsets.only(
-              top: double.parse(documentPropertiesList[currentPageIndex]
-                  .marginTopController
-                  .text),
-              bottom: double.parse(documentPropertiesList[currentPageIndex]
-                  .marginBottomController
-                  .text),
-              left: double.parse(documentPropertiesList[currentPageIndex]
-                  .marginLeftController
-                  .text),
-              right: double.parse(documentPropertiesList[currentPageIndex]
-                  .marginRightController
-                  .text),
-            ),
-            margin: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black)]),
-            child: QuillEditor(
-              // Replace with your QuillEditor configurations
-              configurations: QuillEditorConfigurations(
-                  controller:
-                      textEditorItem.textEditorConfigurations.controller),
-              focusNode: FocusNode(),
-              scrollController: ScrollController(),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 class SmoothScrollBehavior extends MaterialScrollBehavior {
