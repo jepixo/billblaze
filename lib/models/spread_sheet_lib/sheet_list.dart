@@ -20,6 +20,8 @@ class SheetListBox extends SheetItem {
   int crossAxisAlignment;  
   @HiveField(6)
   String decorationId;
+  @HiveField(7)
+  int mainAxisSize;
 
   SheetListBox(
       {
@@ -29,15 +31,20 @@ class SheetListBox extends SheetItem {
       required super.parentId, 
       this.mainAxisAlignment = 0,
       this.crossAxisAlignment = 0,
+      this.mainAxisSize =0,
       required this.decorationId, 
       });
 
   SheetList toSheetList() {
+    print('A PARENT: '+ super.parentId );
     return SheetList(
         sheetList: [],
         direction: direction == true ? Axis.vertical : Axis.horizontal,
-        id: id,
-        parentId: parentId,
+        id: super.id,
+        parentId: super.parentId,
+        mainAxisAlignment: MainAxisAlignment.values[mainAxisAlignment],
+        crossAxisAlignment: CrossAxisAlignment.values[crossAxisAlignment],
+        mainAxisSize: MainAxisSize.values[mainAxisSize],
         listDecoration: Boxes.getSuperDecoration(decorationId).toSuperDecoration(),
         );
   }
@@ -50,6 +57,7 @@ class SheetList extends SheetItem {
   SuperDecoration listDecoration;
   MainAxisAlignment mainAxisAlignment;
   CrossAxisAlignment crossAxisAlignment;
+  MainAxisSize mainAxisSize;
 
   SheetList(
       {required String id,
@@ -59,24 +67,24 @@ class SheetList extends SheetItem {
       required this.listDecoration,
       this.mainAxisAlignment = MainAxisAlignment.start,
       this.crossAxisAlignment = CrossAxisAlignment.start,
+      this.mainAxisSize = MainAxisSize.min,
       this.size = const Size(0, 0)})
-      : super(id: id, parentId: parentId) { 
-    for (var item in sheetList) {
-      item.parentId = id;
-    }
-  }
+      : super(id: id, parentId: parentId);
 
   SheetListBox toSheetListBox() {
-    print('found A SUPERDECORATION: '+ listDecoration.id );
+    // print('found A SUPERDECORATION: '+ listDecoration.id );
     // Boxes.getDecorations().put(listDecoration.id, listDecoration.toSuperDecorationBox());
+    // print('Z PARENT: '+ super.parentId );
+    // print('Zz PARENT: '+ parentId );
     return SheetListBox(
         sheetList: [],
         direction: direction == Axis.vertical ? true : false,
-        id: id,
-        parentId: parentId,
+        id: super.id,
+        parentId: super.parentId,
         decorationId: listDecoration.id,
         crossAxisAlignment: crossAxisAlignment.index,
         mainAxisAlignment: mainAxisAlignment.index,
+        mainAxisSize: mainAxisSize.index,
          );
   }
 
@@ -155,21 +163,26 @@ class SheetList extends SheetItem {
   }
 
   SheetList copyWith(
-      {List<SheetItem>? sheetList,
+      {
+      String? parentId,
+      String? id,
+      List<SheetItem>? sheetList,
       Axis? direction,
       Size? size, 
       MainAxisAlignment? mainAxisAlignment,
       CrossAxisAlignment? crossAxisAlignment,
+      MainAxisSize? mainAxisSize,
       SuperDecoration? listDecoration}) {
     return SheetList(
-      id: super.id,
-      parentId: super.parentId,
+      id: id?? super.id,
+      parentId:parentId?? super.parentId,
       sheetList: sheetList ?? this.sheetList,
       direction: direction ?? this.direction,
       size: size ?? this.size,
       mainAxisAlignment: mainAxisAlignment ?? this.mainAxisAlignment,
       crossAxisAlignment: crossAxisAlignment ?? this.crossAxisAlignment,
       listDecoration: listDecoration ?? this.listDecoration,
+      mainAxisSize: mainAxisSize ?? this.mainAxisSize
     );
   }
 }
