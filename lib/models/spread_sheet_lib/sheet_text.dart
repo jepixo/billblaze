@@ -6,22 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
-
-import 'package:billblaze/components/elevated_button.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 
-part 'text_editor_item.g.dart';
+part 'sheet_text.g.dart';
 
 //  ignore: depend_on_referenced_packages
 // import 'package:parchment_delta/parchment_delta.dart';
 @HiveType(typeId: 3)
-class TextEditorItemBox extends SheetItem {
+class SheetTextBox extends SheetItem {
   @HiveField(2)
   final List<Map<String, dynamic>> textEditorController;
   @HiveField(3)
   final List<String>? linkedTextEditors;
-  TextEditorItemBox({
+  SheetTextBox({
     this.linkedTextEditors = null,
     required this.textEditorController,
     required super.id,
@@ -29,7 +26,7 @@ class TextEditorItemBox extends SheetItem {
   });
 }
 
-class TextEditorItem extends SheetItem {
+class SheetText extends SheetItem {
   final QuillController textEditorController;
   final QuillEditorConfigurations textEditorConfigurations;
   final FocusNode focusNode;
@@ -37,7 +34,7 @@ class TextEditorItem extends SheetItem {
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
   List<String>? linkedTextEditors;
   //
-  TextEditorItem._({
+  SheetText._({
     required super.id,
     required super.parentId,
     required this.textEditorController,
@@ -50,7 +47,7 @@ class TextEditorItem extends SheetItem {
           multiRowsDisplay: false,
         ) {}
 
-  factory TextEditorItem({
+  factory SheetText({
     QuillController? textEditorController,
     String? initialValue,
     required String id,
@@ -75,7 +72,7 @@ class TextEditorItem extends SheetItem {
           padding: EdgeInsets.all(8),
         );
 
-    return TextEditorItem._(
+    return SheetText._(
         textEditorController: controller,
         id: id,
         parentId: parentId,
@@ -95,7 +92,7 @@ class TextEditorItem extends SheetItem {
     return textEditorController.document.toDelta().toJson();
   }
 
-  TextEditorItem copyWith({
+  SheetText copyWith({
     QuillController? textEditorController,
     QuillEditorConfigurations? textEditorConfigurations,
     FocusNode? focusNode,
@@ -105,7 +102,7 @@ class TextEditorItem extends SheetItem {
     String? parentId,
     List<String>? linkedTextEditors,
   }) {
-    return TextEditorItem._(
+    return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
       textEditorConfigurations:
           textEditorConfigurations ?? this.textEditorConfigurations,
@@ -115,10 +112,10 @@ class TextEditorItem extends SheetItem {
     );
   }
 
-  TextEditorItemBox toTEItemBox(TextEditorItem item) {
+  SheetTextBox toTEItemBox(SheetText item) {
     print(
         'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
-    return TextEditorItemBox(
+    return SheetTextBox(
         textEditorController:
             textEditorController.document.toDelta().toJson(),
         id: item.id,

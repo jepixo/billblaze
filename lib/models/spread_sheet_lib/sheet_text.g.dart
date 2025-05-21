@@ -1,22 +1,22 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'text_editor_item.dart';
+part of 'sheet_text.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TextEditorItemBoxAdapter extends TypeAdapter<TextEditorItemBox> {
+class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
   @override
   final int typeId = 3;
 
   @override
-  TextEditorItemBox read(BinaryReader reader) {
+  SheetTextBox read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return TextEditorItemBox(
+    return SheetTextBox(
       linkedTextEditors: (fields[3] as List?)?.cast<String>(),
       textEditorController: (fields[2] as List)
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
@@ -27,7 +27,7 @@ class TextEditorItemBoxAdapter extends TypeAdapter<TextEditorItemBox> {
   }
 
   @override
-  void write(BinaryWriter writer, TextEditorItemBox obj) {
+  void write(BinaryWriter writer, SheetTextBox obj) {
     writer
       ..writeByte(4)
       ..writeByte(2)
@@ -46,7 +46,7 @@ class TextEditorItemBoxAdapter extends TypeAdapter<TextEditorItemBox> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TextEditorItemBoxAdapter &&
+      other is SheetTextBoxAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,0 +1,1 @@
+enum PinStatus { left, none }

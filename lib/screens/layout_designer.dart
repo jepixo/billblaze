@@ -8,6 +8,9 @@ import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/Home.dart';
+import 'package:billblaze/components/davi.dart';
+import 'package:billblaze/components/davi/davi.dart';
+import 'package:billblaze/components/davi/model.dart';
 import 'package:billblaze/components/gradient_glow.dart';
 import 'package:billblaze/components/pickers/hsv_picker.dart';
 import 'package:billblaze/components/pickers/wheel_picker.dart';
@@ -54,7 +57,7 @@ import 'package:billblaze/components/printing.dart'
 // import 'package:printing/printing.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
-import 'package:billblaze/models/spread_sheet_lib/text_editor_item.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/util/numeric_input_filter.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -77,6 +80,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:trina_grid/trina_grid.dart';
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -333,6 +337,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   int currentPageIndex = 0;
   int decorationIndex = -1;
   late String initialLayoutName;
+  late TrinaGridStateManager stateManager;
   int whichPropertyTabIsClicked = 1;
   int whichTextPropertyTabIsClicked = 0;
   int whichListPropertyTabIsClicked = 0;
@@ -351,7 +356,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool isListDecorationPropertiesToggled = false;
   bool isListDecorationLibraryToggled = false;
   List<String> listDecorationPath =[];
-  late TextEditorItem item;
+  late SheetText item;
   late SheetList sheetListItem;
   var dragBackupValue;
   bool showDecorationLayers = true;
@@ -514,6 +519,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     super.didChangeDependencies();
     setState(() {
       var x = 80 / sHeight;
+      wH1DividerPosition = wH1DividerPosition.clamp(50/sWidth,1);
       wVDividerPosition = wVDividerPosition.clamp(x, 1);
       if (!ref.read(pgPropsEnableProvider)) {
         wVDividerPosition = 20 / sHeight;
@@ -563,9 +569,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       SheetListBox sheetListBox = sheetlist.toSheetListBox();
       // print('B PARENT: '+ sheetListBox.parentId );
       for (var i = 0; i < sheetlist.length; i++) {
-        if (sheetlist[i] is TextEditorItem) {
-          sheetListBox.sheetList.add((sheetlist[i] as TextEditorItem)
-              .toTEItemBox((sheetlist[i] as TextEditorItem)));
+        if (sheetlist[i] is SheetText) {
+          sheetListBox.sheetList.add((sheetlist[i] as SheetText)
+              .toTEItemBox((sheetlist[i] as SheetText)));
         } else if (sheetlist[i] is SheetList) {
           sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
         }
@@ -580,9 +586,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     SheetListBox sheetListBox = sheetlist.toSheetListBox();
     // print('Bb PARENT: '+ sheetListBox.parentId );
     for (var i = 0; i < sheetlist.length; i++) {
-      if (sheetlist[i] is TextEditorItem) {
-        sheetListBox.sheetList.add((sheetlist[i] as TextEditorItem)
-            .toTEItemBox((sheetlist[i] as TextEditorItem)));
+      if (sheetlist[i] is SheetText) {
+        sheetListBox.sheetList.add((sheetlist[i] as SheetText)
+            .toTEItemBox((sheetlist[i] as SheetText)));
       } else if (sheetlist[i] is SheetList) {
         sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
       }
@@ -596,11 +602,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     for (SheetListBox e in spreadsheetlist) {
       SheetList sheetList = e.toSheetList();
       for (var item in e.sheetList) {
-        if (item is TextEditorItemBox) {
-          // print('There is a TextEditorItemBox');
+        if (item is SheetTextBox) {
+          // print('There is a SheetTextBox');
           // print('TextEditor Id: ' + item.id);
           // print(item.linkedTextEditors);
-          TextEditorItem tEItem = _addTextField(
+          SheetText tEItem = _addTextField(
               shouldReturn: true,
               docString: item.textEditorController,
               id: item.id,
@@ -659,9 +665,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             for (var v = 0; v < listOfIdsNControllers.length; v++) {
               if (listOfIdsNControllers[v]
                       .containsKey(sheetList.sheetList[i].id) &&
-                  sheetList.sheetList[i] is TextEditorItem) {
+                  sheetList.sheetList[i] is SheetText) {
                 sheetList.sheetList[i] =
-                    (sheetList.sheetList[i] as TextEditorItem).copyWith(
+                    (sheetList.sheetList[i] as SheetText).copyWith(
                   textEditorController: listOfIdsNControllers[v]
                       [sheetList.sheetList[i].id]![0],
                   textEditorConfigurations: QuillEditorConfigurations(
@@ -669,10 +675,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       return customStyleBuilder(attribute);
                     },
                     disableClipboard: false,
-                    onTapDown: (sheetList.sheetList[i] as TextEditorItem)
+                    onTapDown: (sheetList.sheetList[i] as SheetText)
                         .textEditorConfigurations
                         .onTapDown,
-                    builder: (sheetList.sheetList[i] as TextEditorItem)
+                    builder: (sheetList.sheetList[i] as SheetText)
                         .textEditorConfigurations
                         .builder,
                     controller: QuillController(
@@ -718,10 +724,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         print('B PARENT: '+ sheetListBox.parentId );
     SheetList sheetList = sheetListBox.toSheetList();
     for (var item in sheetListBox.sheetList) {
-      if (item is TextEditorItemBox) {
+      if (item is SheetTextBox) {
         // print('TextEditor Id: ' + item.id);
         // print(item.linkedTextEditors);
-        TextEditorItem tEItem = _addTextField(
+        SheetText tEItem = _addTextField(
             shouldReturn: true,
             docString: item.textEditorController,
             id: item.id,
@@ -779,9 +785,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           for (var v = 0; v < listOfIdsNControllers.length; v++) {
             if (listOfIdsNControllers[v]
                     .containsKey(sheetList.sheetList[i].id) &&
-                sheetList.sheetList[i] is TextEditorItem) {
+                sheetList.sheetList[i] is SheetText) {
               sheetList.sheetList[i] =
-                  (sheetList.sheetList[i] as TextEditorItem).copyWith(
+                  (sheetList.sheetList[i] as SheetText).copyWith(
                 textEditorController: listOfIdsNControllers[v]
                     [sheetList.sheetList[i].id]![0],
                 textEditorConfigurations: QuillEditorConfigurations(
@@ -836,10 +842,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     return const TextStyle();
                   },
                   disableClipboard: false,
-                  onTapDown: (sheetList.sheetList[i] as TextEditorItem)
+                  onTapDown: (sheetList.sheetList[i] as SheetText)
                       .textEditorConfigurations
                       .onTapDown,
-                  builder: (sheetList.sheetList[i] as TextEditorItem)
+                  builder: (sheetList.sheetList[i] as SheetText)
                       .textEditorConfigurations
                       .builder,
                   controller: QuillController(
@@ -876,7 +882,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return sheetList;
   }
 
-  TextEditorItem _addTextField({
+  SheetText _addTextField({
     String id = '',
     String parentId = '',
     bool shouldReturn = false,
@@ -991,7 +997,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     if (!shouldReturn) {
       setState(() {
-        spreadSheetList[currentPageIndex].add(TextEditorItem(
+        spreadSheetList[currentPageIndex].add(SheetText(
             textEditorController: textController,
             textEditorConfigurations: textEditorConfigurations,
             id: newId,
@@ -1000,7 +1006,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
         var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
         lm[keyIndex].spreadSheetList[currentPageIndex].sheetList.add(
-            TextEditorItemBox(
+            SheetTextBox(
                 textEditorController:
                     textController.document.toDelta().toJson(),
                 id: newId,
@@ -1010,7 +1016,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       });
     }
 
-    return TextEditorItem(
+    return SheetText(
       textEditorController: textController,
       textEditorConfigurations: textEditorConfigurations,
       id: newId,
@@ -1064,8 +1070,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       // print('item id in iterator: ${sheetList[i].id}');
       // print('item in iterator: ${sheetList[i]}');
 
-      if (sheetList[i] is TextEditorItem && sheetList[i].id == id) {
-        // print('Found TextEditorItem with matching id: ${sheetList[i].id}');
+      if (sheetList[i] is SheetText && sheetList[i].id == id) {
+        // print('Found SheetText with matching id: ${sheetList[i].id}');
         return sheetList[i];
       }
 
@@ -1096,9 +1102,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       // print('item id in sublist iterator: ${sheetList[i].id}');
       // print('item in sublist iterator: ${sheetList[i]}');
 
-      if (sheetList[i] is TextEditorItem && sheetList[i].id == id) {
+      if (sheetList[i] is SheetText && sheetList[i].id == id) {
         print(
-            'Found TextEditorItem in sublist with matching id: ${sheetList[i].id}');
+            'Found SheetText in sublist with matching id: ${sheetList[i].id}');
         return sheetList[i];
       }
 
@@ -1256,11 +1262,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       var itemField = _addTextField(shouldReturn: true);
       var controller = QuillController(
         document: (spreadSheetList[currentPageIndex][panelIndex.panelIndex]
-                as TextEditorItem)
+                as SheetText)
             .textEditorController
             .document,
         selection: (spreadSheetList[currentPageIndex][panelIndex.panelIndex]
-                as TextEditorItem)
+                as SheetText)
             .textEditorController
             .selection,
         onDelete: itemField.textEditorController.onDelete,
@@ -1279,7 +1285,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       if (panelIndex.panelIndex != -1) {
         spreadSheetList[currentPageIndex].insert(
             panelIndex.panelIndex + 1,
-            TextEditorItem(
+            SheetText(
               id: itemField.id,
               parentId: itemField.parentId,
               focusNode: itemField.focusNode,
@@ -1687,7 +1693,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         List.generate(sheetList.sheetList.length, (index) {
                       final item = sheetList.sheetList[index];
 
-                      if (item is TextEditorItem) {
+                      if (item is SheetText) {
                         // print('in buildSheetListWidget item is: $item');
                         Alignment containerAlignment = Alignment.topLeft;
 
@@ -1784,7 +1790,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         List.generate(sheetList.sheetList.length, (index) {
                       final item = sheetList.sheetList[index];
 
-                      if (item is TextEditorItem) {
+                      if (item is SheetText) {
                         Alignment containerAlignment = Alignment.topLeft;
 
                         final currentAttributes = item.textEditorController
@@ -2327,9 +2333,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     try {
       item =
           _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
-              as TextEditorItem;
+              as SheetText;
     } on Exception catch (e) {
-      item = TextEditorItem(id: '', parentId: '');
+      item = SheetText(id: '', parentId: '');
     }
   }
 
@@ -2604,14 +2610,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         onPressed: () {
                                           FocusScope.of(context).unfocus();
                                           if (panelIndex.panelIndex != -1) {
-                                            final TextEditorItem
-                                                textEditorItem =
+                                            final SheetText
+                                                sheetText =
                                                 _sheetItemIterator(
                                                         panelIndex.id,
                                                         spreadSheetList[
                                                             currentPageIndex])
-                                                    as TextEditorItem;
-                                            textEditorItem.focusNode.unfocus();
+                                                    as SheetText;
+                                            sheetText.focusNode.unfocus();
                                           }
                                           _confirmDeleteLayout(
                                               deletePage: false);
@@ -2785,7 +2791,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         //
                         //Spread SHEET Layout //Desktop WEB
                         Positioned(
-                          left: sWidth * wH1DividerPosition,
+                          left: (sWidth * wH1DividerPosition),
                           width: sWidth *
                               (1 - wH1DividerPosition - wH2DividerPosition),
                           // flex: ((1 - wH1DividerPosition - wH2DividerPosition) *
@@ -2913,17 +2919,17 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //     //     'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
 //
                                       //     if (spreadSheetList[currentPageIndex]
-                                      //         [index] is TextEditorItem) {
-                                      //       var textEditorItem =
+                                      //         [index] is SheetText) {
+                                      //       var sheetText =
                                       //           spreadSheetList[
                                       //                   currentPageIndex][index]
-                                      //               as TextEditorItem;
+                                      //               as SheetText;
 //
                                       //       //check if the linkeditems list is nul or not
                            //                
                                       //       return ReorderableDelayedDragStartListener(
                                       //         index: index,
-                                      //         key: ValueKey(textEditorItem.id),
+                                      //         key: ValueKey(sheetText.id),
                                       //         child: GestureDetector(
                                       //           onTap: () {
                                       //             FocusScope.of(context)
@@ -2934,7 +2940,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
  //                                                 
                                       //             setState(() {
                                       //               itemE = _sheetItemIterator(
-                                      //                   textEditorItem.id,
+                                      //                   sheetText.id,
                                       //                   spreadSheetList[
                                       //                       currentPageIndex]);
 //
@@ -2953,10 +2959,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //               _findSheetListItem();            
                                       //               } else {
                                       //                 panelIndex = PanelIndex(
-                                      //                     id: textEditorItem.id,
+                                      //                     id: sheetText.id,
                                       //                     panelIndex: index,
                                       //                     parentId:
-                                      //                         textEditorItem
+                                      //                         sheetText
                                       //                             .parentId);
      //                                                 
                                       //               _findSheetListItem();            
@@ -2972,8 +2978,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //           onSecondaryLongPressDown: (d) {
                                       //             setState(() {
                                       //               panelIndex.id =
-                                      //                   textEditorItem.id;
-                                      //               panelIndex.parentId=textEditorItem.parentId;    
+                                      //                   sheetText.id;
+                                      //               panelIndex.parentId=sheetText.parentId;    
                                       //             });
                                       //             print('secondaryyyTapppppp');
                                       //             bool hasSelection(
@@ -3371,7 +3377,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                   onSelected: () async {
                                       //                     await pushExportField(
                                       //                         context,
-                                      //                         textEditorItem,
+                                      //                         sheetText,
                                       //                         documentPropertiesList,
                                       //                         currentPageIndex);
                                       //                   },
@@ -3396,7 +3402,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                                     () {
                                       //                                   setState(
                                       //                                       () {
-                                      //                                     textEditorItem
+                                      //                                     sheetText
                                       //                                         .textEditorController
                                       //                                         .document = Document();
                                       //                                   });
@@ -3471,7 +3477,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 //
                                       //             final entries =
                                       //                 buildContextMenuEntries(
-                                      //                     textEditorItem
+                                      //                     sheetText
                                       //                         .textEditorController);
                                       //             ContextMenu(
                                       //                     entries: entries,
@@ -3518,7 +3524,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                   child: CustomBorder(
                                       //                     color: panelIndex
                                       //                                 .id ==
-                                      //                             textEditorItem
+                                      //                             sheetText
                                       //                                 .id
                                       //                         ? defaultPalette
                                       //                             .tertiary
@@ -3533,7 +3539,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                     dashPattern: [10, 3],
                                       //                     strokeWidth: panelIndex
                                       //                                 .id ==
-                                      //                             textEditorItem
+                                      //                             sheetText
                                       //                                 .id
                                       //                         ? 2
                                       //                         : 1.2,
@@ -3561,13 +3567,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                                   .strokeAlignInside,
                                       //                           width: panelIndex
                                       //                                       .id ==
-                                      //                                   textEditorItem
+                                      //                                   sheetText
                                       //                                       .id
                                       //                               ? 2
                                       //                               : 1.2,
                                       //                           color: panelIndex
                                       //                                       .id ==
-                                      //                                   textEditorItem
+                                      //                                   sheetText
                                       //                                       .id
                                       //                               ? defaultPalette
                                       //                                   .tertiary
@@ -3594,10 +3600,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                                 child:
                                       //                                     QuillEditor(
                                       //                                   configurations:
-                                      //                                       textEditorItem
+                                      //                                       sheetText
                                       //                                           .textEditorConfigurations,
                                       //                                   focusNode:
-                                      //                                       textEditorItem
+                                      //                                       sheetText
                                       //                                           .focusNode,
                                       //                                   scrollController:
                                       //                                       ScrollController(),
@@ -3638,10 +3644,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       //                     Expanded(
                                       //                       child: QuillEditor(
                                       //                         configurations:
-                                      //                             textEditorItem
+                                      //                             sheetText
                                       //                                 .textEditorConfigurations,
                                       //                         focusNode:
-                                      //                             textEditorItem
+                                      //                             sheetText
                                       //                                 .focusNode,
                                       //                         scrollController:
                                       //                             ScrollController(),
@@ -4339,8 +4345,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           ),
                         ),
                         //
-
                         //
+                        
                         //
                         //RESIZE HANDLE VERTICAL 2
                         Positioned(
@@ -4405,47 +4411,16 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         //RESIZE HANDLE VERTICAL 1
                         Positioned(
                             top: Platform.isAndroid ? 35 : 0,
-                            left: sWidth * (wH1DividerPosition) - 5,
+                            left: (sWidth * wH1DividerPosition) - 5,
                             child: MouseRegion(
-                              cursor: _cursor,
-                              onExit: (event) {
-                                setState(() {
-                                  _cursor = SystemMouseCursors.basic;
-                                });
-                              },
-                              onHover: (PointerHoverEvent event) {
-                                Offset position = event.localPosition;
-                                Size? widgetSize = context.size;
-                                setState(() {
-                                  // Change the cursor based on position
-                                  if (widgetSize == null)
-                                    _cursor = SystemMouseCursors.basic;
-
-                                  // Define the edge proximity threshold
-                                  const edgeThreshold = 10.0;
-
-                                  // Check if the cursor is near the edges and set the cursor style accordingly
-                                  if (position.dx < edgeThreshold ||
-                                      position.dx >
-                                          (widgetSize?.width ?? 0) -
-                                              edgeThreshold) {
-                                    _cursor = SystemMouseCursors.resizeColumn;
-                                  } else if (position.dy < edgeThreshold ||
-                                      position.dy >
-                                          (widgetSize?.height ?? 0) -
-                                              edgeThreshold) {
-                                    _cursor = SystemMouseCursors.resizeRow;
-                                  } else {
-                                    _cursor = SystemMouseCursors.basic;
-                                  }
-                                });
-                              },
+                              cursor: SystemMouseCursors.resizeColumn,
+                              
                               child: GestureDetector(
                                 onPanUpdate: (details) {
                                   double newPosition = (wH1DividerPosition +
                                           details.delta.dx /
                                               context.size!.width)
-                                      .clamp(0.05, 0.4);
+                                      .clamp((50/sWidth), 0.4);
                                   setState(() {
                                     wH1DividerPosition = newPosition;
                                   });
@@ -4457,6 +4432,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 ),
                               ),
                             )),
+                        //
                       ],
                     ),
                   ),
@@ -5977,7 +5953,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                         panelIndex
                                                                             .id,
                                                                         spreadSheetList[
-                                                                            currentPageIndex]) as TextEditorItem;
+                                                                            currentPageIndex]) as SheetText;
 
                                                                     bool _getIsToggled(
                                                                         Map<String,
@@ -8019,7 +7995,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                     panelIndex.id,
                                                                     spreadSheetList[
                                                                         currentPageIndex])
-                                                                as TextEditorItem;
+                                                                as SheetText;
                                                             item.focusNode
                                                                 .unfocus();
                                                             setState(() {
@@ -8305,14 +8281,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         onPressed: () {
                                           FocusScope.of(context).unfocus();
                                           if (panelIndex.panelIndex != -1) {
-                                            final TextEditorItem
-                                                textEditorItem =
+                                            final SheetText
+                                                sheetText =
                                                 _sheetItemIterator(
                                                         panelIndex.id,
                                                         spreadSheetList[
                                                             currentPageIndex])
-                                                    as TextEditorItem;
-                                            textEditorItem.focusNode.unfocus();
+                                                    as SheetText;
+                                            sheetText.focusNode.unfocus();
                                           }
                                           _confirmDeleteLayout(
                                               deletePage: false);
@@ -8465,13 +8441,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           print(
                                               'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
                                           if (spreadSheetList[currentPageIndex]
-                                              [index] is TextEditorItem) {
-                                            var textEditorItem =
+                                              [index] is SheetText) {
+                                            var sheetText =
                                                 spreadSheetList[
                                                         currentPageIndex][index]
-                                                    as TextEditorItem;
+                                                    as SheetText;
                                             return Stack(
-                                              key: ValueKey(textEditorItem
+                                              key: ValueKey(sheetText
                                                   .id), // Ensure each item has a unique key
                                               children: [
                                                 GestureDetector(
@@ -8481,12 +8457,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     var isTrue = false;
                                                     SheetItem? itemE;
                                                     if (panelIndex.id ==
-                                                        textEditorItem.id) {
+                                                        sheetText.id) {
                                                       isTrue = true;
                                                     }
                                                     setState(() {
                                                       itemE = _sheetItemIterator(
-                                                          textEditorItem.id,
+                                                          sheetText.id,
                                                           spreadSheetList[
                                                               currentPageIndex]);
 
@@ -8504,11 +8480,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 '');
                                                       } else {
                                                         panelIndex = PanelIndex(
-                                                            id: textEditorItem
+                                                            id: sheetText
                                                                 .id,
                                                             panelIndex: index,
                                                             parentId:
-                                                                textEditorItem
+                                                                sheetText
                                                                     .parentId);
                                                       }
 
@@ -8567,12 +8543,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                           .primary,
                                                       border: Border.all(
                                                         width: panelIndex.id ==
-                                                                textEditorItem
+                                                                sheetText
                                                                     .id
                                                             ? 4
                                                             : 2,
                                                         color: panelIndex.id ==
-                                                                textEditorItem
+                                                                sheetText
                                                                     .id
                                                             ? defaultPalette
                                                                 .tertiary
@@ -8593,7 +8569,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   .only(
                                                                   bottom: 4),
                                                           child: Text(
-                                                              'id : ${textEditorItem.id}',
+                                                              'id : ${sheetText.id}',
                                                               style:
                                                                   const TextStyle(
                                                                       fontSize:
@@ -8601,13 +8577,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                         ),
                                                         QuillEditor(
                                                           configurations:
-                                                              textEditorItem
+                                                              sheetText
                                                                   .textEditorConfigurations,
                                                           focusNode:
-                                                              textEditorItem
+                                                              sheetText
                                                                   .focusNode,
                                                           scrollController:
-                                                              textEditorItem
+                                                              sheetText
                                                                   .scrollController,
                                                         ),
                                                       ],
@@ -8940,7 +8916,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     List<ContextMenuEntry>
     buildContextMenuEntries(
         QuillController
-            textEditorController, int index, TextEditorItem textEditorItem) {
+            textEditorController, int index, SheetText sheetText) {
     var entries = <ContextMenuEntry>[];
 
     bool hasSelection = textEditorController
@@ -9420,7 +9396,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 TextButton(
                     onPressed: () {
                       setState(() {
-                        textEditorItem
+                        sheetText
                                 .textEditorController
                                 .document =
                             Document();
@@ -9489,15 +9465,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return entries;
     }
 
-    void onRightClick(TextEditorItem textEditorItem, LongPressDownDetails d, int index) {
+    void onRightClick(SheetText sheetText, LongPressDownDetails d, int index) {
       setState(() {
-    panelIndex.id = textEditorItem.id;
-    panelIndex.parentId = textEditorItem.id;
+    panelIndex.id = sheetText.id;
+    panelIndex.parentId = sheetText.id;
     });
     print('secondaryyyTapppppp');
     
     final entries = buildContextMenuEntries(
-    textEditorItem.textEditorController, index, textEditorItem);
+    sheetText.textEditorController, index, sheetText);
     ContextMenu(
         entries: entries,
         boxDecoration: BoxDecoration(
@@ -9597,11 +9573,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     },
                     itemBuilder: (context, index) {
                       // print('hello hello sprdListBuilding: ${sheetList[index]}');
-                      if (sheetList[index] is TextEditorItem) {
-                        var textEditorItem = sheetList[index] as TextEditorItem;
+                      if (sheetList[index] is SheetText) {
+                        var sheetText = sheetList[index] as SheetText;
                         return ReorderableDelayedDragStartListener(
                           index: index,
-                          key: ValueKey(textEditorItem.id),
+                          key: ValueKey(sheetText.id),
                           child: IntrinsicWidth(
                             child: IntrinsicHeight(
                               child: Stack(
@@ -9612,7 +9588,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                                       setState(() {
                                         panelIndex = panelIndex.copyWith(
-                                            id: textEditorItem.id,
+                                            id: sheetText.id,
                                             parentId: sheetList.id);
 
                                         panelIndex.parentId = sheetList.id;
@@ -9633,7 +9609,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                       print(panelIndex);
                                     },
                                     onSecondaryLongPressDown: (d) {
-                                      onRightClick(textEditorItem, d, index);
+                                      onRightClick(sheetText, d, index);
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.only(
@@ -9643,7 +9619,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           right: 0),
                                       child: CustomBorder(
                                         color:
-                                            panelIndex.id == textEditorItem.id
+                                            panelIndex.id == sheetText.id
                                                 ? defaultPalette.tertiary
                                                 : defaultPalette.black,
                                         animateDuration:
@@ -9652,7 +9628,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         radius: const Radius.circular(10),
                                         dashPattern: [10, 3],
                                         strokeWidth:
-                                            panelIndex.id == textEditorItem.id
+                                            panelIndex.id == sheetText.id
                                                 ? 1.5
                                                 : 1.2,
                                         strokeCap: StrokeCap.square,
@@ -9668,11 +9644,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               strokeAlign:
                                                   BorderSide.strokeAlignInside,
                                               width: panelIndex.id ==
-                                                      textEditorItem.id
+                                                      sheetText.id
                                                   ? 1.5
                                                   : 1.2,
                                               color: panelIndex.id ==
-                                                      textEditorItem.id
+                                                      sheetText.id
                                                   ? defaultPalette.tertiary
                                                   : defaultPalette.black,
                                             ),
@@ -9689,10 +9665,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                               ),
                                               Expanded(
                                                 child: QuillEditor(
-                                                  configurations: textEditorItem
+                                                  configurations: sheetText
                                                       .textEditorConfigurations,
                                                   focusNode:
-                                                      textEditorItem.focusNode,
+                                                      sheetText.focusNode,
                                                   scrollController:
                                                       ScrollController(),
                                                 ),
@@ -9829,7 +9805,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                             visited.add(e.id);
 
-                            if (e is TextEditorItem) {
+                            if (e is SheetText) {
                              
 
                               return _addTextField(
@@ -10368,8 +10344,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     double calculateItemHeight(dynamic item) {
       double calculatedHeight = 0;
 
-      // Handling TextEditorItem
-      if (item is TextEditorItem) {
+      // Handling SheetText
+      if (item is SheetText) {
         String content = item.textEditorController.document.toPlainText();
         double maxFontSize = getMaxFontSize(item.textEditorController);
 
@@ -10464,8 +10440,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
     if (sheetList.direction == Axis.horizontal) {
       for (int i = 0; i < sheetList.length; i++) {
-        if (sheetList[i] is TextEditorItem) {
-          TextEditorItem textEditor = sheetList[i] as TextEditorItem;
+        if (sheetList[i] is SheetText) {
+          SheetText textEditor = sheetList[i] as SheetText;
           double maxFontSize = getMaxFontSize(textEditor.textEditorController);
 
           String content =
@@ -10487,8 +10463,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       }
     } else {
       for (int i = 0; i < sheetList.length; i++) {
-        if (sheetList[i] is TextEditorItem) {
-          TextEditorItem textEditor = sheetList[i] as TextEditorItem;
+        if (sheetList[i] is SheetText) {
+          SheetText textEditor = sheetList[i] as SheetText;
           double maxFontSize = getMaxFontSize(textEditor.textEditorController);
 
           String content =
@@ -15286,7 +15262,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                     isListDecorationPropertiesToggled
                                                         ? 0
                                                         : -width,
-                                                top: 0,
+                                                top: 20,
                                                 width:
                                                     isListDecorationPropertiesToggled
                                                         ? width - 102
@@ -15294,7 +15270,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 child: AnimatedContainer(
                                                   duration: Durations.medium4,
                                                   curve: Curves.easeInOut,
-                                                  height: 80,
+                                                  height: 60,
                                                   padding: EdgeInsets.all(4),
                                                   transform: Matrix4.identity()
                                                     ..translate(
@@ -15407,6 +15383,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                 } else {
                                                                   print('Error: Could not update parent decoration.');
                                                                 }
+                                                                sheetListItem.listDecoration = sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id,) as SuperDecoration;
                                                       
                                                             }
                                                       
@@ -15448,7 +15425,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                                   decorationIndex -=
                                                                       1;
                                                                 }
-                                                                
+                                                            sheetListItem.listDecoration = sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id,) as SuperDecoration;
+                                                         
                                                             }
                                                             },
                                                                 Icon(

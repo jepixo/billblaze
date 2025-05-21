@@ -8,7 +8,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
-import 'package:billblaze/models/spread_sheet_lib/text_editor_item.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/LoginSignUp.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,7 +29,7 @@ Future<void> main() async {
   Hive.registerAdapter(DocumentPropertiesBoxAdapter());
   Hive.registerAdapter(SheetItemAdapter());
   Hive.registerAdapter(SheetListBoxAdapter());
-  Hive.registerAdapter(TextEditorItemBoxAdapter());
+  Hive.registerAdapter(SheetTextBoxAdapter());
   Hive.registerAdapter(LayoutModelAdapter());
   Hive.registerAdapter(SheetDecorationAdapter());
   Hive.registerAdapter(SuperDecorationBoxAdapter());
