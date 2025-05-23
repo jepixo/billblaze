@@ -124,8 +124,8 @@ class SheetTableCellBox extends SheetItem {
   SheetItem unboxSheetItem(SheetItem sheetItem, Function findItem, Function textFieldTapDown) {
     if (sheetItem is SheetTextBox) {
       return addTextField(
-        id: super.id, 
-        parentId: super.parentId, 
+        id: sheetItem.id, 
+        parentId: sheetItem.parentId, 
         findItem: findItem, 
         textFieldTapDown: textFieldTapDown, 
         docString: sheetItem.textEditorController);
@@ -226,7 +226,7 @@ class SheetTableCellBox extends SheetItem {
           GoogleFonts.lexend(
             color: defaultPalette.extras[0].withOpacity(0.4),
             letterSpacing: -1,
-            fontSize:10,
+            fontSize:12,
           ),
           VerticalSpacing(0, 0),
           VerticalSpacing(0, 0), null

@@ -51,8 +51,6 @@ import "package:billblaze/components/color_picker.dart"
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:billblaze/colors.dart';
-import 'package:billblaze/components/printing.dart'
-    if (dart.library.html) 'package:printing/printing.dart';
 // import 'package:printing/printing.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
@@ -80,7 +78,7 @@ import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'package:trina_grid/trina_grid.dart';
-import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart' show FixedTableSpanExtent, MinSpanExtent, MinTableSpanExtent, SpanPadding, TableSpan, TableVicinity, TableView, TableViewCell;
+import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart' show FixedTableSpanExtent, TableSpan, TableVicinity, TableView, TableViewCell;
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -141,6 +139,7 @@ class SelectedIndex {
 
 
 
+
 final propertyCardIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
@@ -179,6 +178,7 @@ class LayoutDesigner3 extends ConsumerStatefulWidget {
 class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     with TickerProviderStateMixin {
   final _googleFontsApiKey = 'AIzaSyBSG_5VsGG03fTeSihFNxYSCVN3m6Ltb0c';
+  bool isLoading = true;
   String selectedFontCategory = 'san-serif';
   double hDividerPosition = 0.5;
   double vDividerPosition = 0.55;
@@ -326,7 +326,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   double get sHeight => MediaQuery.of(context).size.height;
   Color dialogSelectColor = Color(0xFF000000);
   List<SheetDecorationVariables> sheetDecorationVariables = [];
-  SystemMouseCursor _cursor = SystemMouseCursors.basic;
   Timer? _timer;
   TextEditingController layoutName = TextEditingController();
   TextEditingController decorationNameController = TextEditingController();
@@ -364,147 +363,145 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   //
   //
   //
-  @override
+@override
   void initState() {
     super.initState();
-    _renderPagePreviewOnProperties().then((x) {
-      Future.delayed(Durations.extralong2).then((x) {
-        _renderPagePreviewOnProperties();
-      });
+    // 1️⃣ Ensure loader paints before heavy work
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialize();
     });
+  }
+
+Future<void> _initialize() async {
+    if (!mounted) return;
+    setState(() => isLoading = true);
+
+    // ─── 2) Extract tiny JSON maps tagged with type ────────────────────────
+    final rawList = Boxes
+        .getDecorations()
+        .values
+        .map((box) {
+          if (box is ItemDecorationBox) {
+            return {'type': 'ItemDecoration', 'value': box.itemDecoration};
+          } else {
+            // SuperDecorationBox extends SheetDecoration, but carries only List<String>
+            return {
+              'type': 'SuperDecoration',
+              'value': (box as SuperDecorationBox).toSuperDecoration().toJson(),
+            };
+          }
+        })
+        .toList();
+
+    // ─── 3) Offload decoding entirely into an isolate ───────────────────────
+    final List<SheetDecoration> decoded =
+        await compute(decodeItemDecorationList, rawList);
+
+    // ─── 4) Back on main isolate: assign your lists ─────────────────────────
+    sheetDecorationList = decoded;
+    filteredDecorations = List.of(decoded);
+
+    // ─── 5) Your original Hive & layout logic ──────────────────────────────
+    final box = Boxes.getLayouts();
     key = widget.id ?? -1;
     keyIndex = widget.index ?? -1;
-    // _timer = Timer.periodic(Duration(milliseconds: 100), (t) {
-    //   setState(() {
-    //     dateTimeNow = DateTime.now();
-    //   });
-    // });
-    // animateToPage(currentPageIndex);
-    var box = Boxes.getLayouts();
-    var decorationBox = Boxes.getDecorations();
-    sheetDecorationList = decorationBox.values.map(
-      (decoration) {
-        if (decoration is ItemDecorationBox) {
-          return (decoration as ItemDecorationBox).toItemDecoration();
-        } else {
-          return (decoration as SuperDecorationBox).toSuperDecoration();
-        }
-      },
-    ).toList();
-    filteredDecorations = sheetDecorationList;
-    if (key == -1) {
-      print('create new layout');
-      layoutName.text = Boxes.getLayoutName();
-      initialLayoutName = layoutName.text;
-      lm = LayoutModel(
-          createdAt: DateTime.now(),
-          modifiedAt: DateTime.now(),
-          name: layoutName.text,
-          docPropsList: [],
-          spreadSheetList: [],
-          id: const Uuid().v4());
 
+    if (key == -1) {
+      final name = Boxes.getLayoutName();
+      layoutName.text = name;
+      initialLayoutName = name;
+      lm = LayoutModel(
+        createdAt: DateTime.now(),
+        modifiedAt: DateTime.now(),
+        name: name,
+        docPropsList: [],
+        spreadSheetList: [],
+        id: const Uuid().v4(),
+      );
       key = Random().nextInt(100000);
       keyIndex = box.length;
       box.put(key, lm!);
-      // print(key);
       lm!.save();
-      Future.delayed(Duration.zero).then(
-        (value) {
-          // _addPdfPage();
-        },
-      ).then(
-        (value) {
-          // print(Boxes.getLayouts().get(key)?.docPropsList);
-        },
-      );
     } else {
-      // _addPdfPage();
-      print('reaches else in init');
-      // print(key);
       lm = box.get(key);
-      // print(box.get(key));
-      // print(lm?.docPropsList);
       spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
       layoutName.text = lm!.name;
-      initialLayoutName = layoutName.text;
-      // print(documentPropertiesList.isEmpty);
+      initialLayoutName = lm!.name;
     }
+
     if (documentPropertiesList.isEmpty) {
       _addPdfPage();
     }
-    // _updatePdfPreview('');
+
+    // ─── 6) Controllers & listeners ────────────────────────────────────────
     tabcunt = TabController(length: 2, vsync: this);
     globalKeys = List.generate(1000, (_) => GlobalKey());
     fetchFonts();
     _findItem();
     _unfocusAll();
-    fontsTabContainerController = TabController(length: 6, vsync: this);
-    fontsTabContainerController.animateTo(1);
-    fontsTabContainerController.addListener(() {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (timeStamp) {
-          setState(() {
-            // Update the category based on current tab index
-            if (whichPropertyTabIsClicked == 2) {
-              selectedFontCategory = fontsTabContainerController.index == 0
-                  ? 'search'
-                  : categorizedFonts.keys
-                      .elementAt(fontsTabContainerController.index - 1);
-            }
-          });
-        },
-      );
-    });
-    textPropertyTabContainerController = TabController(length: 3, vsync: this);
-    textPropertyTabContainerController.addListener(() {
-      setState(() {
-        whichTextPropertyTabIsClicked =
-            textPropertyTabContainerController.index;
-        whichPropertyTabIsClicked = 2;
-        // propertyTabController.jumpToPage(1);
-      });
-    });
-    textPropertyTabContainerController.addListener(() {
-      setState(() {
-        textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked);
-        textPropertyCardsController.animateTo(Offset(1, 1),
-            duration: Durations.short2, curve: Curves.ease);
-        whichPropertyTabIsClicked = 2;
-        // propertyTabController.jumpToPage(1);
-      });
-    });
-    listPropertyTabContainerController = TabController(length: 2, vsync: this);
-    listPropertyTabContainerController.addListener(() {
-      setState(() {
-        whichListPropertyTabIsClicked =
-            listPropertyTabContainerController.index;
-         listPropertyCardsController
-              .setCardIndex(whichListPropertyTabIsClicked);
-          listPropertyCardsController.animateTo(Offset(0.1, 0.1),
-              duration: Durations.short2, curve: Curves.ease);    
-        whichPropertyTabIsClicked = 3;
-        // propertyTabController.jumpToPage(2);
-      });
-    });
-    listPropertyTabContainerController.addListener(() {
-      setState(() {
-        if (listPropertyCardsController.cardIndex !=
-            whichListPropertyTabIsClicked) {
-          listPropertyCardsController
-              .setCardIndex(whichListPropertyTabIsClicked);
-          listPropertyCardsController.animateTo(Offset(0.1, 0.1),
-              duration: Durations.short2, curve: Curves.ease);
-        }
-        whichPropertyTabIsClicked = 3;
 
-        // propertyTabController.jumpToPage(2);
-      });
+    fontsTabContainerController = TabController(length: 6, vsync: this)
+      ..animateTo(1)
+      ..addListener(_onFontsTabChanged);
+
+    textPropertyTabContainerController = TabController(length: 3, vsync: this)
+      ..addListener(_onTextPropertyTabChanged);
+
+    listPropertyTabContainerController = TabController(length: 2, vsync: this)
+      ..addListener(_onListPropertyTabChanged);
+
+    // ─── 7) Done ────────────────────────────────────────────────────────────
+    if (!mounted) return;
+    setState(() {
+      panelIndex.parentId = spreadSheetList[currentPageIndex].id;
     });
-    //
+    setState(() => isLoading = false);
   }
 
+  // ─── Tab change handlers ─────────────────────────────────────────────────
+  void _onFontsTabChanged() {
+    if (!mounted) return;
+    final idx = fontsTabContainerController.index;
+    setState(() {
+      if (whichPropertyTabIsClicked == 2) {
+        selectedFontCategory = idx == 0
+            ? 'search'
+            : categorizedFonts.keys.elementAt(idx - 1);
+      }
+    });
+  }
+
+  void _onTextPropertyTabChanged() {
+    if (!mounted) return;
+    final idx = textPropertyTabContainerController.index;
+    setState(() {
+      whichTextPropertyTabIsClicked = idx;
+      whichPropertyTabIsClicked = 2;
+      textPropertyCardsController.setCardIndex(idx);
+      textPropertyCardsController.animateTo(
+        const Offset(1, 1),
+        duration: Durations.short2,
+        curve: Curves.ease,
+      );
+    });
+  }
+
+  void _onListPropertyTabChanged() {
+    if (!mounted) return;
+    final idx = listPropertyTabContainerController.index;
+    setState(() {
+      whichListPropertyTabIsClicked = idx;
+      listPropertyCardsController.setCardIndex(idx);
+      listPropertyCardsController.animateTo(
+        const Offset(0.1, 0.1),
+        duration: Durations.short2,
+        curve: Curves.ease,
+      );
+      whichPropertyTabIsClicked = 3;
+    });
+  }
+  // _____ Initialization Done _______________________________________________
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
@@ -625,7 +622,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         } else if (item is SheetListBox) {
           sheetList.sheetList.add(boxToSheetList(item));
         } else if (item is SheetTableBox) {
-          sheetList.sheetList.add((item as SheetTableBox).toSheetTable(_findItem,textFieldTapDown));
+          sheetList.sheetList.add((item).toSheetTable(_findItem,textFieldTapDown));
         }
       }
 
@@ -657,7 +654,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       } else if (item is SheetListBox) {
         sheetList.sheetList.add(boxToSheetList(item));
       } else if (item is SheetTableBox) {
-        sheetList.sheetList.add((item as SheetTableBox).toSheetTable(_findItem,textFieldTapDown));
+        sheetList.sheetList.add((item).toSheetTable(_findItem,textFieldTapDown));
       }
     }
     return sheetList;
@@ -827,29 +824,32 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return null;
   }
 
-  SheetItem _sheetItemIterator(String id, SheetList sheetList) {
-    // print('Length: ${sheetList.length}');
-    // print('id for search: $id');
+  SheetItem _sheetItemIterator(String id, SheetList sheetList, {bool shouldReturn = false}) {
+    print('Length: ${sheetList.length}');
+    print('id for search: $id');
 
     for (var i = 0; i < sheetList.length; i++) {
-      // print('item id in iterator: ${sheetList[i].id}');
-      // print('item in iterator: ${sheetList[i]}');
+      print('item id in iterator: ${sheetList[i].id}');
+      print('item in iterator: ${sheetList[i]}');
 
       if (sheetList[i] is SheetText && sheetList[i].id == id) {
-        // print('Found SheetText with matching id: ${sheetList[i].id}');
+        print('Found SheetText with matching id: ${sheetList[i].id}');
         return sheetList[i];
       }
 
-      if (sheetList[i] is SheetList) {
-        // print('Descending into nested SheetList with id: ${sheetList[i].id}');
-        try {
-          var itemItered = _itemIterator(id, sheetList[i] as SheetList);
-          if (itemItered != null) {
+      else if (sheetList[i] is SheetList) {
+        print('Descending into nested SheetList with id: ${sheetList[i].id}');
+          var itemItered = _sheetItemIterator(id, sheetList[i] as SheetList, shouldReturn: true);
+          if (itemItered.id == id) {
             return itemItered;
           }
-        } catch (e) {
-          // print('Exception caught in nested SheetList: $e');
-          continue; // Continue the loop to check the next item
+      }
+
+      else if(sheetList[i] is SheetTable) {
+        print('Descending into nested SheetTable with id: ${sheetList[i].id}');
+        var itemItered = _sheetTableItemIterator(id, sheetList[i] as SheetTable);
+        if (itemItered.id == id) {
+          return itemItered;
         }
       }
 
@@ -857,40 +857,49 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     }
 
     // Throw if the item was not found after iterating through the entire list
-    throw Exception('SheetItem with id $id not found');
+    if (!shouldReturn) {
+      throw Exception('SheetItem with id $id not found');
+    } else {
+      return SheetItem(id: 'yo', parentId: '');
+    }
   }
 
-  SheetItem? _itemIterator(String id, SheetList sheetList) {
-    // print('id for search in sublist: $id');
+  SheetItem _sheetTableItemIterator(String id, SheetTable sheetTable) {
+    SheetItem requiredItem = SheetText(id: 'yo', parentId: '');
+    for (var i = 0; i < sheetTable.rowData.length; i++) {
+      for (var v = 0; v < sheetTable.columnData.length; v++){
+        print('Length: ${sheetTable.cellData[i].length}');
+        print('id for search: $id');
+        print('item id in iterator: ${sheetTable.cellData[i][v].sheetItem.id}');
+        print('item in iterator: ${sheetTable.cellData[i][v].sheetItem}');
 
-    for (var i = 0; i < sheetList.length; i++) {
-      // print('item id in sublist iterator: ${sheetList[i].id}');
-      // print('item in sublist iterator: ${sheetList[i]}');
-
-      if (sheetList[i] is SheetText && sheetList[i].id == id) {
-        print(
-            'Found SheetText in sublist with matching id: ${sheetList[i].id}');
-        return sheetList[i];
-      }
-
-      if (sheetList[i] is SheetList) {
-        // print(
-        // 'Descending further into nested SheetList with id: ${sheetList[i].id}');
-        try {
-          var itemItered = _sheetItemIterator(id, sheetList[i] as SheetList);
-          if (itemItered != null) {
-            return itemItered;
-          }
-        } catch (e) {
-          // print('Exception caught in deeper nested SheetList: $e');
-          continue; // Continue the loop to check the next item
+        if (sheetTable.cellData[i][v].sheetItem is SheetText && sheetTable.cellData[i][v].sheetItem.id == id) {
+          print('Found SheetText with matching id: ${sheetTable.cellData[i][v].sheetItem.id}');
+          return sheetTable.cellData[i][v].sheetItem;
+          // return e;
         }
-      }
 
-      // print('ItemIterationChild: $i');
+        else if (sheetTable.cellData[i][v].sheetItem is SheetList) {
+          // print('Descending into nested SheetList with id: ${e.id}');
+          
+            SheetItem itemItered = _sheetItemIterator(id, sheetTable.cellData[i][v].sheetItem as SheetList, shouldReturn: true);
+            if (itemItered.id == id) {
+              return itemItered;
+            }
+          
+        }
+
+        else if(sheetTable.cellData[i][v].sheetItem is SheetTable) {
+          SheetItem itemItered = _sheetTableItemIterator(id, sheetTable.cellData[i][v].sheetItem as SheetTable);
+          if (itemItered.id == id) {
+            return itemItered;
+            // return itemItered;
+          }
+        }
+      } 
     }
 
-    return null; // This should return null if nothing is found, letting the parent function decide what to do
+    return requiredItem;
   }
 
   SheetDecoration decorationIterator(
@@ -1325,7 +1334,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     sWidth,
     sHeight,
   ) {
-    var width = (sWidth * (wH1DividerPosition - 0.04));
+    
     var doc = documentPropertiesList;
     var sheetList = spreadSheetList;
     return SingleChildScrollView(
@@ -1435,7 +1444,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   Widget _buildSheetListWidget(SheetList sheetList, double width,
-      {double? docWidth = null, double? docHeight = null}) {
+      {double? docWidth = null,}) {
         // print(sheetList.mainAxisSize.name);
     return buildDecoratedContainer(
         sheetList.listDecoration,
@@ -1550,25 +1559,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       final item = sheetList.sheetList[index];
 
                       if (item is SheetText) {
-                        Alignment containerAlignment = Alignment.topLeft;
-
-                        final currentAttributes = item.textEditorController
-                            .getSelectionStyle()
-                            .attributes;
-                        if (_getIsToggled(
-                            currentAttributes, Attribute.centerAlignment)) {
-                          containerAlignment = Alignment.center;
-                        } else if (_getIsToggled(
-                            currentAttributes, Attribute.rightAlignment)) {
-                          containerAlignment = Alignment.topRight;
-                        } else if (_getIsToggled(
-                            currentAttributes, Attribute.justifyAlignment)) {
-                          containerAlignment = Alignment
-                              .topLeft; // Adjust if you have other logic
-                        } else if (_getIsToggled(
-                            currentAttributes, Attribute.leftAlignment)) {
-                          containerAlignment = Alignment.topLeft;
-                        }
                         // print('in buildSheetListWidget item is: $item');
                         return IgnorePointer(
                           key: ValueKey(item),
@@ -2089,6 +2079,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   void _findItem() {
+    print('findItem called');
     try {
       item =
           _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
@@ -2105,11 +2096,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           print('sheetDecorationVariables hello.');
           print(sheetListItem.parentId);
     } on Exception catch (e) {
-      sheetListItem = SheetList(
-          id: 'yo',
-          parentId: '',
-          sheetList: [],
-          listDecoration: SuperDecoration(id: 'yo'));
+      sheetListItem = spreadSheetList[currentPageIndex];
     }
     setState(() {
       decorationNameController.text = sheetListItem.listDecoration.name;
@@ -2252,6 +2239,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     double topPadPosDistance = sHeight / 13;
     double leftPadPosDistance = sWidth / 15;
     double titleFontSize = sHeight / 11;
+    if (isLoading) {
+      return Container(
+        alignment:Alignment(0,0),
+        child: Text('Loading'));
+    }
     if (sWidth > sHeight) {
       //Desktop WEB
       return Scaffold(
@@ -9214,7 +9206,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return Stack(
       children: [
         GestureDetector(
-          behavior: HitTestBehavior.deferToChild,
+          behavior: HitTestBehavior.translucent,
           onTap: () {
             setState(() {
               panelIndex.parentId = sheetList.id;
@@ -10045,13 +10037,17 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   Widget buildSheetTableWidget(SheetTable sheetTable){
+    var tableHeight = 0.0;
+    var tableWidth = 0.0;
+    sheetTable.rowData.forEach((element) => tableHeight += element.size,);
+    sheetTable.columnData.forEach((element) => tableWidth += element.size,);
     return Container(
       margin: EdgeInsets.all(4).copyWith(right:3),
       padding: EdgeInsets.only(right:5),
-      width: ((sheetTable as SheetTable).columnData[0].size*(sheetTable as SheetTable).columnData.length)+15,
+      width: tableWidth+15,
       decoration: BoxDecoration( color:defaultPalette.primary,
       borderRadius: BorderRadius.circular(10)),
-      height:((sheetTable as SheetTable).rowData[0].size*(sheetTable as SheetTable).rowData.length)
+      height:tableHeight
       +18 //height of A B C row
       +20,
       child: ClipRRect(
@@ -10082,10 +10078,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       controller: controller1,
                       physics: physics1
                     ),
-                    rowCount:(sheetTable as SheetTable).rowData.length+1,
-                    columnCount: (sheetTable as SheetTable).columnData.length+1,
-                    pinnedColumnCount: (sheetTable as SheetTable).pinnedColumns,
-                    pinnedRowCount: (sheetTable as SheetTable).pinnedRows,
+                    rowCount:(sheetTable).rowData.length+1,
+                    columnCount: (sheetTable).columnData.length+1,
+                    pinnedColumnCount: (sheetTable).pinnedColumns,
+                    pinnedRowCount: (sheetTable).pinnedRows,
                     columnBuilder: (int i) {
                       if(i ==0){
                         return const TableSpan(
@@ -10125,23 +10121,36 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         return TableViewCell(
                         child: Padding(
                           padding: const EdgeInsets.only(bottom:2),
-                          child: Container(
-                            alignment: Alignment(0, 0),
-                            decoration: BoxDecoration(
-                              color: defaultPalette.primary,
-                              border: Border(
-                                top: BorderSide.none,
-                                left: BorderSide.none,
-                                bottom: BorderSide.none,
-                                right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4))
+                          child: MouseRegion(
+                              cursor: SystemMouseCursors.resizeColumn,
+                              child: GestureDetector(
+                                
+                                onHorizontalDragUpdate: (details) {
+                                
+                                setState(() {
+                                  sheetTable.columnData[vicinity.column-1].size += details.delta.dx.clamp(-5, 150);
+                                  sheetTable.columnData[vicinity.column-1].size = sheetTable.columnData[vicinity.column-1].size.clamp(25,double.infinity);
+                                });
+                                },
+                                child: Container(
+                                  alignment: Alignment(0, 0),
+                                  decoration: BoxDecoration(
+                                    color: defaultPalette.primary,
+                                    border: Border(
+                                      top: BorderSide.none,
+                                      left: BorderSide.none,
+                                      bottom: BorderSide.none,
+                                      right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.2))
+                                      ),
+                                      // borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(vicinity.column == (sheetTable as SheetTable).columnData.length-1?12:0))
+                                  ),
+                                  child: Text('${numberToColumnLabel(vicinity.column)}',
+                                  style: GoogleFonts.lexend(
+                                    letterSpacing: -1,
+                                    fontSize: 12
+                                  ),
+                                  ),
                                 ),
-                                // borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(vicinity.column == (sheetTable as SheetTable).columnData.length-1?12:0))
-                            ),
-                            child: Text('${numberToColumnLabel(vicinity.column)}',
-                            style: GoogleFonts.lexend(
-                              letterSpacing: -1,
-                              fontSize: 12
-                            ),
                             ),
                           ),
                         ),
@@ -10152,21 +10161,34 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         return TableViewCell(
                         child: Padding(
                           padding: const EdgeInsets.only(right:2.0),
-                          child: Container(
-                            alignment: Alignment(0, 0),
-                            decoration: BoxDecoration(
-                              color: defaultPalette.primary,
-                              border: Border(
-                                top: BorderSide.none,
-                                left: BorderSide.none,
-                                bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
-                                right: BorderSide.none),
-                            ),
-                            child: Text('${vicinity.row}',
-                            style: GoogleFonts.lexend(
-                              letterSpacing: -1,
-                              fontSize: 13
-                            ),
+                          child: MouseRegion(
+                              cursor: SystemMouseCursors.resizeRow,
+                              child: GestureDetector(
+                                
+                                onVerticalDragUpdate: (details) {
+                                
+                                setState(() {
+                                  sheetTable.rowData[vicinity.row-1].size += details.delta.dy.clamp(-5, 150);
+                                  sheetTable.rowData[vicinity.row-1].size = sheetTable.rowData[vicinity.row-1].size.clamp(25,double.infinity);
+                                });
+                                },
+                                child: Container(
+                                alignment: Alignment(0, 0),
+                                decoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border(
+                                    top: BorderSide.none,
+                                    left: BorderSide.none,
+                                    bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                                    right: BorderSide.none),
+                                ),
+                                child: Text('${vicinity.row}',
+                                style: GoogleFonts.lexend(
+                                  letterSpacing: -1,
+                                  fontSize: 13
+                                ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -10330,7 +10352,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       }
 
       else if (item is SheetTable) {
-        calculatedHeight = 250;
+        var tableHeight = 0.0;
+        item.rowData.forEach((element) => tableHeight += element.size,);
+        calculatedHeight = tableHeight
+      +18 //height of A B C row
+      +20;
       }
 
 
@@ -10431,6 +10457,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           SheetList nestedSheetList = sheetList[i] as SheetList;
           double nestedWidth = findSheetListBuildWidth(nestedSheetList);
           width += nestedWidth + 20;
+        } else if (sheetList[i] is SheetTable) {
+          var tableHeight = 0.0;
+          var tableWidth = 0.0;
+          (sheetList[i] as SheetTable).rowData.forEach((element) => tableHeight += element.size,);
+          (sheetList[i] as SheetTable).columnData.forEach((element) => tableWidth += element.size,);
+          width += tableWidth;
         }
       }
     } else {
@@ -10504,19 +10536,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   bool textFieldTapDown(TapDownDetails details, String newId) {
-    var isTrue = panelIndex.id == newId;
+    
     setState(() {
       var itemE = _sheetItemIterator(newId, spreadSheetList[currentPageIndex]);
-      print('parent id here from textfieldtapdown: ${itemE.parentId}');
-
-      var index =
-          _sheetListIterator(itemE.parentId, spreadSheetList[currentPageIndex])
-              .indexOf(itemE);
-      panelIndex =
-          PanelIndex(id: itemE.id, panelIndex: index, parentId: itemE.parentId);
-      print('this that pID from within the addText: ${itemE.parentId}');
-      print(
-          'this that id from addtext from panelindex: ${panelIndex.parentId}');
+      panelIndex.id = itemE.id;
       _findSheetListItem();
       whichPropertyTabIsClicked = 2;
       // propertyTabController.jumpToPage(1);
@@ -23382,19 +23405,25 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
   
   List<List<SheetTableCell>> defaultSheetTableCellData(String parentId) {
-  final uuid = Uuid();
   const rows = 10;
   const cols = 10;
 
   return List.generate(rows, (row) {
     return List.generate(cols, (col) {
       final content = 'Cell ${String.fromCharCode(65 + col)}${row+1}';
-      print(row.toString()+' '+col.toString()+' '+content);
+      var newId = Uuid().v4(); 
+
       return SheetTableCell(
-        id: uuid.v4(),
+        id: '${numberToColumnLabel(col)}${row+1}',
         parentId: parentId,
         data: content,
-        sheetItem: _addTextField(shouldReturn: true),
+        sheetItem: addTextField(
+          id: newId,
+          parentId: parentId,
+          docString: [],
+          findItem: _findItem,
+          textFieldTapDown: textFieldTapDown
+          ),
         rowSpan: 1,
         colSpan: 1,
       );
