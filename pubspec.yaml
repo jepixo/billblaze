@@ -22,7 +22,6 @@ dependencies:
   flutter_hooks: ^0.19.0
   # 
   #sketchy
-  material_table_view: ^4.0.2
   iconsax_plus: ^1.0.0
   #sketchy
   #comment for web
@@ -36,7 +35,7 @@ dependencies:
   printing: ^5.12.0
   # animated_menu: ^1.0.2
   number_counting_animation: ^1.0.2
-  flex_color_picker: ^3.6.0
+  # flex_color_picker: ^3.6.0
   
   animate_do: ^3.3.4
   crypto: ^3.0.3
@@ -64,6 +63,7 @@ dependencies:
   cool_background_animation: ^0.0.6 
   axis_layout: ^1.0.1
   trina_grid: ^1.6.8
+  two_dimensional_scrollables: ^0.3.4
 
 dev_dependencies:
   hive_generator: ^2.0.1

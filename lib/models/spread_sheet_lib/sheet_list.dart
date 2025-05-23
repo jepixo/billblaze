@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first 
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:flutter/material.dart'; 
 import 'package:hive/hive.dart';
@@ -35,10 +37,10 @@ class SheetListBox extends SheetItem {
       required this.decorationId, 
       });
 
-  SheetList toSheetList() {
+  SheetList toSheetList(Function findItem, Function textFieldTapDown) {
     print('A PARENT: '+ super.parentId );
     return SheetList(
-        sheetList: [],
+        sheetList: unboxSheetList(sheetList,findItem,textFieldTapDown),
         direction: direction == true ? Axis.vertical : Axis.horizontal,
         id: super.id,
         parentId: super.parentId,
@@ -47,6 +49,20 @@ class SheetListBox extends SheetItem {
         mainAxisSize: MainAxisSize.values[mainAxisSize],
         listDecoration: Boxes.getSuperDecoration(decorationId).toSuperDecoration(),
         );
+  }
+
+  List<SheetItem> unboxSheetList(List<SheetItem> sheetList, Function findItem, Function textFieldTapDown){
+    return sheetList.map((e) {
+      if (e is SheetTextBox) {
+        return e;
+      } else if ( e is SheetListBox) {
+        return e.toSheetList(findItem,textFieldTapDown);
+      } else if (e is SheetTableBox) {
+        return e.toSheetTable(findItem,textFieldTapDown);
+      } else {
+        return e;
+      }
+    },).toList();
   }
 }
 
@@ -72,12 +88,8 @@ class SheetList extends SheetItem {
       : super(id: id, parentId: parentId);
 
   SheetListBox toSheetListBox() {
-    // print('found A SUPERDECORATION: '+ listDecoration.id );
-    // Boxes.getDecorations().put(listDecoration.id, listDecoration.toSuperDecorationBox());
-    // print('Z PARENT: '+ super.parentId );
-    // print('Zz PARENT: '+ parentId );
     return SheetListBox(
-        sheetList: [],
+        sheetList: boxSheetList(sheetList),
         direction: direction == Axis.vertical ? true : false,
         id: super.id,
         parentId: super.parentId,
@@ -86,6 +98,20 @@ class SheetList extends SheetItem {
         mainAxisAlignment: mainAxisAlignment.index,
         mainAxisSize: mainAxisSize.index,
          );
+         
+  }
+
+  List<SheetItem> boxSheetList(List<SheetItem> sheetList) {
+    return sheetList.map((e) {
+       if (e is SheetText) {
+        return e.toTEItemBox(e);
+      } else if (e is SheetList) {
+        return e.toSheetListBox();
+      } else if (e is SheetTable) {
+        return e.toSheetTableBox();
+      }
+      return e;
+    },).toList();
   }
 
   // Adding an item to the list

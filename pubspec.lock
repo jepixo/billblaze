@@ -521,22 +521,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.68.0"
-  flex_color_picker:
-    dependency: "direct main"
-    description:
-      name: flex_color_picker
-      sha256: "12dc855ae8ef5491f529b1fc52c655f06dcdf4114f1f7fdecafa41eec2ec8d79"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.6.0"
-  flex_seed_scheme:
-    dependency: transitive
-    description:
-      name: flex_seed_scheme
-      sha256: "7639d2c86268eff84a909026eb169f008064af0fb3696a651b24b0fa24a40334"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -973,14 +957,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
-  material_table_view:
-    dependency: "direct main"
-    description:
-      name: material_table_view
-      sha256: e648bbfbef20f72c84ec128419c7fc9de59deea6221043ee26b89cac2acdeec6
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.0.2"
   meta:
     dependency: transitive
     description:
@@ -1474,6 +1450,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.8"
+  two_dimensional_scrollables:
+    dependency: "direct main"
+    description:
+      name: two_dimensional_scrollables
+      sha256: "1b0b29095d86df509d115ac668f85c3fcb0bd1554ccf89c289ca4769bead49db"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.4"
   typed_data:
     dependency: transitive
     description:

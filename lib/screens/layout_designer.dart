@@ -7,17 +7,16 @@ import 'dart:math';
 import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
-import 'package:billblaze/Home.dart';
-import 'package:billblaze/components/davi.dart';
-import 'package:billblaze/components/davi/davi.dart';
-import 'package:billblaze/components/davi/model.dart';
-import 'package:billblaze/components/gradient_glow.dart';
+import 'package:billblaze/home.dart';
 import 'package:billblaze/components/pickers/hsv_picker.dart';
 import 'package:billblaze/components/pickers/wheel_picker.dart';
-import 'package:billblaze/components/switcher_button.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
 import 'package:billblaze/components/widgets/hex_picker.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
@@ -47,8 +46,8 @@ import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart'
 import 'package:billblaze/util/HexColorInputFormatter.dart';
 import 'package:flutter/rendering.dart';
 import "package:billblaze/components/color_picker.dart"
-    show ColorPicker, Picker, PickerOrientation;
-import 'package:flex_color_picker/flex_color_picker.dart' as fl;
+    show ColorPicker, ColorTools, FlexPickerNoNullColorExtensions, Picker, PickerOrientation;
+// import 'package:flex_color_picker/flex_color_picker.dart' as fl;
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:billblaze/colors.dart';
@@ -81,6 +80,7 @@ import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'package:trina_grid/trina_grid.dart';
+import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart' show FixedTableSpanExtent, MinSpanExtent, MinTableSpanExtent, SpanPadding, TableSpan, TableVicinity, TableView, TableViewCell;
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -205,10 +205,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   PieMenuController opsMovePieController = PieMenuController();
   PieMenuController opsCopyPieController = PieMenuController();
   PieMenuController opsFormatPieController = PieMenuController();
-  PieMenuController listDirectionPieController = PieMenuController();
-  PieMenuController listMainAxisAlignmentPieController = PieMenuController();
-  PieMenuController listCrossAxisAlignmentDirectionPieController =
-      PieMenuController();
+  // PieMenuController listDirectionPieController = PieMenuController();
+  // PieMenuController listMainAxisAlignmentPieController = PieMenuController();
+  // PieMenuController listCrossAxisAlignmentDirectionPieController =
+  //     PieMenuController();
   List<SheetList> spreadSheetList = [];
   List<DocumentProperties> documentPropertiesList = [];
   List<SheetDecoration> sheetDecorationList = [];
@@ -391,6 +391,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         }
       },
     ).toList();
+    filteredDecorations = sheetDecorationList;
     if (key == -1) {
       print('create new layout');
       layoutName.text = Boxes.getLayoutName();
@@ -439,15 +440,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     fetchFonts();
     _findItem();
     _unfocusAll();
-    Boxes.getDecorations().values.toList().forEach(
-      (element) {
-        print(element.id +
-            ' ' +
-            element.name +
-            ' ' +
-            element.runtimeType.toString());
-      },
-    );
     fontsTabContainerController = TabController(length: 6, vsync: this);
     fontsTabContainerController.animateTo(1);
     fontsTabContainerController.addListener(() {
@@ -538,6 +530,16 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     textStyleTabControler.dispose();
     propertyCardsController.dispose();
     transformationcontroller.dispose();
+    opsFormatPieController.dispose();
+    opsMovePieController.dispose();
+    opsAddPieController.dispose();
+    opsCopyPieController.dispose();
+    layoutName.dispose();
+    decorationNameController.dispose();
+    decorationSearchController.dispose();
+    // listDirectionPieController.dispose();
+    // listMainAxisAlignmentPieController.dispose();
+    // listCrossAxisAlignmentDirectionPieController.dispose();
     // propertyTabController.dispose();
     super.dispose();
   }
@@ -567,6 +569,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     List<SheetListBox> listbox = [];
     for (SheetList sheetlist in spreadSheetList) {
       SheetListBox sheetListBox = sheetlist.toSheetListBox();
+      sheetListBox.sheetList = [];
       // print('B PARENT: '+ sheetListBox.parentId );
       for (var i = 0; i < sheetlist.length; i++) {
         if (sheetlist[i] is SheetText) {
@@ -574,6 +577,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               .toTEItemBox((sheetlist[i] as SheetText)));
         } else if (sheetlist[i] is SheetList) {
           sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
+        } else if (sheetlist[i] is SheetTable) {
+          sheetListBox.sheetList.add((sheetlist[i] as SheetTable).toSheetTableBox());
         }
       }
       listbox.add(sheetListBox);
@@ -584,13 +589,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   SheetListBox sheetListtoBox(SheetList sheetlist) {
     
     SheetListBox sheetListBox = sheetlist.toSheetListBox();
-    // print('Bb PARENT: '+ sheetListBox.parentId );
+    sheetListBox.sheetList = [];
     for (var i = 0; i < sheetlist.length; i++) {
       if (sheetlist[i] is SheetText) {
         sheetListBox.sheetList.add((sheetlist[i] as SheetText)
             .toTEItemBox((sheetlist[i] as SheetText)));
       } else if (sheetlist[i] is SheetList) {
         sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
+      } else if (sheetlist[i] is SheetTable) {
+        sheetListBox.sheetList.add((sheetlist[i] as SheetTable).toSheetTableBox());
       }
     }
     return sheetListBox;
@@ -598,14 +605,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
   List<SheetList> boxToSpreadSheet(spreadsheetlist) {
     List<SheetList> listbox = [];
-    List<Map<String, List<dynamic>>> listOfIdsNControllers = [];
     for (SheetListBox e in spreadsheetlist) {
-      SheetList sheetList = e.toSheetList();
+      SheetList sheetList = e.toSheetList(_findItem,textFieldTapDown);
+      sheetList.sheetList = [];
       for (var item in e.sheetList) {
         if (item is SheetTextBox) {
-          // print('There is a SheetTextBox');
-          // print('TextEditor Id: ' + item.id);
-          // print(item.linkedTextEditors);
           SheetText tEItem = _addTextField(
               shouldReturn: true,
               docString: item.textEditorController,
@@ -615,101 +619,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               id: item.id,
               parentId: item.parentId,
               linkedTextEditors: item.linkedTextEditors);
-          for (var i = 0; i < listOfIdsNControllers.length; i++) {
-            // print("THIS THE FOCUS NOW: " + listOfIdsNControllers[i].toString());
-            if (listOfIdsNControllers[i].containsKey(tEItem.id)) {
-              tEItem = tEItem.copyWith(
-                  textEditorController: listOfIdsNControllers[i][tEItem.id]![0],
-                  textEditorConfigurations: QuillEditorConfigurations(
-                    customStyleBuilder: (attribute) {
-                      return customStyleBuilder(attribute);
-                    },
-                    disableClipboard: false,
-                    onTapDown: tEItem.textEditorConfigurations.onTapDown,
-                    builder: tEItem.textEditorConfigurations.builder,
-                    controller: QuillController(
-                      document: listOfIdsNControllers[i][tEItem.id]![1]
-                          .controller
-                          .document,
-                      selection: listOfIdsNControllers[i][tEItem.id]![1]
-                          .controller
-                          .selection,
-                      readOnly: false,
-                      onSelectionChanged: (textSelection) {
-                        setState(() {});
-                      },
-                      onSelectionCompleted: () {
-                        setState(() {});
-                      },
-                      onDelete: (cursorPosition, forward) {
-                        setState(() {});
-                      },
-                    ),
-                  ));
-            }
-          }
-
-          if (item.linkedTextEditors != null) {
-            for (var i = 0; i < item.linkedTextEditors!.length; i++) {
-              // print(
-              //     "THIS other FOCUS: " + item.linkedTextEditors![i].toString());
-              listOfIdsNControllers.add({
-                item.linkedTextEditors![i]: [
-                  tEItem.textEditorController,
-                  tEItem.textEditorConfigurations
-                ]
-              });
-            }
-          }
-          for (var i = 0; i < sheetList.sheetList.length; i++) {
-            for (var v = 0; v < listOfIdsNControllers.length; v++) {
-              if (listOfIdsNControllers[v]
-                      .containsKey(sheetList.sheetList[i].id) &&
-                  sheetList.sheetList[i] is SheetText) {
-                sheetList.sheetList[i] =
-                    (sheetList.sheetList[i] as SheetText).copyWith(
-                  textEditorController: listOfIdsNControllers[v]
-                      [sheetList.sheetList[i].id]![0],
-                  textEditorConfigurations: QuillEditorConfigurations(
-                    customStyleBuilder: (attribute) {
-                      return customStyleBuilder(attribute);
-                    },
-                    disableClipboard: false,
-                    onTapDown: (sheetList.sheetList[i] as SheetText)
-                        .textEditorConfigurations
-                        .onTapDown,
-                    builder: (sheetList.sheetList[i] as SheetText)
-                        .textEditorConfigurations
-                        .builder,
-                    controller: QuillController(
-                      document: listOfIdsNControllers[v]
-                              [sheetList.sheetList[i].id]![1]
-                          .controller
-                          .document,
-                      selection: listOfIdsNControllers[v]
-                              [sheetList.sheetList[i].id]![1]
-                          .controller
-                          .selection,
-                      readOnly: false,
-                      onSelectionChanged: (textSelection) {
-                        setState(() {});
-                      },
-                      onSelectionCompleted: () {
-                        setState(() {});
-                      },
-                      onDelete: (cursorPosition, forward) {
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                );
-              }
-            }
-          }
+          
 
           sheetList.sheetList.add(tEItem);
         } else if (item is SheetListBox) {
-          sheetList.sheetList.add(boxToSheetList(item, listOfIdsNControllers));
+          sheetList.sheetList.add(boxToSheetList(item));
+        } else if (item is SheetTableBox) {
+          sheetList.sheetList.add((item as SheetTableBox).toSheetTable(_findItem,textFieldTapDown));
         }
       }
 
@@ -719,10 +635,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return listbox;
   }
 
-  SheetList boxToSheetList(SheetListBox sheetListBox,
-      List<Map<String, List<dynamic>>> listOfIdsNControllers) {
+  SheetList boxToSheetList(SheetListBox sheetListBox,) {
         print('B PARENT: '+ sheetListBox.parentId );
-    SheetList sheetList = sheetListBox.toSheetList();
+    SheetList sheetList = sheetListBox.toSheetList(_findItem,textFieldTapDown);
+    sheetList.sheetList = [];
     for (var item in sheetListBox.sheetList) {
       if (item is SheetTextBox) {
         // print('TextEditor Id: ' + item.id);
@@ -736,147 +652,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             id: item.id,
             parentId: item.parentId,
             linkedTextEditors: item.linkedTextEditors);
-        for (var i = 0; i < listOfIdsNControllers.length; i++) {
-          // print("THIS THE FOCUS NOW: " + listOfIdsNControllers[i].toString());
-          if (listOfIdsNControllers[i].containsKey(tEItem.id)) {
-            tEItem = tEItem.copyWith(
-                textEditorController: listOfIdsNControllers[i][tEItem.id]![0],
-                textEditorConfigurations: QuillEditorConfigurations(
-                  customStyleBuilder: (attribute) {
-                    return customStyleBuilder(attribute);
-                  },
-                  disableClipboard: false,
-                  onTapDown: tEItem.textEditorConfigurations.onTapDown,
-                  builder: tEItem.textEditorConfigurations.builder,
-                  controller: QuillController(
-                    document: listOfIdsNControllers[i][tEItem.id]![1]
-                        .controller
-                        .document,
-                    selection: listOfIdsNControllers[i][tEItem.id]![1]
-                        .controller
-                        .selection,
-                    readOnly: false,
-                    onSelectionChanged: (textSelection) {
-                      setState(() {});
-                    },
-                    onSelectionCompleted: () {
-                      setState(() {});
-                    },
-                    onDelete: (cursorPosition, forward) {
-                      setState(() {});
-                    },
-                  ),
-                ));
-          }
-        }
-
-        if (item.linkedTextEditors != null) {
-          for (var i = 0; i < item.linkedTextEditors!.length; i++) {
-            // print("THIS other FOCUS: " + item.linkedTextEditors![i].toString());
-            listOfIdsNControllers.add({
-              item.linkedTextEditors![i]: [
-                tEItem.textEditorController,
-                tEItem.textEditorConfigurations
-              ]
-            });
-          }
-        }
-        for (var i = 0; i < sheetList.sheetList.length; i++) {
-          for (var v = 0; v < listOfIdsNControllers.length; v++) {
-            if (listOfIdsNControllers[v]
-                    .containsKey(sheetList.sheetList[i].id) &&
-                sheetList.sheetList[i] is SheetText) {
-              sheetList.sheetList[i] =
-                  (sheetList.sheetList[i] as SheetText).copyWith(
-                textEditorController: listOfIdsNControllers[v]
-                    [sheetList.sheetList[i].id]![0],
-                textEditorConfigurations: QuillEditorConfigurations(
-                  customStyleBuilder: (attribute) {
-                    // Handle letter spacing
-                    if (attribute.key == 'letterSpacing') {
-                      String? letterSpacing = attribute.value as String?;
-                      return TextStyle(
-                        letterSpacing: double.parse(letterSpacing ?? '0'),
-                      );
-                    }
-                    // Handle word spacing (custom attribute example)
-                    if (attribute.key == 'wordSpacing') {
-                      String? wordSpacing = attribute.value as String?;
-                      return TextStyle(
-                        wordSpacing: double.parse(wordSpacing ?? '0'),
-                      );
-                    }
-                    // Handle line height (custom attribute example)
-                    if (attribute.key == 'lineHeight') {
-                      String? lineHeight = attribute.value as String?;
-                      return TextStyle(
-                        height: double.parse(lineHeight ?? '0'),
-                      );
-                    }
-                    if (attribute.key == 'stroke') {
-                      List<String> strokeValues =
-                          (attribute.value as String).split(',');
-                      String strokeColorHex = strokeValues[0];
-                      double strokeWidth =
-                          double.tryParse(strokeValues[1]) ?? 2.0;
-                      String fillColorHex = strokeValues[2];
-
-                      Color strokeColor = Color(
-                          int.parse(strokeColorHex.replaceFirst('#', '0xFF')));
-                      Color fillColor = Color(
-                          int.parse(fillColorHex.replaceFirst('#', '0xFF')));
-
-                      return TextStyle(
-                        color: fillColor, // Fill color
-                        shadows: [
-                          Shadow(
-                            offset: Offset(0, 0), // Centered stroke
-                            blurRadius:
-                                strokeWidth, // Controls stroke thickness
-                            color: strokeColor, // Stroke color
-                          ),
-                        ],
-                      );
-                    }
-                    // Return default TextStyle if attribute not handled
-                    return const TextStyle();
-                  },
-                  disableClipboard: false,
-                  onTapDown: (sheetList.sheetList[i] as SheetText)
-                      .textEditorConfigurations
-                      .onTapDown,
-                  builder: (sheetList.sheetList[i] as SheetText)
-                      .textEditorConfigurations
-                      .builder,
-                  controller: QuillController(
-                    document: listOfIdsNControllers[v]
-                            [sheetList.sheetList[i].id]![1]
-                        .controller
-                        .document,
-                    selection: listOfIdsNControllers[v]
-                            [sheetList.sheetList[i].id]![1]
-                        .controller
-                        .selection,
-                    readOnly: false,
-                    onSelectionChanged: (textSelection) {
-                      setState(() {});
-                    },
-                    onSelectionCompleted: () {
-                      setState(() {});
-                    },
-                    onDelete: (cursorPosition, forward) {
-                      setState(() {});
-                    },
-                  ),
-                ),
-              );
-            }
-          }
-        }
-
+        
         sheetList.sheetList.add(tEItem);
       } else if (item is SheetListBox) {
-        sheetList.sheetList.add(boxToSheetList(item, listOfIdsNControllers));
+        sheetList.sheetList.add(boxToSheetList(item));
+      } else if (item is SheetTableBox) {
+        sheetList.sheetList.add((item as SheetTableBox).toSheetTable(_findItem,textFieldTapDown));
       }
     }
     return sheetList;
@@ -972,23 +753,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         return customStyleBuilder(attribute); // Default style
       },
       builder: (context, rawEditor) {
-        return Stack(
-          children: [
-            Transform.scale(
-              scale: 1,
-              alignment: Alignment.topLeft,
-              child: Container(
-                padding: const EdgeInsets.only(left: 8),
-                decoration: BoxDecoration(
-                    color: panelIndex.id == newId
-                        ? const ui.Color(0xFFE2E2E2)
-                        : const Color(0xffe0e0e0),
-                    borderRadius: BorderRadius.circular(6)),
-                child: rawEditor,
-              ),
-            ),
-          ],
-        );
+        return textEditorBuilder(rawEditor, newId);
       },
       onTapDown: (details, p1) {
         return textFieldTapDown(details, newId);
@@ -1167,12 +932,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   void _updatevDividerPosition(double newPosition) {
     setState(() {
       vDividerPosition = newPosition;
-    });
-  }
-
-  void _selectTextField(int index) {
-    setState(() {
-      // selectedIndex[currentPageIndex] = index;/
     });
   }
 
@@ -2467,32 +2226,19 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
-  TextStyle customStyleBuilder(attribute) {
-    if (attribute.key == 'letterSpacing') {
-      String? letterSpacing = attribute.value as String?;
-      return TextStyle(
-        letterSpacing: double.parse(letterSpacing ?? '0'),
-      );
-    }
-    // Handle word spacing (custom attribute example)
-    if (attribute.key == 'wordSpacing') {
-      String? wordSpacing = attribute.value as String?;
-      return TextStyle(
-        wordSpacing: double.parse(wordSpacing ?? '0'),
-      );
-    }
-    // Handle line height (custom attribute example)
-    if (attribute.key == 'lineHeight') {
-      String? lineHeight = attribute.value as String?;
-      return TextStyle(
-        height: double.parse(lineHeight ?? '0'),
-      );
-    }
-
-    // Return default TextStyle if attribute not handled
-    return const TextStyle();
+  Widget textEditorBuilder(Widget rawEditor, String newId){
+    return Container(
+      padding: const EdgeInsets.only(left: 8),
+      decoration: BoxDecoration(
+          // border: Border.all(color: defaultPalette.extras[0]),
+          color: panelIndex.id == newId
+              ? const ui.Color(0xFFE2E2E2)
+              : const Color(0xffe0e0e0),
+          borderRadius: BorderRadius.circular(6)),
+      child: rawEditor,
+    );
   }
-
+  
   ////BUUILDDDDDDDD
   ///BUILDDD
   ///BUILDDDDDDD
@@ -2608,19 +2354,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     ///clearLayout Button
                                     IconButton(
                                         onPressed: () {
-                                          FocusScope.of(context).unfocus();
-                                          if (panelIndex.panelIndex != -1) {
-                                            final SheetText
-                                                sheetText =
-                                                _sheetItemIterator(
-                                                        panelIndex.id,
-                                                        spreadSheetList[
-                                                            currentPageIndex])
-                                                    as SheetText;
-                                            sheetText.focusNode.unfocus();
-                                          }
-                                          _confirmDeleteLayout(
-                                              deletePage: false);
+                                          
                                         },
                                         icon: Transform.rotate(
                                           angle: math.pi / 4,
@@ -2659,7 +2393,22 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         )),
                                     //Add table
                                     IconButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          setState(() {
+                                            String newId = Uuid().v4();
+                                            spreadSheetList[currentPageIndex].add(
+                                              SheetTable(
+                                                id: newId, 
+                                                parentId: spreadSheetList[currentPageIndex].id,
+                                                cellData: defaultSheetTableCellData(newId),
+                                                columnData: defaultSheetTableColumnData(newId),
+                                                rowData: defaultSheetTableRowData(newId),
+                                                pinnedColumns: 1,
+                                                pinnedRows: 1,
+                                                )
+                                            );
+                                          });
+                                        },
                                         icon: Icon(
                                           CupertinoIcons.table,
                                           size: Platform.isWindows ? null : 15,
@@ -2839,7 +2588,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   // border: Border.all(color: defaultPalette.tertiary,strokeAlign: BorderSide.strokeAlignOutside,width: 4)
                                 ),
                                 padding: EdgeInsets.symmetric(
-                                    vertical: 3, horizontal: 2),
+                                    vertical:3, horizontal: 2).copyWith(right: 0),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(15),
                                   child: Stack(
@@ -4346,46 +4095,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         ),
                         //
                         //
-                        
                         //
                         //RESIZE HANDLE VERTICAL 2
                         Positioned(
                             top: Platform.isAndroid ? 35 : 0,
-                            left: sWidth * (1 - wH2DividerPosition) - 5,
+                            left: sWidth * (1 - wH2DividerPosition) - 3,
                             child: MouseRegion(
-                              cursor: _cursor,
-                              onExit: (event) {
-                                setState(() {
-                                  _cursor = SystemMouseCursors.basic;
-                                });
-                              },
-                              onHover: (PointerHoverEvent event) {
-                                Offset position = event.localPosition;
-                                Size? widgetSize = context.size;
-                                setState(() {
-                                  // Change the cursor based on position
-                                  if (widgetSize == null)
-                                    _cursor = SystemMouseCursors.basic;
-
-                                  // Define the edge proximity threshold
-                                  const edgeThreshold = 10.0;
-
-                                  // Check if the cursor is near the edges and set the cursor style accordingly
-                                  if (position.dx < edgeThreshold ||
-                                      position.dx >
-                                          (widgetSize?.width ?? 0) -
-                                              edgeThreshold) {
-                                    _cursor = SystemMouseCursors.resizeColumn;
-                                  } else if (position.dy < edgeThreshold ||
-                                      position.dy >
-                                          (widgetSize?.height ?? 0) -
-                                              edgeThreshold) {
-                                    _cursor = SystemMouseCursors.resizeRow;
-                                  } else {
-                                    _cursor = SystemMouseCursors.basic;
-                                  }
-                                });
-                              },
+                              cursor: SystemMouseCursors.resizeColumn,
                               child: GestureDetector(
                                 onPanUpdate: (details) {
                                   double newPosition = ((0.9 -
@@ -4404,7 +4120,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 child: Container(
                                   color: Colors.transparent,
                                   height: sHeight,
-                                  width: 10,
+                                  width: 8,
                                 ),
                               ),
                             )),
@@ -9518,64 +9234,98 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
              
             });
           },
-          child: Padding(
-            padding: spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? EdgeInsets.all(0)
-                    : const EdgeInsets.only(
-              right: 2,
-              bottom: 0,
+          child: ScrollConfiguration(
+            behavior: ScrollBehavior().copyWith(scrollbars: false),
+            child: Padding(
+                padding: spreadSheetList[currentPageIndex].id == sheetList.id
+                ? EdgeInsets.all(0)
+                : const EdgeInsets.only(
               left: 4,
+              right: 3
             ),
-            child: CustomBorder(
-              color: panelIndex.parentId == sheetList.id
-                  ? spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? defaultPalette.transparent
-                    : defaultPalette.extras[1]
-                  : defaultPalette.transparent,
-              radius: Radius.circular(15),
-              strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
-              dashPattern: [10, 5],
-              strokeCap: StrokeCap.square,
-              animateBorder: true,
-              animateDuration: Duration(seconds: 5),
-              child: Container(
-                width: findSheetListBuildWidth(sheetList) <= 50
-                    ? 50
-                    : findSheetListBuildWidth(sheetList),
-                height: findSheetListBuildHeight(sheetList) <= 50
-                    ? 50
-                    : findSheetListBuildHeight(sheetList),
-                // height: 300,
-                padding: const EdgeInsets.only(top: 0, left: 1, right: 2),
-
-                // buildlistw
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
-                      color: panelIndex.parentId == sheetList.id
-                          ?  spreadSheetList[currentPageIndex].id == sheetList.id
-                            ? defaultPalette.transparent
-                            :defaultPalette.extras[1]
-                          : spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? defaultPalette.transparent
-                    :Color(0xFFFFFFFF)),
-                  color: defaultPalette.transparent,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: ReorderableListView.builder(
-                    buildDefaultDragHandles: false,
-                    scrollDirection: sheetList.direction,
-                    // buildlistw
-                    proxyDecorator: (child, index, animation) {
-                      return Container(child: child);
+              child: CustomBorder(
+                color: panelIndex.parentId == sheetList.id
+                ? spreadSheetList[currentPageIndex].id == sheetList.id
+                  ? defaultPalette.transparent
+                  : defaultPalette.extras[1]
+                : defaultPalette.transparent,
+                radius: Radius.circular(15),
+                strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
+                dashPattern: [10, 5],
+                strokeCap: StrokeCap.square,
+                animateBorder: true,
+                animateDuration: Duration(seconds: 5),
+                child: Container(
+              width:sheetList.id == spreadSheetList[currentPageIndex].id
+              ?sWidth
+              : findSheetListBuildWidth(sheetList) <= 50
+                ? 50
+                : findSheetListBuildWidth(sheetList),
+              height: findSheetListBuildHeight(sheetList) <= 50
+                ? 50
+                : findSheetListBuildHeight(sheetList),
+              padding: const EdgeInsets.only(top: 0, left: 1, right: 1.5),
+                                
+              // buildlistw
+              decoration: BoxDecoration(
+                border: Border.all(
+                    width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
+                    color: panelIndex.parentId == sheetList.id
+                        ?  spreadSheetList[currentPageIndex].id == sheetList.id
+                          ? defaultPalette.transparent
+                          :defaultPalette.extras[1]
+                        : spreadSheetList[currentPageIndex].id == sheetList.id
+                  ? defaultPalette.transparent
+                  :Color(0xFFFFFFFF)),
+                color: defaultPalette.transparent,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: DynMouseScroll(
+                durationMS: 500,
+                scrollSpeed: 1,
+                builder: (context, controller, physics) {
+                  return ScrollbarUltima(
+                    alwaysShowThumb: true,
+                    controller: controller,
+                    scrollbarPosition:
+                        ScrollbarPosition.right,
+                    backgroundColor: defaultPalette.primary,
+                    isDraggable: true,
+                    maxDynamicThumbLength: 100,
+                    thumbBuilder:
+                        (context, animation, widgetStates) {
+                      return Column(
+                        children: List.generate(1, (index) {
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 5, top:5),
+                            decoration: BoxDecoration(
+                              border: Border.all(),
+                              color: defaultPalette.primary,
+                              borderRadius:
+                                  BorderRadius.circular(99999)),
+                            width: 4,
+                            height: 90,
+                          );
+                        },)
+                        
+                      );
                     },
-                    itemBuilder: (context, index) {
+                    child: Padding(
+                        padding: const EdgeInsets.only(right:3.5),
+                      child: ReorderableListView.builder(
+                        buildDefaultDragHandles: false,
+                        scrollDirection: sheetList.direction,
+                        scrollController: controller,
+                        physics: physics,
+                        proxyDecorator: (child, index, animation) {
+                      return Container(child: child); },
+                      itemBuilder: (context, index) {
                       // print('hello hello sprdListBuilding: ${sheetList[index]}');
                       if (sheetList[index] is SheetText) {
                         var sheetText = sheetList[index] as SheetText;
-                        return ReorderableDelayedDragStartListener(
+                        return ReorderableDragStartListener(
                           index: index,
                           key: ValueKey(sheetText.id),
                           child: IntrinsicWidth(
@@ -9583,116 +9333,57 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                               child: Stack(
                                 children: [
                                   GestureDetector(
-                                    onTap: () {
-                                      FocusScope.of(context).unfocus();
-
-                                      setState(() {
-                                        panelIndex = panelIndex.copyWith(
-                                            id: sheetText.id,
-                                            parentId: sheetList.id);
-
-                                        panelIndex.parentId = sheetList.id;
-
-                                        _findSheetListItem();
-                                        whichPropertyTabIsClicked = 2;
-                                        // propertyTabController.jumpToPage(1);
-
-                                        if (hDividerPosition > 0.48) {
-                                          hDividerPosition = 0.4;
-                                        }
-                                      });
-                                      _findSheetListItem();
-
-                                      print('clicked');
-                                      print(sheetListItem.id);
-
-                                      print(panelIndex);
-                                    },
-                                    onSecondaryLongPressDown: (d) {
-                                      onRightClick(sheetText, d, index);
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          // bottom: 2,
-                                          left: 2,
-                                          top: 4,
-                                          right: 0),
-                                      child: CustomBorder(
-                                        color:
-                                            panelIndex.id == sheetText.id
-                                                ? defaultPalette.tertiary
-                                                : defaultPalette.black,
-                                        animateDuration:
-                                            const Duration(seconds: 5),
-                                        animateBorder: true,
-                                        radius: const Radius.circular(10),
-                                        dashPattern: [10, 3],
-                                        strokeWidth:
-                                            panelIndex.id == sheetText.id
-                                                ? 1.5
-                                                : 1.2,
-                                        strokeCap: StrokeCap.square,
-                                        child: Container(
+                                        onTap: () {
+                                          FocusScope.of(context).unfocus();
+                                          
+                                          setState(() {
+                                            panelIndex = panelIndex.copyWith(
+                                                id: sheetText.id,
+                                                parentId: sheetList.id);
+                                          
+                                            panelIndex.parentId = sheetList.id;
+                                          
+                                            _findSheetListItem();
+                                            whichPropertyTabIsClicked = 2;
+                                            // propertyTabController.jumpToPage(1);
+                                          
+                                            if (hDividerPosition > 0.48) {
+                                              hDividerPosition = 0.4;
+                                            }
+                                          });
+                                          _findSheetListItem();
+                                          
+                                          print('clicked');
+                                          print(sheetListItem.id);
+                                          
+                                          print(panelIndex);
+                                        },
+                                        onSecondaryLongPressDown: (d) {
+                                          onRightClick(sheetText, d, index);
+                                        },
+                                        child: Padding(
                                           padding: const EdgeInsets.only(
+                                              // bottom: 2,
+                                              left: 2,
                                               top: 4,
-                                              bottom: 4,
-                                              left: 0,
-                                              right: 4),
-                                          decoration: BoxDecoration(
-                                            color: defaultPalette.primary,
-                                            border: Border.all(
-                                              strokeAlign:
-                                                  BorderSide.strokeAlignInside,
-                                              width: panelIndex.id ==
-                                                      sheetText.id
-                                                  ? 1.5
-                                                  : 1.2,
-                                              color: panelIndex.id ==
-                                                      sheetText.id
-                                                  ? defaultPalette.tertiary
-                                                  : defaultPalette.black,
-                                            ),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                child: const Icon(
-                                                  TablerIcons.cursor_text,
-                                                  size: 15,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: QuillEditor(
-                                                  configurations: sheetText
-                                                      .textEditorConfigurations,
-                                                  focusNode:
-                                                      sheetText.focusNode,
-                                                  scrollController:
-                                                      ScrollController(),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                              right: 2),
+                                          child: buildSheetTextWidget(sheetList[index] as SheetText)),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        );
+                            );
                         // buildlistw
                       } else if (sheetList[index] is SheetList) {
-                        return ReorderableDelayedDragStartListener(
+                        return ReorderableDragStartListener(
                           index: index,
                           key: ValueKey(sheetList[index].id),
                           child: Container(
                               margin: EdgeInsets.only(top: 4),
-                              // height: findSheetListBuildHeight(sheetList[index] as SheetList)+50,
-                              width: findSheetListBuildWidth(
+                              width:sheetList.id == spreadSheetList[currentPageIndex].id?
+                              sWidth
+                              : findSheetListBuildWidth(
                                           sheetList[index] as SheetList) <=
                                       50
                                   ? 50
@@ -9702,24 +9393,37 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   sheetList[index] as SheetList)),
                         );
                       }
+                       else if(sheetList[index] is SheetTable){
+                        return ReorderableDragStartListener(
+                          key: ValueKey(sheetList[index].id),
+                          index: index,
+                          child: buildSheetTableWidget(sheetList[index] as SheetTable)
+                          );
+                      
+                      }
                       return Container(
                         key: ValueKey(const Uuid().v4()),
                         color: Colors.amberAccent,
                         height: 12,
                         // buildlistw
                       );
-                    },
-                    itemCount: sheetList.length,
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) {
-                          newIndex -= 1;
-                        }
-                        final item = sheetList.removeAt(oldIndex);
-                        // buildlistw
-                        sheetList.insert(newIndex, item);
-                      });
-                    },
+                      },
+                      itemCount: sheetList.length,
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          if (newIndex > oldIndex) {
+                            newIndex -= 1;
+                          }
+                          final item = sheetList.removeAt(oldIndex);
+                          // buildlistw
+                          sheetList.insert(newIndex, item);
+                        });
+                      },
+                      ),
+                      ),
+                      );
+                      }
+                    ),
                   ),
                 ),
               ),
@@ -10340,6 +10044,269 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     );
   }
 
+  Widget buildSheetTableWidget(SheetTable sheetTable){
+    return Container(
+      margin: EdgeInsets.all(4).copyWith(right:3),
+      padding: EdgeInsets.only(right:5),
+      width: ((sheetTable as SheetTable).columnData[0].size*(sheetTable as SheetTable).columnData.length)+15,
+      decoration: BoxDecoration( color:defaultPalette.primary,
+      borderRadius: BorderRadius.circular(10)),
+      height:((sheetTable as SheetTable).rowData[0].size*(sheetTable as SheetTable).rowData.length)
+      +18 //height of A B C row
+      +20,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12).copyWith(topRight: Radius.circular(8)),
+        child: DynMouseScroll(
+          builder: (context, controller1, physics1) {
+            return DynMouseScroll(
+          builder: (context, controller2, physics2) {
+            return Stack(
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top:18, left:15, bottom: 5,),
+                  decoration: BoxDecoration(
+                  color:defaultPalette.secondary,
+                  borderRadius: BorderRadius.circular(3)
+                ),
+                ),
+                Padding(
+                  //this is for having a secondary colored lined at the edge of the table when you scroll
+                  padding: const EdgeInsets.only(right: 2.0),
+                  child: TableView.builder(
+                    horizontalDetails: ScrollableDetails.horizontal(
+                      controller: controller2,
+                      physics: physics2,
+                                                  
+                    ),
+                    verticalDetails: ScrollableDetails.vertical(
+                      controller: controller1,
+                      physics: physics1
+                    ),
+                    rowCount:(sheetTable as SheetTable).rowData.length+1,
+                    columnCount: (sheetTable as SheetTable).columnData.length+1,
+                    pinnedColumnCount: (sheetTable as SheetTable).pinnedColumns,
+                    pinnedRowCount: (sheetTable as SheetTable).pinnedRows,
+                    columnBuilder: (int i) {
+                      if(i ==0){
+                        return const TableSpan(
+                          extent:FixedTableSpanExtent(17));
+                      }
+                      return TableSpan(
+                        extent: FixedTableSpanExtent((sheetTable as SheetTable).columnData[i-1].size),
+                        // padding: SpanPadding.all(3)
+                        );
+                    },
+                    rowBuilder: (int i) {
+                      if(i ==0){
+                        return const TableSpan(extent:FixedTableSpanExtent(20));
+                      }
+                      return TableSpan(
+                        extent: FixedTableSpanExtent((sheetTable as SheetTable).rowData[i -1].size),
+                        );
+                    }, 
+                    cellBuilder: (BuildContext context, TableVicinity vicinity) {
+                      
+                      //top corner useless piece
+                        if(vicinity.row==0 && vicinity.column==0 ){
+                        return TableViewCell(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ColoredBox(
+                            color: defaultPalette.primary,
+                            child: Center(
+                              child: Text(''),
+                            ),
+                          ),
+                        ),
+                      );
+                      }
+                      //topbar A B C D
+                      if(vicinity.row==0 && vicinity.column!=0 ){
+                        return TableViewCell(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom:2),
+                          child: Container(
+                            alignment: Alignment(0, 0),
+                            decoration: BoxDecoration(
+                              color: defaultPalette.primary,
+                              border: Border(
+                                top: BorderSide.none,
+                                left: BorderSide.none,
+                                bottom: BorderSide.none,
+                                right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4))
+                                ),
+                                // borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(vicinity.column == (sheetTable as SheetTable).columnData.length-1?12:0))
+                            ),
+                            child: Text('${numberToColumnLabel(vicinity.column)}',
+                            style: GoogleFonts.lexend(
+                              letterSpacing: -1,
+                              fontSize: 12
+                            ),
+                            ),
+                          ),
+                        ),
+                      );
+                      }
+                      //left 1 2 3 4 5
+                      if(vicinity.column==0 ){
+                        return TableViewCell(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right:2.0),
+                          child: Container(
+                            alignment: Alignment(0, 0),
+                            decoration: BoxDecoration(
+                              color: defaultPalette.primary,
+                              border: Border(
+                                top: BorderSide.none,
+                                left: BorderSide.none,
+                                bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                                right: BorderSide.none),
+                            ),
+                            child: Text('${vicinity.row}',
+                            style: GoogleFonts.lexend(
+                              letterSpacing: -1,
+                              fontSize: 13
+                            ),
+                            ),
+                          ),
+                        ),
+                      );
+                      }
+                      var rowIndex =  vicinity.row-1;
+                      var columnIndex = vicinity.column-1;                      
+                      return TableViewCell(
+                        columnMergeSpan: (sheetTable as SheetTable).cellData[rowIndex][columnIndex].colSpan,
+                        columnMergeStart: vicinity.column,
+                        rowMergeSpan: (sheetTable as SheetTable).cellData[rowIndex][columnIndex].rowSpan,
+                        rowMergeStart: vicinity.row,
+                        child: Padding(
+                          padding: const EdgeInsets.all(1),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: defaultPalette.primary,
+                              borderRadius: BorderRadius.circular(2),
+                              // border: Border(
+                              //   top: BorderSide.none,
+                              //   left: BorderSide.none,
+                              //   bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                              //   right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4))
+                              //   ),
+                            ),
+                            child: () {
+                              if (sheetTable.cellData[rowIndex][columnIndex].sheetItem is SheetText){
+                                return buildSheetTableTextWidget(sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText);
+                              }
+                              return SizedBox();
+                            }()
+                            ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+                );
+                }
+                );
+              }),
+            ),
+          );
+                      
+  }
+
+  Widget buildSheetTextWidget(SheetText sheetText) {
+    return CustomBorder(
+          color:
+              panelIndex.id == sheetText.id
+                  ? defaultPalette.tertiary
+                  : defaultPalette.black,
+          animateDuration:
+              const Duration(seconds: 5),
+          animateBorder: true,
+          radius: const Radius.circular(10),
+          dashPattern: [10, 3],
+          strokeWidth:
+              panelIndex.id == sheetText.id
+                  ? 1.5
+                  : 1.2,
+          strokeCap: StrokeCap.square,
+          child: Container(
+            padding: const EdgeInsets.only(
+                top: 4,
+                bottom: 4,
+                left: 0,
+                right: 4),
+            decoration: BoxDecoration(
+              color: defaultPalette.primary,
+              border: Border.all(
+                strokeAlign:
+                    BorderSide.strokeAlignInside,
+                width: panelIndex.id ==
+                        sheetText.id
+                    ? 1.5
+                    : 1.2,
+                color: panelIndex.id ==
+                        sheetText.id
+                    ? defaultPalette.tertiary
+                    : defaultPalette.black,
+              ),
+              borderRadius:
+                  BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  child: const Icon(
+                    TablerIcons.cursor_text,
+                    size: 15,
+                  ),
+                ),
+                Expanded(
+                  child: QuillEditor(
+                    configurations: sheetText
+                        .textEditorConfigurations,
+                    focusNode:
+                        sheetText.focusNode,
+                    scrollController:
+                        ScrollController(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+                                       
+  }
+
+  Widget buildSheetTableTextWidget(SheetText sheetText) {
+    return Container(
+      decoration: BoxDecoration(
+        color: defaultPalette.primary,
+        borderRadius:
+            BorderRadius.circular(0),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            TablerIcons.cursor_text,
+            size: 14,
+          ),
+          Expanded(
+            child: QuillEditor(
+              configurations: sheetText
+                  .textEditorConfigurations,
+              focusNode:
+                  sheetText.focusNode,
+              scrollController:
+                  ScrollController(),
+            ),
+          ),
+        ],
+      ),
+    );
+                                       
+  }
+
+
   double findSheetListBuildHeight(SheetList sheetList) {
     double calculateItemHeight(dynamic item) {
       double calculatedHeight = 0;
@@ -10361,6 +10328,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       else if (item is SheetList) {
         calculatedHeight = findSheetListBuildHeight(item);
       }
+
+      else if (item is SheetTable) {
+        calculatedHeight = 250;
+      }
+
 
       return calculatedHeight;
     }
@@ -13937,31 +13909,24 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   SizedBox(
                                                     height: 100,
                                                     width: 95,
-                                                    child: fl.ColorWheelPicker(
-                                                      color: hexToColor(item
+                                                    child: WheelPicker(
+                                                      color:HSVColor.fromColor(hexToColor(item
                                                           .textEditorController
                                                           .getSelectionStyle()
                                                           .attributes['color']
-                                                          ?.value),
+                                                          ?.value)),
                                                       onChanged: (color) {
                                                         setState(() {
                                                           item.textEditorController
                                                               .formatSelection(
                                                             ColorAttribute(
-                                                                '#${colorToHex(color)}'),
+                                                                '#${colorToHex(color.toColor())}'),
                                                           );
                                                           hexController.text =
                                                               '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                                         });
                                                       },
-                                                      onChangeEnd: (value) {
-                                                        _renderPagePreviewOnProperties();
-                                                      },
-                                                      onWheel: (bool value) {},
-                                                      wheelSquarePadding: 5,
-                                                      wheelWidth: 8,
-                                                      hasBorder: true,
-                                                      shouldUpdate: true,
+                                                      
                                                     ),
                                                   ),
                                                   SizedBox(
@@ -13970,7 +13935,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                                                   //Name of FONT COLOR
                                                   Text(
-                                                      fl.ColorTools
+                                                      ColorTools
                                                           .nameThatColor(
                                                         hexToColor(item
                                                             .textEditorController
@@ -13986,100 +13951,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ),
                                             //COLOR SWATCH FOR PAGE COLOR
 
-                                            fl.ColorPicker(
-                                              color: hexToColor(item
-                                                  .textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes['color']
-                                                  ?.value),
-                                              pickersEnabled: const {
-                                                fl.ColorPickerType.both: false,
-                                                fl.ColorPickerType.primary:
-                                                    false,
-                                                fl.ColorPickerType.accent:
-                                                    false,
-                                                fl.ColorPickerType.bw: false,
-                                                fl.ColorPickerType.custom: true,
-                                                fl.ColorPickerType.wheel: false
-                                              },
-                                              enableTooltips: true,
-                                              showColorName: false,
-                                              //  ((sWidth *
-                                              //           wH2DividerPosition) -
-                                              //       145) >
-                                              //   64? true:false,
-                                              // showColorCode: true,
-                                              // enableOpacity: true,
-                                              customColorSwatchesAndNames: {
-                                                createSwatch(
-                                                    hexToColor(item
-                                                        .textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes['color']
-                                                        ?.value),
-                                                    12): ''
-                                              },
-                                              colorCodeHasColor: true,
-                                              enableShadesSelection: true,
-                                              colorCodeReadOnly: false,
-                                              height:
-                                                  ((sWidth * wH2DividerPosition -
-                                                              145) /
-                                                          3)
-                                                      .clamp(15, 30),
-                                              width:
-                                                  ((sWidth * wH2DividerPosition -
-                                                              145) /
-                                                          4)
-                                                      .clamp(15, 30),
-                                              runSpacing: 2,
-                                              shadesSpacing: 0,
-                                              spacing: 1,
-                                              borderRadius: 5,
-                                              hasBorder: true,
-                                              borderColor:
-                                                  const Color(0xFF3F3F3F)
-                                                      .withOpacity(0.6),
-                                              colorNameTextStyle:
-                                                  GoogleFonts.bungee(
-                                                      fontSize: 10),
-                                              colorCodeTextStyle:
-                                                  GoogleFonts.bungee(
-                                                      fontSize: 8),
-                                              colorCodePrefixStyle:
-                                                  GoogleFonts.bungee(
-                                                      fontSize: 8),
-                                              columnSpacing: 5,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              toolbarSpacing: 0,
-                                              selectedColorIcon:
-                                                  TablerIcons.circle,
-                                              editIcon: TablerIcons.circle,
-                                              padding: EdgeInsets.only(
-                                                  right: 115, top: 10),
-                                              wheelWidth: 5,
-                                              wheelSquarePadding: 8,
-                                              wheelDiameter: 120,
-                                              wheelSquareBorderRadius: 8,
-                                              opacityThumbRadius: 12,
-                                              opacityTrackHeight: 12,
-                                              wheelHasBorder: true,
-                                              onColorChangeEnd: (value) {
-                                                _renderPagePreviewOnProperties();
-                                              },
-                                              onColorChanged: (color) {
-                                                setState(() {
-                                                  item.textEditorController
-                                                      .formatSelection(
-                                                    ColorAttribute(
-                                                        '#${colorToHex(color)}'),
-                                                  );
-                                                  hexController.text =
-                                                      '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
-                                                });
-                                              },
-                                            ),
+                                            
+                                          
                                           ],
                                         ),
                                         //Text BG COLOR
@@ -14195,32 +14068,25 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                   SizedBox(
                                                     height: 100,
                                                     width: 95,
-                                                    child: fl.ColorWheelPicker(
-                                                      color: hexToColor(item
+                                                    child: WheelPicker(
+                                                      color: HSVColor.fromColor(hexToColor(item
                                                           .textEditorController
                                                           .getSelectionStyle()
                                                           .attributes[
                                                               'background']
-                                                          ?.value),
+                                                          ?.value)) ,
                                                       onChanged: (color) {
                                                         setState(() {
                                                           item.textEditorController
                                                               .formatSelection(
                                                             BackgroundAttribute(
-                                                                '#${colorToHex(color)}'),
+                                                                '#${colorToHex(color.toColor())}'),
                                                           );
                                                           bghexController.text =
                                                               '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
                                                         });
                                                       },
-                                                      onChangeEnd: (value) {
-                                                        _renderPagePreviewOnProperties();
-                                                      },
-                                                      onWheel: (bool value) {},
-                                                      wheelSquarePadding: 5,
-                                                      wheelWidth: 8,
-                                                      hasBorder: true,
-                                                      shouldUpdate: true,
+                                                      
                                                     ),
                                                   ),
                                                   SizedBox(
@@ -14229,7 +14095,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                                                   //Name of PAGE COLOR
                                                   Text(
-                                                      fl.ColorTools
+                                                      ColorTools
                                                           .nameThatColor(
                                                         hexToColor(item
                                                             .textEditorController
@@ -14246,101 +14112,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ),
                                             //COLOR SWATCH FOR PAGE COLOR
 
-                                            fl.ColorPicker(
-                                              color: hexToColor(item
-                                                  .textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes['background']
-                                                  ?.value),
-                                              pickersEnabled: const {
-                                                fl.ColorPickerType.both: false,
-                                                fl.ColorPickerType.primary:
-                                                    false,
-                                                fl.ColorPickerType.accent:
-                                                    false,
-                                                fl.ColorPickerType.bw: false,
-                                                fl.ColorPickerType.custom: true,
-                                                fl.ColorPickerType.wheel: false
-                                              },
-                                              enableTooltips: true,
-                                              showColorName: false,
-                                              //  ((sWidth *
-                                              //           wH2DividerPosition) -
-                                              //       145) >
-                                              //   64? true:false,
-                                              // showColorCode: true,
-                                              // enableOpacity: true,
-                                              customColorSwatchesAndNames: {
-                                                createSwatch(
-                                                    hexToColor(item
-                                                        .textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes[
-                                                            'background']
-                                                        ?.value),
-                                                    12): ''
-                                              },
-                                              colorCodeHasColor: true,
-                                              enableShadesSelection: true,
-                                              colorCodeReadOnly: false,
-                                              height:
-                                                  ((sWidth * wH2DividerPosition -
-                                                              145) /
-                                                          3)
-                                                      .clamp(15, 30),
-                                              width:
-                                                  ((sWidth * wH2DividerPosition -
-                                                              145) /
-                                                          4)
-                                                      .clamp(15, 30),
-                                              runSpacing: 2,
-                                              shadesSpacing: 0,
-                                              spacing: 1,
-                                              borderRadius: 5,
-                                              hasBorder: true,
-                                              borderColor:
-                                                  const Color(0xFF3F3F3F)
-                                                      .withOpacity(0.6),
-                                              colorNameTextStyle:
-                                                  GoogleFonts.bungee(
-                                                      fontSize: 10),
-                                              colorCodeTextStyle:
-                                                  GoogleFonts.bungee(
-                                                      fontSize: 8),
-                                              colorCodePrefixStyle:
-                                                  GoogleFonts.bungee(
-                                                      fontSize: 8),
-                                              columnSpacing: 5,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              toolbarSpacing: 0,
-                                              selectedColorIcon:
-                                                  TablerIcons.circle,
-                                              editIcon: TablerIcons.circle,
-                                              padding: EdgeInsets.only(
-                                                  right: 115, top: 10),
-                                              wheelWidth: 5,
-                                              wheelSquarePadding: 8,
-                                              wheelDiameter: 120,
-                                              wheelSquareBorderRadius: 8,
-                                              opacityThumbRadius: 12,
-                                              opacityTrackHeight: 12,
-                                              wheelHasBorder: true,
-                                              onColorChangeEnd: (value) {
-                                                _renderPagePreviewOnProperties();
-                                              },
-                                              onColorChanged: (color) {
-                                                setState(() {
-                                                  item.textEditorController
-                                                      .formatSelection(
-                                                    BackgroundAttribute(
-                                                        '#${colorToHex(color)}'),
-                                                  );
-                                                  bghexController.text =
-                                                      '${item.textEditorController.getSelectionStyle().attributes['background']?.value}';
-                                                });
-                                              },
-                                            ),
+                                            
                                           ],
                                         ),
                                       ],
@@ -19128,23 +18900,16 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         SizedBox(
                                           height: 100,
                                           width: 90,
-                                          child: fl.ColorWheelPicker(
-                                            color: documentPropertiesList[ind]
-                                                .pageColor,
+                                          child: WheelPicker(
+                                            color: HSVColor.fromColor(documentPropertiesList[ind]
+                                                .pageColor),
                                             onChanged: (c) {
                                               setState(() {
                                                 documentPropertiesList[ind]
-                                                    .pageColor = c;
+                                                    .pageColor = c.toColor();
                                               });
                                             },
-                                            onChangeEnd: (value) {
-                                              _renderPagePreviewOnProperties();
-                                            },
-                                            onWheel: (bool value) {},
-                                            wheelSquarePadding: 5,
-                                            wheelWidth: 5,
-                                            hasBorder: true,
-                                            shouldUpdate: true,
+                                            
                                           ),
                                         ),
                                         SizedBox(
@@ -19153,7 +18918,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
                                         //Name of PAGE COLOR
                                         Text(
-                                            fl.ColorTools.nameThatColor(
+                                            ColorTools.nameThatColor(
                                               documentPropertiesList[ind]
                                                   .pageColor,
                                             ),
@@ -19164,80 +18929,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ),
                                   //COLOR SWATCH FOR PAGE COLOR
 
-                                  fl.ColorPicker(
-                                      color:
-                                          documentPropertiesList[ind].pageColor,
-                                      pickersEnabled: const {
-                                        fl.ColorPickerType.both: false,
-                                        fl.ColorPickerType.primary: false,
-                                        fl.ColorPickerType.accent: false,
-                                        fl.ColorPickerType.bw: false,
-                                        fl.ColorPickerType.custom: true,
-                                        fl.ColorPickerType.wheel: false
-                                      },
-                                      enableTooltips: true,
-                                      showColorName: false,
-                                      //  ((sWidth *
-                                      //           wH2DividerPosition) -
-                                      //       145) >
-                                      //   66? true:false,
-                                      // showColorCode: true,
-                                      // enableOpacity: true,
-                                      customColorSwatchesAndNames: {
-                                        createSwatch(
-                                            documentPropertiesList[ind]
-                                                .pageColor,
-                                            12): ''
-                                      },
-                                      colorCodeHasColor: true,
-                                      enableShadesSelection: true,
-                                      colorCodeReadOnly: false,
-                                      height:
-                                          ((sWidth * wH2DividerPosition - 145) /
-                                                  3)
-                                              .clamp(15, 30),
-                                      width:
-                                          ((sWidth * wH2DividerPosition - 145) /
-                                                  4)
-                                              .clamp(15, 30),
-                                      runSpacing: 2,
-                                      shadesSpacing: 0,
-                                      spacing: 1,
-                                      borderRadius: 5,
-                                      hasBorder: false,
-                                      borderColor: ui.Color(0xFFD9D9D9),
-                                      colorNameTextStyle:
-                                          GoogleFonts.bungee(fontSize: 10),
-                                      colorCodeTextStyle:
-                                          GoogleFonts.bungee(fontSize: 8),
-                                      colorCodePrefixStyle:
-                                          GoogleFonts.bungee(fontSize: 8),
-                                      columnSpacing: 5,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      toolbarSpacing: 0,
-                                      selectedColorIcon: TablerIcons.circle,
-                                      editIcon: TablerIcons.circle,
-                                      padding:
-                                          EdgeInsets.only(right: 115, top: 10),
-                                      wheelWidth: 5,
-                                      wheelSquarePadding: 8,
-                                      wheelDiameter: 120,
-                                      wheelSquareBorderRadius: 8,
-                                      opacityThumbRadius: 12,
-                                      opacityTrackHeight: 12,
-                                      wheelHasBorder: true,
-                                      onColorChangeEnd: (value) {
-                                        _renderPagePreviewOnProperties();
-                                      },
-                                      onColorChanged: (c) {
-                                        setState(() {
-                                          documentPropertiesList[ind]
-                                              .pageColor = c;
-                                        });
-
-                                        // _renderPagePreviewOnProperties();
-                                      }),
+                                  
                                 ],
                               ),
 
@@ -21274,7 +20966,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Text(
-                          ' ${(fl.ColorTools.nameThatColor(
+                          ' ${(ColorTools.nameThatColor(
                             currentItemDecoration.decoration.color ??
                                 defaultPalette.transparent,
                           )).toLowerCase()}',
@@ -21698,7 +21390,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Text(
-                            ' ${(fl.ColorTools.nameThatColor(currentBorder.top.color)).toLowerCase()}',
+                            ' ${(ColorTools.nameThatColor(currentBorder.top.color)).toLowerCase()}',
                             style: GoogleFonts.lexend(
                                 fontSize: 14,
                                 letterSpacing: -1,
@@ -22597,7 +22289,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Text(
-                          ' ${(fl.ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
+                          ' ${(ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
                           style: GoogleFonts.lexend(
                               fontSize: 14,
                               letterSpacing: -1,
@@ -23688,7 +23380,92 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       ],
     );
   }
+  
+  List<List<SheetTableCell>> defaultSheetTableCellData(String parentId) {
+  final uuid = Uuid();
+  const rows = 10;
+  const cols = 10;
+
+  return List.generate(rows, (row) {
+    return List.generate(cols, (col) {
+      final content = 'Cell ${String.fromCharCode(65 + col)}${row+1}';
+      print(row.toString()+' '+col.toString()+' '+content);
+      return SheetTableCell(
+        id: uuid.v4(),
+        parentId: parentId,
+        data: content,
+        sheetItem: _addTextField(shouldReturn: true),
+        rowSpan: 1,
+        colSpan: 1,
+      );
+      
+    });
+  });
 }
+
+  List<SheetTableColumn> defaultSheetTableColumnData(String parentId) {
+  final uuid = Uuid();
+
+  return List.generate(10, (index) {
+    return SheetTableColumn(
+      id: uuid.v4(),
+      parentId: parentId,
+      size: 80, // or any default column width
+    );
+  });
+}
+
+  List<SheetTableRow> defaultSheetTableRowData(String parentId) {
+  final uuid = Uuid();
+
+  return List.generate(10, (index) {
+    return SheetTableRow(
+      id: uuid.v4(),
+      parentId: parentId,
+      size: 30, // or any default row height
+    );
+  });
+}
+
+  String numberToColumnLabel(int number) {
+    String result = '';
+    while (number > 0) {
+      number--; // Excel columns are 1-indexed, so adjust
+      result = String.fromCharCode((number % 26) + 65) + result;
+      number ~/= 26;
+    }
+    return result;
+  }
+                                  
+
+}
+
+  TextStyle customStyleBuilder(attribute) {
+    if (attribute.key == 'letterSpacing') {
+      String? letterSpacing = attribute.value as String?;
+      return TextStyle(
+        letterSpacing: double.parse(letterSpacing ?? '0'),
+      );
+    }
+    // Handle word spacing (custom attribute example)
+    if (attribute.key == 'wordSpacing') {
+      String? wordSpacing = attribute.value as String?;
+      return TextStyle(
+        wordSpacing: double.parse(wordSpacing ?? '0'),
+      );
+    }
+    // Handle line height (custom attribute example)
+    if (attribute.key == 'lineHeight') {
+      String? lineHeight = attribute.value as String?;
+      return TextStyle(
+        height: double.parse(lineHeight ?? '0'),
+      );
+    }
+
+    // Return default TextStyle if attribute not handled
+    return const TextStyle();
+  }
+
 
 class WordSpacingAttribute extends Attribute<String?> {
   static const _key = 'wordSpacing';
