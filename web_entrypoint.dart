@@ -1,5 +1,5 @@
 // import 'package:billblaze/Home.dart';
-import 'package:billblaze/Home.dart';
+import 'package:billblaze/home.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/screens/LoginSignUp.dart';

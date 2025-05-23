@@ -1,10 +1,14 @@
 import 'dart:io';
 
-import 'package:billblaze/Home.dart';
+import 'package:billblaze/home.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
 import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
@@ -35,6 +39,10 @@ Future<void> main() async {
   Hive.registerAdapter(SuperDecorationBoxAdapter());
   Hive.registerAdapter(AccessAdapter());
   Hive.registerAdapter(ItemDecorationBoxAdapter());
+  Hive.registerAdapter(SheetTableBoxAdapter());
+  Hive.registerAdapter(SheetTableCellBoxAdapter());
+  Hive.registerAdapter(SheetTableRowBoxAdapter());
+  Hive.registerAdapter(SheetTableColumnBoxAdapter());
 // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
   await Hive.openBox<SheetDecoration>('decorations');

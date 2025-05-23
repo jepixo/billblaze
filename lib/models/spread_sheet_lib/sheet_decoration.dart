@@ -1,16 +1,13 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:ui' as ui;
 
-import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:billblaze/components/color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
-import 'package:uuid/uuid.dart';
-
-import 'package:billblaze/providers/box_provider.dart';
 
 part 'sheet_decoration.g.dart';
 
