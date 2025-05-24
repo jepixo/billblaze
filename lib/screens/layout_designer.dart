@@ -1446,176 +1446,326 @@ Future<void> _initialize() async {
   Widget _buildSheetListWidget(SheetList sheetList, double width,
       {double? docWidth = null,}) {
         // print(sheetList.mainAxisSize.name);
-    return buildDecoratedContainer(
-        sheetList.listDecoration,
-        IntrinsicHeight(
-          child: sheetList.direction == Axis.vertical
-              //For Columns in the pdf side of things
-              ? IntrinsicWidth(
-                  child: Flex(
-                    direction: Axis.vertical,
-                    mainAxisAlignment: sheetList.mainAxisAlignment,
-                    crossAxisAlignment: sheetList.crossAxisAlignment,
-                    mainAxisSize: sheetList.mainAxisSize, 
-                    children:
-                        List.generate(sheetList.sheetList.length, (index) {
-                      final item = sheetList.sheetList[index];
-
-                      if (item is SheetText) {
-                        // print('in buildSheetListWidget item is: $item');
-                        Alignment containerAlignment = Alignment.topLeft;
-
-                        // Get alignment based on current attributes
-                        final currentAttributes = item.textEditorController
-                            .getSelectionStyle()
-                            .attributes;
-
-                        // Determine alignment from `attributes`
-                        if (_getIsToggled(
-                            currentAttributes, Attribute.centerAlignment)) {
-                          containerAlignment = Alignment.center;
-                        } else if (_getIsToggled(
-                            currentAttributes, Attribute.rightAlignment)) {
-                          containerAlignment = Alignment.topRight;
-                        } else if (_getIsToggled(
-                            currentAttributes, Attribute.justifyAlignment)) {
-                          containerAlignment = Alignment
-                              .topLeft; // Adjust if you have other logic
-                        } else if (_getIsToggled(
-                            currentAttributes, Attribute.leftAlignment)) {
-                          containerAlignment = Alignment.topLeft;
+    return GestureDetector(
+      onDoubleTap:(){
+        panelIndex.parentId = sheetList.id;
+        _findSheetListItem();
+      },
+      child: buildDecoratedContainer(
+          sheetList.listDecoration,
+          IntrinsicHeight(
+            child: sheetList.direction == Axis.vertical
+                //For Columns in the pdf side of things
+                ? IntrinsicWidth(
+                    child: Flex(
+                      direction: Axis.vertical,
+                      mainAxisAlignment: sheetList.mainAxisAlignment,
+                      crossAxisAlignment: sheetList.crossAxisAlignment,
+                      mainAxisSize: sheetList.mainAxisSize, 
+                      children:
+                          List.generate(sheetList.sheetList.length, (index) {
+                        final item = sheetList.sheetList[index];
+      
+                        if (item is SheetText) {
+                          // print('in buildSheetListWidget item is: $item');
+                          Alignment containerAlignment = Alignment.topLeft;
+      
+                          // Get alignment based on current attributes
+                          final currentAttributes = item.textEditorController
+                              .getSelectionStyle()
+                              .attributes;
+      
+                          // Determine alignment from `attributes`
+                          if (_getIsToggled(
+                              currentAttributes, Attribute.centerAlignment)) {
+                            containerAlignment = Alignment.center;
+                          } else if (_getIsToggled(
+                              currentAttributes, Attribute.rightAlignment)) {
+                            containerAlignment = Alignment.topRight;
+                          } else if (_getIsToggled(
+                              currentAttributes, Attribute.justifyAlignment)) {
+                            containerAlignment = Alignment
+                                .topLeft; // Adjust if you have other logic
+                          } else if (_getIsToggled(
+                              currentAttributes, Attribute.leftAlignment)) {
+                            containerAlignment = Alignment.topLeft;
+                          }
+                          // print('in buildSheetListWidget item is: $item');
+                          return IgnorePointer(
+                            key: ValueKey(item),
+                            child: Container(
+                              // width: docWidth,
+                              alignment: containerAlignment,
+      
+                              child: IntrinsicWidth(
+                                child: QuillEditor(
+                                  key: ValueKey(item.id),
+                                  configurations: QuillEditorConfigurations(
+                                    scrollable: false,
+                                    showCursor: false,
+                                    enableInteractiveSelection: false,
+                                    enableSelectionToolbar: false,
+                                    requestKeyboardFocusOnCheckListChanged: false,
+                                    customStyleBuilder: (attribute) {
+                                      return customStyleBuilder(attribute);
+                                    },
+                                    disableClipboard: true,
+                                    controller: QuillController(
+                                      document:
+                                          item.textEditorController.document,
+                                      selection:
+                                          item.textEditorController.selection,
+                                      readOnly: true,
+                                      onSelectionChanged: (textSelection) {
+                                        setState(() {});
+                                      },
+                                      onReplaceText: (index, len, data) {
+                                        setState(() {});
+                                        return false;
+                                      },
+                                      onSelectionCompleted: () {
+                                        setState(() {});
+                                      },
+                                      onDelete: (cursorPosition, forward) {
+                                        setState(() {});
+                                      },
+                                    ),
+                                  ),
+                                  focusNode: FocusNode(),
+                                  scrollController: ScrollController(),
+                                ),
+                              ),
+                            ),
+                          );
+                        } else if (item is SheetList) {
+                          // print('in buildSheetListWidget item is: $item');
+                          return _buildSheetListWidget(item, width);
+                        } else if (item is SheetTable) {
+                          return _buildSheetTableWidget(item,);
                         }
-                        // print('in buildSheetListWidget item is: $item');
-                        return IgnorePointer(
-                          key: ValueKey(item),
-                          child: Container(
-                            // width: docWidth,
-                            alignment: containerAlignment,
-                            // alignment: Alignment.center,
-                            // decoration: BoxDecoration(
-                            //   image: DecorationImage(
-                            //     image: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStND_j06Kvfw2Y-eBSOlOC060f8DIL5-gs8w&s',),fit: BoxFit.fitWidth)
-                            //   ,
-                            // ),
 
-                            child: IntrinsicWidth(
-                              child: QuillEditor(
-                                key: ValueKey(item.id),
-                                configurations: QuillEditorConfigurations(
-                                  scrollable: false,
-                                  showCursor: false,
-                                  enableInteractiveSelection: false,
-                                  enableSelectionToolbar: false,
-                                  requestKeyboardFocusOnCheckListChanged: false,
-                                  customStyleBuilder: (attribute) {
-                                    return customStyleBuilder(attribute);
-                                  },
-                                  disableClipboard: true,
-                                  controller: QuillController(
-                                    document:
-                                        item.textEditorController.document,
-                                    selection:
-                                        item.textEditorController.selection,
-                                    readOnly: true,
-                                    onSelectionChanged: (textSelection) {
-                                      setState(() {});
+                        return const SizedBox();
+                      }),
+                    ),
+                  )
+                //For Rows in the pdf side of things
+                : SizedBox(
+                    width: docWidth,
+                    child: Row(
+                      // direction: Axis.horizontal,
+                      mainAxisAlignment: sheetList.mainAxisAlignment,
+                      crossAxisAlignment: sheetList.crossAxisAlignment,
+                      mainAxisSize: sheetList.mainAxisSize,
+                      children:
+                          List.generate(sheetList.sheetList.length, (index) {
+                        final item = sheetList.sheetList[index];
+      
+                        if (item is SheetText) {
+                          // print('in buildSheetListWidget item is: $item');
+                          return IgnorePointer(
+                            key: ValueKey(item),
+                            child: SizedBox(
+                              width: docWidth,
+                              child: IntrinsicWidth(
+                                child: QuillEditor(
+                                  key: ValueKey(item.id),
+                                  configurations: QuillEditorConfigurations(
+                                    scrollable: false,
+                                    showCursor: false,
+                                    enableInteractiveSelection: false,
+                                    enableSelectionToolbar: false,
+                                    requestKeyboardFocusOnCheckListChanged:
+                                        false,
+                                    customStyleBuilder: (attribute) {
+                                      return customStyleBuilder(attribute);
                                     },
-                                    onReplaceText: (index, len, data) {
-                                      setState(() {});
-                                      return false;
-                                    },
-                                    onSelectionCompleted: () {
-                                      setState(() {});
-                                    },
-                                    onDelete: (cursorPosition, forward) {
-                                      setState(() {});
-                                    },
+                                    disableClipboard: true,
+                                    controller: QuillController(
+                                      document:
+                                          item.textEditorController.document,
+                                      selection:
+                                          item.textEditorController.selection,
+                                      readOnly: true,
+                                      onSelectionChanged: (textSelection) {
+                                        setState(() {});
+                                      },
+                                      onReplaceText: (index, len, data) {
+                                        setState(() {});
+                                        return false;
+                                      },
+                                      onSelectionCompleted: () {
+                                        setState(() {});
+                                      },
+                                      onDelete: (cursorPosition, forward) {
+                                        setState(() {});
+                                      },
+                                    ),
                                   ),
+                                  focusNode: FocusNode(),
+                                  scrollController: ScrollController(),
                                 ),
-                                focusNode: FocusNode(),
-                                scrollController: ScrollController(),
                               ),
                             ),
-                          ),
-                        );
-                      } else if (item is SheetList) {
-                        // print('in buildSheetListWidget item is: $item');
-                        return _buildSheetListWidget(item, width);
-                      }
-                      return const SizedBox();
-                    }),
+                          );
+                        } else if (item is SheetList) {
+                          // print('in buildSheetListWidget item is: $item');
+                          return _buildSheetListWidget(item, width);
+                        }
+                        return const SizedBox();
+                      }),
+                    ),
                   ),
-                )
-              //For Rows in the pdf side of things
-              : SizedBox(
-                  width: docWidth,
-                  child: Row(
-                    // direction: Axis.horizontal,
-                    mainAxisAlignment: sheetList.mainAxisAlignment,
-                    crossAxisAlignment: sheetList.crossAxisAlignment,
-                    mainAxisSize: sheetList.mainAxisSize,
-                    children:
-                        List.generate(sheetList.sheetList.length, (index) {
-                      final item = sheetList.sheetList[index];
-
-                      if (item is SheetText) {
-                        // print('in buildSheetListWidget item is: $item');
-                        return IgnorePointer(
-                          key: ValueKey(item),
-                          child: SizedBox(
-                            width: docWidth,
-                            child: IntrinsicWidth(
-                              child: QuillEditor(
-                                key: ValueKey(item.id),
-                                configurations: QuillEditorConfigurations(
-                                  scrollable: false,
-                                  showCursor: false,
-                                  enableInteractiveSelection: false,
-                                  enableSelectionToolbar: false,
-                                  requestKeyboardFocusOnCheckListChanged:
-                                      false,
-                                  customStyleBuilder: (attribute) {
-                                    return customStyleBuilder(attribute);
-                                  },
-                                  disableClipboard: true,
-                                  controller: QuillController(
-                                    document:
-                                        item.textEditorController.document,
-                                    selection:
-                                        item.textEditorController.selection,
-                                    readOnly: true,
-                                    onSelectionChanged: (textSelection) {
-                                      setState(() {});
-                                    },
-                                    onReplaceText: (index, len, data) {
-                                      setState(() {});
-                                      return false;
-                                    },
-                                    onSelectionCompleted: () {
-                                      setState(() {});
-                                    },
-                                    onDelete: (cursorPosition, forward) {
-                                      setState(() {});
-                                    },
-                                  ),
-                                ),
-                                focusNode: FocusNode(),
-                                scrollController: ScrollController(),
-                              ),
-                            ),
-                          ),
-                        );
-                      } else if (item is SheetList) {
-                        // print('in buildSheetListWidget item is: $item');
-                        return _buildSheetListWidget(item, width);
-                      }
-                      return const SizedBox();
-                    }),
-                  ),
-                ),
-        ),
-        false);
+          ),
+          false),
+    );
   }
+
+    Widget _buildSheetTableWidget(SheetTable sheetTable){
+    var tableHeight = 0.0;
+    var tableWidth = 0.0;
+    sheetTable.rowData.forEach((element) => tableHeight += element.size,);
+    sheetTable.columnData.forEach((element) => tableWidth += element.size,);
+    return Container(
+      width: tableWidth,
+      decoration: BoxDecoration( color:defaultPalette.primary,
+      borderRadius: BorderRadius.circular(10)),
+      height:tableHeight,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12).copyWith(topRight: Radius.circular(8)),
+        child: DynMouseScroll(
+          builder: (context, controller1, physics1) {
+            return DynMouseScroll(
+          builder: (context, controller2, physics2) {
+            return Stack(
+              children: [
+                Container(
+                  // margin: EdgeInsets.only(top:18, left:15, bottom: 5,),
+                  decoration: BoxDecoration(
+                  color:defaultPalette.secondary,
+                  borderRadius: BorderRadius.circular(3)
+                ),
+                ),
+                TableView.builder(
+                  horizontalDetails: ScrollableDetails.horizontal(
+                    controller: controller2,
+                    physics: physics2,
+                                                
+                  ),
+                  verticalDetails: ScrollableDetails.vertical(
+                    controller: controller1,
+                    physics: physics1
+                  ),
+                  rowCount:(sheetTable).rowData.length,
+                  columnCount: (sheetTable).columnData.length,
+                  pinnedColumnCount: (sheetTable).pinnedColumns,
+                  pinnedRowCount: (sheetTable).pinnedRows,
+                  columnBuilder: (int i) {
+                    
+                    return TableSpan(
+                      extent: FixedTableSpanExtent((sheetTable as SheetTable).columnData[i].size),
+                      // padding: SpanPadding.all(3)
+                      );
+                  },
+                  rowBuilder: (int i) {
+                    
+                    return TableSpan(
+                      extent: FixedTableSpanExtent((sheetTable as SheetTable).rowData[i].size),
+                      );
+                  }, 
+                  cellBuilder: (BuildContext context, TableVicinity vicinity) {
+                    
+                    
+                    
+                    var rowIndex =  vicinity.row;
+                    var columnIndex = vicinity.column;                      
+                    return TableViewCell(
+                      columnMergeSpan: (sheetTable as SheetTable).cellData[rowIndex][columnIndex].colSpan,
+                      columnMergeStart: vicinity.column,
+                      rowMergeSpan: (sheetTable as SheetTable).cellData[rowIndex][columnIndex].rowSpan,
+                      rowMergeStart: vicinity.row,
+                      child: Padding(
+                        padding: const EdgeInsets.all(0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            borderRadius: BorderRadius.circular(2),
+                            border: Border(
+                              top: BorderSide.none,
+                              left: BorderSide.none,
+                              bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                              right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4))
+                              ),
+                          ),
+                          child: () {
+                            if (sheetTable.cellData[rowIndex][columnIndex].sheetItem is SheetText){
+                              return _buildSheetTableTextWidget(
+                                sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText,
+                                disable:true
+                                );
+                            }
+                            return SizedBox();
+                          }()
+                          ),
+                      ),
+                    );
+                  }),
+                ],
+                );
+                }
+                );
+              }),
+            ),
+          );
+                      
+  }
+
+  Widget _buildSheetTableTextWidget(SheetText sheetText, {bool disable = true}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: defaultPalette.primary,
+        borderRadius:
+            BorderRadius.circular(0),
+      ),
+      child: QuillEditor(
+        key: ValueKey(item.id),
+        configurations: QuillEditorConfigurations(
+          scrollable: false,
+          showCursor: false,
+          enableInteractiveSelection: false,
+          enableSelectionToolbar: false,
+          requestKeyboardFocusOnCheckListChanged: false,
+          customStyleBuilder: (attribute) {
+            return customStyleBuilder(attribute);
+          },
+          disableClipboard: true,
+          controller: QuillController(
+            document:
+                sheetText.textEditorController.document,
+            selection:
+                sheetText.textEditorController.selection,
+            readOnly: true,
+            onSelectionChanged: (textSelection) {
+              setState(() {});
+            },
+            onReplaceText: (index, len, data) {
+              setState(() {});
+              return false;
+            },
+            onSelectionCompleted: () {
+              setState(() {});
+            },
+            onDelete: (cursorPosition, forward) {
+              setState(() {});
+            },
+          ),
+        ),
+        focusNode: FocusNode(),
+        scrollController: ScrollController(),
+      ),
+    );
+                                       
+  }
+
 
   double _getPageWidth(
       PdfPageFormat format, pw.PageOrientation pageOrientation) {
