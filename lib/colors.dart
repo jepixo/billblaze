@@ -132,16 +132,16 @@ ColorPalette againPalette = ColorPalette(
     extras: [
       Color(0xff293132),//0
       Color(0xffF9DC5C),//1
-      Color(0xffEB5E28),//2
-      Color(0xffe94f37),//3
-      Color(0xffFF8C61),//4
-      Color(0xffE54B4B),//5
+      Color(0xffe94f37),//2
+      Color(0xff9D75CB),//3
+      Color(0xff931F1D),//4
+      Color(0xffA594F9),//5
       Color(0xffD62828),//6
       
-      Color(0xff664C43),//7
+      Color(0xff4C1A57),//7
       
       Color(0xffC4D7F2),//8
-      Color(0xff4D7EA8),//9
+      Color(0xff401F3E),//9
       Color(0xff3C91E6),//10
-      Color(0xff916953),//11
+      Color(0xff083d77),//11
     ]);

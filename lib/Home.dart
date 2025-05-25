@@ -320,9 +320,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         recentsCardController.unswipe().then((n) {
           recentsCardController.unswipe().then((n) {
             recentsCardController.setCardIndex(0);
-            ref
-                .read(cCardIndexProvider.notifier)
-                .update((s) => s = recentsCardController.cardIndex!);
+            ref.read(cCardIndexProvider.notifier).update((s) => s = recentsCardController.cardIndex!);
             _cardPosition = 0;
           });
         });
@@ -1815,6 +1813,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   children: [
                     ElevatedLayerButton(
                       onClick: () {
+                      
                         Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -1914,17 +1913,46 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         itemBuilder: (BuildContext context, int i) {
                           return GestureDetector(
                             onTap: () {
-                              Navigator.push(context, MaterialPageRoute(
-                                builder: (context) {
-                                  return PopScope(
-                                    canPop: false,
-                                    child: LayoutDesigner3(
-                                      id: Boxes.getLayouts().keyAt(i),
-                                      index: i,
-                                    ),
-                                  );
-                                },
-                              ));
+                              void openLayoutDesigner(BuildContext context) async {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => Center(child: CircularProgressIndicator()),
+                        );
+
+                        // Load heavy data here (or wait for any required resources)
+                        await Future.delayed(Duration(seconds: 3)); // simulate actual delay
+                        // await yourApiCall(); or heavy object creation
+
+                        Navigator.pop(context); // Close the progress dialog
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (c) => Material(
+                              child: PopScope(
+                                canPop: false,
+                                child: LayoutDesigner3(
+                                  id: Boxes.getLayouts().keyAt(i),
+                                  index: i,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      openLayoutDesigner(context);
+                              // Navigator.push(context, MaterialPageRoute(
+                              //   builder: (context) {
+                              //     return PopScope(
+                              //       canPop: false,
+                              //       child: LayoutDesigner3(
+                              //         id: Boxes.getLayouts().keyAt(i),
+                              //         index: i,
+                              //       ),
+                              //     );
+                              //   },
+                              // ));
                             },
                             child: Container(
                               height: 50,
