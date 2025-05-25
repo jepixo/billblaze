@@ -45,7 +45,7 @@ static SuperDecorationBox getSuperDecoration(String id){
       return decoration.id == id && decoration is SuperDecorationBox;
       },
     orElse: () {
-      String newDecoId = Uuid().v4();
+      String newDecoId = 'dSPR-${ const Uuid().v4()}';
       // print('newonehas to be added in the decoBox unfort: '+ newDecoId);
       SuperDecoration newSuperDecoration = SuperDecoration(id: newDecoId);
       print('doesnt exist '+ id);

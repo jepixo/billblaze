@@ -203,7 +203,7 @@ class SheetTableCellBox extends SheetItem {
       );
     }
 
-    String newId = id.isEmpty ? const Uuid().v4() : id;
+    String newId = id.isEmpty ? 'TX-${ const Uuid() .v4()}': id;
     var textEditorConfigurations = QuillEditorConfigurations(
       enableScribble: true,
       enableSelectionToolbar: true,
