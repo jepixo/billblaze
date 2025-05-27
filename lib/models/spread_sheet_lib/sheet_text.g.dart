@@ -17,7 +17,7 @@ class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return SheetTextBox(
-      linkedTextEditors: (fields[3] as List?)?.cast<String>(),
+      textDecoration: fields[3] as SuperDecorationBox,
       textEditorController: (fields[2] as List)
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
@@ -33,7 +33,7 @@ class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
       ..writeByte(2)
       ..write(obj.textEditorController)
       ..writeByte(3)
-      ..write(obj.linkedTextEditors)
+      ..write(obj.textDecoration)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

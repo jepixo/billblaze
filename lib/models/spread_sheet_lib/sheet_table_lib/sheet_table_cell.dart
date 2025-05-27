@@ -1,5 +1,6 @@
 
 import 'package:billblaze/colors.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
@@ -128,7 +129,9 @@ class SheetTableCellBox extends SheetItem {
         parentId: sheetItem.parentId, 
         findItem: findItem, 
         textFieldTapDown: textFieldTapDown, 
-        docString: sheetItem.textEditorController);
+        docString: sheetItem.textEditorController,
+        textDecoration: sheetItem.textDecoration.toSuperDecoration()
+        );
     }
     else if (sheetItem is SheetListBox){
       return (sheetItem).toSheetList(findItem,textFieldTapDown);
@@ -147,7 +150,7 @@ class SheetTableCellBox extends SheetItem {
     required Function textFieldTapDown,
     required List<Map<String, dynamic>>
         docString, // Use List<Map<String, dynamic>> directly
-    List<String> linkedTextFields = const [],
+    required SuperDecoration textDecoration,
   }) {
     Delta delta;
     print('DocString: $docString');
@@ -250,7 +253,7 @@ class SheetTableCellBox extends SheetItem {
       id: newId,
       parentId:
           parentId,
-      linkedTextEditors: linkedTextFields, // Use parentId if not empty
+      textDecoration: textDecoration, // Use parentId if not empty
     );
   }
 

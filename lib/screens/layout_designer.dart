@@ -181,8 +181,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   PageController pageViewIndicatorController = PageController();
   PageController textStyleTabControler = PageController();
   late TabController fontsTabContainerController;
-  late TabController textPropertyTabContainerController;
-  late TabController listPropertyTabContainerController;
   AppinioSwiperController propertyCardsController = AppinioSwiperController();
   AppinioSwiperController textPropertyCardsController =
       AppinioSwiperController();
@@ -275,6 +273,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   Timer? _timer;
   TextEditingController layoutName = TextEditingController();
   TextEditingController decorationNameController = TextEditingController();
+  TextEditingController textDecorationNameController = TextEditingController();
   TextEditingController decorationSearchController = TextEditingController();
   int key = 0;
   int keyIndex = 0;
@@ -300,8 +299,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool isListDecorationPropertiesToggled = false;
   bool isListDecorationLibraryToggled = false;
   List<String> listDecorationPath =[];
-  late SheetText item;
-  late SheetList sheetListItem;
+  List<String> textDecorationPath=[];
+  SheetText item = SheetText(id: 'yo',parentId: 'yo', textDecoration: SuperDecoration(id: 'yo'),);
+  SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration: SuperDecoration(id: 'yo'), sheetList: [],);
   late SheetTable sheetTableItem;
   var dragBackupValue;
   bool showDecorationLayers = true;
@@ -345,7 +345,7 @@ Future<void> _initialize() async {
 
     // ─── 4) Back on main isolate: assign your lists ─────────────────────────
     sheetDecorationList = decoded;
-    filteredDecorations = List.of(decoded);
+    filteredDecorations = sheetDecorationList;
 
     // ─── 5) Your original Hive & layout logic ──────────────────────────────
     final box = Boxes.getLayouts();
@@ -374,28 +374,25 @@ Future<void> _initialize() async {
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
       layoutName.text = lm!.name;
       initialLayoutName = lm!.name;
+      // sheetListItem = spreadSheetList[currentPageIndex];
     }
 
     if (documentPropertiesList.isEmpty) {
       _addPdfPage();
+      // sheetListItem = spreadSheetList[currentPageIndex];
     }
 
     // ─── 6) Controllers & listeners ────────────────────────────────────────
     tabcunt = TabController(length: 2, vsync: this);
     globalKeys = List.generate(1000, (_) => GlobalKey());
     fetchFonts();
-    _findItem();
+    // _findItem();
     _unfocusAll();
-
+    // _findSheetListItem();
+    
     fontsTabContainerController = TabController(length: 6, vsync: this)
       ..animateTo(1)
       ..addListener(_onFontsTabChanged);
-
-    textPropertyTabContainerController = TabController(length: 3, vsync: this)
-      ..addListener(_onTextPropertyTabChanged);
-
-    listPropertyTabContainerController = TabController(length: 2, vsync: this)
-      ..addListener(_onListPropertyTabChanged);
 
     // ─── 7) Done ────────────────────────────────────────────────────────────
     if (!mounted) return;
@@ -419,35 +416,6 @@ Future<void> _initialize() async {
     });
   }
 
-  void _onTextPropertyTabChanged() {
-    if (!mounted) return;
-    final idx = textPropertyTabContainerController.index;
-    setState(() {
-      whichTextPropertyTabIsClicked = idx;
-      whichPropertyTabIsClicked = 2;
-      textPropertyCardsController.setCardIndex(idx);
-      textPropertyCardsController.animateTo(
-        const Offset(1, 1),
-        duration: Durations.short2,
-        curve: Curves.ease,
-      );
-    });
-  }
-
-  void _onListPropertyTabChanged() {
-    if (!mounted) return;
-    final idx = listPropertyTabContainerController.index;
-    setState(() {
-      whichListPropertyTabIsClicked = idx;
-      listPropertyCardsController.setCardIndex(idx);
-      listPropertyCardsController.animateTo(
-        const Offset(0.1, 0.1),
-        duration: Durations.short2,
-        curve: Curves.ease,
-      );
-      whichPropertyTabIsClicked = 3;
-    });
-  }
   // _____ Initialization Done _______________________________________________
   @override
   void didChangeDependencies() {
@@ -473,6 +441,8 @@ Future<void> _initialize() async {
     pageViewIndicatorController.dispose();
     textStyleTabControler.dispose();
     propertyCardsController.dispose();
+    listPropertyCardsController.dispose();
+    textPropertyCardsController.dispose();
     transformationcontroller.dispose();
     opsFormatPieController.dispose();
     opsMovePieController.dispose();
@@ -481,6 +451,7 @@ Future<void> _initialize() async {
     layoutName.dispose();
     decorationNameController.dispose();
     decorationSearchController.dispose();
+    listPropertyCardsController.dispose();
     // listDirectionPieController.dispose();
     // listMainAxisAlignmentPieController.dispose();
     // listCrossAxisAlignmentDirectionPieController.dispose();
@@ -558,11 +529,13 @@ Future<void> _initialize() async {
               shouldReturn: true,
               docString: item.textEditorController,
               id: item.id,
-              parentId: item.parentId);
+              parentId: item.parentId,
+              textDecoration: item.textDecoration.toSuperDecoration()
+              );
           tEItem = tEItem.copyWith(
               id: item.id,
               parentId: item.parentId,
-              linkedTextEditors: item.linkedTextEditors);
+              textDecoration: item.textDecoration.toSuperDecoration());
           
 
           sheetList.sheetList.add(tEItem);
@@ -591,11 +564,13 @@ Future<void> _initialize() async {
             shouldReturn: true,
             docString: item.textEditorController,
             id: item.id,
-            parentId: item.parentId);
+            parentId: item.parentId,
+            textDecoration: item.textDecoration.toSuperDecoration()
+            );
         tEItem = tEItem.copyWith(
             id: item.id,
             parentId: item.parentId,
-            linkedTextEditors: item.linkedTextEditors);
+            textDecoration: item.textDecoration.toSuperDecoration());
         
         sheetList.sheetList.add(tEItem);
       } else if (item is SheetListBox) {
@@ -613,7 +588,7 @@ Future<void> _initialize() async {
     bool shouldReturn = false,
     List<Map<String, dynamic>>?
         docString, // Use List<Map<String, dynamic>> directly
-    List<String> linkedTextFields = const [],
+    required SuperDecoration textDecoration
   }) {
     Delta delta;
     print('DocString: $docString');
@@ -707,7 +682,7 @@ Future<void> _initialize() async {
         return textFieldTapDown(details, newId);
       },
     );
-
+    
     if (!shouldReturn) {
       setState(() {
         spreadSheetList[currentPageIndex].add(SheetText(
@@ -715,7 +690,7 @@ Future<void> _initialize() async {
             textEditorConfigurations: textEditorConfigurations,
             id: newId,
             parentId: spreadSheetList[currentPageIndex].id,
-            linkedTextEditors: linkedTextFields));
+            textDecoration: textDecoration));
 
         var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
         lm[keyIndex].spreadSheetList[currentPageIndex].sheetList.add(
@@ -724,7 +699,7 @@ Future<void> _initialize() async {
                     textController.document.toDelta().toJson(),
                 id: newId,
                 parentId: spreadSheetList[currentPageIndex].id,
-                linkedTextEditors: linkedTextFields));
+                textDecoration: textDecoration.toSuperDecorationBox()));
         lm[keyIndex].save();
       });
     }
@@ -735,7 +710,7 @@ Future<void> _initialize() async {
       id: newId,
       parentId:
           parentId.isNotEmpty ? parentId : spreadSheetList[currentPageIndex].id,
-      linkedTextEditors: linkedTextFields, // Use parentId if not empty
+      textDecoration: textDecoration, // Use parentId if not empty
     );
   }
 
@@ -816,7 +791,7 @@ Future<void> _initialize() async {
   }
 
   SheetItem _sheetTableItemIterator(String id, SheetTable sheetTable) {
-    SheetItem requiredItem = SheetText(id: 'yo', parentId: '');
+    SheetItem requiredItem = SheetText(id: 'yo', parentId: '', textDecoration: SuperDecoration(id: ''));
     for (var i = 0; i < sheetTable.rowData.length; i++) {
       for (var v = 0; v < sheetTable.columnData.length; v++){
         print('Length: ${sheetTable.cellData[i].length}');
@@ -1356,6 +1331,7 @@ Future<void> _initialize() async {
   Widget _buildSheetListWidget(SheetList sheetList, double width,
       {double? docWidth = null,}) {
         // print(sheetList.mainAxisSize.name);
+
     return GestureDetector(
       onDoubleTap:(){
         panelIndex.parentId = sheetList.id;
@@ -1374,17 +1350,18 @@ Future<void> _initialize() async {
                       mainAxisSize: sheetList.mainAxisSize, 
                       children:
                           List.generate(sheetList.sheetList.length, (index) {
-                        final item = sheetList.sheetList[index];
+                        final sheetTextItem = sheetList.sheetList[index];
       
-                        if (item is SheetText) {
+                        if (sheetTextItem is SheetText) {
                           // print('in buildSheetListWidget item is: $item');
                           Alignment containerAlignment = Alignment.topLeft;
       
                           // Get alignment based on current attributes
-                          final currentAttributes = item.textEditorController
+                          final currentAttributes = sheetTextItem.textEditorController
                               .getSelectionStyle()
                               .attributes;
-      
+                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
+                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
                           // Determine alignment from `attributes`
                           if (_getIsToggled(
                               currentAttributes, Attribute.centerAlignment)) {
@@ -1402,14 +1379,15 @@ Future<void> _initialize() async {
                           }
                           // print('in buildSheetListWidget item is: $item');
                           return IgnorePointer(
-                            key: ValueKey(item),
+                            key: ValueKey(sheetTextItem),
                             child: Container(
                               // width: docWidth,
                               alignment: containerAlignment,
-      
-                              child: IntrinsicWidth(
-                                child: QuillEditor(
-                                  key: ValueKey(item.id),
+                              child: 
+                              buildDecoratedContainer(
+                                sheetTextItem.textDecoration,
+                                QuillEditor(
+                                  key: ValueKey(sheetTextItem.id),
                                   configurations: QuillEditorConfigurations(
                                     scrollable: false,
                                     showCursor: false,
@@ -1422,9 +1400,9 @@ Future<void> _initialize() async {
                                     disableClipboard: true,
                                     controller: QuillController(
                                       document:
-                                          item.textEditorController.document,
+                                          sheetTextItem.textEditorController.document,
                                       selection:
-                                          item.textEditorController.selection,
+                                          sheetTextItem.textEditorController.selection,
                                       readOnly: true,
                                       onSelectionChanged: (textSelection) {
                                         setState(() {});
@@ -1444,14 +1422,16 @@ Future<void> _initialize() async {
                                   focusNode: FocusNode(),
                                   scrollController: ScrollController(),
                                 ),
+                                 false,
+                              
                               ),
                             ),
                           );
-                        } else if (item is SheetList) {
-                          // print('in buildSheetListWidget item is: $item');
-                          return _buildSheetListWidget(item, width);
-                        } else if (item is SheetTable) {
-                          return _buildSheetTableWidget(item,);
+                        } else if (sheetTextItem is SheetList) {
+                          // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
+                          return _buildSheetListWidget(sheetTextItem, width);
+                        } else if (sheetTextItem is SheetTable) {
+                          return _buildSheetTableWidget(sheetTextItem,);
                         }
 
                         return const SizedBox();
@@ -1474,47 +1454,50 @@ Future<void> _initialize() async {
                           // print('in buildSheetListWidget item is: $item');
                           return IgnorePointer(
                             key: ValueKey(item),
-                            child: SizedBox(
-                              width: docWidth,
-                              child: IntrinsicWidth(
-                                child: QuillEditor(
-                                  key: ValueKey(item.id),
-                                  configurations: QuillEditorConfigurations(
-                                    scrollable: false,
-                                    showCursor: false,
-                                    enableInteractiveSelection: false,
-                                    enableSelectionToolbar: false,
-                                    requestKeyboardFocusOnCheckListChanged:
-                                        false,
-                                    customStyleBuilder: (attribute) {
-                                      return customStyleBuilder(attribute);
-                                    },
-                                    disableClipboard: true,
-                                    controller: QuillController(
-                                      document:
-                                          item.textEditorController.document,
-                                      selection:
-                                          item.textEditorController.selection,
-                                      readOnly: true,
-                                      onSelectionChanged: (textSelection) {
-                                        setState(() {});
+                            child: buildDecoratedContainer(
+                              item.textDecoration,
+                              SizedBox(
+                                width: docWidth,
+                                child: IntrinsicWidth(
+                                  child: QuillEditor(
+                                    key: ValueKey(item.id),
+                                    configurations: QuillEditorConfigurations(
+                                      scrollable: false,
+                                      showCursor: false,
+                                      enableInteractiveSelection: false,
+                                      enableSelectionToolbar: false,
+                                      requestKeyboardFocusOnCheckListChanged:
+                                          false,
+                                      customStyleBuilder: (attribute) {
+                                        return customStyleBuilder(attribute);
                                       },
-                                      onReplaceText: (index, len, data) {
-                                        setState(() {});
-                                        return false;
-                                      },
-                                      onSelectionCompleted: () {
-                                        setState(() {});
-                                      },
-                                      onDelete: (cursorPosition, forward) {
-                                        setState(() {});
-                                      },
+                                      disableClipboard: true,
+                                      controller: QuillController(
+                                        document:
+                                            item.textEditorController.document,
+                                        selection:
+                                            item.textEditorController.selection,
+                                        readOnly: true,
+                                        onSelectionChanged: (textSelection) {
+                                          setState(() {});
+                                        },
+                                        onReplaceText: (index, len, data) {
+                                          setState(() {});
+                                          return false;
+                                        },
+                                        onSelectionCompleted: () {
+                                          setState(() {});
+                                        },
+                                        onDelete: (cursorPosition, forward) {
+                                          setState(() {});
+                                        },
+                                      ),
                                     ),
+                                    focusNode: FocusNode(),
+                                    scrollController: ScrollController(),
                                   ),
-                                  focusNode: FocusNode(),
-                                  scrollController: ScrollController(),
                                 ),
-                              ),
+                              ), false
                             ),
                           );
                         } else if (item is SheetList) {
@@ -1530,82 +1513,79 @@ Future<void> _initialize() async {
     );
   }
 
-    Widget _buildSheetTableWidget(SheetTable sheetTable){
-    var tableHeight = 0.0;
-    var tableWidth = 0.0;
-    sheetTable.rowData.forEach((element) => tableHeight += element.size,);
-    sheetTable.columnData.forEach((element) => tableWidth += element.size,);
-    return SizedBox(
-      width: tableWidth,
-      height:tableHeight,
-      child: TableView.builder(
-        rowCount:(sheetTable).rowData.length,
-        columnCount: (sheetTable).columnData.length,
-        pinnedColumnCount: (sheetTable).pinnedColumns,
-        pinnedRowCount: (sheetTable).pinnedRows,
-        columnBuilder: (int i) {
-          
-          return TableSpan(
-            extent: FixedTableSpanExtent((sheetTable).columnData[i].size),
-            // padding: SpanPadding.all(3)
-            );
-        },
-        rowBuilder: (int i) {
-          
-          return TableSpan(
-            extent: FixedTableSpanExtent((sheetTable).rowData[i].size),
-            );
-        }, 
-        cellBuilder: (BuildContext context, TableVicinity vicinity) {
-          
-          
-          
-          var rowIndex =  vicinity.row;
-          var columnIndex = vicinity.column;                      
-          return TableViewCell(
-            columnMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].colSpan,
-            columnMergeStart: vicinity.column,
-            rowMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].rowSpan,
-            rowMergeStart: vicinity.row,
-            child: Padding(
-              padding: const EdgeInsets.all(0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: defaultPalette.primary,
-                  borderRadius: BorderRadius.circular(2),
-                  border: Border(
-                    top: BorderSide.none,
-                    left: BorderSide.none,
-                    bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
-                    right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4))
-                    ),
-                ),
-                child: () {
-                  if (sheetTable.cellData[rowIndex][columnIndex].sheetItem is SheetText){
-                    return _buildSheetTableTextWidget(
-                      sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText,
-                      disable:true
-                      );
-                  }
-                  return SizedBox();
-                }()
-                ),
-            ),
+  Widget _buildSheetTableWidget(SheetTable sheetTable){
+  var tableHeight = 0.0;
+  var tableWidth = 0.0;
+  sheetTable.rowData.forEach((element) => tableHeight += element.size,);
+  sheetTable.columnData.forEach((element) => tableWidth += element.size,);
+  return SizedBox(
+    width: tableWidth,
+    height:tableHeight,
+    child: TableView.builder(
+      rowCount:(sheetTable).rowData.length,
+      columnCount: (sheetTable).columnData.length,
+      pinnedColumnCount: (sheetTable).pinnedColumns,
+      pinnedRowCount: (sheetTable).pinnedRows,
+      columnBuilder: (int i) {
+        
+        return TableSpan(
+          extent: FixedTableSpanExtent((sheetTable).columnData[i].size),
+          // padding: SpanPadding.all(3)
           );
-        }),
+      },
+      rowBuilder: (int i) {
+        
+        return TableSpan(
+          extent: FixedTableSpanExtent((sheetTable).rowData[i].size),
           );
-                      
-  }
+      }, 
+      cellBuilder: (BuildContext context, TableVicinity vicinity) {
+        
+        
+        
+        var rowIndex =  vicinity.row;
+        var columnIndex = vicinity.column;                      
+        return TableViewCell(
+          columnMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].colSpan,
+          columnMergeStart: vicinity.column,
+          rowMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].rowSpan,
+          rowMergeStart: vicinity.row,
+          child: Padding(
+            padding: const EdgeInsets.all(0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: defaultPalette.primary,
+                borderRadius: BorderRadius.circular(2),
+                border: Border(
+                  top: BorderSide.none,
+                  left: BorderSide.none,
+                  bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                  right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4))
+                  ),
+              ),
+              child: () {
+                if (sheetTable.cellData[rowIndex][columnIndex].sheetItem is SheetText){
+                  return _buildSheetTableTextWidget(
+                    sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText,
+                    disable:true
+                    );
+                }
+                return SizedBox();
+              }()
+              ),
+          ),
+        );
+      }),
+        );
+                    
+}
 
   Widget _buildSheetTableTextWidget(SheetText sheetText, {bool disable = true}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: defaultPalette.primary,
-        borderRadius:
-            BorderRadius.circular(0),
-      ),
-      child: QuillEditor(
-        key: ValueKey(item.id),
+    SuperDecoration decor = sheetDecorationList.firstWhere((element) => element.id == sheetText.textDecoration.id,) as SuperDecoration;
+    return buildDecoratedContainer(
+      decor,
+       QuillEditor(
+        key: ValueKey(sheetText.id),
         configurations: QuillEditorConfigurations(
           scrollable: false,
           showCursor: false,
@@ -1639,7 +1619,7 @@ Future<void> _initialize() async {
         ),
         focusNode: FocusNode(),
         scrollController: ScrollController(),
-      ),
+      ), false
     );
                                        
   }
@@ -2113,10 +2093,14 @@ Future<void> _initialize() async {
               as SheetText;
 
     } on Exception catch (e) {
-      item = SheetText(id: '', parentId: '');
+      item = SheetText(id: '', parentId: '', textDecoration: SuperDecoration(id:'yo'));
     }
     setState(() {
+      textDecorationNameController.text = item.textDecoration.name;
+      decorationIndex = -1;
+      updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == item.textDecoration.id) as SuperDecoration);
       
+      textDecorationPath =[item.textDecoration.id];
     });
   }
 
@@ -2395,7 +2379,12 @@ Future<void> _initialize() async {
                                               '________addText pressed LD_________');
                                           // print(
                                           //     'panelId from addtextfield: ${panelIndex.id}');
-                                          _addTextField();
+                                          
+                                          var newDecoId = 'dSPR-'+Uuid().v4();
+                                          setState(() {
+                                            sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                                          });
+                                          _addTextField(textDecoration: SuperDecoration(id: newDecoId));
                                         },
                                         icon: Icon(
                                           CupertinoIcons.plus_bubble,
@@ -2418,8 +2407,11 @@ Future<void> _initialize() async {
                                     IconButton(
                                         onPressed: () {
                                           setState(() {
-                                            String newId = 'TB-${ const Uuid()
-                                .v4()}';
+                                            String newId = 'TB-${ const Uuid().v4()}';
+                                            var newDecoId = 'dSPR-'+Uuid().v4();
+                                            setState(() {
+                                              sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                                            });  
                                             spreadSheetList[currentPageIndex].add(
                                               SheetTable(
                                                 id: newId, 
@@ -2429,6 +2421,7 @@ Future<void> _initialize() async {
                                                 rowData: defaultSheetTableRowData(newId),
                                                 pinnedColumns: 1,
                                                 pinnedRows: 1,
+                                                sheetTableDecoration: SuperDecoration(id: newDecoId)
                                                 )
                                             );
                                           });
@@ -2879,7 +2872,7 @@ Future<void> _initialize() async {
                                                 border: Border.all(),
                                               ),
                                             ),
-                                            //list tabs buttons
+                                            //text tabs buttons
                                             Positioned.fill(
                                               child: Container(
                                                 margin: const EdgeInsets.only(
@@ -2905,7 +2898,7 @@ Future<void> _initialize() async {
                                                             whichPropertyTabIsClicked = 2;
                                                             whichTextPropertyTabIsClicked = 0;
                                                             Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
-                                      
+                                                            _findItem();  
                                                           });
                                                         },
                                                         buttonHeight: 21,
@@ -2941,7 +2934,7 @@ Future<void> _initialize() async {
                                                             whichPropertyTabIsClicked = 2;
                                                             whichTextPropertyTabIsClicked = 1;
                                                             Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
-                                      
+                                                            _findItem();  
                                                           });
                                                         },
                                                         buttonHeight: 21,
@@ -2976,7 +2969,14 @@ Future<void> _initialize() async {
                                                             whichPropertyTabIsClicked = 2;
                                                             whichTextPropertyTabIsClicked = 2;
                                                             Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
-                                      
+                                                            _findItem();  
+                                                            decorationIndex = -1;
+                                                            isListDecorationLibraryToggled = false;
+                                                            isListDecorationPropertiesToggled = false;
+                                                            showDecorationLayers = false;
+                                                            updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration);
+                                                            textDecorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration).name;
+                                           
                                                           });
                                                         },
                                                         buttonHeight: 21,
@@ -3022,6 +3022,15 @@ Future<void> _initialize() async {
                                                             duration:
                                                                 Duration.zero,
                                                             curve: Curves.linear);
+                                                   _findItem(); 
+                                                   decorationIndex = -1;
+                                                    isListDecorationLibraryToggled = false;
+                                                    isListDecorationPropertiesToggled = false;
+                                                    showDecorationLayers = false;
+                                                    updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration);
+                                                    textDecorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration).name;
+                                                
+
                                                   });
                                                 },
                                                 buttonHeight: 30,
@@ -3093,10 +3102,8 @@ Future<void> _initialize() async {
                                                   bottom: 3
                                                 ),
                                                 decoration: BoxDecoration(
-                                                  color:
-                                                      defaultPalette.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
+                                                  color:defaultPalette.transparent,
+                                                  borderRadius:BorderRadius.circular(2),
                                                   // border: Border.all(),
                                                 ),
                                                 child: Stack(
@@ -3106,8 +3113,20 @@ Future<void> _initialize() async {
                                                       child: ElevatedLayerButton(
                                                         onClick: () {
                                                           setState(() {
-                                                            whichPropertyTabIsClicked = 3;
-                                                           whichListPropertyTabIsClicked =0;
+                                                          if (whichPropertyTabIsClicked != 3) {
+                                                              whichPropertyTabIsClicked = 3;
+                                                              _findSheetListItem();
+                                                            }
+                                                            if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=0) {
+                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(0),);
+                                                                
+                                                                whichListPropertyTabIsClicked =0;
+                                                              } else {
+                                                                print('heryaa');
+                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.swipeDefault(),);
+                                                                
+                                                              }
+                                                              
                                                           });
                                                         },
                                                         buttonHeight: 21,
@@ -3140,8 +3159,27 @@ Future<void> _initialize() async {
                                                       child: ElevatedLayerButton(
                                                         onClick: () {
                                                           setState(() {
-                                                        whichPropertyTabIsClicked = 3;
-                                                        whichListPropertyTabIsClicked =1;
+                                                            if (whichPropertyTabIsClicked != 3) {
+                                                              whichPropertyTabIsClicked = 3;
+                                                              _findSheetListItem();
+                                                              decorationIndex = -1;
+                                                              isListDecorationLibraryToggled = false;
+                                                              isListDecorationPropertiesToggled = false;
+                                                              showDecorationLayers = false;
+                                                              updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration);
+                                                              decorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration).name;
+                                                          
+                                                            }
+                                                            if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=1) {
+                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(1),);
+                                                                
+                                                                whichListPropertyTabIsClicked =1;
+                                                              } else {
+                                                                print('heryaa');
+                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(1),);
+                                                                
+                                                              }
+                                                            // listPropertyCardsController.swipeDefault();
                                                           });
                                                         },
                                                         buttonHeight: 21,
@@ -3180,7 +3218,17 @@ Future<void> _initialize() async {
                                               child: ElevatedLayerButton(
                                                 onClick: () {
                                                   setState(() {
-                                                    whichPropertyTabIsClicked = 3;
+                                                    if (whichPropertyTabIsClicked != 3) {
+                                                      whichPropertyTabIsClicked = 3;
+                                                      _findSheetListItem();
+                                                      decorationIndex = -1;
+                                                      isListDecorationLibraryToggled = false;
+                                                      isListDecorationPropertiesToggled = false;
+                                                      showDecorationLayers = false;
+                                                      updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration);
+                                                      textDecorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration).name;
+                                                    
+                                                    }
                                                   });
                                                 },
                                                 buttonHeight: 30,
@@ -3269,7 +3317,7 @@ Future<void> _initialize() async {
                                                         onClick: () {
                                                           setState(() {
                                                             whichPropertyTabIsClicked = 3;
-                                                            listPropertyTabContainerController.animateTo(0);
+                                                            listPropertyCardsController.setCardIndex(0);
                                                             // listPropertyCardsController
                                                             //     .setCardIndex(0);
                                                           });
@@ -3294,19 +3342,19 @@ Future<void> _initialize() async {
                                                         depth:1.5,
                                                         baseDecoration: BoxDecoration(
                                                           color: defaultPalette.extras[0],
-                                                          
+                                                         
                                                         ),
                                                       ),
                                                     ),
-                                            
+                                           
                                                     Positioned(
                                                       bottom:0, right:3,
                                                       child: ElevatedLayerButton(
                                                         onClick: () {
                                                           setState(() {
                                                         whichPropertyTabIsClicked = 3;
-                                                        listPropertyTabContainerController
-                                                            .animateTo(1);
+                                                        listPropertyCardsController
+                                                            .setCardIndex(1);
                                                           });
                                                         },
                                                         buttonHeight: 21,
@@ -3328,16 +3376,16 @@ Future<void> _initialize() async {
                                                         depth: 1.5,
                                                         baseDecoration: BoxDecoration(
                                                           color: defaultPalette.extras[0],
-                                                          
+                                                         
                                                         ),
                                                       ),
                                                     ),
-                                            
+                                           
                                                   ],
                                                 )
                                               ),
                                             ),
-
+                                    
                                             //the propety tab switch main button to list properties
                                             Positioned(
                                               top:-2,
@@ -3348,8 +3396,8 @@ Future<void> _initialize() async {
                                                 onClick: () {
                                                   setState(() {
                                                     whichPropertyTabIsClicked = 3;
-                                                    listPropertyTabContainerController
-                                                        .animateTo(0);
+                                                    listPropertyCardsController
+                                                        .setCardIndex(0);
                                                     // propertyTabController.jumpToPage(2);
                                                   });
                                                 },
@@ -7306,9 +7354,6 @@ Future<void> _initialize() async {
                                         onPressed: () {
                                           print(
                                               '________addText pressed LD_________');
-                                          // print(
-                                          //     'panelId from addtextfield: ${panelIndex.id}');
-                                          _addTextField();
                                         },
                                         icon: Icon(
                                           CupertinoIcons.plus_bubble,
@@ -8067,7 +8112,11 @@ Future<void> _initialize() async {
                       .row_insert_top,
                   onSelected: () {
                     setState(() {
-                    var newItem = _addTextField( shouldReturn:  true);
+                    var newDecoId = 'dSPR-'+Uuid().v4();
+                   
+                      sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                 
+                    var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
                     sheetList.insert( index, newItem);
                     });
                   },
@@ -8079,10 +8128,12 @@ Future<void> _initialize() async {
                       .row_insert_bottom,
                   onSelected: () {
                     setState(() {
-                    var newItem =
-                          _addTextField(
-                              shouldReturn:
-                                  true);  
+                    var newDecoId = 'dSPR-'+Uuid().v4();
+                   
+                      sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                 
+                    var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
+                    
                     if (index<sheetList.length) {
                       
                       sheetList.insert(
@@ -8103,27 +8154,31 @@ Future<void> _initialize() async {
                       .code_plus,
                   onSelected: () {
                     setState(() {
-                        var newId =
-                           'LI-${ const Uuid()
-                                .v4()}';
-                        var decoId ='dSPR-${ const Uuid()
-                                .v4()}';
-                        var newDeco = SuperDecoration(id: decoId);
-                        sheetDecorationList.add(newDeco);       
-                        sheetList.insert(
-                        index,
-                        SheetList(
-                        direction:
-                          Axis.vertical,
-                        id: newId,
-                        parentId: sheetList.id,
-                        listDecoration: newDeco,
-                        sheetList: [
-                          _addTextField( shouldReturn:true)
-                        ]
-                        ));
-                        print('plused');
-                        print(sheetList.id);
+                      var newDecoId = 'dSPR-'+Uuid().v4();
+                      sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                      var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
+                    
+                      var newId =
+                          'LI-${ const Uuid()
+                              .v4()}';
+                      var decoId ='dSPR-${ const Uuid()
+                              .v4()}';
+                      var newDeco = SuperDecoration(id: decoId);
+                      sheetDecorationList.add(newDeco);       
+                      sheetList.insert(
+                      index,
+                      SheetList(
+                      direction:
+                        Axis.vertical,
+                      id: newId,
+                      parentId: sheetList.id,
+                      listDecoration: newDeco,
+                      sheetList: [
+                        newItem
+                      ]
+                      ));
+                      print('plused');
+                      print(sheetList.id);
                     });
                   },
                 ),
@@ -8785,7 +8840,8 @@ Future<void> _initialize() async {
                                 docString: e.textEditorConfigurations.controller.document.toDelta().toJson(),
                                 id: 'TX-${ const Uuid().v4()}',
                                 parentId: parentIdOverride,
-                                shouldReturn: true
+                                shouldReturn: true,
+                                textDecoration: e.textDecoration
 
                                 );
                             }
@@ -8864,7 +8920,12 @@ Future<void> _initialize() async {
                             .row_insert_top,
                         onSelected: () {
                           setState(() {
-                          var newItem = _addTextField( shouldReturn:  true);
+                          var newDecoId = 'dSPR-'+Uuid().v4();
+                          
+                          sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                         
+                          var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
+                    
                           _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
                             _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
                             , newItem);
@@ -8878,7 +8939,10 @@ Future<void> _initialize() async {
                             .row_insert_bottom,
                         onSelected: () {
                           setState(() {
-                          var newItem = _addTextField( shouldReturn:  true);
+                          var newDecoId = 'dSPR-'+Uuid().v4();
+                          sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                          var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
+                    
                           var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
                           if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
                             
@@ -8903,7 +8967,10 @@ Future<void> _initialize() async {
                           icon: TablerIcons.row_insert_top,
                           onSelected: () {
                             setState(() {
-                            var newItem = _addTextField(shouldReturn: true);  
+                            var newDecoId = 'dSPR-'+Uuid().v4();
+                            sheetDecorationList.add(SuperDecoration(id: newDecoId));
+                            var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
+                     
                             var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
                             if (index<sheetList.length) {
                               
@@ -8923,7 +8990,10 @@ Future<void> _initialize() async {
                               .row_insert_bottom,
                           onSelected: () {
                             setState(() {
-                              var newItem = _addTextField(shouldReturn: true);  
+                              var newDecoId = 'dSPR-'+Uuid().v4();
+                              sheetDecorationList.add(SuperDecoration(id: newDecoId)); 
+                              var newItem = _addTextField( shouldReturn:  true,textDecoration: SuperDecoration(id: newDecoId));
+                     
                               
                                 sheetList.add(
                                     newItem);
@@ -9393,8 +9463,7 @@ Future<void> _initialize() async {
                                   onHorizontalDragUpdate: (details) {
                                   
                                   setState(() {
-                                    sheetTable.columnData[vicinity.column-1].size += details.delta.dx.clamp(-5, 150);
-                                    sheetTable.columnData[vicinity.column-1].size = sheetTable.columnData[vicinity.column-1].size.clamp(25,double.infinity);
+                                    sheetTable.columnData[vicinity.column-1].size = (sheetTable.columnData[vicinity.column-1].size+details.delta.dx.clamp(-(sheetTable.columnData[vicinity.column-1].size-50),double.infinity)).clamp(50,double.infinity);
                                   });
                                   },
                                   child: Container(
@@ -10073,8 +10142,6 @@ Future<void> _initialize() async {
                   //   _renderPagePreviewOnProperties();
                   // }
                   whichTextPropertyTabIsClicked = b;
-                  textPropertyTabContainerController.index =
-                      whichTextPropertyTabIsClicked;
                   _cardPosition = 0;
                 });
               },
@@ -12187,57 +12254,8 @@ Future<void> _initialize() async {
                         ),
                       ),
 
-
+                    // TEXT DECORATION
                     if (index == 2) ...[
-                      // Positioned.fill(
-                      //   child: //GRAPH BEHIND FONT CARD
-                      //       Padding(
-                      //         padding: const EdgeInsets.all(10),
-                      //         child: ClipRRect(
-                      //           borderRadius: BorderRadius.circular(25),
-                      //           child: Opacity(
-                      //             opacity: 0.35,
-                      //             child: Container(
-                      //               width: sWidth,
-                      //               height: sHeight,
-                      //               color: defaultPalette.primary,
-                      //               child: LineChart(LineChartData(
-                      //                   backgroundColor: defaultPalette.primary,
-                      //                   lineBarsData: [LineChartBarData()],
-                      //                   titlesData:
-                      //                       const FlTitlesData(show: false),
-                      //                   gridData: FlGridData(
-                      //                       getDrawingVerticalLine: (value) =>
-                      //                           FlLine(
-                      //                               color: defaultPalette.extras[0]
-                      //                                   .withOpacity(0.8),
-                      //                               dashArray: [5, 5],
-                      //                               strokeWidth: 1),
-                      //                       getDrawingHorizontalLine: (value) =>
-                      //                           FlLine(
-                      //                               color: defaultPalette
-                      //                                   .extras[0]
-                      //                                   .withOpacity(0.8),
-                      //                               dashArray: [5, 5],
-                      //                               strokeWidth: 1),
-                      //                       show: true,
-                      //                       horizontalInterval: 3,
-                      //                       verticalInterval: 30),
-                      //                   borderData: FlBorderData(show: false),
-                      //                   minY: 0,
-                      //                   maxY: 50,
-                      //                   maxX: dateTimeNow.millisecondsSinceEpoch
-                      //                               .ceilToDouble() /
-                      //                           500 +
-                      //                       250,
-                      //                   minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
-                                 
-                      //             ),
-                      //           ),
-                      //         ),
-                      //       ),
-
-                      // ),
                       
                       Positioned.fill(
                       child: AnimatedPadding(
@@ -12248,13 +12266,13 @@ Future<void> _initialize() async {
                             borderRadius: BorderRadius.circular(10),
                             child: Column(
                               children: [
-                                //Black Balloon button and circlebutton elevated &&&  DECOR Title and the preview box and text information
+                                //grey Balloon button and circlebutton elevated &&&  DECOR Title and the preview box and text information
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    //Black Balloon button and circlebutton elevated on upper half
+                                    //grey Balloon button and circlebutton elevated on upper half
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -12268,8 +12286,8 @@ Future<void> _initialize() async {
                                               isListDecorationLibraryToggled = false;
                                               isListDecorationPropertiesToggled = false;
                                               showDecorationLayers = false;
-                                              updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration);
-                                              decorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration).name;
+                                              updateSheetDecorationvariables(sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration);
+                                              textDecorationNameController.text = (sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration).name;
                                             });
                                           },
                                           child: AnimatedContainer(
@@ -12284,8 +12302,7 @@ Future<void> _initialize() async {
                                             decoration: BoxDecoration(
                                               color: defaultPalette.secondary,
                                               border: Border.all(width:1),
-                                              borderRadius:
-                                                  BorderRadius.circular(500),
+                                              borderRadius: BorderRadius.circular(500),
                                             ),
                                           ),
                                         ),
@@ -12363,12 +12380,12 @@ Future<void> _initialize() async {
                                               var itemDecoId = 'dITM-${ const Uuid().v4()}';
                                               var itemDecoration = ItemDecoration(id: itemDecoId);
 
-                                              if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length < 70) {
+                                              if ((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length < 70) {
                                                 // Add the new decoration to the main list
                                                 sheetDecorationList.add(itemDecoration);
 
                                                 // Get the reference to the SuperDecoration from the list
-                                                var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration);
+                                                var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration);
                                                 if (currentItemDecoration is SuperDecoration) {
                                                   // Create a new list with the updated decoration IDs
                                                   var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
@@ -12386,7 +12403,7 @@ Future<void> _initialize() async {
                                                   }
 
                                                   // Also update the decoration reference in the item itself
-                                                  sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                  item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
 
 
                                                   print('New decoration added');
@@ -12493,9 +12510,9 @@ Future<void> _initialize() async {
                                                       Padding(
                                                         padding: const EdgeInsets.only(left:2.0),
                                                         child: Text(
-                                                            '' +sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?'': (decorationIndex == -1  ? 
-                                                          (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration) 
-                                                          : decorationIterator((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                            '' +sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?'': (decorationIndex == -1  ? 
+                                                          (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration) 
+                                                          : decorationIterator((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                             .itemDecorationList[decorationIndex], sheetDecorationList)).runtimeType.toString()
                                                             .replaceAll(RegExp(r'Decoration'), '')
                                                             .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()), maxLines:1,
@@ -12517,7 +12534,7 @@ Future<void> _initialize() async {
                                                           cursorColor:
                                                               defaultPalette.extras[0],
                                                           controller:
-                                                              decorationNameController,
+                                                              textDecorationNameController,
                                                           decoration:
                                                               InputDecoration(
                                                             filled:
@@ -12556,8 +12573,8 @@ Future<void> _initialize() async {
                                                           onChanged:
                                                               (value) {
                                                             setState(() {
-                                                            var currentItemDecoration = decorationIterator((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id, sheetDecorationList);
-
+                                                            var currentItemDecoration = decorationIterator((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).id, sheetDecorationList);
+                                                            textDecorationNameController.text = value;
                                                             if (decorationIndex == -1) {
                                                               if (currentItemDecoration is SuperDecoration) {
                                                                 // Update the decoration and the name in the list item
@@ -12565,12 +12582,10 @@ Future<void> _initialize() async {
                                                                 int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
                                                                 if (index != -1) {
                                                                   sheetDecorationList[index] = updatedDecoration;
-                                                                  // Update the name in the sheetListItem as well
-                                                                  // sheetListItem.listDecoration = sheetListItem.listDecoration.copyWith(name: value);
-                                                                }
+                                                                 }
                                                               }
                                                             } else {
-                                                              currentItemDecoration = decorationIterator((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex], sheetDecorationList);
+                                                              currentItemDecoration = decorationIterator((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex], sheetDecorationList);
 
                                                               try {
                                                                 if (currentItemDecoration is SuperDecoration) {
@@ -12591,7 +12606,9 @@ Future<void> _initialize() async {
                                                               } on Exception catch (e) {
                                                                 print('Error updating decoration: $e');
                                                               }
+
                                                             }
+                                                            
                                                           });
 
 
@@ -12618,7 +12635,7 @@ Future<void> _initialize() async {
                                                                 children: [
                                                                   TextSpan(text: 'id: '),
                                                                   TextSpan(
-                                                                    text:sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?'': decorationIndex == -1 ? (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
+                                                                    text:sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?'': decorationIndex == -1 ? (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).id : (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                                                     style: GoogleFonts.lexend(color: defaultPalette.extras[0], fontSize: 6, fontWeight: FontWeight.normal),
                                                                   ),
                                                                 ])),
@@ -12637,17 +12654,17 @@ Future<void> _initialize() async {
                                                   width: 58,
                                                   padding: EdgeInsets.only(
                                                       right: 3),
-                                                  child:sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?null:
+                                                  child:sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last, orElse:()=> SheetDecoration(id: 'yo', name: 'name')).id =='yo'?null:
                                                       buildDecoratedContainer(
                                                           decorationIndex ==
                                                                   -1
-                                                              ? (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                              ? (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                               : SuperDecoration(
                                                                   id: 'yo',
                                                                   itemDecorationList: [
-                                                                      ...(sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                                      ...(sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                                           .itemDecorationList
-                                                                          .sublist(0, (decorationIndex + 1).clamp(0, (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length))
+                                                                          .sublist(0, (decorationIndex + 1).clamp(0, (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length))
                                                                     ]),
                                                           SizedBox(
                                                               width: 30,
@@ -12721,7 +12738,7 @@ Future<void> _initialize() async {
                                                       
                                                                 // Step 1: Get the parent decoration safely
                                                                 var parentItemDecoration = decorationIterator(
-                                                                    (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id, sheetDecorationList);
+                                                                    (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).id, sheetDecorationList);
                                                       
                                                                 if (parentItemDecoration == null) {
                                                                   print('Error: Could not find parent decoration.');
@@ -12736,7 +12753,7 @@ Future<void> _initialize() async {
                                                       
                                                                 // Step 2: Create a new decoration based on the current one
                                                                 var currentItemDecoration = decorationIterator(
-                                                                    (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
+                                                                    (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                                                     sheetDecorationList);
                                                       
                                                                 if (currentItemDecoration == null) {
@@ -12784,7 +12801,7 @@ Future<void> _initialize() async {
                                                                 } else {
                                                                   print('Error: Could not update parent decoration.');
                                                                 }
-                                                                sheetListItem.listDecoration = sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id,) as SuperDecoration;
+                                                                item.textDecoration = sheetDecorationList.firstWhere((element) => element.id == item.textDecoration.id,) as SuperDecoration;
                                                       
                                                             }
                                                       
@@ -12816,17 +12833,17 @@ Future<void> _initialize() async {
                                                             roundButton(() {
                                                               if (decorationIndex !=
                                                                         -1) {
-                                                                if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                                if ((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                                         .itemDecorationList
                                                                         .length >
-                                                                    1) {(sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                                    1) {(sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                                       .itemDecorationList
                                                                       .removeAt(
                                                                           decorationIndex);
                                                                   decorationIndex -=
                                                                       1;
                                                                 }
-                                                            sheetListItem.listDecoration = sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id,) as SuperDecoration;
+                                                            item.textDecoration = sheetDecorationList.firstWhere((element) => element.id == item.textDecoration.id,) as SuperDecoration;
                                                          
                                                             }
                                                             },
@@ -12857,7 +12874,7 @@ Future<void> _initialize() async {
                                                 child: SingleChildScrollView(
                                                   scrollDirection: Axis.horizontal,
                                                   child: Row(
-                                                    children: listDecorationPath.map((e) {
+                                                    children: textDecorationPath.map((e) {
                                                       return 
                                                         Wrap(
                                                           children: [
@@ -12869,19 +12886,20 @@ Future<void> _initialize() async {
                                                                   splashColor:  defaultPalette.secondary,
                                                                   onTap: () {
                                                                     setState(() {
-                                                                      listDecorationPath = listDecorationPath.sublist(0, listDecorationPath.indexOf(e)+1);
+                                                                      textDecorationPath = textDecorationPath.sublist(0, textDecorationPath.indexOf(e)+1);
                                                                       decorationIndex =-1;
-                                                                      updateSheetDecorationvariables(sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration);
+                                                                      updateSheetDecorationvariables(sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration);
+                                                                      textDecorationNameController.text = sheetDecorationList.firstWhere((el)=> el.id == e).name;
                                                                     });
                                                                   },
-                                                                child:listDecorationPath.indexOf(e)==0
+                                                                child:textDecorationPath.indexOf(e)==0
                                                               ? Icon(TablerIcons.smart_home, size:15)
                                                               :  Container(
                                                                   padding: EdgeInsets.symmetric(horizontal: 2),
                                                                   decoration: BoxDecoration(
                                                                     shape: BoxShape.circle,),
                                                                   child: Text(
-                                                                    (sheetDecorationList.firstWhere((el)=> el.id == listDecorationPath[listDecorationPath.indexOf(e)-1]) as SuperDecoration).itemDecorationList.indexOf(e).toString(),
+                                                                    (sheetDecorationList.firstWhere((el)=> el.id == textDecorationPath[textDecorationPath.indexOf(e)-1]) as SuperDecoration).itemDecorationList.indexOf(e).toString(),
                                                                     style: GoogleFonts.lexend(
                                                                     fontSize: 12,
                                                                     letterSpacing: -1,
@@ -12890,7 +12908,7 @@ Future<void> _initialize() async {
                                                                   ),              
                                                                 ),),
                                                             ),
-                                                            Icon(TablerIcons.chevron_compact_right, size:15),
+                                                            const Icon(TablerIcons.chevron_compact_right, size:15),
                                                           ],
                                                         )
                                                       ;
@@ -12953,7 +12971,7 @@ Future<void> _initialize() async {
                                           
                                           if (decorationIndex != -1) {
                                           currentItemDecoration = decorationIterator(
-                                            (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
+                                            (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                             sheetDecorationList);
                                           }
                                           return SingleChildScrollView(
@@ -12984,7 +13002,7 @@ Future<void> _initialize() async {
                                                       // print(p0);
                                                       setState(() {
                                                       var selectedItemDecoration = decorationIterator(
-                                                        (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
+                                                        (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList[decorationIndex],
                                                         sheetDecorationList,
                                                       ) as ItemDecoration;
                                   
@@ -13390,25 +13408,25 @@ Future<void> _initialize() async {
                                                 ),
                                                 //ALL THE EDITOR UIs
                                                 if (decorationIndex != -1 && !isListDecorationLibraryToggled)
-                                                  if (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration).itemDecorationList[
+                                                  if (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration).itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                     is ItemDecoration)
                                                   ...buildItemDecorationEditor(
-                                                      (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration)
+                                                      (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration)
                                                             .itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                           as ItemDecoration), shadowLayerIndex: sheetDecorationVariables[decorationIndex].listShadowLayerSelectedIndex),
                                                 //If selected layer is superdecoration
                                                 if (decorationIndex != -1 && !isListDecorationLibraryToggled)
-                                                  if (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration).itemDecorationList[
+                                                  if (decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration).itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                     is SuperDecoration)
-                                                      ...buildSuperDecorationEditor(decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration)
+                                                      ...buildSuperDecorationEditor(decorationIterator((sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration)
                                                             .itemDecorationList[
                                                         decorationIndex], sheetDecorationList)
                                                           as SuperDecoration),
                                                 if(decorationIndex == -1 && !isListDecorationLibraryToggled )
-                                                ...buildSuperDecorationEditor(sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration),
+                                                ...buildSuperDecorationEditor(sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration),
                                                           
                                                 if(isListDecorationLibraryToggled)
                                                 Padding(
@@ -13424,7 +13442,7 @@ Future<void> _initialize() async {
                                                               message: 'add a SuperDecoration.',
                                                               child: roundButton(
                                                                 () { 
-                                                                  var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration); 
+                                                                  var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration); 
                                                                    
                                                                 setState(() {
                                                                   var superDecoId = 'dSPR-${ const Uuid().v4()}';
@@ -13448,7 +13466,7 @@ Future<void> _initialize() async {
                                                                       }
                                                                       print('New decoration added');
                                                                       print(updatedDecoration.itemDecorationList);
-                                                                      sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                      item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
 
                                                                     } else {
                                                                       print('Error: Decoration is not a SuperDecoration');
@@ -13556,7 +13574,7 @@ Future<void> _initialize() async {
                                                               message: 'add this as a layer to the current SuperDecoration.',
                                                               child: roundButton(
                                                                 () { 
-                                                                  var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration); 
+                                                                  var currentItemDecoration = (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration); 
                                                                    
                                                                 if (currentItemDecoration.itemDecorationList.length < 70) {
                                                                    
@@ -13577,7 +13595,7 @@ Future<void> _initialize() async {
                                                                     }
                                                                                                             
                                                                     updateSheetDecorationvariables(currentItemDecoration);
-                                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                    item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
                                         
                                                                     print('New decoration added');
                                                                     print(updatedDecoration.itemDecorationList);
@@ -13607,16 +13625,16 @@ Future<void> _initialize() async {
                                                                 .toList();
                                                                 },Icon(TablerIcons.trash,size: 14,), 'delete',padding: EdgeInsets.all(2), showText: false),
                                                             ),
-                                                            if(e is SuperDecoration && listDecorationPath.length ==1)
+                                                            if(e is SuperDecoration && textDecorationPath.length ==1)
                                                             UtilityWidgets.maybeTooltip(
                                                               message: 'switch the current SuperDecoration with this one.',
                                                               child: roundButton(() {
                                                                 
-                                                                sheetListItem.listDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
+                                                                item.textDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
                                                                 updateSheetDecorationvariables(e);
                                                                 decorationIndex =-1;
-                                                                sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
-                                                                listDecorationPath =[e.id];
+                                                                item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                                textDecorationPath =[e.id];
                                                                 },Icon(TablerIcons.replace,size: 14,), 'switchTo',padding: EdgeInsets.all(2), showText: false),
                                                                 
                                                             ),
@@ -13625,29 +13643,26 @@ Future<void> _initialize() async {
                                                             UtilityWidgets.maybeTooltip(
                                                               message: '''add it's child layers to the current SuperDecoration.''',
                                                               child: roundButton(() {
-                                                                if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length < 70) {
+                                                                if ((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length < 70) {
                                                                   
                                                                   
-                                                                  if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,)) is SuperDecoration) {
+                                                                  if ((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,)) is SuperDecoration) {
                                                                     // Create a new list with the updated decoration IDs
-                                                                    var updatedList = List<String>.from((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList);
+                                                                    var updatedList = List<String>.from((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList);
                                                                     updatedList.addAll(e.itemDecorationList);
                                                                                                             
                                                                     // Create the updated decoration using copyWith
-                                                                    var updatedDecoration = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).copyWith(
+                                                                    var updatedDecoration = (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).copyWith(
                                                                       itemDecorationList: updatedList,
                                                                     );
                                                                                                             
                                                                     // Find the index and update the list with the new decoration
-                                                                    int index = sheetDecorationList.indexWhere((deco) => deco.id == (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).id);
+                                                                    int index = sheetDecorationList.indexWhere((deco) => deco.id == (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).id);
                                                                     if (index != -1) {
                                                                       sheetDecorationList[index] = updatedDecoration;
                                                                     }
-                                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                    item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
                                                                                                         
-                                                                    // Also update the decoration reference in the item itself
-                                                                    // sheetListItem.listDecoration = updatedDecoration;
-                                                                                                            
                                                                     print('New decoration added');
                                                                     print(updatedDecoration.itemDecorationList);
                                                                   } else {
@@ -13798,7 +13813,7 @@ Future<void> _initialize() async {
                                   durationMS: 500,
                                   scrollSpeed: 1,
                                   builder: (context, controller, physics) {
-                                    List<MapEntry<int, SheetDecoration>> decorationEntries = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList
+                                    List<MapEntry<int, SheetDecoration>> decorationEntries = (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList
                                     .asMap().entries.toList().reversed.map((entry) {
                                       // Get the actual decoration using the ID
                                       final decoration = decorationIterator(entry.value, sheetDecorationList);
@@ -13820,10 +13835,10 @@ Future<void> _initialize() async {
                                         child: ReorderableListView(
                                           onReorder: (oldIndex, newIndex) {
                                             setState(() {
-                                              final itemList = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                              final itemList = (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                   .itemDecorationList.reversed.toList();
 
-                                              final item = itemList
+                                              final elem = itemList
                                                     .removeAt(oldIndex);
                                                 if ((newIndex !=
                                                     itemList.length + 2)) {
@@ -13835,14 +13850,14 @@ Future<void> _initialize() async {
 
                                                   
                                                   if (oldIndex < newIndex) {
-                                                    itemList.insert(newIndex-1,item);
+                                                    itemList.insert(newIndex-1,elem);
                                                     // decorationIndex =
                                                     //     (newIndex - 1);
                                                   } else {
                                                     // decorationIndex =
                                                     //     newIndex;
                                                     itemList.insert(
-                                                      newIndex, item);
+                                                      newIndex, elem);
                                                   }
                                                   print('hah' +
                                                       oldIndex
@@ -13850,18 +13865,18 @@ Future<void> _initialize() async {
                                                       ' ' +
                                                       newIndex.toString());
                                                 } else {
-                                                  itemList.add(item);
+                                                  itemList.add(elem);
                                                   // decorationIndex =
                                                   //     itemList.length - 1;
                                                   print(oldIndex.toString() +
                                                       ' ' +
                                                       newIndex.toString());
                                                 }
-                                                (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                   .itemDecorationList = itemList.reversed.toList();
-                                                sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
 
-                                              updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration));
+                                              updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration));
                                             });
                                           },
                                           proxyDecorator:
@@ -13874,7 +13889,7 @@ Future<void> _initialize() async {
                                           children: [
                                             for (final entry in decorationEntries)
                                               ReorderableDragStartListener(
-                                                index: (((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                index: (((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                         .itemDecorationList
                                                         .length -
                                                     1) -
@@ -13886,9 +13901,9 @@ Future<void> _initialize() async {
                                                     AnimatedContainer(
                                                       duration: Duration(
                                                           milliseconds: (500 +
-                                                                  (300 /(((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 
+                                                                  (300 /(((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 
                                                                   ? 2 
-                                                                  : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length) - 1)) * entry.key)
+                                                                  : (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length) - 1)) * entry.key)
                                                               .round()),
                                                       curve: Curves.easeIn,
                                                       height: (((sHeight * 0.9) - 250) / (decorationIndex == entry.key ? 8 : 10.3))
@@ -13933,7 +13948,7 @@ Future<void> _initialize() async {
                                                       duration: Duration(
                                                           milliseconds: (500 +
                                                                   (300 /
-                                                                          (((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length) -
+                                                                          (((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length) -
                                                                               1)) *
                                                                       entry.key)
                                                               .round()),
@@ -14021,7 +14036,7 @@ Future<void> _initialize() async {
                                                                 SuperDecoration(
                                                                     id: 'id',
                                                                     itemDecorationList: [
-                                                                      (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                                      (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                                           .itemDecorationList[entry.key]
                                                                     ]),
                                                                 SizedBox(
@@ -14063,7 +14078,7 @@ Future<void> _initialize() async {
                                                                       decorationIndex =entry.key;
                                                                       print(decorationIndex);
                                                                       var itemDecoration = decorationIterator(
-                                                                          (sheetDecorationList.firstWhere((e)=> e.id == listDecorationPath.last) as SuperDecoration).itemDecorationList[decorationIndex],
+                                                                          (sheetDecorationList.firstWhere((e)=> e.id == textDecorationPath.last) as SuperDecoration).itemDecorationList[decorationIndex],
                                                                           sheetDecorationList);
                                                                       decorationNameController .text =itemDecoration.name;
                                                                       isListDecorationLibraryToggled =false;
@@ -14078,7 +14093,7 @@ Future<void> _initialize() async {
                                                                       } else{
                                                                         print(decorationIndex);
                                                                         // _findSheetListItem();
-                                                                        updateSheetDecorationvariables((sheetDecorationList.firstWhere((element) => element.id == listDecorationPath.last,) as SuperDecoration));
+                                                                        updateSheetDecorationvariables((sheetDecorationList.firstWhere((element) => element.id == textDecorationPath.last,) as SuperDecoration));
                                                                         
                                                                         decorationIndex = entry.key;
                                                                         }
@@ -14088,15 +14103,15 @@ Future<void> _initialize() async {
                                                               onDoubleTap: () {
                                                                 setState(() {
                                                                   var itemDecoration = decorationIterator(
-                                                                      (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList[entry.key],
+                                                                      (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList[entry.key],
                                                                       sheetDecorationList);
                                                                   if (itemDecoration is SuperDecoration) {    
                                                                   decorationNameController.text = itemDecoration.name;
                                                                   isListDecorationLibraryToggled = false;
 
                                                                   updateSheetDecorationvariables(itemDecoration);
-                                                                  listDecorationPath.add(itemDecoration.id);
-                                                                  print(listDecorationPath);
+                                                                  textDecorationPath.add(itemDecoration.id);
+                                                                  print(textDecorationPath);
                                                                   decorationIndex = -1;
                                                                   }
 
@@ -14117,7 +14132,7 @@ Future<void> _initialize() async {
                                                       duration: Duration(
                                                           milliseconds: (500 +
                                                                   (300 /
-                                                                          (((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration).itemDecorationList.length) -
+                                                                          (((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration).itemDecorationList.length) -
                                                                               1)) *
                                                                       entry.key)
                                                               .round()),
@@ -14144,16 +14159,16 @@ Future<void> _initialize() async {
                                                                 if (decorationIndex !=
                                                                     -1) {
                                                                   setState(() {
-                                                                    if ((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                                    if ((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                                             .itemDecorationList
                                                                             .length >
                                                                         1) {
-                                                                      (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
+                                                                      (sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration)
                                                                           .itemDecorationList
                                                                           .removeAt(
                                                                               decorationIndex);
                                                                       decorationIndex =-1;
-                                                                      updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration));
+                                                                      updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == textDecorationPath.last,) as SuperDecoration));
                                                                     }
 
                                                                   });
@@ -14225,7 +14240,7 @@ Future<void> _initialize() async {
                           // });
                           setState(() {
                             showDecorationLayers = !showDecorationLayers;
-                            if (sheetListItem.id == 'yo') {
+                            if (item.id == 'yo') {
                               _findSheetListItem();
                             }
                           });
@@ -14260,6 +14275,12 @@ Future<void> _initialize() async {
       case 3:
         //The actual cards for list properties
         return FadeInLeft(
+          onFinish: (direction) {
+            setState(() {
+              listPropertyCardsController
+                  .setCardIndex(whichListPropertyTabIsClicked);
+            });
+          },
           from: 3,
           duration: Durations.short3,
           child: AppinioSwiper(
@@ -14288,8 +14309,6 @@ Future<void> _initialize() async {
                 // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
                 isListDecorationLibraryToggled = false;
                 whichListPropertyTabIsClicked = b;
-                listPropertyTabContainerController.index =
-                    whichListPropertyTabIsClicked;
                 _cardPosition = 0;
                 if (sheetListItem.id == 'yo') {
                   _findSheetListItem();
@@ -14897,8 +14916,11 @@ Future<void> _initialize() async {
                                                   }
 
                                                   // Also update the decoration reference in the item itself
-                                                  sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
-
+                                                  if (whichPropertyTabIsClicked ==3) {
+                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                  } else if (whichPropertyTabIsClicked == 2){
+                                                    item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                  }
 
                                                   print('New decoration added');
                                                   print(updatedDecoration.itemDecorationList);
@@ -14953,11 +14975,19 @@ Future<void> _initialize() async {
                                                 Container(
                                                   color:defaultPalette.extras[0],
                                                   height: 30,
-                                                  child: MatrixRainAnimation(
-                                                    backgroundColor:
-                                                        defaultPalette
-                                                            .extras[0],
-                                                  ),
+                                                  child: MultipleBalloons(
+                                                  minSize: 5,
+                                                  maxSize: 35,
+                                                  maxSpeed: 1.5,
+                                                  maxSwayAmount: 30,
+                                                  minSwayAmount: 10,
+                                                
+                                                ),
+                                                  // child: MatrixRainAnimation(
+                                                  //   backgroundColor:
+                                                  //       defaultPalette
+                                                  //           .extras[0],
+                                                  // ),
                                                 ),
                                                 Positioned(
                                                   right: 0,
@@ -15286,8 +15316,11 @@ Future<void> _initialize() async {
                                                                 } else {
                                                                   print('Error: Could not update parent decoration.');
                                                                 }
-                                                                sheetListItem.listDecoration = sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id,) as SuperDecoration;
-                                                      
+                                                                if (whichPropertyTabIsClicked ==3) {
+                                                                  sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                } else if (whichPropertyTabIsClicked == 2){
+                                                                  item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                                }
                                                             }
                                                       
                                                       
@@ -15328,8 +15361,11 @@ Future<void> _initialize() async {
                                                                   decorationIndex -=
                                                                       1;
                                                                 }
-                                                            sheetListItem.listDecoration = sheetDecorationList.firstWhere((element) => element.id == sheetListItem.listDecoration.id,) as SuperDecoration;
-                                                         
+                                                            if (whichPropertyTabIsClicked ==3) {
+                                                              sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                            } else if (whichPropertyTabIsClicked == 2){
+                                                              item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                            }
                                                             }
                                                             },
                                                                 Icon(
@@ -15950,8 +15986,11 @@ Future<void> _initialize() async {
                                                                       }
                                                                       print('New decoration added');
                                                                       print(updatedDecoration.itemDecorationList);
+                                                                      if (whichPropertyTabIsClicked ==3) {
                                                                       sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
-
+                                                                      } else if (whichPropertyTabIsClicked == 2){
+                                                                        item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                                      }
                                                                     } else {
                                                                       print('Error: Decoration is not a SuperDecoration');
                                                                     }
@@ -16079,8 +16118,11 @@ Future<void> _initialize() async {
                                                                     }
                                                                                                             
                                                                     updateSheetDecorationvariables(currentItemDecoration);
-                                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
-                                        
+                                                                    if (whichPropertyTabIsClicked ==3) {
+                                                                      sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                    } else if (whichPropertyTabIsClicked == 2){
+                                                                      item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                                    }
                                                                     print('New decoration added');
                                                                     print(updatedDecoration.itemDecorationList);
                                                                   } else {
@@ -16114,11 +16156,19 @@ Future<void> _initialize() async {
                                                               message: 'switch the current SuperDecoration with this one.',
                                                               child: roundButton(() {
                                                                 
-                                                                sheetListItem.listDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
-                                                                updateSheetDecorationvariables(e);
-                                                                decorationIndex =-1;
-                                                                sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
-                                                                listDecorationPath =[e.id];
+                                                                if (whichPropertyTabIsClicked ==3) {
+                                                                  sheetListItem.listDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
+                                                                  updateSheetDecorationvariables(e);
+                                                                  decorationIndex =-1;
+                                                                  sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                  listDecorationPath =[e.id];
+                                                                } else if(whichPropertyTabIsClicked ==2){
+                                                                  item.textDecoration = decorationIterator(e.id, sheetDecorationList) as SuperDecoration;
+                                                                  updateSheetDecorationvariables(e);
+                                                                  decorationIndex =-1;
+                                                                  item.textDecoration= (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                                  textDecorationPath =[e.id];
+                                                                }
                                                                 },Icon(TablerIcons.replace,size: 14,), 'switchTo',padding: EdgeInsets.all(2), showText: false),
                                                                 
                                                             ),
@@ -16145,10 +16195,13 @@ Future<void> _initialize() async {
                                                                     if (index != -1) {
                                                                       sheetDecorationList[index] = updatedDecoration;
                                                                     }
-                                                                    sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
-                                                                                                        
-                                                                    // Also update the decoration reference in the item itself
-                                                                    // sheetListItem.listDecoration = updatedDecoration;
+                                                                    
+                                                                    
+                                                                    if (whichPropertyTabIsClicked ==3) {
+                                                                      sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                                    } else if (whichPropertyTabIsClicked == 2){
+                                                                      item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                                    }
                                                                                                             
                                                                     print('New decoration added');
                                                                     print(updatedDecoration.itemDecorationList);
@@ -16310,7 +16363,7 @@ Future<void> _initialize() async {
                                               final itemList = (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                   .itemDecorationList.reversed.toList();
 
-                                              final item = itemList
+                                              final elem = itemList
                                                     .removeAt(oldIndex);
                                                 if ((newIndex !=
                                                     itemList.length + 2)) {
@@ -16322,14 +16375,14 @@ Future<void> _initialize() async {
 
                                                   
                                                   if (oldIndex < newIndex) {
-                                                    itemList.insert(newIndex-1,item);
+                                                    itemList.insert(newIndex-1,elem);
                                                     // decorationIndex =
                                                     //     (newIndex - 1);
                                                   } else {
                                                     // decorationIndex =
                                                     //     newIndex;
                                                     itemList.insert(
-                                                      newIndex, item);
+                                                      newIndex, elem);
                                                   }
                                                   print('hah' +
                                                       oldIndex
@@ -16337,7 +16390,7 @@ Future<void> _initialize() async {
                                                       ' ' +
                                                       newIndex.toString());
                                                 } else {
-                                                  itemList.add(item);
+                                                  itemList.add(elem);
                                                   // decorationIndex =
                                                   //     itemList.length - 1;
                                                   print(oldIndex.toString() +
@@ -16346,7 +16399,12 @@ Future<void> _initialize() async {
                                                 }
                                                 (sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration)
                                                   .itemDecorationList = itemList.reversed.toList();
-                                                sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                
+                                                if (whichPropertyTabIsClicked ==3) {
+                                                  sheetListItem.listDecoration= (sheetDecorationList.firstWhere((e) => e.id == sheetListItem.listDecoration.id,) as SuperDecoration);
+                                                } else if (whichPropertyTabIsClicked == 2){
+                                                  item.textDecoration = (sheetDecorationList.firstWhere((e) => e.id == item.textDecoration.id,) as SuperDecoration);
+                                                }
 
                                               updateSheetDecorationvariables((sheetDecorationList.firstWhere((e) => e.id == listDecorationPath.last,) as SuperDecoration));
                                             });
@@ -16738,8 +16796,6 @@ Future<void> _initialize() async {
                     ),
                   
                   ],
-                  // Positioned.fill(child: Center(child: Text(sheetListItem.id))),
-                  // Left and Right adjustments
                 ],
               );
             },
@@ -19091,6 +19147,7 @@ Future<void> _initialize() async {
     int depth = 0,
     int maxDepth = 10, // Adjustable depth limit for cycles
   }) {
+    
     // Add current ID to visited list if not already present
     List<String> newVisitedIds = List.from(visitedIds);
 
@@ -19157,7 +19214,7 @@ Future<void> _initialize() async {
   }
 
   List<Widget> buildSuperDecorationEditor(
-    SuperDecoration superDecoration
+    SuperDecoration superDecoration,
   ){
     if(superDecoration.itemDecorationList.isEmpty){
       return [];
@@ -19229,11 +19286,17 @@ Future<void> _initialize() async {
                   var itemDecoration =  (sheetDecorationList.firstWhere((el) => el.id == e) as SuperDecoration);
                   if (itemDecoration is SuperDecoration) {    
                   decorationNameController.text = itemDecoration.name;
+                  textDecorationNameController.text = itemDecoration.name;
                   isListDecorationLibraryToggled = false;
 
                   updateSheetDecorationvariables(itemDecoration);
-                  listDecorationPath.add(itemDecoration.id);
-                  print(listDecorationPath);
+                  if (whichPropertyTabIsClicked==3) {
+                    listDecorationPath.add(itemDecoration.id);
+                    print(listDecorationPath);
+                  } else if (whichPropertyTabIsClicked==2) {
+                    textDecorationPath.add(itemDecoration.id);
+                    print(textDecorationPath);
+                  }
                   decorationIndex = -1;
                   }
 
@@ -23517,11 +23580,15 @@ Future<void> _initialize() async {
   List<List<SheetTableCell>> defaultSheetTableCellData(String parentId) {
   const rows = 10;
   const cols = 10;
-
+  var newDecoId = 'dSPR-'+Uuid().v4();
+  setState(() {
+    sheetDecorationList.add(SuperDecoration(id: newDecoId));
+  });  
+  
   return List.generate(rows, (row) {
     return List.generate(cols, (col) {
       final content = 'Cell ${String.fromCharCode(65 + col)}${row+1}';
-      var newId = 'TBd-${ const Uuid().v4()}'; 
+      var newId = 'TX-${ const Uuid().v4()}'; 
 
       return SheetTableCell(
         id: '${numberToColumnLabel(col)}${row+1}',
@@ -23532,7 +23599,8 @@ Future<void> _initialize() async {
           parentId: parentId,
           docString: [],
           findItem: _findItem,
-          textFieldTapDown: textFieldTapDown
+          textFieldTapDown: textFieldTapDown,
+          textDecoration: SuperDecoration(id: newDecoId)
           ),
         rowSpan: 1,
         colSpan: 1,
