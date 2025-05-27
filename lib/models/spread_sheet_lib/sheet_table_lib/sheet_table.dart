@@ -1,3 +1,4 @@
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
@@ -18,6 +19,8 @@ class SheetTableBox extends SheetItem {
   int pinnedRows;
   @HiveField(6)
   int pinnedColumns;
+  @HiveField(7)
+  SuperDecorationBox sheetTableDecoration;
 
   SheetTableBox({
     required super.id, 
@@ -27,7 +30,7 @@ class SheetTableBox extends SheetItem {
     this.columnData = const [],
     this.pinnedRows = 1,
     this.pinnedColumns =1,
-    
+    required this.sheetTableDecoration
   });
 
   SheetTable toSheetTable(Function findItem, Function textFieldTapDown) {
@@ -38,7 +41,8 @@ class SheetTableBox extends SheetItem {
       pinnedColumns: pinnedColumns,
       columnData: columnData.map((e) => e.toSheetTableColumn(),).toList(),
       rowData: rowData.map((e) => e.toSheetTableRow(),).toList(),
-      cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown),).toList(),).toList()
+      cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown),).toList(),).toList(),
+      sheetTableDecoration: sheetTableDecoration.toSuperDecoration()
       );
   }
   
@@ -53,6 +57,7 @@ class SheetTable extends SheetItem {
   List<SheetTableColumn> columnData;
   int pinnedRows;
   int pinnedColumns;
+  SuperDecoration sheetTableDecoration;
 
   SheetTable({
     required super.id,
@@ -62,6 +67,7 @@ class SheetTable extends SheetItem {
     this.columnData = const [],
     this.pinnedRows =1,
     this.pinnedColumns = 1,
+    required this.sheetTableDecoration,
   });
 
   SheetTableBox toSheetTableBox() {
@@ -73,6 +79,7 @@ class SheetTable extends SheetItem {
       columnData: columnData.map((e) => e.toSheetTableColumnBox(),).toList(),
       pinnedColumns: pinnedColumns,
       pinnedRows: pinnedRows,
+      sheetTableDecoration: sheetTableDecoration.toSuperDecorationBox()
       );
   }
 

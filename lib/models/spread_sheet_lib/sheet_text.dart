@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // import 'package:fleather/fleather.dart';
 // import 'dart:math';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -17,9 +18,9 @@ class SheetTextBox extends SheetItem {
   @HiveField(2)
   final List<Map<String, dynamic>> textEditorController;
   @HiveField(3)
-  final List<String>? linkedTextEditors;
+  final SuperDecorationBox textDecoration;
   SheetTextBox({
-    this.linkedTextEditors = null,
+    required this.textDecoration,
     required this.textEditorController,
     required super.id,
     required super.parentId,
@@ -34,14 +35,14 @@ class SheetText extends SheetItem {
   final FocusNode focusNode;
   final ScrollController scrollController;
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
-  List<String>? linkedTextEditors;
+  SuperDecoration textDecoration;
   //
   SheetText._({
     required super.id,
     required super.parentId,
     required this.textEditorController,
     required this.textEditorConfigurations,
-    this.linkedTextEditors,
+    required this.textDecoration,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -58,7 +59,7 @@ class SheetText extends SheetItem {
     ScrollController? scrollController,
     QuillSimpleToolbar? toolBarConfigurations,
     QuillEditorConfigurations? textEditorConfigurations,
-    List<String>? linkedTextEditors,
+    required SuperDecoration textDecoration,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -79,7 +80,8 @@ class SheetText extends SheetItem {
         id: id,
         parentId: parentId,
         textEditorConfigurations: configurations,
-        linkedTextEditors: linkedTextEditors);
+        textDecoration: textDecoration
+        );
   }
 
   Delta getTextEditorDocumentAsDelta() {
@@ -102,7 +104,7 @@ class SheetText extends SheetItem {
     QuillSimpleToolbarConfigurations? toolBarConfigurations,
     String? id,
     String? parentId,
-    List<String>? linkedTextEditors,
+    SuperDecoration? textDecoration,
   }) {
     return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -110,7 +112,7 @@ class SheetText extends SheetItem {
           textEditorConfigurations ?? this.textEditorConfigurations,
       id: id ?? this.id,
       parentId: parentId ?? this.parentId,
-      linkedTextEditors: linkedTextEditors ?? this.linkedTextEditors,
+      textDecoration: textDecoration ?? this.textDecoration,
     );
   }
 
@@ -122,6 +124,6 @@ class SheetText extends SheetItem {
             textEditorController.document.toDelta().toJson(),
         id: item.id,
         parentId: item.parentId,
-        linkedTextEditors: item.linkedTextEditors);
+        textDecoration: item.textDecoration.toSuperDecorationBox());
   }
 }
