@@ -20,15 +20,27 @@ class SheetTableRowBoxAdapter extends TypeAdapter<SheetTableRowBox> {
       id: fields[0] as String,
       parentId: fields[1] as String,
       size: fields[2] as double,
+      minSize: fields[3] as double,
+      maxSize: fields[4] as double,
+      hide: fields[5] as bool,
+      rowDecoration: fields[6] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableRowBox obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(7)
       ..writeByte(2)
       ..write(obj.size)
+      ..writeByte(3)
+      ..write(obj.minSize)
+      ..writeByte(4)
+      ..write(obj.maxSize)
+      ..writeByte(5)
+      ..write(obj.hide)
+      ..writeByte(6)
+      ..write(obj.rowDecoration)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
