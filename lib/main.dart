@@ -43,6 +43,7 @@ Future<void> main() async {
   Hive.registerAdapter(SheetTableCellBoxAdapter());
   Hive.registerAdapter(SheetTableRowBoxAdapter());
   Hive.registerAdapter(SheetTableColumnBoxAdapter());
+  // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
   await Hive.openBox<SheetDecoration>('decorations');

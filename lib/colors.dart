@@ -140,7 +140,6 @@ ColorPalette againPalette = ColorPalette(
       
       Color(0xff4C1A57),//7
       
-      Color(0xffC4D7F2),//8
       Color(0xff401F3E),//9
       Color(0xff3C91E6),//10
       Color(0xff083d77),//11
