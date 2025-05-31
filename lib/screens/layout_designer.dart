@@ -167,54 +167,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   final _googleFontsApiKey = 'AIzaSyBSG_5VsGG03fTeSihFNxYSCVN3m6Ltb0c';
   bool isLoading = true;
   String selectedFontCategory = 'san-serif';
-  double hDividerPosition = 0.5;
-  double vDividerPosition = 0.55;
-  double appbarHeight = 0.065;
-  double wH1DividerPosition = 0.2;
-  double wH2DividerPosition = 0.23;
-  double wVDividerPosition = 0.5;
-  double _cardPosition = 0;
-  DateTime dateTimeNow = DateTime.now();
-  List<SelectedIndex> selectedIndex = [];
-  PanelIndex panelIndex = PanelIndex(id: '', parentId: '');
-  List<SheetList?> sheetListClipboard =[null,null];
-  PageController pageViewIndicatorController = PageController();
-  PageController textStyleTabControler = PageController();
-  late TabController fontsTabContainerController;
-  AppinioSwiperController propertyCardsController = AppinioSwiperController();
-  AppinioSwiperController textPropertyCardsController =
-      AppinioSwiperController();
-  AppinioSwiperController listPropertyCardsController =
-      AppinioSwiperController();
-  AppinioSwiperController tablePropertyCardsController =
-      AppinioSwiperController();    
-  PieMenuController opsAddPieController = PieMenuController();
-  PieMenuController opsMovePieController = PieMenuController();
-  PieMenuController opsCopyPieController = PieMenuController();
-  PieMenuController opsFormatPieController = PieMenuController();
-  // PieMenuController listDirectionPieController = PieMenuController();
-  // PieMenuController listMainAxisAlignmentPieController = PieMenuController();
-  // PieMenuController listCrossAxisAlignmentDirectionPieController =
-  //     PieMenuController();
-  List<SheetList> spreadSheetList = [];
-  List<DocumentProperties> documentPropertiesList = [];
-  List<SheetDecoration> sheetDecorationList = [];
-  double textFieldHeight = 40;
-  double presuConstraintsMinW = 20;
-  double pdfPreviewPaddingScaleFactor = 1;
-  FocusNode marginAllFocus = FocusNode();
-  FocusNode marginTopFocus = FocusNode();
-  FocusNode marginBottomFocus = FocusNode();
-  FocusNode marginLeftFocus = FocusNode();
-  FocusNode marginRightFocus = FocusNode();
-  final FocusNode layoutNamefocusNode = FocusNode();
-  final FocusNode decorationNameFocusNode = FocusNode();
-  final FocusNode textDecorationNameFocusNode = FocusNode();
-  List<FocusNode> fontFocusNodes = List.generate(6, (e)=>FocusNode());
-  List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
-  zz.TransformationController transformationcontroller =
-      zz.TransformationController();
-  late TabController tabcunt;
+  late String initialLayoutName;
   List<String> fonts2 = [
     'Billabong',
     'AlexBrush',
@@ -238,6 +191,56 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       .toList()
       .where((font) => !font.startsWith('Noto'))
       .toList();
+  List<String> listDecorationPath =[];
+  List<String> textDecorationPath=[];
+  List<String> tableDecorationPath =[];
+  List<String> tablebgDecorationPath = [];
+  List<String> rowDecorationPath = [];
+  List<String> columnDecorationPath = [];
+  Map<String, List<String>> categorizedFonts = {};    
+  double hDividerPosition = 0.5;
+  double vDividerPosition = 0.55;
+  double appbarHeight = 0.065;
+  double wH1DividerPosition = 0.2;
+  double wH2DividerPosition = 0.23;
+  double wVDividerPosition = 0.5;
+  double _cardPosition = 0;
+  double textFieldHeight = 40;
+  double presuConstraintsMinW = 20;
+  double pdfPreviewPaddingScaleFactor = 1;
+  double get sWidth => MediaQuery.of(context).size.width;
+  double get sHeight => MediaQuery.of(context).size.height;
+  double? _pendingDelta;
+  DateTime dateTimeNow = DateTime.now();
+  List<SelectedIndex> selectedIndex = [];
+  PanelIndex panelIndex = PanelIndex(id: '', parentId: '');
+  List<SheetList?> sheetListClipboard =[null,null];
+  PageController pageViewIndicatorController = PageController();
+  PageController textStyleTabControler = PageController();
+  late TabController fontsTabContainerController;
+  AppinioSwiperController propertyCardsController = AppinioSwiperController();
+  AppinioSwiperController textPropertyCardsController = AppinioSwiperController();
+  AppinioSwiperController listPropertyCardsController = AppinioSwiperController();
+  AppinioSwiperController tablePropertyCardsController = AppinioSwiperController();    
+  PieMenuController opsAddPieController = PieMenuController();
+  PieMenuController opsMovePieController = PieMenuController();
+  PieMenuController opsCopyPieController = PieMenuController();
+  PieMenuController opsFormatPieController = PieMenuController();
+  List<SheetList> spreadSheetList = [];
+  List<DocumentProperties> documentPropertiesList = [];
+  List<SheetDecoration> sheetDecorationList = [];
+  FocusNode marginAllFocus = FocusNode();
+  FocusNode marginTopFocus = FocusNode();
+  FocusNode marginBottomFocus = FocusNode();
+  FocusNode marginLeftFocus = FocusNode();
+  FocusNode marginRightFocus = FocusNode();
+  final FocusNode layoutNamefocusNode = FocusNode();
+  final FocusNode decorationNameFocusNode = FocusNode();
+  final FocusNode textDecorationNameFocusNode = FocusNode();
+  List<FocusNode> fontFocusNodes = List.generate(6, (e)=>FocusNode());
+  zz.TransformationController transformationcontroller = zz.TransformationController();
+  late TabController tabcunt;
+  
   List<Color> paletteColors = [
     Colors.black,
     Colors.white,
@@ -260,8 +263,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     Color(int.parse('0xff1289A7')),
     Color(int.parse('0xffD980FA'))
   ];
-  Map<String, List<String>> categorizedFonts = {};
-
   List<bool> isTapped = [false, true, false, false, false];
   List<GlobalKey> globalKeys = [];
   List<Uint8List> _images = [];
@@ -269,8 +270,6 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   var filteredDecorations =[];
   late LayoutModel? lm;
   GlobalKey spreadSheetKey = GlobalKey();
-  double get sWidth => MediaQuery.of(context).size.width;
-  double get sHeight => MediaQuery.of(context).size.height;
   Color dialogSelectColor = Color(0xFF000000);
   List<SheetDecorationVariables> sheetDecorationVariables = [];
   Timer? _timer;
@@ -278,17 +277,20 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   TextEditingController listDecorationNameController = TextEditingController();
   TextEditingController textDecorationNameController = TextEditingController();
   TextEditingController tableDecorationNameController = TextEditingController();
+  TextEditingController tablebgDecorationNameController = TextEditingController();
+  TextEditingController rowDecorationNameController = TextEditingController();
+  TextEditingController columnDecorationNameController = TextEditingController();
   TextEditingController decorationSearchController = TextEditingController();
   int key = 0;
   int keyIndex = 0;
   int pageCount = 0;
   int currentPageIndex = 0;
   int decorationIndex = -1;
-  late String initialLayoutName;
   int whichPropertyTabIsClicked = 1;
   int whichTextPropertyTabIsClicked = 0;
   int whichListPropertyTabIsClicked = 0;
-  int whichTablePropertyTabIsClicked =0;
+  int whichTablePropertyTabIsClicked = 0;
+  int whichTableDecorationIsClicked = 0;
   SheetTableVariables sheetTableVariables = SheetTableVariables();
   Uint8List? cachedImageData;
   bool nameExists = false;
@@ -306,14 +308,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool isListDecorationLibraryToggled = false;
   bool showDecorationLayers = true;
   bool isTableDecorationModeDropped = false;
-  List<String> listDecorationPath =[];
-  List<String> textDecorationPath=[];
-  List<String> tableDecorationPath =[];
+  List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
   SheetText item = SheetText(id: 'yo',parentId: 'yo', textDecoration: SuperDecoration(id: 'yo'),);
   SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration: SuperDecoration(id: 'yo'), sheetList: [],);
   late SheetTable sheetTableItem;
   var dragBackupValue;
-  double? _pendingDelta;
   OverlayEntry? _overlay;
 
   //
@@ -356,7 +355,12 @@ Future<void> _initialize() async {
         await compute(decodeItemDecorationList, rawList);
 
     // ─── 4) Back on main isolate: assign your lists ─────────────────────────
-    sheetDecorationList = decoded;
+    sheetDecorationList = decoded
+  ..sort((a, b) {
+    int indexA = int.parse(a.id.split('/').last);
+    int indexB = int.parse(b.id.split('/').last);
+    return indexA.compareTo(indexB);
+  });;
     filteredDecorations = sheetDecorationList;
 
     // ─── 5) Your original Hive & layout logic ──────────────────────────────
@@ -852,8 +856,7 @@ Future<void> _initialize() async {
     return requiredItem;
   }
 
-  SheetDecoration decorationIterator(
-    String id, List<SheetDecoration> sheetDecorationList) {
+  SheetDecoration decorationIterator(String id, List<SheetDecoration> sheetDecorationList) {
       // print('decoration '+ id);
   for (int i = 0; i < sheetDecorationList.length; i++) {
     
@@ -1174,7 +1177,7 @@ Future<void> _initialize() async {
     return SuperDecoration(id: newDecoId);
   }
 
-// genWidget
+  // genWidget
   Widget _generateWid(sWidth, sHeight) {
     var width = (sWidth * (1 - vDividerPosition)) - 16;
     var doc = documentPropertiesList;
@@ -2158,14 +2161,46 @@ Future<void> _initialize() async {
     
   }
 
-  void _findSheetTableItem(SheetTable sheetTable){
+  void _findSheetTableItem(SheetTable sheetTable,{
+    bool updateVariables = true
+  }){
     setState(() {
+        var tmpinx = int.tryParse(sheetTable.sheetTableDecoration.id.substring(sheetTable.sheetTableDecoration.id.indexOf('/') + 1))??-42;
+        var tmpbginx = int.tryParse(sheetTable.sheetTablebgDecoration.id.substring(sheetTable.sheetTablebgDecoration.id.indexOf('/') + 1))??-42;
+        var rwinx = int.tryParse(sheetTable.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTable.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-42;
+        var clinx = int.tryParse(sheetTable.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTable.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-42;
         sheetTableItem = sheetTable;
         panelIndex.parentId = sheetTable.id;
         whichPropertyTabIsClicked = 4;
+        decorationIndex=-1;
+        if(updateVariables) updateSheetTableVariables(sheetTable);
+        tableDecorationNameController.text = sheetDecorationList[tmpinx].name;
         tableDecorationPath..clear()..add(sheetTable.sheetTableDecoration.id);
-        updateSheetTableVariables(sheetTable);
-        tableDecorationNameController.text = sheetTable.sheetTableDecoration.name;
+        tablebgDecorationNameController.text = sheetDecorationList[tmpbginx].name;
+        tablebgDecorationPath..clear()..add(sheetDecorationList[tmpbginx].id);
+        rowDecorationNameController.text = sheetDecorationList[rwinx].name; 
+        rowDecorationPath..clear()..add(sheetDecorationList[rwinx].id); 
+        columnDecorationNameController.text = sheetDecorationList[clinx].name;   
+        columnDecorationPath..clear()..add(sheetDecorationList[clinx].id);
+        
+         switch (whichTableDecorationIsClicked) {
+          case 0:
+            updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+            break;
+          case 1:
+            updateSheetDecorationvariables(sheetDecorationList[tmpbginx] as SuperDecoration);
+            break;
+          case 2:
+            updateSheetDecorationvariables(sheetDecorationList[rwinx] as SuperDecoration);
+            break;
+          case 3:
+            updateSheetDecorationvariables(sheetDecorationList[clinx] as SuperDecoration);
+            break;
+          default:
+        }
+        print('sheetDecorationVariables initiated.');
+        print(sheetTableItem.sheetTableDecoration.id);
+        print(' '+ sheetDecorationVariables.length.toString());
       });
   }
 
@@ -9620,6 +9655,7 @@ Future<void> _initialize() async {
                                 panelIndex.id = sheetTable.cellData[rowIndex][columnIndex].sheetItem.id;
                                 panelIndex.parentId = sheetTable.cellData[rowIndex][columnIndex].sheetItem.parentId;
                                 sheetTableItem = sheetTable;
+                                // _findItem();
                                 _findSheetTableItem(sheetTable);
                               });
                               },
@@ -14788,6 +14824,14 @@ Future<void> _initialize() async {
               var sheetTableDecoration = sheetDecorationList[tblinx];
               var rowDecoration = sheetDecorationList[rowinx];
               var columnDecoration = sheetDecorationList[colinx];
+              String selectedDecorationTitle = 
+              whichTableDecorationIsClicked == 0
+              ? ' Table'
+              : whichTableDecorationIsClicked == 1
+                ? ' TableBG'
+                : whichTableDecorationIsClicked == 2
+                  ? ' Row '+(sheetTableVariables.rowLayerIndex+1).toString()
+                  : ' Column '+numberToColumnLabel(sheetTableVariables.columnLayerIndex+1);
               List<TextEditingController> tableTextControllers=[
                 TextEditingController()..text= (sheetTableItem.pinnedRows-1).toString(),
                 TextEditingController()..text= (sheetTableItem.pinnedColumns-1).toString(),
@@ -14801,6 +14845,29 @@ Future<void> _initialize() async {
                 
               ];
               
+              Widget switchTableDecorationTile (int s, String p, double top){
+              return Positioned(
+                top:top,
+                child: GestureDetector(
+                  onTap:(){
+                    setState(() {
+                      whichTableDecorationIsClicked = s;
+                      selectedDecorationTitle = p;
+                      isTableDecorationModeDropped = false;
+                      // print('HEY ANM '+selectedDecorationTitle+whichTableDecorationIsClicked.toString());
+                      int rwinx = int.tryParse(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-4;
+                      int clinx = int.tryParse(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-4;
+                      int tbinx = int.tryParse(sheetTableItem.sheetTableDecoration.id.substring(sheetTableItem.sheetTableDecoration.id.indexOf('/') + 1))??-4;
+                      _findSheetTableItem(sheetTableItem, updateVariables: false);
+                    });
+                  },
+                  child: Text( p,style: GoogleFonts.lexend(
+                  fontSize: 15,
+                  letterSpacing:-1,
+                  )),
+                ));
+            }
+    
               Widget titleTile(
               String name,
               IconData icon, {
@@ -15717,7 +15784,76 @@ Future<void> _initialize() async {
                       )
                     )
                   ],
-                  if (index == 1) ...buildSuperDecorationSwiperInterface(tableDecorationPath, tableDecorationNameController)
+                  if (index == 1) ...[
+                  ...buildSuperDecorationSwiperInterface(
+                    whichTableDecorationIsClicked ==0
+                    ? tableDecorationPath
+                    : whichTableDecorationIsClicked ==1
+                    ? tablebgDecorationPath
+                    : whichTableDecorationIsClicked ==2
+                    ? rowDecorationPath
+                    : columnDecorationPath
+                    , 
+                    whichTableDecorationIsClicked ==0
+                    ? tableDecorationNameController
+                    : whichTableDecorationIsClicked ==1
+                    ? tablebgDecorationNameController
+                    : whichTableDecorationIsClicked ==2
+                    ? rowDecorationNameController
+                    : columnDecorationNameController
+                    
+                    ),
+                  
+                  Positioned(
+                  top:75,
+                  left:42,
+                  child: ClipRRect(
+                    borderRadius:BorderRadius.circular(5),
+                    child: Material(
+                            color: defaultPalette.transparent,
+                            child: InkWell(
+                              hoverColor: defaultPalette.primary,
+                              highlightColor: defaultPalette.primary,
+                              splashColor: defaultPalette.primary,
+                              onTap:(){
+                                setState(() {
+                                  isTableDecorationModeDropped= !isTableDecorationModeDropped;
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: Durations.medium4,
+                                height:isTableDecorationModeDropped? 110:26,
+                                width: width-90,
+                                decoration:BoxDecoration(
+                                  color: isTableDecorationModeDropped? defaultPalette.primary: defaultPalette.transparent,
+                                  border: isTableDecorationModeDropped? Border.all():null,
+                                  borderRadius:BorderRadius.circular(5),
+                                ),
+                                child: Stack(children: [
+                                  Positioned(
+                                    top:5,
+                                    width: width-90,
+                                    child: Row(
+                                      children: [
+                                        Expanded(child: Text(selectedDecorationTitle,style: GoogleFonts.rockSalt())),
+                                        Icon(TablerIcons.transfer_vertical, size:18),
+                                        SizedBox(width:2)
+                                      ],
+                                    )),
+                                  switchTableDecorationTile(0, ' Table', 30),
+                                  switchTableDecorationTile(1, ' Tablebg', 50),
+                                  switchTableDecorationTile(2, ' Row '+(sheetTableVariables.rowLayerIndex+1).toString(), 70),
+                                  switchTableDecorationTile(3, ' Column '+ numberToColumnLabel(sheetTableVariables.columnLayerIndex+1), 90),
+                          
+                          // Text(sheetTableItem.id.startsWith('TB')? 'Table':'Row')
+                            ],)
+                          ),
+                        ),
+                      ),
+                      )
+                    ),
+        
+                    ],
                   
                 ]
               );
@@ -18144,8 +18280,8 @@ Future<void> _initialize() async {
       itinx = int.tryParse((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
                                               
     }
-    // print(itemDecorationPath.last.indexOf('/'));
-    // print('inxindex: '+inx.toString()+'||itinx: '+itinx.toString()+'\\decorationIndex: '+decorationIndex.toString());
+    
+   // print('inxindex: '+inx.toString()+'||itinx: '+itinx.toString()+'\\decorationIndex: '+decorationIndex.toString());
     Widget roundButton(
       void Function() onTap,
       Widget icon,
@@ -18215,7 +18351,7 @@ Future<void> _initialize() async {
       );
     }
 
-
+    
     return [
                       
       Positioned.fill(
@@ -18250,7 +18386,7 @@ Future<void> _initialize() async {
                               itemDecorationNameController.text = (sheetDecorationList[inx] as SuperDecoration).name;
                               print(sheetDecorationList[inx].id);    
                               print((sheetDecorationList[inx] as SuperDecoration).itemDecorationList);
-                              
+                               
                             });
                           },
                           child: AnimatedContainer(
@@ -18363,32 +18499,11 @@ Future<void> _initialize() async {
                               if ((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length < 70) {
                                 // Add the new decoration to the main list
                                 sheetDecorationList.add(itemDecoration);
-
+                                (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.add(itemDecoId);
                                 // Get the reference to the SuperDecoration from the list
-                                var currentItemDecoration = (sheetDecorationList[inx] as SuperDecoration);
-                                if (currentItemDecoration is SuperDecoration) {
-                                  // Create a new list with the updated decoration IDs
-                                  var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
-                                  updatedList.add(itemDecoId);
-
-                                  // Create the updated decoration using copyWith
-                                  var updatedDecoration = currentItemDecoration.copyWith(
-                                    itemDecorationList: updatedList,
-                                  );
-
-                                  // Find the index and update the list with the new decoration
-                                  sheetDecorationList[inx] = updatedDecoration;
-
-                                  // Also update the decoration reference in the item itself
-                                  item.textDecoration= (sheetDecorationList[inx]as SuperDecoration);
-
-
-                                  // print('New decoration added');
-                                  // print(updatedDecoration.itemDecorationList);
+                                
                                   updateSheetDecorationvariables(sheetDecorationList[inx] as  SuperDecoration);
-                                } else {
-                                  print('Error: Decoration is not a SuperDecoration');
-                                }
+                                
                               } else {
                                 print('Guys come on, turn this into a super now');
                               }
@@ -18505,10 +18620,10 @@ Future<void> _initialize() async {
                                           : sheetDecorationList[itinx]).runtimeType.toString()
                                           .replaceAll(RegExp(r'Decoration'), '')
                                           .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()), maxLines:1,
-                                        style: GoogleFonts.rockSalt(
-                                        color: defaultPalette.extras[0],
-                                        height: 1.5,
-                                        fontSize: 16,
+                                            style: GoogleFonts.rockSalt(
+                                            color: defaultPalette.extras[0],
+                                            height: 1.5,
+                                            fontSize: 16,
                                           ),
                                         ),
                                       )
@@ -18905,42 +19020,7 @@ Future<void> _initialize() async {
                                   ),
                                 ),
                               ),
-                              if(whichPropertyTabIsClicked == 4)
-                              Positioned(
-                                top:30,
-
-                                child: ClipRRect(
-                                  borderRadius:BorderRadius.circular(15),
-                                  child: Material(
-                                          color: defaultPalette.transparent,
-                                          child: InkWell(
-                                            hoverColor: defaultPalette.primary,
-                                            highlightColor: defaultPalette.primary,
-                                            splashColor: defaultPalette.primary,
-                                            onTap:(){
-                                              setState(() {
-                                                isTableDecorationModeDropped= !isTableDecorationModeDropped;
-                                              });
-                                            },
-                                            child: AnimatedContainer(
-                                              duration: Durations.medium4,
-                                              height:isTableDecorationModeDropped? 75:30,
-                                              width: width-70,
-                                              decoration:BoxDecoration(
-                                                
-                                              ),
-                                              child: Stack(children: [
-                                                Text(sheetTableItem.id.startsWith('TB')? '  Table':'Row',style: GoogleFonts.rockSalt()),
-                                                Positioned(
-                                                  top:15,
-                                                  child: Text(sheetTableItem.id.startsWith('TB')? 'Table':'Row')),
-                                                // Text(sheetTableItem.id.startsWith('TB')? 'Table':'Row')
-                                              ],)
-                                            ),
-                                          ),
-                                        ),
-                                )
-                              ),
+                              
                             ],
                           ),
                         ],
@@ -18954,7 +19034,7 @@ Future<void> _initialize() async {
       ),
     ),
 
-      //TreeView of Properties per layer and THE ALL THE EDITOR UIs
+      //TreeView of Properties per layer and THE ALL THE EDITOR UIs and LIBRARY
       Positioned(
         left: showDecorationLayers ? 48 : 12,
         top: 138,
@@ -19442,6 +19522,7 @@ Future<void> _initialize() async {
                                   if(decorationIndex == -1 && !isListDecorationLibraryToggled )
                                   ...buildSuperDecorationEditor(sheetDecorationList[inx] as SuperDecoration),
                                             
+                                  //THE LIBRARY FOR DECORATION          
                                   if(isListDecorationLibraryToggled)
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
@@ -19453,33 +19534,14 @@ Future<void> _initialize() async {
                                               children: [
                                                 
                                               UtilityWidgets.maybeTooltip(
-                                                message: 'add a SuperDecoration.',
+                                                message: 'addNewSuperDecoration.',
                                                 child: roundButton(
                                                   () { 
                                                     var currentItemDecoration = (sheetDecorationList[inx] as SuperDecoration); 
                                                       
                                                   setState(() {
                                                     if (currentItemDecoration.itemDecorationList.length < 70) {
-                                                      // Add the new decoration to the main list
-                                                      // Get the reference to the SuperDecoration from the list
-                                                        if (currentItemDecoration is SuperDecoration) {
-                                                        // Create a new list with the updated decoration IDs
-                                                        var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
-                                                        updatedList.add(newSuperDecoration().id);
-                                                        // Create the updated decoration using copyWith
-                                                        var updatedDecoration = currentItemDecoration.copyWith(
-                                                          itemDecorationList: updatedList,
-                                                        );
-                                                        // Find the index and update the list with the new decoration
-                                                        int index = sheetDecorationList.indexWhere((deco) => deco.id == currentItemDecoration.id);
-                                                        if (index != -1) {
-                                                          sheetDecorationList[index] = updatedDecoration;
-                                                        }
-                                                        print('New decoration added');
-                                                        print(updatedDecoration.itemDecorationList);
-                                                      } else {
-                                                        print('Error: Decoration is not a SuperDecoration');
-                                                      }
+                                                      (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.add(newSuperDecoration().id);
                                                     } else {
                                                       print('Guys come on, turn this into a super now');
                                                     }
@@ -19618,18 +19680,25 @@ Future<void> _initialize() async {
                                                 message: 'delete this decoration permanently.',
                                                 child: roundButton(() {
                                                                                               
-                                                  int index = sheetDecorationList.indexWhere((deco) => deco.id == e.id);
-                                                  if (index != -1) {
-                                                    sheetDecorationList.removeAt(index);
-                                                  }
-                                                  Boxes.getDecorations().deleteAt(index);
-                                                  saveDecorations(sheetDecorationList);
-                                                  filteredDecorations = sheetDecorationList
-                                                  .where((decoration) =>
-                                                      decoration.name.toLowerCase().contains(decorationSearchController.text.toLowerCase()))
-                                                  .toList();
-                                                  },Icon(TablerIcons.trash,size: 14,), 'delete',padding: EdgeInsets.all(2), showText: false),
+                                                  // int index = sheetDecorationList.indexWhere((deco) => deco.id == e.id);
+                                                  // if (index != -1) {
+                                                  //   sheetDecorationList.removeAt(index);
+                                                  // }
+                                                  // Boxes.getDecorations().deleteAt(index);
+                                                  // for (int i = 0; i < sheetDecorationList.length; i++) {
+                                                  //   final deco = sheetDecorationList[i];
+                                                  //   deco.id = '${deco.id.split('/')[0]}/$i';
+                                                  // }
+                                                  // filteredDecorations = sheetDecorationList
+                                                  // .where((decoration) =>
+                                                  //     decoration.name.toLowerCase().contains(decorationSearchController.text.toLowerCase()))
+                                                  // .toList();
+                                                  // saveDecorations(sheetDecorationList);
+                                                  
+                                                  },
+                                                  Icon(TablerIcons.trash,size: 14,), 'delete',padding: EdgeInsets.all(2), showText: false),
                                               ),
+                                              
                                               if(e is SuperDecoration && itemDecorationPath.length ==1)
                                               UtilityWidgets.maybeTooltip(
                                                 message: 'switch the current SuperDecoration with this one.',
@@ -19643,16 +19712,60 @@ Future<void> _initialize() async {
                                                       itemDecorationPath
                                                       ..clear()
                                                       ..add(e.id);
+                                                    
                                                       break;
                                                     case 3:
                                                       sheetListItem.listDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
                                                       updateSheetDecorationvariables(e);
                                                       decorationIndex =-1;
-                                                      listDecorationPath
+                                                      itemDecorationPath
                                                       ..clear()
                                                       ..add(e.id);  
-                                                    default:
+                                                      break;
+                                                    case 4:
+                                                      if(whichTableDecorationIsClicked == 0){
+                                                        sheetTableItem.sheetTableDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                        updateSheetDecorationvariables(e);
+                                                        decorationIndex =-1;
+                                                        itemDecorationPath..clear()..add(e.id);
+                                                      } else if (whichTableDecorationIsClicked == 2){
+                                                        updateSheetDecorationvariables(e);
+                                                        decorationIndex =-1;
+                                                        itemDecorationPath..clear()..add(e.id);
+                                                        for (var cell in sheetTableItem.cellData[sheetTableVariables.rowLayerIndex]) {
+                                                          // print(cell);
+                                                          if (cell.sheetItem is SheetText &&
+                                                              ((cell.sheetItem as SheetText).textDecoration.id ==
+                                                                  sheetTableItem.sheetTableDecoration.id || 
+                                                                  (cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration)) {
+                                                            // print(cell.sheetItem);        
+                                                            (cell.sheetItem as SheetText).textDecoration = sheetDecorationList[tmpinx] as SuperDecoration; 
+                                                          }
+                                                        }
+                                                        sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration = sheetDecorationList[tmpinx].id;
+                                                        
+                                                      } else if (whichTableDecorationIsClicked == 3){
+                                                        updateSheetDecorationvariables(e);
+                                                        decorationIndex =-1;
+                                                        itemDecorationPath..clear()..add(e.id);
+                                                        for (var row in sheetTableItem.cellData) {
+                                                        var cell = row[sheetTableVariables.columnLayerIndex];
+                                                        print(cell);
+                                                        if (cell.sheetItem is SheetText && ((cell.sheetItem as SheetText).textDecoration.id ==
+                                                                sheetTableItem.sheetTableDecoration.id ||
+                                                                (cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration)) {
+                                                          print(cell.sheetItem);   
+                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                          }
+                                                        }
+                                                        sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration = sheetDecorationList[tmpinx].id;
+                                                        
+
+                                                      }
+                                                      
+                                                      break;
                                                   }
+                                                  itemDecorationNameController.text=e.name;
 
                                                   
                                                   },Icon(TablerIcons.replace,size: 14,), 'switchTo',padding: EdgeInsets.all(2), showText: false),
@@ -19739,7 +19852,7 @@ Future<void> _initialize() async {
                       },
                             
                     ),
-                                                ),
+                  ),
                                       
                 ],
               ),
@@ -20271,7 +20384,57 @@ Future<void> _initialize() async {
           ),
         ),
       ),
-    
+      //dropdown to switch betwee table row and column
+      if(false)
+        Positioned(
+          top:75,
+          left:42,
+          child: ClipRRect(
+            borderRadius:BorderRadius.circular(5),
+            child: Material(
+                    color: defaultPalette.transparent,
+                    child: InkWell(
+                      hoverColor: defaultPalette.primary,
+                      highlightColor: defaultPalette.primary,
+                      splashColor: defaultPalette.primary,
+                      onTap:(){
+                        setState(() {
+                          isTableDecorationModeDropped= !isTableDecorationModeDropped;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: Durations.medium4,
+                        height:isTableDecorationModeDropped? 110:26,
+                        width: width-90,
+                        decoration:BoxDecoration(
+                          color: isTableDecorationModeDropped? defaultPalette.primary: defaultPalette.transparent,
+                          border: isTableDecorationModeDropped? Border.all():null,
+                          borderRadius:BorderRadius.circular(5),
+                        ),
+                        child: Stack(children: [
+                          Positioned(
+                            top:5,
+                            width: width-90,
+                            child: Row(
+                              children: [
+                                // Expanded(child: Text(selectedDecorationTitle,style: GoogleFonts.rockSalt())),
+                                Icon(TablerIcons.transfer_vertical, size:18),
+                                SizedBox(width:2)
+                              ],
+                            )),
+                          // switchTableDecorationTile(0, ' Table', 30),
+                          // switchTableDecorationTile(1, ' Tablebg', 50),
+                          // switchTableDecorationTile(2, ' Row '+(sheetTableVariables.rowLayerIndex+1).toString(), 70),
+                          // switchTableDecorationTile(3, ' Column '+ numberToColumnLabel(sheetTableVariables.columnLayerIndex+1), 90),
+                          
+                          // Text(sheetTableItem.id.startsWith('TB')? 'Table':'Row')
+                        ],)
+                      ),
+                    ),
+                  ),
+          )
+        ),
+                            
       ];
   }
 
@@ -20286,7 +20449,7 @@ Future<void> _initialize() async {
       var tmpinx = int.tryParse(e.substring(e.indexOf('/') + 1))??-33;
       var itemDecoration = sheetDecorationList[tmpinx];
       index++;
-      // print('yo: '+index.toString());
+      // print('yo: '+index.toString()+' '+ sheetDecorationVariables.length.toString());
       if (itemDecoration is ItemDecoration) {
       return 
         Column(
@@ -20296,7 +20459,7 @@ Future<void> _initialize() async {
                
                 setState(() {
                   var i =sheetDecorationVariables.indexWhere((el) => el.id==itemDecoration.id,);
-                   print('LALALA: '+i.toString());
+                  //  print('LALALA: '+i.toString());
                   sheetDecorationVariables[i].isExpanded = !sheetDecorationVariables[i].isExpanded;
                 });
               },
