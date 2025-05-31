@@ -30,7 +30,7 @@ class SheetTableBox extends SheetItem {
     this.columnData = const [],
     this.pinnedRows = 1,
     this.pinnedColumns =1,
-    required this.sheetTableDecoration
+    required this.sheetTableDecoration,
   });
 
   SheetTable toSheetTable(Function findItem, Function textFieldTapDown) {
