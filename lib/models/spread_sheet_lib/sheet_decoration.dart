@@ -22,7 +22,7 @@ enum Access {
 @HiveType(typeId: 6)
 class SheetDecoration extends HiveObject {
   @HiveField(0)
-  final String id;
+  String id;
   @HiveField(1)
   final String name;
   @HiveField(2)

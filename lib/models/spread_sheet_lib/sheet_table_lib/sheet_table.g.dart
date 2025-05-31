@@ -27,13 +27,14 @@ class SheetTableBoxAdapter extends TypeAdapter<SheetTableBox> {
       pinnedRows: fields[5] as int,
       pinnedColumns: fields[6] as int,
       sheetTableDecoration: fields[7] as SuperDecorationBox,
+      sheetTablebgDecoration: fields[8] as SuperDecorationBox?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableBox obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(2)
       ..write(obj.cellData)
       ..writeByte(3)
@@ -46,6 +47,8 @@ class SheetTableBoxAdapter extends TypeAdapter<SheetTableBox> {
       ..write(obj.pinnedColumns)
       ..writeByte(7)
       ..write(obj.sheetTableDecoration)
+      ..writeByte(8)
+      ..write(obj.sheetTablebgDecoration)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
