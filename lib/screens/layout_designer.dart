@@ -7,11 +7,12 @@ import 'dart:math';
 import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:billblaze/components/widgets/eye_dropper.dart';
+import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/home.dart';
 import 'package:billblaze/components/pickers/hsv_picker.dart';
 import 'package:billblaze/components/pickers/wheel_picker.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
-import 'package:billblaze/components/widgets/hex_picker.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
@@ -34,7 +35,6 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:minimap_scrollbar/minimap_scrollbar.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:number_counting_animation/number_counting_animation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -200,14 +200,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   List<String> columnDecorationPath = [];
   Map<String, List<String>> categorizedFonts = {};    
   double hDividerPosition = 0.5;
-  double vDividerPosition = 0.55;
-  double appbarHeight = 0.065;
   double wH1DividerPosition = 0.2;
   double wH2DividerPosition = 0.23;
   double wVDividerPosition = 0.5;
   double _cardPosition = 0;
   double textFieldHeight = 40;
-  double presuConstraintsMinW = 20;
   double pdfPreviewPaddingScaleFactor = 1;
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
@@ -796,7 +793,6 @@ Future<void> _initialize() async {
     return null;
   }
 
-
   SheetList _sheetListIterator(String id, SheetList sheetList) {
     if (sheetList.id == id) {
       return sheetList;
@@ -918,18 +914,6 @@ Future<void> _initialize() async {
       list.add(sheetDecorationList[tmpinx]);
     }
     return list;
-  }
-
-  void _updatehDividerPosition(double newPosition) {
-    setState(() {
-      hDividerPosition = newPosition;
-    });
-  }
-
-  void _updatevDividerPosition(double newPosition) {
-    setState(() {
-      vDividerPosition = newPosition;
-    });
   }
 
   void _deselectTextField() {
@@ -1211,77 +1195,6 @@ Future<void> _initialize() async {
     print(newDecoId);
     sheetDecorationList.add(SuperDecoration(id: newDecoId));
     return SuperDecoration(id: newDecoId);
-  }
-
-  // genWidget
-  Widget _generateWid(sWidth, sHeight) {
-    var width = (sWidth * (1 - vDividerPosition)) - 16;
-    var doc = documentPropertiesList;
-    var sheetList = spreadSheetList;
-    return SingleChildScrollView(
-      // controller: pdfScrollController,
-      child: Column(
-        children: [
-          for (int i = 0; i < pageCount; i++)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 30.0, horizontal: 10),
-              child: RepaintBoundary(
-                key: globalKeys[i],
-                child: Container(
-                  width: doc[i].pageFormatController == PdfPageFormat.a4
-                      ? 1 * 793.7007874
-                      : doc[i].pageFormatController == PdfPageFormat.a3
-                          ? 0.72 * 1122.519685
-                          : doc[i].pageFormatController == PdfPageFormat.a5
-                              ? 1 * 559.37007874
-                              : doc[i].pageFormatController == PdfPageFormat.a6
-                                  ? 1 * 396.8503937
-                                  : doc[i].pageFormatController ==
-                                          PdfPageFormat.letter
-                                      ? 1 * 816
-                                      : doc[i].pageFormatController ==
-                                              PdfPageFormat.legal
-                                          ? 1 * 816
-                                          : 2480 / 2,
-                  height: doc[i].pageFormatController == PdfPageFormat.a4
-                      ? 1 * 1122.519685
-                      : doc[i].pageFormatController == PdfPageFormat.a3
-                          ? 0.72 * 1587.4015748
-                          : doc[i].pageFormatController == PdfPageFormat.a5
-                              ? 1 * 793.7007874
-                              : doc[i].pageFormatController == PdfPageFormat.a6
-                                  ? 1 * 559.37007874
-                                  : doc[i].pageFormatController ==
-                                          PdfPageFormat.letter
-                                      ? 1 * 1056
-                                      : doc[i].pageFormatController ==
-                                              PdfPageFormat.legal
-                                          ? 1 * 1344
-                                          : 3508 / 2,
-                  decoration:
-                      const BoxDecoration(color: Colors.white, boxShadow: [
-                    // BoxShadow(
-                    //   blurRadius: 5,
-                  ]),
-                  padding: EdgeInsets.only(
-                    top: double.parse(doc[i].marginTopController.text),
-                    bottom: double.parse(doc[i].marginBottomController.text),
-                    left: double.parse(doc[i].marginLeftController.text),
-                    right: double.parse(doc[i].marginRightController.text),
-                  ),
-                  child: _buildSheetListWidget(
-                      sheetList[i], sWidth * (1 - vDividerPosition)),
-                ),
-              ),
-            )
-        ],
-      ),
-    );
-    //   itemCount: pageCount,
-    //   itemBuilder: (context, i) {
-    //   },
-    // );
   }
 
   Widget _generateWidWin(
@@ -2361,5689 +2274,1615 @@ Future<void> _initialize() async {
     double sWidth = MediaQuery.of(context).size.width;
     Duration sideBarPosDuration = const Duration(milliseconds: 300);
     Duration defaultDuration = const Duration(milliseconds: 300);
-    double topPadPosDistance = sHeight / 13;
-    double leftPadPosDistance = sWidth / 15;
     double titleFontSize = sHeight / 11;
     if (isLoading) {
       return Container(
         alignment:Alignment(0,0),
         child: Text('Loading', style: GoogleFonts.lexend(letterSpacing:-1, fontSize:40),));
     }
-    if (sWidth > sHeight) {
+    if (true) {
       //Desktop WEB
       return Scaffold(
           resizeToAvoidBottomInset: false,
           body: SafeArea(
-            child: Container(
-              color: defaultPalette.white,
-              child: Stack(
-                children: [
-                  Container(
-                    height: sHeight,
-                    width: sWidth,
-                    color: Colors.transparent,
-                  ),
-                  Positioned(
-                    // duration: Duration(milliseconds: 300),
-                    width: sWidth,
-                    height: sHeight,
-                    child: Stack(
-                      children: [
-                        // Graph //Desktop Behind the emulating preview
-                        IgnorePointer(
-                          ignoring: true,
-                          child: AnimatedContainer(
-                            duration: Durations.extralong1,
-                            height: sHeight,
+            child: EyeDropper(
+              child: Container(
+                color: defaultPalette.white,
+                child: Stack(
+                  children: [
+                    Container(
+                      height: sHeight,
+                      width: sWidth,
+                      color: Colors.transparent,
+                    ),
+                    Positioned(
+                      // duration: Duration(milliseconds: 300),
+                      width: sWidth,
+                      height: sHeight,
+                      child: Stack(
+                        children: [
+                          // Graph //Desktop Behind the emulating preview
+                          IgnorePointer(
+                            ignoring: true,
+                            child: AnimatedContainer(
+                              duration: Durations.extralong1,
+                              height: sHeight,
+                              width: sWidth,
+                              alignment: Alignment.centerRight,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withOpacity(0.2),
+                              ),
+                              padding: const EdgeInsets.only(
+                                top: 0,
+                              ),
+                              //layGraph
+                              child: Opacity(
+                                opacity: 0.35,
+                                child: LineChart(LineChartData(
+                                    lineBarsData: [LineChartBarData()],
+                                    titlesData: const FlTitlesData(show: false),
+                                    gridData: FlGridData(
+                                        show: true,
+                                        getDrawingVerticalLine: (value) => FlLine(
+                                            color: defaultPalette.extras[0]
+                                                .withOpacity(0.5),
+                                            dashArray: [5, 5],
+                                            strokeWidth: 1),
+                                        getDrawingHorizontalLine: (value) => FlLine(
+                                            color: defaultPalette.extras[0]
+                                                .withOpacity(0.5),
+                                            dashArray: [5, 5],
+                                            strokeWidth: 1),
+                                        horizontalInterval: 10,
+                                        verticalInterval: 30),
+                                    borderData: FlBorderData(show: false),
+                                    minY: 0,
+                                    maxY: 50,
+                                    maxX: dateTimeNow.millisecondsSinceEpoch
+                                                .ceilToDouble() /
+                                            500 +
+                                        250,
+                                    minX: dateTimeNow.millisecondsSinceEpoch
+                                            .ceilToDouble() /
+                                        500)),
+                              ),
+                            ),
+                          ),
+                          //sidebar tools and pdf preview //Desktop WEB
+                          Positioned(
+                            top: Platform.isWindows ? 0 : 30,
                             width: sWidth,
-                            alignment: Alignment.centerRight,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.2),
-                            ),
-                            padding: const EdgeInsets.only(
-                              top: 0,
-                            ),
-                            //layGraph
-                            child: Opacity(
-                              opacity: 0.35,
-                              child: LineChart(LineChartData(
-                                  lineBarsData: [LineChartBarData()],
-                                  titlesData: const FlTitlesData(show: false),
-                                  gridData: FlGridData(
-                                      show: true,
-                                      getDrawingVerticalLine: (value) => FlLine(
-                                          color: defaultPalette.extras[0]
-                                              .withOpacity(0.5),
-                                          dashArray: [5, 5],
-                                          strokeWidth: 1),
-                                      getDrawingHorizontalLine: (value) => FlLine(
-                                          color: defaultPalette.extras[0]
-                                              .withOpacity(0.5),
-                                          dashArray: [5, 5],
-                                          strokeWidth: 1),
-                                      horizontalInterval: 10,
-                                      verticalInterval: 30),
-                                  borderData: FlBorderData(show: false),
-                                  minY: 0,
-                                  maxY: 50,
-                                  maxX: dateTimeNow.millisecondsSinceEpoch
-                                              .ceilToDouble() /
-                                          500 +
-                                      250,
-                                  minX: dateTimeNow.millisecondsSinceEpoch
-                                          .ceilToDouble() /
-                                      500)),
-                            ),
-                          ),
-                        ),
-                        //sidebar tools and pdf preview //Desktop WEB
-                        Positioned(
-                          top: Platform.isWindows ? 0 : 30,
-                          width: sWidth,
-                          height: sHeight,
-                          child: Row(
-                            children: [
-                              ///////Side TOOL BAR
-                              Container(
-                                height: sHeight,
-                                width: Platform.isWindows ? 45 : 30,
-                                color: defaultPalette.white,
-                                ///////Side TOOL BAR
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    ///Resize handle
-                                    Container(
-                                      padding: const EdgeInsets.all(5),
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          color: defaultPalette.black
-                                              .withOpacity(0)),
-                                      child: Icon(
-                                        TablerIcons.grip_horizontal,
-                                        color:
-                                            defaultPalette.white.withOpacity(0),
-                                        size: 20,
-                                      ),
-                                    ),
-
-                                    ///clearLayout Button
-                                    IconButton(
-                                        onPressed: () {
-                                          
-                                        },
-                                        icon: Transform.rotate(
-                                          angle: math.pi / 4,
-                                          child: Icon(
-                                            IconsaxPlusLinear.add,
-                                            size:
-                                                Platform.isWindows ? null : 20,
-                                            color: defaultPalette.black,
-                                          ),
-                                        )),
-                                    //ADD TEXT
-                                    IconButton(
-                                        onPressed: () {
-                                          print(
-                                              '________addText pressed LD_________');
-                                          // print(
-                                          //     'panelId from addtextfield: ${panelIndex.id}');
-                                          _addTextField(textDecoration: newSuperDecoration());
-                                        },
-                                        icon: Icon(
-                                          CupertinoIcons.plus_bubble,
-                                          size: Platform.isWindows ? null : 15,
-                                          color: defaultPalette.black,
-                                        )),
-                                    //Add Image
-                                    IconButton(
-                                        onPressed: () async {
-                                          await _capturePng().then((onValue) {
-                                            _genPdf();
-                                          });
-                                        },
-                                        icon: Icon(
-                                          IconsaxPlusLinear.gallery_add,
-                                          size: Platform.isWindows ? null : 15,
-                                          color: defaultPalette.black,
-                                        )),
-                                    //Add table
-                                    IconButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            String newId = 'TB-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration();
-                                            spreadSheetList[currentPageIndex].add(
-                                              SheetTable(
-                                                id: newId, 
-                                                parentId: spreadSheetList[currentPageIndex].id,
-                                                cellData: defaultSheetTableCellData(newId, newDecoration),
-                                                columnData: defaultSheetTableColumnData(newId, newDecoration.id),
-                                                rowData: defaultSheetTableRowData(newId, newDecoration.id),
-                                                pinnedColumns: 1,
-                                                pinnedRows: 1,
-                                                sheetTableDecoration: SuperDecoration(id: newDecoration.id)
-                                                )
-                                            );
-                                          });
-                                        },
-                                        icon: Icon(
-                                          CupertinoIcons.table,
-                                          size: Platform.isWindows ? null : 15,
-                                          color: defaultPalette.black,
-                                        )),
-                                    //Duplpicate
-                                    IconButton(
-                                        onPressed: (){},
-                                        icon: Icon(
-                                          CupertinoIcons.plus_square_on_square,
-                                          size: Platform.isWindows ? null : 15,
-                                          color: defaultPalette.black,
-                                        )),
-                                    IconButton(
-                                        onPressed: () => _removeTextField(),
-                                        icon: Icon(
-                                          Icons.delete,
-                                          size: Platform.isWindows ? null : 15,
-                                          color: defaultPalette.black,
-                                        )),
-                                  ],
-                                ),
-                              ),
-                              //emulating the pdf preview //Desktop WEB
-                              Expanded(
-                                flex: (20000).round(),
-                                child: Container(
-                                  height: sHeight,
-                                  child: zz.Zoom(
-                                    centerOnScale: false,
-                                    initTotalZoomOut: true,
-                                    maxScale: 5,
-                                    zoomSensibility: 2,
-                                    // key: ValueKey(currentPageIndex),
-                                    backgroundColor: defaultPalette.transparent,
-                                    canvasColor: defaultPalette.transparent,
-                                    transformationController:
-                                        transformationcontroller,
-                                    opacityScrollBars: 0,
-                                    onScaleUpdate: (p0, p1) {
-                                      setState(() {
-                                        pdfPreviewPaddingScaleFactor = p1;
-                                        // print(pdfPreviewPaddingScaleFactor);
-                                      });
-                                    },
-                                    initScale: 0.01,
-                                    child: Transform.scale(
-                                      scale: 0.8,
-                                      // scale: 1,
-                                      alignment: Alignment.topLeft,
-                                      child: Container(
-                                        padding: EdgeInsets.only(
-                                            bottom: 500,
-                                            top: 50 *
-                                                (1 /
-                                                    pdfPreviewPaddingScaleFactor),
-                                            left: 40,
-                                            right: 5000),
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.transparent),
-                                        // alignment: Alignment.center,
-                                        child: _generateWidWin(
-                                            sWidth, sHeight * 0.9),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // coloredcontainer fill on right side of the screen
-                        Positioned(
-                          left: sWidth / 2,
-                          top: 0,
-                          child: Container(
-                            width: sWidth / 2,
                             height: sHeight,
-                            color: defaultPalette.tertiary,
-                            child: IgnorePointer(
-                              ignoring: true,
-                              child: AnimatedContainer(
-                                duration: Durations.extralong1,
-                                height: sHeight,
-                                width: sWidth,
-                                alignment: Alignment.centerRight,
-                                decoration: BoxDecoration(),
-                                //layGraph
-                                child: Opacity(
-                                  opacity: 0.35,
-                                  child: LineChart(LineChartData(
-                                      lineBarsData: [LineChartBarData()],
-                                      titlesData:
-                                          const FlTitlesData(show: false),
-                                      gridData: FlGridData(
-                                          getDrawingVerticalLine: (value) => FlLine(
-                                              color: defaultPalette.primary
-                                                  .withOpacity(0.8),
-                                              dashArray: [5, 5],
-                                              strokeWidth: 1),
-                                          getDrawingHorizontalLine: (value) =>
-                                              FlLine(
-                                                  color: defaultPalette.primary
-                                                      .withOpacity(0.8),
-                                                  dashArray: [5, 5],
-                                                  strokeWidth: 1),
-                                          show: true,
-                                          horizontalInterval: 5,
-                                          verticalInterval: 30),
-                                      borderData: FlBorderData(show: false),
-                                      minY: 0,
-                                      maxY: 50,
-                                      maxX: dateTimeNow.millisecondsSinceEpoch
-                                                  .ceilToDouble() /
-                                              500 +
-                                          250,
-                                      minX: dateTimeNow.millisecondsSinceEpoch
-                                              .ceilToDouble() /
-                                          500)),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        //
-                        //
-                        //
-                        //
-                        //
-                        //Spread SHEET Layout //Desktop WEB
-                        Positioned(
-                          left: (sWidth * wH1DividerPosition),
-                          width: sWidth *
-                              (1 - wH1DividerPosition - wH2DividerPosition),
-                          // flex: ((1 - wH1DividerPosition - wH2DividerPosition) *
-                          //         10000)
-                          //     .round(),
-                          top: Platform.isAndroid ? 35 : 35,
-                          height: Platform.isAndroid
-                              ? sHeight * 0.85
-                              : sHeight - 40,
-                          child: GestureDetector(
-                            onTap: () {
-                              _unfocusAll();
-                              setState(() {
-                                // panelIndex.runTimeType = null;
-                                panelIndex.parentId = '';
-                                panelIndex.id = '';
-                                if (whichPropertyTabIsClicked !=1) {
-                                whichPropertyTabIsClicked = 1;
-                                Future.delayed(Durations.short1).then(
-                                  (value) {
-                                    print("YUHUUUUUUUU");
-                                    whichPropertyTabIsClicked = 1;
-                                    propertyCardsController.swipeDefault();
-                                  },
-                                );
-                              }
-                              });
-                            },
-                            onSecondaryTap: () {
-                              print("YUHUUUUUUUU");
-                            },
-                            child: CustomBorder(
-                              color: defaultPalette.extras[0],
-                              radius: Radius.circular(20),
-                              strokeWidth: 2,
-                              dashPattern: [30, 10],
-                              strokeCap: StrokeCap.butt,
-                              animateBorder: true,
-                              dashRadius: Radius.circular(50),
-                              animateDuration: Duration(milliseconds: 5500),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: defaultPalette.extras[0],
-                                  borderRadius: BorderRadius.circular(20),
-                                  // border: Border.all(color: defaultPalette.tertiary,strokeAlign: BorderSide.strokeAlignOutside,width: 4)
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                    vertical:3, horizontal: 2).copyWith(right: 0),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: Stack(
+                            child: Row(
+                              children: [
+                                ///////Side TOOL BAR
+                                Container(
+                                  height: sHeight,
+                                  width: Platform.isWindows ? 45 : 30,
+                                  color: defaultPalette.white,
+                                  ///////Side TOOL BAR
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      // Graph //Desktop WEB
-                                      IgnorePointer(
-                                        ignoring: true,
-                                        child: AnimatedContainer(
-                                          duration: Durations.extralong1,
-                                          height: sHeight,
-                                          width: sWidth,
-                                          alignment: Alignment.centerRight,
-
-                                          padding: const EdgeInsets.only(
-                                            top: 0,
-                                          ),
-                                          //layGraph
-                                          child: Opacity(
-                                            opacity: 0.35,
-                                            child: LineChart(LineChartData(
-                                                lineBarsData: [
-                                                  LineChartBarData()
-                                                ],
-                                                titlesData: const FlTitlesData(
-                                                    show: false),
-                                                gridData: FlGridData(
-                                                    getDrawingVerticalLine: (value) => FlLine(
-                                                        color: defaultPalette
-                                                            .primary
-                                                            .withOpacity(0.2),
-                                                        dashArray: [5, 5]),
-                                                    getDrawingHorizontalLine:
-                                                        (value) => FlLine(
-                                                            color: defaultPalette
-                                                                .primary
-                                                                .withOpacity(0.2),
-                                                            dashArray: [5, 5]),
-                                                    show: true,
-                                                    horizontalInterval: 10,
-                                                    verticalInterval: 30),
-                                                borderData: FlBorderData(show: false),
-                                                minY: 0,
-                                                maxY: 50,
-                                                maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500 + 250,
-                                                minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
-                                          ),
+                                      ///Resize handle
+                                      Container(
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            color: defaultPalette.black
+                                                .withOpacity(0)),
+                                        child: Icon(
+                                          TablerIcons.grip_horizontal,
+                                          color:
+                                              defaultPalette.white.withOpacity(0),
+                                          size: 20,
                                         ),
                                       ),
-                                      //Main SpreadSheet //Desktop WEB
-                                      MinimapScrollbarWidget(
-                                        miniSize: 30,
-                                        imageUpdateInterval: 500000,
-                                        child: SizedBox(
-                                          width: sWidth * (1 - wH1DividerPosition - wH2DividerPosition),
-                                          height:  sHeight - 40,
-                                          child: _buildListWidget(spreadSheetList[currentPageIndex])))
-                                      
+              
+                                      ///clearLayout Button
+                                      IconButton(
+                                          onPressed: () {
+                                            
+                                          },
+                                          icon: Transform.rotate(
+                                            angle: math.pi / 4,
+                                            child: Icon(
+                                              IconsaxPlusLinear.add,
+                                              size:
+                                                  Platform.isWindows ? null : 20,
+                                              color: defaultPalette.black,
+                                            ),
+                                          )),
+                                      //ADD TEXT
+                                      IconButton(
+                                          onPressed: () {
+                                            print(
+                                                '________addText pressed LD_________');
+                                            // print(
+                                            //     'panelId from addtextfield: ${panelIndex.id}');
+                                            _addTextField(textDecoration: newSuperDecoration());
+                                          },
+                                          icon: Icon(
+                                            CupertinoIcons.plus_bubble,
+                                            size: Platform.isWindows ? null : 15,
+                                            color: defaultPalette.black,
+                                          )),
+                                      //Add Image
+                                      IconButton(
+                                          onPressed: () async {
+                                            await _capturePng().then((onValue) {
+                                              _genPdf();
+                                            });
+                                          },
+                                          icon: Icon(
+                                            IconsaxPlusLinear.gallery_add,
+                                            size: Platform.isWindows ? null : 15,
+                                            color: defaultPalette.black,
+                                          )),
+                                      //Add table
+                                      IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              String newId = 'TB-${ const Uuid().v4()}';
+                                              var newDecoration = newSuperDecoration();
+                                              spreadSheetList[currentPageIndex].add(
+                                                SheetTable(
+                                                  id: newId, 
+                                                  parentId: spreadSheetList[currentPageIndex].id,
+                                                  cellData: defaultSheetTableCellData(newId, newDecoration),
+                                                  columnData: defaultSheetTableColumnData(newId, newDecoration.id),
+                                                  rowData: defaultSheetTableRowData(newId, newDecoration.id),
+                                                  pinnedColumns: 1,
+                                                  pinnedRows: 1,
+                                                  sheetTableDecoration: SuperDecoration(id: newDecoration.id)
+                                                  )
+                                              );
+                                            });
+                                          },
+                                          icon: Icon(
+                                            CupertinoIcons.table,
+                                            size: Platform.isWindows ? null : 15,
+                                            color: defaultPalette.black,
+                                          )),
+                                      //Duplpicate
+                                      IconButton(
+                                          onPressed: (){},
+                                          icon: Icon(
+                                            CupertinoIcons.plus_square_on_square,
+                                            size: Platform.isWindows ? null : 15,
+                                            color: defaultPalette.black,
+                                          )),
+                                      IconButton(
+                                          onPressed: () => _removeTextField(),
+                                          icon: Icon(
+                                            Icons.delete,
+                                            size: Platform.isWindows ? null : 15,
+                                            color: defaultPalette.black,
+                                          )),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        //
-                        //
-                        //////////PROPERTIES SECTION
-                        Positioned(
-                          width: sWidth * (wH2DividerPosition),
-                          top: Platform.isAndroid ? 35 : 0,
-                          height: Platform.isAndroid
-                              ? sHeight * 0.85
-                              : sHeight * 0.9,
-                          left: sWidth * (1 - wH2DividerPosition),
-                          child: Stack(
-                            children: [
-                              //animatedborders Properties page, text, list tab animatedborders on the top right
-                              Container(
-                                height: (50),
-                                margin:
-                                    EdgeInsets.only(top: 29, left: 0, right: 6),
-                                padding: EdgeInsets.only(bottom: 0),
-                                decoration: BoxDecoration(
-                                  color: defaultPalette.transparent,
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                        flex: 1,
-                                        child: Padding(
-                                          padding:
-                                              EdgeInsets.only(left: 9, top: 10),
-                                          child: CustomBorder(
-                                            color: whichPropertyTabIsClicked ==
-                                                    1
-                                                ? defaultPalette.primary
-                                                : defaultPalette.transparent,
-                                            animateDuration:
-                                                const Duration(seconds: 1),
-                                            animateBorder: true,
-                                            radius: const Radius.circular(10),
-                                            dashPattern: const [15, 10],
-                                            strokeWidth: 4,
-                                            child: SizedBox(
-                                              height: 45,
-                                              width: _getPropertiesButtonWidth(
-                                                  'page'),
-                                            ),
-                                          ),
-                                        )),
-                                    //text field properties button border
-                                    if (panelIndex.id != '')
-                                      Expanded(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(
-                                                left: 4, top: 8),
-                                            child: CustomBorder(
-                                              color:
-                                                  whichPropertyTabIsClicked == 2
-                                                      ? defaultPalette.primary
-                                                      : defaultPalette
-                                                          .transparent,
-                                              radius: const Radius.circular(8),
-                                              dashPattern: const [5, 1],
-                                              strokeWidth: 5,
-                                              child: SizedBox(
-                                                height: 43,
-                                                width: (2 *
-                                                    (sWidth *
-                                                        (wH2DividerPosition)) /
-                                                    5),
-                                              ),
-                                            ),
-                                          )),
-                                    //sheet list properties button border
-                                    if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("LI"))
-                                      Expanded(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(
-                                                left: 5, top: 8),
-                                            child: CustomBorder(
-                                              color:
-                                                  whichPropertyTabIsClicked == 3
-                                                      ? defaultPalette.primary
-                                                      : defaultPalette
-                                                          .transparent,
-                                              radius: const Radius.circular(6),
-                                              dashPattern: const [5, 1],
-                                              strokeWidth: 5,
-                                              child: SizedBox(
-                                                height: 45,
-                                                width: 2 *
-                                                    (sWidth *
-                                                        (wH2DividerPosition)) /
-                                                    5,
-                                              ),
-                                            ),
-                                          )),
-                                    //sheet table properties button border
-                                    if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("TB"))
-                                      Expanded(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(
-                                                left: 5, top: 8),
-                                            child: CustomBorder(
-                                              color:
-                                                  whichPropertyTabIsClicked == 4
-                                                      ? defaultPalette.primary
-                                                      : defaultPalette
-                                                          .transparent,
-                                              radius: const Radius.circular(6),
-                                              dashPattern: const [5, 1],
-                                              strokeWidth: 4,
-                                              child: SizedBox(
-                                                height: 45,
-                                                width: 2 *
-                                                    (sWidth *
-                                                        (wH2DividerPosition)) /
-                                                    5,
-                                              ),
-                                            ),
-                                          )),
-                                  
-                                  ],
-                                ),
-                              ),
-                              //buttons Properties page, text, list tab browser buttons on the top right
-                              Container(
-                                height: (50),
-                                margin:
-                                    EdgeInsets.only(top: 29, left: 0, right: 6),
-                                padding: EdgeInsets.only(bottom: 0),
-                                decoration: BoxDecoration(
-                                  color: defaultPalette.transparent,
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    //page properties button button
-                                    Expanded(
-                                      flex: 1,
-                                      child: ElevatedLayerButton(
-                                        // isTapped: false,t
-                                        onClick: () {
-                                          setState(() {
-                                            whichPropertyTabIsClicked = 1;
-                                            Future.delayed(Durations.short1).then(
-                                              (value) {
-                                                print("YUHUUUUUUUU");
-                                                whichPropertyTabIsClicked = 1;
-                                                propertyCardsController.swipeDefault();
-                                              },
-                                            );       
-                                          });
-                                        },
-                                        buttonHeight: 50,
-                                        buttonWidth:
-                                            _getPropertiesButtonWidth('page'),
-                                        borderRadius: BorderRadius.circular(8),
-                                        animationDuration:
-                                            const Duration(milliseconds: 100),
-                                        animationCurve: Curves.ease,
-                                        topDecoration: BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border.all(),
-                                        ),
-                                        topLayerChild: const Icon(
-                                          TablerIcons.script,
-                                          size: 20,
-                                          // color: Colors.blue,
-                                        ),
-                                        subfac: 10,
-                                        baseDecoration: BoxDecoration(
-                                          color: defaultPalette.extras[0],
-                                          border: Border.all(),
+                                //emulating the pdf preview //Desktop WEB
+                                Expanded(
+                                  flex: (20000).round(),
+                                  child: Container(
+                                    height: sHeight,
+                                    child: zz.Zoom(
+                                      centerOnScale: false,
+                                      initTotalZoomOut: true,
+                                      maxScale: 5,
+                                      zoomSensibility: 2,
+                                      // key: ValueKey(currentPageIndex),
+                                      backgroundColor: defaultPalette.transparent,
+                                      canvasColor: defaultPalette.transparent,
+                                      transformationController:
+                                          transformationcontroller,
+                                      opacityScrollBars: 0,
+                                      onScaleUpdate: (p0, p1) {
+                                        setState(() {
+                                          pdfPreviewPaddingScaleFactor = p1;
+                                          // print(pdfPreviewPaddingScaleFactor);
+                                        });
+                                      },
+                                      initScale: 0.01,
+                                      child: Transform.scale(
+                                        scale: 0.8,
+                                        // scale: 1,
+                                        alignment: Alignment.topLeft,
+                                        child: Container(
+                                          padding: EdgeInsets.only(
+                                              bottom: 500,
+                                              top: 50 *
+                                                  (1 /
+                                                      pdfPreviewPaddingScaleFactor),
+                                              left: 40,
+                                              right: 5000),
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette.transparent),
+                                          // alignment: Alignment.center,
+                                          child: _generateWidWin(
+                                              sWidth, sHeight * 0.9),
                                         ),
                                       ),
                                     ),
-                                    //text field properties button button
-                                    if (panelIndex.id != '' && item.id != '')
-                                      Expanded(
-                                        flex: 2,
-                                        child: Stack(
-                                          children: [
-                                            //The green panel
-                                            Container(
-                                              margin: EdgeInsets.only(
-                                                  top: 10, left: 4),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.tertiary,
-                                                borderRadius:
-                                                    BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
-                                                border: Border.all(),
-                                              ),
-                                            ),
-                                            //text tabs buttons
-                                            Positioned.fill(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                  top: 22,
-                                                  left: 4,
-                                                  bottom: 3
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      defaultPalette.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
-                                                  // border: Border.all(),
-                                                ),
-                                                child: Stack(
-                                                  children: [
-                                                    //button that switched the tab to text formatting
-                                                    Positioned(
-                                                      bottom:0, left:0,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                            whichPropertyTabIsClicked = 2;
-                                                            whichTextPropertyTabIsClicked = 0;
-                                                            Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
-                                                            _findItem();  
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth: (_getPropertiesButtonWidth(
-                                                                'sheet-list')/3)-2,
-                                                        borderRadius:
-                                                            BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                            milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.typeface,
-                                                          size: 12,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth:1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    //button that switched the tab to text font
-                                                    Positioned(
-                                                      bottom:0, 
-                                                      right:(_getPropertiesButtonWidth('text-field')/3) -2 ,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                            whichPropertyTabIsClicked = 2;
-                                                            whichTextPropertyTabIsClicked = 1;
-                                                            Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
-                                                            _findItem();  
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth:( _getPropertiesButtonWidth(
-                                                          'text-field')/3)-2,
-                                                        borderRadius: BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                        milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.currency_florin,
-                                                          size: 13,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth: 1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                          
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    //button that switched the tab to text SuperDecoration
-                                                    Positioned(
-                                                      bottom:0, right:3,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                            var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
-                                                    
-                                                            whichPropertyTabIsClicked = 2;
-                                                            whichTextPropertyTabIsClicked = 2;
-                                                            Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
-                                                            _findItem();  
-                                                            decorationIndex = -1;
-                                                            isListDecorationLibraryToggled = false;
-                                                            isListDecorationPropertiesToggled = false;
-                                                            showDecorationLayers = false;
-                                                            updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                            textDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                    
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth:( _getPropertiesButtonWidth(
-                                                          'text-field')/3)-2,
-                                                        borderRadius: BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                        milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.sparkles,
-                                                          size: 12,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth: 1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                          
-                                                        ),
-                                                      ),
-                                                    ),
-                                            
-                                                  ],
-                                                )
-                                              ),
-                                            ),
-                                            // the property tab switch main button
-                                            Positioned(
-                                              top: -2,
-                                              right: 0,
-                                              child: ElevatedLayerButton(
-                                                // isTapped: false,0
-                                                onClick: () {
-                                                  setState(() {
-                                                    var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
-                                                     
-                                                      
-                                                    whichPropertyTabIsClicked = 2;
-                                                    // propertyTabController.jumpToPage(1);
-                                                    textPropertyCardsController
-                                                        .animateTo(Offset(1, 1),
-                                                            duration:
-                                                                Duration.zero,
-                                                            curve: Curves.linear);
-                                                   _findItem(); 
-                                                   decorationIndex = -1;
-                                                    isListDecorationLibraryToggled = false;
-                                                    isListDecorationPropertiesToggled = false;
-                                                    updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                    textDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                    
-
-                                                  });
-                                                },
-                                                buttonHeight: 30,
-                                                buttonWidth: _getPropertiesButtonWidth('text-field') + 2,
-                                                borderRadius:
-                                                    BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
-                                                animationDuration: const Duration(
-                                                    milliseconds: 100),
-                                                animationCurve: Curves.ease,
-                                                topDecoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  border: Border.all(),
-                                                ),
-                                                topLayerChild: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceAround,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Icon(
-                                                      TablerIcons
-                                                          .text_recognition,
-                                                      size: 15,
-                                                      // color: Colors.blue,
-                                                    ),
-                                                    Text(
-                                                      'text',
-                                                      style: GoogleFonts.bungee(
-                                                          color: defaultPalette
-                                                              .black,
-                                                          fontSize: 12),
-                                                    )
-                                                  ],
-                                                ),
-                                                subfac: 10,
-                                                depth: 3,
-                                                baseDecoration: BoxDecoration(
-                                                  color: defaultPalette.extras[0],
-                                                  // border: Border.all(),
-                                                ),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    //sheetlist properties button button on top the whole thing
-                                    if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("LI"))
-                                      Expanded(
-                                        flex: 2,
-                                        child: Stack(
-                                          children: [
-                                            //Yellow Panel behind
-                                            Container(
-                                              margin: EdgeInsets.only(
-                                                  top: 9, left: 5),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.extras[1],
-                                                borderRadius: BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
-                                                border: Border.all(),
-                                              ),
-                                            ),
-                                            //list tabs buttons
-                                            Positioned.fill(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                  top: 22,
-                                                  left: 4,
-                                                  bottom: 3
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color:defaultPalette.transparent,
-                                                  borderRadius:BorderRadius.circular(2),
-                                                  // border: Border.all(),
-                                                ),
-                                                child: Stack(
-                                                  children: [
-                                                    Positioned(
-                                                      bottom:0, left:0,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                          if (whichPropertyTabIsClicked != 3) {
-                                                              whichPropertyTabIsClicked = 3;
-                                                              _findSheetListItem();
-                                                            }
-                                                            if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=0) {
-                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(0),);
-                                                                
-                                                                whichListPropertyTabIsClicked =0;
-                                                              } else {
-                                                                print('heryaa');
-                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.swipeDefault(),);
-                                                                
-                                                              }
-                                                              
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth: (_getPropertiesButtonWidth(
-                                                                'sheet-list')/2)-5,
-                                                        borderRadius:
-                                                            BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                            milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.list_tree,
-                                                          size: 12,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth:1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                          
-                                                        ),
-                                                      ),
-                                                    ),
-                                            
-                                                    Positioned(
-                                                      bottom:0, right:3,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                            if (whichPropertyTabIsClicked != 3) {
-                                                              var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
-                                                              whichPropertyTabIsClicked = 3;
-                                                              _findSheetListItem();
-                                                              decorationIndex = -1;
-                                                              isListDecorationLibraryToggled = false;
-                                                              isListDecorationPropertiesToggled = false;
-                                                              showDecorationLayers = false;
-                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                              listDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                            
-                                                            }
-                                                            if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=1) {
-                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(1),);
-                                                                
-                                                                whichListPropertyTabIsClicked =1;
-                                                              } else {
-                                                                // print('heryaa');
-                                                                Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(1),);
-                                                                
-                                                              }
-                                                            // listPropertyCardsController.swipeDefault();
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth:( _getPropertiesButtonWidth(
-                                                          'sheet-list')/2) -5,
-                                                        borderRadius: BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                        milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: defaultPalette.primary,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.sparkles,
-                                                          size: 12,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth: 1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                          
-                                                        ),
-                                                      ),
-                                                    ),
-                                            
-                                                  ],
-                                                )
-                                              ),
-                                            ),
-
-                                            //the propety tab switch main button to list properties
-                                            Positioned(
-                                              top:-2,
-                                              right:0,
-                                              child: ElevatedLayerButton(
-                                                onClick: () {
-                                                  setState(() {
-                                                    if (whichPropertyTabIsClicked != 3) {
-                                                      var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
-                                                      whichPropertyTabIsClicked = 3;
-                                                      _findSheetListItem();
-                                                      decorationIndex = -1;
-                                                      isListDecorationLibraryToggled = false;
-                                                      isListDecorationPropertiesToggled = false;
-                                                      showDecorationLayers = false;
-                                                      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                      listDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                    
-                                                    }
-                                                  });
-                                                },
-                                                buttonHeight: 30,
-                                                buttonWidth:
-                                                    _getPropertiesButtonWidth(
-                                                        'sheet-list'),
-                                                borderRadius:BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
-                                                animationDuration: const Duration(
-                                                    milliseconds: 100),
-                                                animationCurve: Curves.ease,
-                                                topDecoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  border: Border.all(),
-                                                ),
-                                                topLayerChild: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceAround,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Icon(
-                                                      TablerIcons
-                                                          .brackets_contain,
-                                                      size: 15,
-                                                    ),
-                                                    Text(
-                                                      'List',
-                                                      style: GoogleFonts.bungee(
-                                                          color: defaultPalette
-                                                              .black,
-                                                          fontSize: 12),
-                                                    )
-                                                  ],
-                                                ),
-                                                subfac: 10,
-                                                depth: 3,
-                                                baseDecoration: BoxDecoration(
-                                                  color: defaultPalette.extras[0],
-                                                  
-                                                ),
-                                              ),
-                                            
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    //sheettable properties button button on top of the whole thing
-                                    if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("TB"))
-                                      Expanded(
-                                        flex: 2,
-                                        child: Stack(
-                                          children: [
-                                            //Amethyst Panel behind
-                                            Container(
-                                              margin: EdgeInsets.only(
-                                                  top: 9, left: 5),
-                                              decoration: BoxDecoration(
-                                                color: defaultPalette.extras[3],
-                                                borderRadius:
-                                                    BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
-                                                border: Border.all(),
-                                              ),
-                                            ),
-                                            //table tabs buttons
-                                            Positioned.fill(
-                                              child: Container(
-                                                margin: const EdgeInsets.only(
-                                                  top: 22,
-                                                  left: 4,
-                                                  bottom: 3
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      defaultPalette.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
-                                                  // border: Border.all(),
-                                                ),
-                                                child: Stack(
-                                                  children: [
-                                                    Positioned(
-                                                      bottom:0, left:0,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                            if (whichPropertyTabIsClicked != 4) {
-                                                              var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
-                                                              whichPropertyTabIsClicked = 4;
-                                                              // _findSheetListItem();
-                                                              decorationIndex = -1;
-                                                              isListDecorationLibraryToggled = false;
-                                                              isListDecorationPropertiesToggled = false;
-                                                              // showDecorationLayers = false;
-                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                              tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                          
-                                                            }
-                                                            if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
-                                                                Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                
-                                                              whichTablePropertyTabIsClicked =1;
-                                                            } else {
-                                                              print('heryaa');
-                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                              
-                                                            }
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth: (_getPropertiesButtonWidth(
-                                                                'sheet-list')/2)-5,
-                                                        borderRadius:
-                                                            BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                            milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.list_tree,
-                                                          size: 12,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth:1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                         
-                                                        ),
-                                                      ),
-                                                    ),
-                                           
-                                                    Positioned(
-                                                      bottom:0, right:3,
-                                                      child: ElevatedLayerButton(
-                                                        onClick: () {
-                                                          setState(() {
-                                                        if (whichPropertyTabIsClicked != 4) {
-                                                              var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
-                                                              whichPropertyTabIsClicked = 4;
-                                                              // _findSheetListItem();
-                                                              decorationIndex = -1;
-                                                              isListDecorationLibraryToggled = false;
-                                                              isListDecorationPropertiesToggled = false;
-                                                              // showDecorationLayers = false;
-                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                              tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                          
-                                                            }
-                                                            if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
-                                                                Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                
-                                                                whichTablePropertyTabIsClicked =1;
-                                                              } else {
-                                                                print('heryaa');
-                                                                Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                
-                                                              }
-                                                          });
-                                                        },
-                                                        buttonHeight: 21,
-                                                        buttonWidth:( _getPropertiesButtonWidth(
-                                                          'sheet-list')/2) -5,
-                                                        borderRadius: BorderRadius.circular(5),
-                                                        animationDuration: const Duration(
-                                                        milliseconds: 100),
-                                                        animationCurve: Curves.ease,
-                                                        topDecoration: BoxDecoration(
-                                                          color: defaultPalette.primary,
-                                                          border: Border.all(),
-                                                        ),
-                                                        topLayerChild: const Icon(
-                                                          TablerIcons.sparkles,
-                                                          size: 12,
-                                                        ),
-                                                        subfac: 5,
-                                                        depth: 1.5,
-                                                        baseDecoration: BoxDecoration(
-                                                          color: defaultPalette.extras[0],
-                                                         
-                                                        ),
-                                                      ),
-                                                    ),
-                                           
-                                                  ],
-                                                )
-                                              ),
-                                            ),
-                                    
-                                            //the propety tab switch main button to table properties
-                                            Positioned(
-                                              top:-2,
-                                              right:0,
-                                              child: ElevatedLayerButton(
-                                                // isTapped: false,
-                                                // toggleOnTap: true,
-                                                onClick: () {
-                                                  setState(() {
-                                                    if (whichPropertyTabIsClicked != 4) {
-                                                      var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
-                                                      whichPropertyTabIsClicked = 4;
-                                                      // _findSheetListItem();
-                                                      decorationIndex = -1;
-                                                      isListDecorationLibraryToggled = false;
-                                                      isListDecorationPropertiesToggled = false;
-                                                      // showDecorationLayers = false;
-                                                      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                      tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                          
-                                                    }
-                                                  });
-                                                },
-                                                buttonHeight: 30,
-                                                buttonWidth:
-                                                    _getPropertiesButtonWidth(
-                                                        'sheet-list'),
-                                                borderRadius:BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
-                                                animationDuration: const Duration(
-                                                    milliseconds: 100),
-                                                animationCurve: Curves.ease,
-                                                topDecoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  border: Border.all(),
-                                                ),
-                                                topLayerChild: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceAround,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.table_chart_outlined,
-                                                      size: 14,
-                                                    ),
-                                                    Text(
-                                                      'Table',
-                                                      style: GoogleFonts.bungee(
-                                                          color: defaultPalette.black,
-                                                          fontSize: 12),
-                                                    )
-                                                  ],
-                                                ),
-                                                subfac: 10,
-                                                depth:3,
-                                                baseDecoration: BoxDecoration(
-                                                  color: defaultPalette.extras[0],
-                                                  // border: Border.all(),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    
-                                  ],
-                                ),
-                              ),
-                              //Content inside properties CARDS Main Parent
-                              Container(
-                                padding: EdgeInsets.only(top: 73),
-                                child: FadeInLeft(child: _getProperTiesCards()),
-                              ),
-                              
-                              //the place to render the preview for decoration before displaying
-                              // Positioned(
-                              //   left: -1000, // Move off-screen
-                              //   top: -1000,
-                              //   height: sHeight/5,
-                              //   width: sHeight/5,
-                              //   child: RepaintBoundary(
-                              //     key: previewBoxKey,
-                              //     child:  buildDecoratedContainer(sheetListItem.listDecoration, SizedBox(width:30,height:30), true),
-                              //   ),
-                              // ),
-                            ],
-                          ),
-                        ),
-                        //
-                        //
-                        //
-                        //RESIZE HANDLE VERTICAL 2
-                        Positioned(
-                            top: Platform.isAndroid ? 35 : 0,
-                            left: sWidth * (1 - wH2DividerPosition) - 3,
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.resizeColumn,
-                              child: GestureDetector(
-                                onPanUpdate: (details) {
-                                  double newPosition = ((0.9 -
-                                              wH2DividerPosition -
-                                              wH1DividerPosition) +
-                                          details.delta.dx /
-                                              context.size!.width)
-                                      .clamp(0.1, 0.6);
-                                  setState(() {
-                                    wH2DividerPosition =
-                                        (newPosition - .9 + wH1DividerPosition)
-                                            .abs()
-                                            .clamp(0.21, 0.48);
-                                  });
-                                },
-                                child: Container(
-                                  color: Colors.transparent,
-                                  height: sHeight,
-                                  width: 8,
-                                ),
-                              ),
-                            )),
-                        //RESIZE HANDLE VERTICAL 1
-                        Positioned(
-                            top: Platform.isAndroid ? 35 : 0,
-                            left: (sWidth * wH1DividerPosition) - 5,
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.resizeColumn,
-                              
-                              child: GestureDetector(
-                                onPanUpdate: (details) {
-                                  double newPosition = (wH1DividerPosition +
-                                          details.delta.dx /
-                                              context.size!.width)
-                                      .clamp((50/sWidth), 0.4);
-                                  setState(() {
-                                    wH1DividerPosition = newPosition;
-                                  });
-                                },
-                                child: Container(
-                                  color: Colors.transparent,
-                                  height: sHeight,
-                                  width: 10,
-                                ),
-                              ),
-                            )),
-                        //
-                      ],
-                    ),
-                  ),
-                  //
-                  // Windows top bar
-                  if (Platform.isWindows)
-                    GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onPanStart: (details) {
-                        appWindow.startDragging();
-                      },
-                      onDoubleTap: () {
-                        appWindow.maximizeOrRestore();
-                      },
-                      child: Container(
-                        color: Colors.transparent,
-                        height: 40,
-                        child: Consumer(builder: (context, ref, c) {
-                          return Stack(
-                            children: [
-                              AnimatedPositioned(
-                                right: 0,
-                                top: -2,
-                                duration: Durations.short4,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: AnimatedContainer(
-                                    duration: Durations.short4,
-                                    padding: const EdgeInsets.only(
-                                        right: 8, bottom: 4),
-                                    margin: const EdgeInsets.only(top: 0),
-                                    decoration: const BoxDecoration(
-                                        color: Colors.transparent,
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          bottomLeft: Radius.circular(12),
-                                        )),
-                                    child: Row(
-                                      children: [
-                                        //minimize button
-                                        ElevatedLayerButton(
-                                          // isTapped: false,
-                                          // toggleOnTap: true,
-                                          depth: 2,
-                                          onClick: () {
-                                            Future.delayed(Duration.zero)
-                                                .then((y) {
-                                              appWindow.minimize();
-                                            });
-                                          },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          animationDuration:
-                                              const Duration(milliseconds: 10),
-                                          animationCurve: Curves.ease,
-                                          topDecoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border: Border.all(),
-                                          ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.rectangle,
-                                            size: 15,
-                                            // color: Colors.blue,
-                                          ),
-                                          baseDecoration: BoxDecoration(
-                                            color: Colors.green,
-                                            border: Border.all(),
-                                          ),
-                                        ),
-                                        //
-                                        //maximize button
-                                        ElevatedLayerButton(
-                                          // isTapped: false,
-                                          // toggleOnTap: true,
-                                          depth: 2,
-                                          onClick: () {
-                                            Future.delayed(Durations.short1)
-                                                .then((y) {
-                                              appWindow.maximizeOrRestore();
-                                            });
-                                          },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          animationDuration:
-                                              const Duration(milliseconds: 1),
-                                          animationCurve: Curves.ease,
-                                          topDecoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border: Border.all(),
-                                          ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.triangle,
-                                            size: 14,
-                                            // color: Colors.amber,
-                                          ),
-                                          baseDecoration: BoxDecoration(
-                                            color: Colors.green,
-                                            border: Border.all(),
-                                          ),
-                                        ),
-                                        //close button
-                                        ElevatedLayerButton(
-                                          // isTapped: false,
-                                          // toggleOnTap: true,
-                                          depth: 2,
-                                          onClick: () {
-                                            Future.delayed(Duration.zero)
-                                                .then((y) {
-                                              appWindow.close();
-                                            });
-                                          },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          animationDuration:
-                                              const Duration(milliseconds: 1),
-                                          animationCurve: Curves.ease,
-                                          topDecoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border: Border.all(),
-                                          ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.circle,
-                                            size: 15,
-                                            // color: Colors.red,
-                                          ),
-                                          baseDecoration: BoxDecoration(
-                                            color: Colors.green,
-                                            border: Border.all(),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    //
                                   ),
                                 ),
-                              ),
-                            ],
-                          );
-                        }),
-                      ),
-                    ),
-
-                  //
-                  //BILLBLAZE MAIN TITLE //Desktop WEB
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: Platform.isAndroid ? 30 : 5,
-                    left: Platform.isAndroid ? 45 : 60,
-                    child: AnimatedTextKit(
-                      // key: ValueKey(appinioLoop),
-                      animatedTexts: [
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.abrilFatface(
-                                fontSize: Platform.isAndroid
-                                    ? titleFontSize / 3.5
-                                    : 15,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.zcoolKuaiLe(
-                                fontSize: Platform.isAndroid
-                                    ? titleFontSize / 3.5
-                                    : 15,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.splash(
-                                fontSize: Platform.isAndroid
-                                    ? titleFontSize / 3.5
-                                    : 15,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze",
-                            textStyle: GoogleFonts.libreBarcode39ExtendedText(
-                                fontSize: Platform.isAndroid
-                                    ? titleFontSize / 3.5
-                                    : 15,
-                                letterSpacing: 0,
-                                height: 1),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.redactedScript(
-                                fontSize: Platform.isAndroid
-                                    ? titleFontSize / 3.5
-                                    : 15,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                      ],
-                      // totalRepeatCount: 1,
-                      repeatForever: true,
-                      pause: const Duration(milliseconds: 30000),
-                      displayFullTextOnTap: true,
-                      stopPauseOnTap: true,
-                    ),
-                  ),
-                  //
-                  //SIDE BAR BUTTON //Desktop WEB
-                  AnimatedPositioned(
-                    duration: sideBarPosDuration,
-                    top: (sHeight / 20) - (sHeight / 18),
-                    left: -10,
-                    child: ElevatedLayerButton(
-                      // isTapped: false,
-                      // toggleOnTap: true,
-                      onClick: () {
-                        saveLayout();
-                        ref
-                            .read(propertyCardIndexProvider.notifier)
-                            .update((s) => s = 0);
-                        Navigator.pop(context);
-                      },
-                      buttonHeight: Platform.isWindows ? 60 : 50,
-                      buttonWidth: Platform.isWindows ? 60 : 50,
-                      borderRadius: BorderRadius.circular(100),
-                      animationDuration: const Duration(milliseconds: 100),
-                      animationCurve: Curves.ease,
-                      topDecoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(),
-                      ),
-                      topLayerChild: Icon(
-                        IconsaxPlusLinear.element_3,
-                        size: Platform.isWindows ? 20 : 15,
-                      ),
-                      baseDecoration: BoxDecoration(
-                        color: Colors.green,
-                        border: Border.all(),
-                      ),
-                    ),
-                  ),
-                  //
-                  //Layout Name Rename
-                  Positioned(
-                    top: 0,
-                    height: Platform.isAndroid ? 30 : 35,
-                    width: sWidth / 7,
-                    left: Platform.isAndroid ? sWidth / 2.5 : sWidth / 2,
-                    // width: (sWidth * wH2DividerPosition - 10) * 0.3,
-                    child: IntrinsicWidth(
-                      child: Focus(
-                        onFocusChange: _onFieldFocusChange,
-                        child: TextFormField(
-                          focusNode: layoutNamefocusNode,
-                          cursorColor: defaultPalette.primary,
-                          controller: layoutName,
-
-                          textAlignVertical: TextAlignVertical.top,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 5),
-                            filled: true,
-                            fillColor: defaultPalette.transparent,
-                            border: OutlineInputBorder(
-                              // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                              borderRadius: BorderRadius.circular(
-                                  5), // Replace with your desired radius
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  width: 0, color: defaultPalette.transparent),
-                              borderRadius:
-                                  BorderRadius.circular(5), // Same as border
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  width: 1.2,
-                                  color: defaultPalette.transparent),
-                              borderRadius:
-                                  BorderRadius.circular(6), // Same as border
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                width: 3,
-                                color: nameExists
-                                    ? layoutName.text == initialLayoutName
-                                        ? defaultPalette.extras[1]
-                                        : Colors.red
-                                    : defaultPalette.transparent,
-                              ),
-                              borderRadius:
-                                  BorderRadius.circular(5), // Same as border
+                              ],
                             ),
                           ),
-                          // keyboardType: TextInputType.number,
-                          style: GoogleFonts.bungee(
-                              color: defaultPalette.black, fontSize: 12),
-                          onChanged: (value) {
-                            _checkLayoutName();
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ));
-    } else {
-      //MOBILE
-      return Scaffold(
-          resizeToAvoidBottomInset: false,
-          body: SafeArea(
-            child: Container(
-              color: defaultPalette.white,
-              child: Stack(
-                children: [
-                  Container(
-                    height: sHeight,
-                    width: sWidth,
-                    color: Colors.transparent,
-                  ),
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    child: Column(
-                      children: [
-                        //APPBAR
-                        Expanded(
-                          flex: (appbarHeight * 10000).round(),
-                          child: Container(
-                            height: sHeight * 0.1,
-                          ),
-                        ),
-                        //TOP HALF
-                        Expanded(
-                          flex: (hDividerPosition * 10000).round(),
-                          child: Stack(
-                            children: [
-                              //Graph
-                              IgnorePointer(
+                          // coloredcontainer fill on right side of the screen
+                          Positioned(
+                            left: sWidth / 2,
+                            top: 0,
+                            child: Container(
+                              width: sWidth / 2,
+                              height: sHeight,
+                              color: defaultPalette.tertiary,
+                              child: IgnorePointer(
                                 ignoring: true,
                                 child: AnimatedContainer(
                                   duration: Durations.extralong1,
                                   height: sHeight,
                                   width: sWidth,
                                   alignment: Alignment.centerRight,
-                                  color: Colors.black.withOpacity(0.06),
-                                  padding: const EdgeInsets.only(
-                                    top: 0,
-                                  ),
+                                  decoration: BoxDecoration(),
                                   //layGraph
-                                  child: LineChart(LineChartData(
-                                      lineBarsData: [LineChartBarData()],
-                                      titlesData:
-                                          const FlTitlesData(show: false),
-                                      gridData: const FlGridData(
-                                          show: true,
-                                          horizontalInterval: 10,
-                                          verticalInterval: 30),
-                                      borderData: FlBorderData(show: false),
-                                      minY: 0,
-                                      maxY: 50,
-                                      maxX: dateTimeNow.millisecondsSinceEpoch
-                                                  .ceilToDouble() /
-                                              500 +
-                                          250,
-                                      minX: dateTimeNow.millisecondsSinceEpoch
-                                              .ceilToDouble() /
-                                          500)),
-                                ),
-                              ),
-
-                              AnimatedPositioned(
-                                duration: const Duration(milliseconds: 300),
-                                // left: panelIndex.panelIndex == -1
-                                //     ? (sWidth * vDividerPosition)
-                                //     : 0,
-                                child: Row(
-                                  children: [
-                                    /////////////////////LEFT
-                                    Expanded(
-                                        flex:
-                                            (vDividerPosition * 10000).toInt(),
-                                        child: SafeArea(
-                                          child: Stack(
-                                            children: [
-                                              Container(
-                                                height:
-                                                    sHeight * hDividerPosition,
-                                                color: Colors.transparent,
-                                              ),
-
-                                              ///LEFT TITLE PAGE PROPS
-                                              Positioned(
-                                                // duration: Durations.medium4,
-                                                top: 0,
-                                                left: 0,
-                                                height: (sHeight) *
-                                                    (hDividerPosition),
-                                                width:
-                                                    sWidth * vDividerPosition,
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 10),
-                                                  child:
-
-                                                      ///LEFT TITLE PAGE PROPS
-                                                      Material(
-                                                    color: defaultPalette
-                                                        .transparent,
-                                                    child:
-                                                        SingleChildScrollView(
-                                                      physics:
-                                                          const BouncingScrollPhysics(),
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Stack(
-                                                            children: [
-                                                              Container(
-                                                                height: 55,
-                                                                width: sWidth *
-                                                                    vDividerPosition,
-                                                              ),
-                                                              //LeftScreen tilte
-                                                              Container(
-                                                                height: 55,
-                                                                margin:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        left:
-                                                                            10,
-                                                                        top: 8,
-                                                                        bottom:
-                                                                            5),
-                                                                width: sWidth *
-                                                                    vDividerPosition *
-                                                                    0.4,
-                                                                child: Text(
-                                                                    vDividerPosition <
-                                                                            0.45
-                                                                        ? 'PG \nPRP'
-                                                                        : 'Page Properties',
-                                                                    maxLines: 2,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .fade,
-                                                                    style: TextStyle(
-                                                                        color: defaultPalette
-                                                                            .black,
-                                                                        fontSize:
-                                                                            16,
-                                                                        fontWeight:
-                                                                            FontWeight.bold)),
-                                                              ),
-                                                              //nextprev buittons
-                                                              Positioned(
-                                                                right: 30,
-                                                                top: 12,
-                                                                child:
-                                                                    Container(
-                                                                  decoration: BoxDecoration(
-                                                                      color: defaultPalette
-                                                                          .tertiary,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              8)),
-                                                                  margin:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          top:
-                                                                              5),
-                                                                  height: 30,
-                                                                  width: 50,
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceAround,
-                                                                    children: [
-                                                                      GestureDetector(
-                                                                        child:
-                                                                            Icon(
-                                                                          Icons
-                                                                              .keyboard_arrow_left_sharp,
-                                                                          color:
-                                                                              defaultPalette.black,
-                                                                        ),
-                                                                        onTap:
-                                                                            () {
-                                                                          setState(
-                                                                              () {
-                                                                            // print('________PREV PAGE STARTED LD_________');
-                                                                            if (currentPageIndex ==
-                                                                                0) {
-                                                                              // pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16), duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
-                                                                              return;
-                                                                            }
-                                                                            currentPageIndex--;
-
-                                                                            // pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) + 16),
-                                                                            // duration: const Duration(milliseconds: 100),
-                                                                            // curve: Curves.easeIn);
-                                                                          });
-                                                                          // print(
-                                                                          //     '________END PREV PAGE LD_________');
-                                                                        },
-                                                                      ),
-                                                                      GestureDetector(
-                                                                        child:
-                                                                            Icon(
-                                                                          Icons
-                                                                              .keyboard_arrow_right_sharp,
-                                                                          color:
-                                                                              defaultPalette.black,
-                                                                        ),
-                                                                        onTap:
-                                                                            () {
-                                                                          setState(
-                                                                              () {
-                                                                            print('________NEXT PAGE STARTED LD_________');
-                                                                            if (pageCount ==
-                                                                                (currentPageIndex + 1)) {
-                                                                              _addPdfPage();
-
-                                                                              currentPageIndex++;
-                                                                              // pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) + 6), duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
-
-                                                                              print('________END NEXT PAGE LD_________');
-                                                                              return;
-                                                                            }
-
-                                                                            currentPageIndex++;
-
-                                                                            // pdfScrollController.animateTo(currentPageIndex * ((1.41428571429 * ((sWidth * (1 - vDividerPosition)) - 6)) + 6),
-                                                                            //     duration: const Duration(milliseconds: 100),
-                                                                            //     curve: Curves.easeIn);
-                                                                            // ref.read(panelIndexProvider.notifier).state = PanelIndex(
-                                                                            //     id: ref
-                                                                            //         .read(sheetListProviderFamily(ref.read(spreadSheetProvider.select((p) => p[ref.read(currentPageIndexProvider)]
-                                                                            //             .id))))
-                                                                            //         .id,
-                                                                            //     panelIndex:
-                                                                            //         0);
-                                                                            print('________END NEXT PAGE LD_________');
-                                                                          });
-                                                                        },
-                                                                      )
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          //pageNumber textfiwld
-                                                          SizedBox(
-                                                            height:
-                                                                textFieldHeight,
-                                                            width: sWidth *
-                                                                vDividerPosition,
-
-                                                            ///Stack For Delete
-                                                            child: Stack(
-                                                              children: [
-                                                                ///PAGE COUNT TEXT
-                                                                TextFormField(
-                                                                  cursorColor:
-                                                                      defaultPalette
-                                                                          .tertiary,
-                                                                  controller: documentPropertiesList[
-                                                                          currentPageIndex]
-                                                                      .pageNumberController,
-                                                                  inputFormatters: [
-                                                                    FilteringTextInputFormatter
-                                                                        .allow(RegExp(
-                                                                            r'^\d*\.?\d*$'))
-                                                                  ],
-                                                                  textAlignVertical:
-                                                                      TextAlignVertical
-                                                                          .top,
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  decoration:
-                                                                      InputDecoration(
-                                                                    suffixIcon: //Delete page
-                                                                        GestureDetector(
-                                                                      onTap:
-                                                                          () {},
-                                                                      child:
-                                                                          Icon(
-                                                                        Icons
-                                                                            .delete_outline_rounded,
-                                                                        color: defaultPalette
-                                                                            .transparent,
-                                                                      ),
-                                                                    ),
-                                                                    labelText:
-                                                                        'Page Number',
-                                                                    labelStyle:
-                                                                        TextStyle(
-                                                                      color: defaultPalette
-                                                                          .black,
-                                                                      fontSize:
-                                                                          15,
-                                                                    ),
-                                                                    floatingLabelAlignment:
-                                                                        FloatingLabelAlignment
-                                                                            .start,
-                                                                    filled:
-                                                                        true,
-                                                                    fillColor:
-                                                                        defaultPalette
-                                                                            .primary,
-                                                                    border:
-                                                                        OutlineInputBorder(
-                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              10.0), // Replace with your desired radius
-                                                                    ),
-                                                                    enabledBorder:
-                                                                        OutlineInputBorder(
-                                                                      borderSide: BorderSide(
-                                                                          width:
-                                                                              2,
-                                                                          color:
-                                                                              defaultPalette.black),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              12.0), // Same as border
-                                                                    ),
-                                                                    disabledBorder:
-                                                                        OutlineInputBorder(
-                                                                      borderSide: BorderSide(
-                                                                          width:
-                                                                              2,
-                                                                          color:
-                                                                              defaultPalette.black),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              12.0), // Same as border
-                                                                    ),
-                                                                    focusedBorder:
-                                                                        OutlineInputBorder(
-                                                                      borderSide: BorderSide(
-                                                                          width:
-                                                                              3,
-                                                                          color:
-                                                                              defaultPalette.tertiary),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              10.0), // Same as border
-                                                                    ),
-                                                                  ),
-                                                                  keyboardType:
-                                                                      TextInputType
-                                                                          .number,
-                                                                  style: TextStyle(
-                                                                      color: defaultPalette
-                                                                          .black,
-                                                                      fontSize:
-                                                                          15),
-                                                                  enabled:
-                                                                      false,
-                                                                  // onChanged:
-                                                                  //     (value) {
-                                                                  //   _updatePdfPreview;
-                                                                  //   _addPdfPage();
-                                                                  // }
-                                                                ),
-                                                                //DELETE ICON
-                                                                Positioned(
-                                                                  right: 15 / 2,
-                                                                  top: (textFieldHeight /
-                                                                          2) -
-                                                                      25 / 2,
-                                                                  child:
-                                                                      GestureDetector(
-                                                                    onTap: () {
-                                                                      _confirmDeleteLayout(
-                                                                          deletePage:
-                                                                              true);
-                                                                      // pdfScrollController.animateTo(
-                                                                      //     currentPageIndex *
-                                                                      //         ((1.41428571429 * ((sWidth * (1 - vDividerPosition)))) +
-                                                                      //             16),
-                                                                      //     duration: const Duration(
-                                                                      //         milliseconds:
-                                                                      //             100),
-                                                                      //     curve:
-                                                                      //         Curves.easeIn);
-                                                                    },
-                                                                    child: Icon(
-                                                                      Icons
-                                                                          .delete_outline_rounded,
-                                                                      color: defaultPalette
-                                                                          .black,
-                                                                      size: 25,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-
-                                                          //LEFT SIDE MARGIN , ORIENTATION, FORMAT
-                                                          Column(
-                                                            children: [
-                                                              const SizedBox(
-                                                                height: 10,
-                                                              ),
-                                                              Row(
-                                                                children: [
-                                                                  Expanded(
-                                                                    child:
-                                                                        SizedBox(
-                                                                      height:
-                                                                          textFieldHeight,
-                                                                      child: // TO STACK THE INCREMENT BUTTONS
-                                                                          Stack(
-                                                                        children: [
-                                                                          //MARGIN ALL TEXT
-                                                                          TextFormField(
-                                                                            onTapOutside:
-                                                                                (event) {
-                                                                              marginAllFocus.unfocus();
-                                                                            },
-                                                                            obscureText:
-                                                                                documentPropertiesList[currentPageIndex].useIndividualMargins,
-                                                                            focusNode:
-                                                                                marginAllFocus,
-                                                                            controller:
-                                                                                documentPropertiesList[currentPageIndex].marginAllController,
-                                                                            inputFormatters: [
-                                                                              NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 2.001)
-                                                                            ],
-                                                                            textAlignVertical:
-                                                                                TextAlignVertical.top,
-                                                                            textAlign:
-                                                                                TextAlign.center,
-                                                                            decoration:
-                                                                                InputDecoration(
-                                                                              // alignLabelWithHint:
-                                                                              //     true,
-                                                                              contentPadding: const EdgeInsets.all(0),
-                                                                              floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                              labelText: 'Margin',
-                                                                              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                                              filled: true,
-                                                                              fillColor: !documentPropertiesList[currentPageIndex].useIndividualMargins ? defaultPalette.primary : defaultPalette.primary.withOpacity(0.5),
-                                                                              border: OutlineInputBorder(
-                                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                              ),
-                                                                              enabledBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                              ),
-                                                                              focusedBorder: OutlineInputBorder(
-                                                                                borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                              ),
-                                                                            ),
-                                                                            keyboardType:
-                                                                                TextInputType.number,
-                                                                            style: TextStyle(
-                                                                                // fontStyle: FontStyle.italic,
-                                                                                color: defaultPalette.black),
-                                                                            onChanged:
-                                                                                (value) {
-                                                                              // setState(() {
-
-                                                                              documentPropertiesList[currentPageIndex].marginTopController.text = value;
-                                                                              documentPropertiesList[currentPageIndex].marginBottomController.text = value;
-                                                                              documentPropertiesList[currentPageIndex].marginLeftController.text = value;
-                                                                              documentPropertiesList[currentPageIndex].marginRightController.text = value;
-                                                                              // _updatePdfPreview(
-                                                                              //     '');
-                                                                              // });
-                                                                            },
-                                                                            enabled:
-                                                                                !documentPropertiesList[currentPageIndex].useIndividualMargins,
-                                                                          ),
-
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            left:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  var value = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginAllController.text = (double.parse(value) - 1).abs().toString();
-                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                });
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: const Icon(
-                                                                                IconsaxPlusLinear.arrow_left_1,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          Positioned(
-                                                                            top:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            right:
-                                                                                (textFieldHeight / 2) - 15 / 2,
-                                                                            child:
-                                                                                GestureDetector(
-                                                                              onTap: () {
-                                                                                setState(() {
-                                                                                  documentPropertiesList[currentPageIndex].marginAllController.text = (double.parse(documentPropertiesList[currentPageIndex].marginAllController.text) + 1).toString();
-                                                                                  documentPropertiesList[currentPageIndex].marginTopController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginBottomController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginLeftController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                  documentPropertiesList[currentPageIndex].marginRightController.text = documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                                });
-
-                                                                                // _updatePdfPreview('');
-                                                                              },
-                                                                              child: const Icon(
-                                                                                IconsaxPlusLinear.arrow_right_3,
-                                                                                size: 15,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  ////INDIVIDUAL MARGINS BUTTON
-                                                                  IconButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          documentPropertiesList[currentPageIndex].useIndividualMargins =
-                                                                              !documentPropertiesList[currentPageIndex].useIndividualMargins;
-                                                                          if (documentPropertiesList[currentPageIndex].useIndividualMargins ==
-                                                                              false) {
-                                                                            documentPropertiesList[currentPageIndex].marginTopController.text =
-                                                                                documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                            documentPropertiesList[currentPageIndex].marginBottomController.text =
-                                                                                documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                            documentPropertiesList[currentPageIndex].marginLeftController.text =
-                                                                                documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                            documentPropertiesList[currentPageIndex].marginRightController.text =
-                                                                                documentPropertiesList[currentPageIndex].marginAllController.text;
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                      icon: documentPropertiesList[currentPageIndex]
-                                                                              .useIndividualMargins
-                                                                          ? const Icon(
-                                                                              IconsaxPlusBold.maximize_1,
-                                                                              size: 30,
-                                                                            )
-                                                                          : const Icon(
-                                                                              IconsaxPlusLinear.maximize_2,
-                                                                              size: 30,
-                                                                            ))
-                                                                  // Text(
-                                                                  //     'Use Individual Margins'),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 10,
-                                                              ),
-                                                              if (documentPropertiesList[
-                                                                      currentPageIndex]
-                                                                  .useIndividualMargins)
-                                                                Column(
-                                                                  children: [
-                                                                    Row(
-                                                                      children: [
-                                                                        //TOP MARGIN
-                                                                        Expanded(
-                                                                          child:
-                                                                              //TOP MARGIN TEXT
-                                                                              SizedBox(
-                                                                            height:
-                                                                                textFieldHeight,
-                                                                            child:
-                                                                                Stack(
-                                                                              children: [
-                                                                                TextFormField(
-                                                                                  onTapOutside: (event) {
-                                                                                    marginTopFocus.unfocus();
-                                                                                  },
-                                                                                  focusNode: marginTopFocus,
-                                                                                  controller: documentPropertiesList[currentPageIndex].marginTopController,
-                                                                                  inputFormatters: [
-                                                                                    // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                                                    NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
-                                                                                  ],
-                                                                                  style: TextStyle(color: defaultPalette.black),
-                                                                                  cursorColor: defaultPalette.secondary,
-                                                                                  textAlign: TextAlign.center,
-                                                                                  textAlignVertical: TextAlignVertical.top,
-                                                                                  decoration: InputDecoration(
-                                                                                    contentPadding: const EdgeInsets.all(0),
-                                                                                    labelText: 'Top',
-                                                                                    labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                    prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                    suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                    filled: true,
-                                                                                    fillColor: defaultPalette.primary,
-                                                                                    border: OutlineInputBorder(
-                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                    ),
-                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                    ),
-                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                    ),
-                                                                                  ),
-                                                                                  keyboardType: TextInputType.number,
-                                                                                  // onChanged: (value) => _updatePdfPreview(''),
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  left: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) - 1).abs().toString();
-                                                                                      });
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_left_1,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  right: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginTopController.text = (double.parse(documentPropertiesList[currentPageIndex].marginTopController.text) + 1).toString();
-                                                                                      });
-
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_right_3,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        //BOTTOM MARGIN TEXT
-                                                                        Expanded(
-                                                                          child:
-                                                                              SizedBox(
-                                                                            height:
-                                                                                textFieldHeight,
-                                                                            child:
-                                                                                //STACK FOR INCREDECRE
-                                                                                Stack(
-                                                                              children: [
-                                                                                //BOTTOM TEXT FIELD
-                                                                                TextFormField(
-                                                                                  onTapOutside: (event) {
-                                                                                    marginBottomFocus.unfocus();
-                                                                                  },
-                                                                                  focusNode: marginBottomFocus,
-                                                                                  controller: documentPropertiesList[currentPageIndex].marginBottomController,
-                                                                                  inputFormatters: [
-                                                                                    NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginTopController.text))
-                                                                                  ],
-                                                                                  style: TextStyle(color: defaultPalette.black),
-                                                                                  cursorColor: defaultPalette.secondary,
-                                                                                  textAlign: TextAlign.center,
-                                                                                  textAlignVertical: TextAlignVertical.top,
-
-                                                                                  ///INPUT DECORATION
-                                                                                  decoration: InputDecoration(
-                                                                                    contentPadding: const EdgeInsets.all(0),
-                                                                                    labelText: 'Bottom',
-                                                                                    labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                    filled: true,
-                                                                                    fillColor: defaultPalette.primary,
-                                                                                    border: OutlineInputBorder(
-                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                    ),
-                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                    ),
-                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                    ),
-                                                                                  ),
-                                                                                  keyboardType: TextInputType.number,
-                                                                                  // onChanged: (value) => _updatePdfPreview(''),
-                                                                                ),
-                                                                                //BOTTOM DECREMENT
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  left: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) - 1).abs().toString();
-                                                                                      });
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_left_1,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                //BOTTOM INCREMENT
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  right: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginBottomController.text = (double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text) + 1).toString();
-                                                                                      });
-
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_right_3,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          15,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        //Left MARGIN WIDGET
-                                                                        Expanded(
-                                                                          child:
-                                                                              SizedBox(
-                                                                            height:
-                                                                                textFieldHeight,
-                                                                            child:
-                                                                                Stack(
-                                                                              children: [
-                                                                                TextFormField(
-                                                                                  onTapOutside: (event) {
-                                                                                    marginLeftFocus.unfocus();
-                                                                                  },
-                                                                                  focusNode: marginLeftFocus,
-                                                                                  controller: documentPropertiesList[currentPageIndex].marginLeftController,
-                                                                                  inputFormatters: [
-                                                                                    NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginRightController.text))
-                                                                                  ],
-                                                                                  style: TextStyle(color: defaultPalette.black),
-                                                                                  cursorColor: defaultPalette.black,
-                                                                                  textAlign: TextAlign.center,
-                                                                                  textAlignVertical: TextAlignVertical.top,
-                                                                                  decoration: InputDecoration(
-                                                                                    contentPadding: const EdgeInsets.all(0),
-                                                                                    labelText: 'Left',
-                                                                                    labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                                                                                    filled: true,
-                                                                                    fillColor: defaultPalette.primary,
-                                                                                    border: OutlineInputBorder(
-                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                    ),
-                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                    ),
-                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                    ),
-                                                                                  ),
-                                                                                  keyboardType: TextInputType.number,
-                                                                                  onChanged: (value) => {
-                                                                                    // _updatePdfPreview('')
-                                                                                  },
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  left: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) - 1).abs().toString();
-                                                                                      });
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_left_1,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  right: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginLeftController.text = (double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text) + 1).toString();
-                                                                                      });
-
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_right_3,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        //RIGHT MARGIN TEXT
-                                                                        Expanded(
-                                                                          child:
-                                                                              SizedBox(
-                                                                            height:
-                                                                                textFieldHeight,
-                                                                            child:
-                                                                                Stack(
-                                                                              children: [
-                                                                                TextFormField(
-                                                                                  onTapOutside: (event) {
-                                                                                    marginRightFocus.unfocus();
-                                                                                  },
-                                                                                  focusNode: marginRightFocus,
-                                                                                  controller: documentPropertiesList[currentPageIndex].marginRightController,
-                                                                                  style: TextStyle(color: defaultPalette.black),
-                                                                                  cursorColor: defaultPalette.secondary,
-                                                                                  inputFormatters: [
-                                                                                    NumericInputFormatter(maxValue: documentPropertiesList[currentPageIndex].pageFormatController.width / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginLeftController.text))
-                                                                                  ],
-                                                                                  textAlign: TextAlign.center,
-                                                                                  textAlignVertical: TextAlignVertical.top,
-                                                                                  decoration: InputDecoration(
-                                                                                    contentPadding: const EdgeInsets.all(0),
-                                                                                    labelText: 'Right',
-                                                                                    labelStyle: TextStyle(color: defaultPalette.black, fontSize: 20),
-                                                                                    floatingLabelAlignment: FloatingLabelAlignment.center,
-                                                                                    filled: true,
-                                                                                    fillColor: defaultPalette.primary,
-                                                                                    border: OutlineInputBorder(
-                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                    ),
-                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.black),
-                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                    ),
-                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.tertiary),
-                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                    ),
-                                                                                  ),
-                                                                                  keyboardType: TextInputType.number,
-                                                                                  // onChanged: (value) => _updatePdfPreview,
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  left: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) - 1).abs().toString();
-                                                                                      });
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_left_1,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                Positioned(
-                                                                                  top: (textFieldHeight / 2) - 15 / 2,
-                                                                                  right: 15 / 2,
-                                                                                  child: GestureDetector(
-                                                                                    onTap: () {
-                                                                                      setState(() {
-                                                                                        documentPropertiesList[currentPageIndex].marginRightController.text = (double.parse(documentPropertiesList[currentPageIndex].marginRightController.text) + 1).toString();
-                                                                                      });
-
-                                                                                      // _updatePdfPreview('');
-                                                                                    },
-                                                                                    child: const Icon(
-                                                                                      IconsaxPlusLinear.arrow_right_3,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                              //Orientation
-                                                              SizedBox(
-                                                                height:
-                                                                    textFieldHeight +
-                                                                        10,
-                                                                child:
-                                                                    CustomDropdown(
-                                                                  hintText:
-                                                                      'Orientation',
-                                                                  items: [
-                                                                    'Portrait',
-                                                                    'Landscape'
-                                                                  ],
-                                                                  closedHeaderPadding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          10),
-                                                                  initialItem: documentPropertiesList[currentPageIndex]
-                                                                              .orientationController ==
-                                                                          pw.PageOrientation
-                                                                              .portrait
-                                                                      ? 'Portrait'
-                                                                      : 'Landscape',
-                                                                  onChanged:
-                                                                      (value) {
-                                                                    setState(
-                                                                        () {
-                                                                      documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .orientationController = value ==
-                                                                              'Portrait'
-                                                                          ? pw.PageOrientation
-                                                                              .portrait
-                                                                          : pw.PageOrientation
-                                                                              .landscape;
-                                                                    });
-                                                                    // _updatePdfPreview(
-                                                                    //     '');
-                                                                  },
-                                                                  listItemBuilder:
-                                                                      (context,
-                                                                          item,
-                                                                          isSelected,
-                                                                          onItemSelect) {
-                                                                    return Row(
-                                                                      children: [
-                                                                        Icon(
-                                                                          item == 'Portrait'
-                                                                              ? Icons.crop_portrait
-                                                                              : Icons.crop_3_2_sharp,
-                                                                          size:
-                                                                              20,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        Text(
-                                                                            item)
-                                                                      ],
-                                                                    );
-                                                                  },
-                                                                  decoration:
-                                                                      CustomDropdownDecoration(
-                                                                    prefixIcon:
-                                                                        Icon(
-                                                                      documentPropertiesList[currentPageIndex].orientationController ==
-                                                                              pw
-                                                                                  .PageOrientation.portrait
-                                                                          ? Icons
-                                                                              .crop_portrait_outlined
-                                                                          : Icons
-                                                                              .crop_3_2_sharp,
-                                                                      size: 20,
-                                                                    ),
-                                                                    closedBorderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    closedBorder: Border.all(
-                                                                        color: defaultPalette
-                                                                            .black,
-                                                                        width:
-                                                                            2),
-                                                                    expandedBorder: Border.all(
-                                                                        color: defaultPalette
-                                                                            .tertiary,
-                                                                        width:
-                                                                            3),
-                                                                    closedFillColor:
-                                                                        defaultPalette
-                                                                            .primary,
-                                                                    hintStyle:
-                                                                        TextStyle(
-                                                                      color: defaultPalette
-                                                                          .black,
-                                                                    ),
-                                                                    headerStyle:
-                                                                        TextStyle(
-                                                                      color: defaultPalette
-                                                                          .black,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 5),
-                                                              //Page Format
-                                                              SizedBox(
-                                                                height:
-                                                                    textFieldHeight,
-                                                                child:
-                                                                    CustomDropdown
-                                                                        .search(
-                                                                  hintText:
-                                                                      'Page Format',
-                                                                  items: [
-                                                                    'A4',
-                                                                    'A3',
-                                                                    'A5',
-                                                                    'A6',
-                                                                    'Letter',
-                                                                    'Legal',
-                                                                    'Standard',
-                                                                  ],
-                                                                  initialItem: getPageFormatString(
-                                                                      documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .pageFormatController),
-                                                                  onChanged:
-                                                                      (value) {
-                                                                    setState(
-                                                                        () {
-                                                                      documentPropertiesList[currentPageIndex]
-                                                                              .pageFormatController =
-                                                                          getPageFormatFromString(value ??
-                                                                              '');
-                                                                    });
-                                                                    // _updatePdfPreview(
-                                                                    //     '');
-                                                                  },
-                                                                  closedHeaderPadding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          10),
-                                                                  decoration:
-                                                                      CustomDropdownDecoration(
-                                                                    closedBorderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                    closedBorder: Border.all(
-                                                                        color: defaultPalette
-                                                                            .black,
-                                                                        width:
-                                                                            2),
-                                                                    expandedBorder: Border.all(
-                                                                        color: defaultPalette
-                                                                            .tertiary,
-                                                                        width:
-                                                                            3),
-                                                                    closedFillColor:
-                                                                        defaultPalette
-                                                                            .primary,
-                                                                    hintStyle: TextStyle(
-                                                                        color: defaultPalette
-                                                                            .black),
-                                                                    headerStyle:
-                                                                        TextStyle(
-                                                                            color:
-                                                                                defaultPalette.black),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              // Divider(),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 30,
-                                                          )
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              //Text Styling
-                                              Positioned(
-                                                // duration: Durations.medium3,
-                                                left: 44,
-                                                child: Container(
-                                                  height: sHeight *
-                                                      (hDividerPosition),
-                                                  width: (sWidth *
-                                                          vDividerPosition) -
-                                                      44,
-                                                  child: Column(
-                                                    // direction: Axis.vertical,
-                                                    children: [
-                                                      Container(
-                                                        height: 50,
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                left: 5,
-                                                                top: 5),
-                                                        child: Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceEvenly,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            //heading
-                                                            Text(
-                                                              'TEXT STYLE',
-                                                              style: GoogleFonts
-                                                                  .bungee(
-                                                                      fontSize:
-                                                                          18,
-                                                                      letterSpacing:
-                                                                          0,
-                                                                      height:
-                                                                          1),
-                                                            ),
-                                                            //id
-                                                            Text(
-                                                              panelIndex.id,
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style: GoogleFonts
-                                                                  .lexend(
-                                                                      fontSize:
-                                                                          8,
-                                                                      letterSpacing:
-                                                                          0,
-                                                                      height:
-                                                                          0.9),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                              child: Container(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(5),
-                                                                child: Builder(
-                                                                  builder:
-                                                                      (context) {
-                                                                    var item = _sheetItemIterator(
-                                                                        panelIndex
-                                                                            .id,
-                                                                        spreadSheetList[
-                                                                            currentPageIndex]) as SheetText;
-
-                                                                    bool _getIsToggled(
-                                                                        Map<String,
-                                                                                Attribute>
-                                                                            attrs,
-                                                                        Attribute
-                                                                            attribute) {
-                                                                      if (attribute.key == Attribute.list.key ||
-                                                                          attribute.key ==
-                                                                              Attribute
-                                                                                  .header.key ||
-                                                                          attribute.key ==
-                                                                              Attribute
-                                                                                  .script.key ||
-                                                                          attribute.key ==
-                                                                              Attribute.align.key) {
-                                                                        final currentAttribute =
-                                                                            attrs[attribute.key];
-                                                                        if (currentAttribute ==
-                                                                            null) {
-                                                                          // print(
-                                                                          //     'returning false');
-                                                                          return false;
-                                                                        }
-                                                                        // print(
-                                                                        //     'returning ${currentAttribute.value == attribute.value}');
-                                                                        return currentAttribute.value ==
-                                                                            attribute.value;
-                                                                      }
-                                                                      // print(
-                                                                      //     'returning ${attrs.containsKey(attribute.key)}');
-                                                                      return attrs
-                                                                          .containsKey(
-                                                                              attribute.key);
-                                                                    }
-
-                                                                    Widget
-                                                                        buildElevatedLayerButton({
-                                                                      required double
-                                                                          buttonHeight,
-                                                                      required double
-                                                                          buttonWidth,
-                                                                      required Duration
-                                                                          animationDuration,
-                                                                      required Curve
-                                                                          animationCurve,
-                                                                      required void
-                                                                              Function()
-                                                                          onClick,
-                                                                      required BoxDecoration
-                                                                          baseDecoration,
-                                                                      required BoxDecoration
-                                                                          topDecoration,
-                                                                      required Widget
-                                                                          topLayerChild,
-                                                                      required BorderRadius
-                                                                          borderRadius,
-                                                                      bool toggleOnTap =
-                                                                          false,
-                                                                      bool isTapped =
-                                                                          false,
-                                                                    }) {
-                                                                      var down =
-                                                                          isTapped;
-                                                                      void _handleTapDown(
-                                                                          TapDownDetails
-                                                                              details) {
-                                                                        onClick();
-
-                                                                        setState(
-                                                                            () {
-                                                                          down =
-                                                                              true;
-                                                                          print(
-                                                                              down);
-                                                                        });
-                                                                      }
-
-                                                                      void _handleTapUp(
-                                                                          TapUpDetails
-                                                                              details) {
-                                                                        if (!toggleOnTap &&
-                                                                            down) {
-                                                                          setState(
-                                                                              () {
-                                                                            down =
-                                                                                !down;
-                                                                          });
-                                                                        }
-                                                                      }
-
-                                                                      void
-                                                                          _handleTapCancel() {}
-
-                                                                      return GestureDetector(
-                                                                        onTap:
-                                                                            () {},
-                                                                        onTapDown:
-                                                                            _handleTapDown,
-                                                                        onTapUp:
-                                                                            _handleTapUp,
-                                                                        onTapCancel:
-                                                                            _handleTapCancel,
-                                                                        child:
-                                                                            SizedBox(
-                                                                          height:
-                                                                              buttonHeight,
-                                                                          width:
-                                                                              buttonWidth,
-                                                                          child:
-                                                                              Stack(
-                                                                            alignment:
-                                                                                Alignment.bottomRight,
-                                                                            children: [
-                                                                              Positioned(
-                                                                                bottom: 0,
-                                                                                right: 0,
-                                                                                child: Container(
-                                                                                  width: buttonWidth - 10,
-                                                                                  height: buttonHeight - 10,
-                                                                                  decoration: baseDecoration.copyWith(
-                                                                                    borderRadius: borderRadius,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              AnimatedPositioned(
-                                                                                duration: animationDuration,
-                                                                                curve: animationCurve,
-                                                                                bottom: !down ? 4 : 0,
-                                                                                right: !down ? 4 : 0,
-                                                                                child: Container(
-                                                                                  width: buttonWidth - 10,
-                                                                                  height: buttonHeight - 10,
-                                                                                  alignment: Alignment.center,
-                                                                                  decoration: topDecoration.copyWith(
-                                                                                    borderRadius: borderRadius,
-                                                                                  ),
-                                                                                  child: topLayerChild,
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    }
-
-                                                                    var width =
-                                                                        (sWidth *
-                                                                                vDividerPosition) -
-                                                                            44;
-
-                                                                    TextEditingController
-                                                                        hexController =
-                                                                        TextEditingController()
-                                                                          ..text =
-                                                                              '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
-                                                                    TextEditingController
-                                                                        bghexController =
-                                                                        TextEditingController()
-                                                                          ..text =
-                                                                              '${(item.textEditorController.getSelectionStyle().attributes['background']?.value ?? '#00000000')}';
-                                                                    TextEditingController
-                                                                        fontSizeController =
-                                                                        TextEditingController()
-                                                                          ..text =
-                                                                              '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0')}';
-                                                                    if (fontSizeController
-                                                                        .text
-                                                                        .endsWith(
-                                                                            '.0')) {
-                                                                      fontSizeController
-                                                                              .text =
-                                                                          '${double.parse(item.textEditorController.getSelectionStyle().attributes['size']?.value ?? '0').ceil()}';
-                                                                    }
-                                                                    TextEditingController
-                                                                        letterSpaceController =
-                                                                        TextEditingController()
-                                                                          ..text =
-                                                                              '${double.parse(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value ?? '0')}';
-                                                                    if (letterSpaceController
-                                                                        .text
-                                                                        .endsWith(
-                                                                            '.0')) {
-                                                                      letterSpaceController.text = letterSpaceController
-                                                                          .text
-                                                                          .replaceAll(
-                                                                              '.0',
-                                                                              '');
-                                                                    }
-                                                                    TextEditingController
-                                                                        wordSpaceController =
-                                                                        TextEditingController()
-                                                                          ..text =
-                                                                              '${double.parse(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value ?? '0')}';
-                                                                    if (wordSpaceController
-                                                                        .text
-                                                                        .endsWith(
-                                                                            '.0')) {
-                                                                      wordSpaceController.text = wordSpaceController
-                                                                          .text
-                                                                          .replaceAll(
-                                                                              '.0',
-                                                                              '');
-                                                                    }
-                                                                    TextEditingController
-                                                                        lineSpaceController =
-                                                                        TextEditingController()
-                                                                          ..text =
-                                                                              '${double.parse(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value ?? '0')}';
-                                                                    if (lineSpaceController
-                                                                        .text
-                                                                        .endsWith(
-                                                                            '.0')) {
-                                                                      lineSpaceController.text = lineSpaceController
-                                                                          .text
-                                                                          .replaceAll(
-                                                                              '.0',
-                                                                              '');
-                                                                    }
-                                                                    int crossAxisCount =
-                                                                        width < (width / vDividerPosition) / 1.75
-                                                                            ? 2
-                                                                            : 4;
-                                                                    var iconWidth =
-                                                                        width /
-                                                                            crossAxisCount /
-                                                                            1.05;
-                                                                    var iconHeight =
-                                                                        // 50.0;
-                                                                        width < (width / vDividerPosition) / 2.2
-                                                                            ? iconWidth
-                                                                            : width < (width / vDividerPosition) / 1.75
-                                                                                ? iconWidth / 1.3
-                                                                                : iconWidth;
-                                                                    var fCrossAxisCount = width <
-                                                                            (sWidth) /
-                                                                                3
-                                                                        ? 1
-                                                                        : width <
-                                                                                (sWidth) / 1.7
-                                                                            ? 2
-                                                                            : 3;
-                                                                    var fButtonWidth =
-                                                                        width /
-                                                                            fCrossAxisCount /
-                                                                            1.05;
-                                                                    var fButtonHeight =
-                                                                        fButtonWidth *
-                                                                            0.5;
-                                                                    return PageView(
-                                                                      controller:
-                                                                          textStyleTabControler,
-                                                                      scrollDirection:
-                                                                          Axis.vertical,
-                                                                      onPageChanged:
-                                                                          (value) {
-                                                                        print(
-                                                                            value);
-                                                                      },
-                                                                      children: [
-                                                                        //FONTS
-                                                                        Stack(
-                                                                          children: [
-                                                                            Positioned(
-                                                                              top: 0,
-                                                                              height: sHeight * (hDividerPosition - appbarHeight),
-                                                                              width: width - 10,
-                                                                              child: GridView.builder(
-                                                                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: fCrossAxisCount, childAspectRatio: 2),
-                                                                                itemCount: fonts.length,
-                                                                                itemBuilder: (context, index) {
-                                                                                  return buildElevatedLayerButton(
-                                                                                    buttonHeight: fButtonHeight,
-                                                                                    buttonWidth: fButtonWidth,
-                                                                                    toggleOnTap: true,
-                                                                                    isTapped: item.textEditorController.getSelectionStyle().attributes[Attribute.font.key]?.value == fonts[index],
-                                                                                    animationDuration: const Duration(milliseconds: 100),
-                                                                                    animationCurve: Curves.ease,
-                                                                                    onClick: () {
-                                                                                      item.textEditorController.formatSelection(Attribute.fromKeyValue(
-                                                                                        Attribute.font.key,
-                                                                                        fonts[index] == 'Clear' ? null : fonts[index],
-                                                                                      ));
-                                                                                      setState(() {});
-                                                                                    },
-                                                                                    baseDecoration: BoxDecoration(
-                                                                                      color: Colors.green,
-                                                                                      border: Border.all(),
-                                                                                    ),
-                                                                                    topDecoration: BoxDecoration(
-                                                                                      color: Colors.white,
-                                                                                      border: Border.all(),
-                                                                                    ),
-                                                                                    topLayerChild: Text(
-                                                                                      fonts[index],
-                                                                                      style: TextStyle(fontFamily: fonts[index], fontSize: fButtonWidth / 7),
-                                                                                      maxLines: 1,
-                                                                                    ),
-                                                                                    borderRadius: BorderRadius.circular(8),
-                                                                                  );
-                                                                                },
-                                                                              ),
-                                                                            ),
-                                                                            // const Text(
-                                                                            //   'Font Family',
-                                                                            //   style: TextStyle(
-                                                                            //     fontSize: 15,
-                                                                            //   ),
-                                                                            //   textAlign: TextAlign.left,
-                                                                            //   textDirection: TextDirection.ltr,
-                                                                            // ),
-                                                                          ],
-                                                                        ),
-                                                                        //FORMATTING ALL THAT PAGE
-                                                                        SingleChildScrollView(
-                                                                          child:
-                                                                              SizedBox(
-                                                                            width:
-                                                                                width,
-                                                                            height: width < (width / vDividerPosition) / 2.2
-                                                                                ? iconWidth * 7
-                                                                                : width < (width / vDividerPosition) / 1.75
-                                                                                    ? (iconWidth / 1.3) * 7
-                                                                                    : iconWidth * 5,
-                                                                            child:
-                                                                                Stack(
-                                                                              children: [
-                                                                                // BOLD ITALIC UNDERLINE STRIKETHRU
-                                                                                Positioned(
-                                                                                  left: 0,
-                                                                                  top: 0,
-                                                                                  width: width - 10,
-                                                                                  height: iconHeight * 3,
-                                                                                  child: GridView.builder(
-                                                                                    physics: const NeverScrollableScrollPhysics(),
-                                                                                    itemCount: 4,
-                                                                                    padding: const EdgeInsets.all(0),
-                                                                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                        crossAxisCount: crossAxisCount,
-                                                                                        crossAxisSpacing: 0,
-                                                                                        mainAxisSpacing: 0,
-                                                                                        // mainAxisExtent: width/3
-                                                                                        childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                            ? 1
-                                                                                            : width < (width / vDividerPosition) / 1.75
-                                                                                                ? 1.3
-                                                                                                : 1),
-                                                                                    itemBuilder: (BuildContext context, int index) {
-                                                                                      switch (index) {
-                                                                                        case 0:
-                                                                                          // BOLD
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.bold),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.bold.key);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.bold, null) : Attribute.bold,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.bold,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 1:
-                                                                                          //ITALIC
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.italic),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.italic.key);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.italic, null) : Attribute.italic,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.italic,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 2:
-                                                                                          //UNDERLINE
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.underline),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.underline.key);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.underline, null) : Attribute.underline,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.underline,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 3:
-                                                                                          //STRIKETHRU
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.strikeThrough),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              final currentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.strikeThrough.key);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.strikeThrough, null) : Attribute.strikeThrough,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.strikethrough,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        default:
-                                                                                          return Container();
-                                                                                      }
-                                                                                    },
-                                                                                  ),
-                                                                                ),
-                                                                                // SUPER, SUBS, LTR, RTL
-                                                                                Positioned(
-                                                                                  top: width < (width / vDividerPosition) / 2.2
-                                                                                      ? iconWidth * 2.2
-                                                                                      : width < (width / vDividerPosition) / 1.75
-                                                                                          ? (iconWidth / 1.3) * 2.2
-                                                                                          : iconWidth * 1.2,
-                                                                                  left: 0,
-                                                                                  width: width - 10,
-                                                                                  height: iconHeight * 2,
-                                                                                  child: GridView.builder(
-                                                                                    physics: const NeverScrollableScrollPhysics(),
-                                                                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                      crossAxisCount: crossAxisCount,
-                                                                                      crossAxisSpacing: 0,
-                                                                                      mainAxisSpacing: 0,
-                                                                                      childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                          ? 1
-                                                                                          : width < (width / vDividerPosition) / 1.75
-                                                                                              ? 1.3
-                                                                                              : 1,
-                                                                                    ),
-                                                                                    itemCount: 4,
-                                                                                    itemBuilder: (BuildContext context, int index) {
-                                                                                      switch (index) {
-                                                                                        case 0:
-                                                                                          //SUBSCRIPT
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
-                                                                                              );
-                                                                                              final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.superscript.key);
-                                                                                              if (uncurrentValue && currentValue) {
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.clone(Attribute.subscript, null),
-                                                                                                );
-                                                                                                currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                              }
-                                                                                              print('$uncurrentValue && $currentValue');
-                                                                                              if (uncurrentValue && !currentValue) {
-                                                                                                print('un');
-                                                                                                print(uncurrentValue);
-                                                                                                item.textEditorController.formatSelection(Attribute.clone(Attribute.superscript, null));
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.subscript,
-                                                                                                );
-                                                                                                setState(() {
-                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.subscript);
-                                                                                                });
-                                                                                                print('cu');
-                                                                                                print(currentValue);
-                                                                                                return;
-                                                                                              }
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.subscript, null) : Attribute.subscript,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.subscript,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 1:
-                                                                                          //SUPERSCIPT
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
-                                                                                              );
-                                                                                              final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.subscript.key);
-                                                                                              if (uncurrentValue && currentValue) {
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.clone(Attribute.superscript, null),
-                                                                                                );
-                                                                                                currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                              }
-                                                                                              print('$uncurrentValue && $currentValue');
-                                                                                              if (uncurrentValue && !currentValue) {
-                                                                                                print('un');
-                                                                                                print(uncurrentValue);
-                                                                                                item.textEditorController.formatSelection(Attribute.clone(Attribute.subscript, null));
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.superscript,
-                                                                                                );
-                                                                                                setState(() {
-                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.superscript);
-                                                                                                });
-                                                                                                print('cu');
-                                                                                                print(currentValue);
-                                                                                                return;
-                                                                                              }
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.superscript, null) : Attribute.superscript,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.superscript,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 2:
-                                                                                          //DIRECTION LTR
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: !_getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.text_direction_ltr,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 3:
-                                                                                          //DIRECTION RTL
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rtl);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.rtl, null) : Attribute.rtl,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.text_direction_rtl,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-
-                                                                                        default:
-                                                                                          return Container();
-                                                                                      }
-                                                                                    },
-                                                                                  ),
-                                                                                ),
-                                                                                // LEFT RIGHT CENTER JUSTIFY
-                                                                                Positioned(
-                                                                                  top: width < (width / vDividerPosition) / 2.2
-                                                                                      ? iconWidth * 2.2
-                                                                                          //height of the previous wdiget
-                                                                                          +
-                                                                                          iconHeight * 2.2
-                                                                                      : width < (width / vDividerPosition) / 1.75
-                                                                                          ? (iconWidth / 1.3) * 2.2
-                                                                                              //height of the previous wdiget
-                                                                                              +
-                                                                                              iconHeight * 2.2
-                                                                                          : iconWidth * 1.2
-                                                                                              //height of the previous wdiget
-                                                                                              +
-                                                                                              iconHeight * 1.2,
-                                                                                  left: 0,
-                                                                                  width: width - 10,
-                                                                                  height: iconHeight * 2,
-                                                                                  child: GridView.builder(
-                                                                                    physics: const NeverScrollableScrollPhysics(),
-                                                                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                                                                      crossAxisCount: crossAxisCount,
-                                                                                      crossAxisSpacing: 0,
-                                                                                      mainAxisSpacing: 0,
-                                                                                      childAspectRatio: width < (width / vDividerPosition) / 2.2
-                                                                                          ? 1
-                                                                                          : width < (width / vDividerPosition) / 1.75
-                                                                                              ? 1.3
-                                                                                              : 1,
-                                                                                    ),
-                                                                                    itemCount: 4,
-                                                                                    itemBuilder: (BuildContext context, int index) {
-                                                                                      switch (index) {
-                                                                                        case 0:
-                                                                                          //LEFT ALIGN
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.leftAlignment, null) : Attribute.leftAlignment,
-                                                                                              );
-                                                                                              final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.rightAlignment.key);
-                                                                                              if (uncurrentValue && currentValue) {
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.clone(Attribute.leftAlignment, null),
-                                                                                                );
-                                                                                                currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
-                                                                                              }
-                                                                                              print('$uncurrentValue && $currentValue');
-                                                                                              if (uncurrentValue && !currentValue) {
-                                                                                                print('un');
-                                                                                                print(uncurrentValue);
-                                                                                                item.textEditorController.formatSelection(Attribute.clone(Attribute.rightAlignment, null));
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.leftAlignment,
-                                                                                                );
-                                                                                                setState(() {
-                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.leftAlignment);
-                                                                                                });
-                                                                                                print('cu');
-                                                                                                print(currentValue);
-                                                                                                return;
-                                                                                              }
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.leftAlignment, null) : Attribute.leftAlignment,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.align_left,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 1:
-                                                                                          //RIGHT ALIGN
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.rightAlignment, null) : Attribute.rightAlignment,
-                                                                                              );
-                                                                                              final uncurrentValue = item.textEditorController.getSelectionStyle().attributes.containsKey(Attribute.leftAlignment.key);
-                                                                                              if (uncurrentValue && currentValue) {
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.clone(Attribute.rightAlignment, null),
-                                                                                                );
-                                                                                                currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
-                                                                                              }
-                                                                                              print('$uncurrentValue && $currentValue');
-                                                                                              if (uncurrentValue && !currentValue) {
-                                                                                                print('un');
-                                                                                                print(uncurrentValue);
-                                                                                                item.textEditorController.formatSelection(Attribute.clone(Attribute.leftAlignment, null));
-                                                                                                item.textEditorController.formatSelection(
-                                                                                                  Attribute.rightAlignment,
-                                                                                                );
-                                                                                                setState(() {
-                                                                                                  currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.rightAlignment);
-                                                                                                });
-                                                                                                print('cu');
-                                                                                                print(currentValue);
-                                                                                                return;
-                                                                                              }
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.rightAlignment, null) : Attribute.rightAlignment,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.align_right,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 2:
-                                                                                          //CENTER ALIGN
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.centerAlignment),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.centerAlignment);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.centerAlignment, null) : Attribute.centerAlignment,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.align_center,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-                                                                                        case 3:
-                                                                                          //JUSTIFY ALIGN
-                                                                                          return buildElevatedLayerButton(
-                                                                                            buttonHeight: iconHeight,
-                                                                                            buttonWidth: iconWidth,
-                                                                                            toggleOnTap: true,
-                                                                                            isTapped: _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.justifyAlignment),
-                                                                                            animationDuration: const Duration(milliseconds: 100),
-                                                                                            animationCurve: Curves.ease,
-                                                                                            onClick: () {
-                                                                                              var currentValue = _getIsToggled(item.textEditorController.getSelectionStyle().attributes, Attribute.justifyAlignment);
-                                                                                              item.textEditorController.formatSelection(
-                                                                                                currentValue ? Attribute.clone(Attribute.justifyAlignment, null) : Attribute.justifyAlignment,
-                                                                                              );
-                                                                                            },
-                                                                                            baseDecoration: BoxDecoration(
-                                                                                              color: Colors.green,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topDecoration: BoxDecoration(
-                                                                                              color: Colors.white,
-                                                                                              border: Border.all(),
-                                                                                            ),
-                                                                                            topLayerChild: const Icon(
-                                                                                              TablerIcons.align_justified,
-                                                                                              color: Colors.black,
-                                                                                              size: 20,
-                                                                                            ),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                          );
-
-                                                                                        default:
-                                                                                          return Container();
-                                                                                      }
-                                                                                    },
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        //Font Size, Word Spacing, Letter Spacing, Line Spacing
-                                                                        SingleChildScrollView(
-                                                                          child:
-                                                                              //SIZE SPACE PARENT
-                                                                              Container(
-                                                                            padding:
-                                                                                const EdgeInsets.only(left: 5),
-                                                                            width:
-                                                                                width,
-                                                                            height:
-                                                                                70 * 5,
-                                                                            child:
-                                                                                Column(
-                                                                              children: [
-                                                                                //Font Size TEXT FIELD PARENT
-                                                                                ClipRRect(
-                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                  child: Container(
-                                                                                    decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                    height: 70,
-                                                                                    width: width,
-                                                                                    child: Row(
-                                                                                      children: [
-                                                                                        //Icon title slider field
-                                                                                        Expanded(
-                                                                                          flex: (1600 * vDividerPosition).ceil(),
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              //Row font and title
-                                                                                              GestureDetector(
-                                                                                                onTap: () {
-                                                                                                },
-                                                                                                child: Padding(
-                                                                                                  padding: const EdgeInsets.only(top: 5, left: 5),
-                                                                                                  child: Row(
-                                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                    children: [
-                                                                                                      const Expanded(
-                                                                                                          flex: 100,
-                                                                                                          child: Icon(
-                                                                                                            TablerIcons.text_size,
-                                                                                                            size: 18,
-                                                                                                          )),
-                                                                                                      vDividerPosition > 0.45
-                                                                                                          ? Expanded(
-                                                                                                              flex: 700,
-                                                                                                              child: Container(
-                                                                                                                height: 18,
-                                                                                                                alignment: Alignment.bottomLeft,
-                                                                                                                child: const Text(
-                                                                                                                  '  Font Size',
-                                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                ),
-                                                                                                              ))
-                                                                                                          : Container(),
-                                                                                                    ],
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              //TextField
-                                                                                              TextField(
-                                                                                                onTapOutside: (event) {
-                                                                                                  // fontSizeFocus.unfocus();
-                                                                                                },
-                                                                                                onSubmitted: (value) {
-                                                                                                  item.textEditorController.formatSelection(
-                                                                                                    Attribute.clone(Attribute.size, value.toString()),
-                                                                                                  );
-                                                                                                },
-                                                                                                controller: fontSizeController,
-                                                                                                inputFormatters: [
-                                                                                                  NumericInputFormatter(maxValue: 100),
-                                                                                                ],cursorColor: defaultPalette.black,
-                                                                                                // selectionControls: MaterialTextSelectionControls(),
-                                                                                                textAlign: TextAlign.right,
-                                                                                                scrollPadding: const EdgeInsets.all(0),
-                                                                                                textAlignVertical: TextAlignVertical.top,
-                                                                                                decoration: InputDecoration(
-                                                                                                  contentPadding: const EdgeInsets.all(0),
-
-                                                                                                  // filled: true,
-                                                                                                  // fillColor: defaultPalette.primary,
-                                                                                                  enabledBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                  focusedBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                ),
-                                                                                                keyboardType: TextInputType.number,
-                                                                                              ),
-
-                                                                                              //Balloon Slider
-                                                                                              Positioned(
-                                                                                                bottom: 0,
-                                                                                                width: width * 0.6,
-                                                                                                child: BalloonSlider(
-                                                                                                    trackHeight: 15,
-                                                                                                    thumbRadius: 7.5,
-                                                                                                    showRope: true,
-                                                                                                    color: defaultPalette.tertiary,
-                                                                                                    ropeLength: 300 / 8,
-                                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[Attribute.size.key]?.value) ?? 20.toString()) / 100,
-                                                                                                    onChanged: (val) {
-                                                                                                      setState(() {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          Attribute.clone(Attribute.size, (val * 100).toStringAsFixed(0)),
-                                                                                                        );
-                                                                                                      });
-                                                                                                    }),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                        //+ -
-                                                                                        Expanded(
-                                                                                          flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                          child: Stack(
-                                                                                            // mainAxisAlignment: MainAxisAlignment.start,
-                                                                                            children: [
-                                                                                              Positioned(
-                                                                                                top: -4,
-                                                                                                right: 4,
-                                                                                                height: 35,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  // isTapped: false,
-                                                                                                  // toggleOnTap: true,
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = int.parse(fontSizeController.text) + 1;
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.clone(Attribute.size, val.toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.add,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              Positioned(
-                                                                                                bottom: 5,
-                                                                                                right: 4,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  // isTapped: false,
-                                                                                                  // toggleOnTap: true,
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = (int.parse(fontSizeController.text) - 1).clamp(0, 100);
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        Attribute.clone(Attribute.size, val.toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.minus,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        )
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                //
-                                                                                //
-                                                                                const SizedBox(
-                                                                                  height: 20,
-                                                                                ),
-                                                                                //LetterSpacing Parentt
-                                                                                ClipRRect(
-                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                  child: Container(
-                                                                                    decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                    height: 70,
-                                                                                    width: width,
-                                                                                    child: Row(
-                                                                                      children: [
-                                                                                        //LetterSpacing
-                                                                                        //Icon title slider field
-                                                                                        Expanded(
-                                                                                          flex: (1600 * vDividerPosition).ceil(),
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              //LetterSpacing
-                                                                                              //Row font and title
-                                                                                              GestureDetector(
-                                                                                                onTap: () {
-                                                                                                },
-                                                                                                //LetterSpacing
-                                                                                                //Row font and title
-                                                                                                child: Padding(
-                                                                                                  padding: const EdgeInsets.only(top: 5, left: 5),
-                                                                                                  //LetterSpacing
-                                                                                                  //Row font and title
-                                                                                                  child: Row(
-                                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                    children: [
-                                                                                                      //LetterSpacing
-                                                                                                      //icon
-                                                                                                      const Expanded(
-                                                                                                          flex: 100,
-                                                                                                          child: Icon(
-                                                                                                            TablerIcons.letter_spacing,
-                                                                                                            size: 18,
-                                                                                                          )),
-                                                                                                      //LetterSpacing
-                                                                                                      //title
-                                                                                                      vDividerPosition > 0.45
-                                                                                                          ? Expanded(
-                                                                                                              flex: 700,
-                                                                                                              child: Container(
-                                                                                                                height: 18,
-                                                                                                                alignment: Alignment.bottomLeft,
-                                                                                                                child: const Text(
-                                                                                                                  '  Letter Space',
-                                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                ),
-                                                                                                              ))
-                                                                                                          : Container(),
-                                                                                                    ],
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              //LetterSpacing
-                                                                                              //TextField
-                                                                                              TextField(
-                                                                                                onTapOutside: (event) {
-                                                                                                  // fontSizeFocus.unfocus();
-                                                                                                },
-                                                                                                onSubmitted: (value) {
-                                                                                                  item.textEditorController.formatSelection(
-                                                                                                    LetterSpacingAttribute((value).toString()),
-                                                                                                  );
-                                                                                                },
-                                                                                                controller: letterSpaceController,
-                                                                                                inputFormatters: [
-                                                                                                  NumericInputFormatter(maxValue: 100),
-                                                                                                ],cursorColor: defaultPalette.black,
-                                                                                                // selectionControls: MaterialTextSelectionControls(),
-                                                                                                textAlign: TextAlign.right,
-                                                                                                scrollPadding: const EdgeInsets.all(0),
-                                                                                                textAlignVertical: TextAlignVertical.top,
-                                                                                                decoration: InputDecoration(
-                                                                                                  contentPadding: const EdgeInsets.all(0),
-
-                                                                                                  // filled: true,
-                                                                                                  // fillColor: defaultPalette.primary,
-                                                                                                  enabledBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                  focusedBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                ),
-                                                                                                keyboardType: TextInputType.number,
-                                                                                              ),
-                                                                                              //LetterSpacing
-                                                                                              //Balloon Slider
-                                                                                              Positioned(
-                                                                                                bottom: 0,
-                                                                                                width: width * 0.6,
-                                                                                                child: BalloonSlider(
-                                                                                                    trackHeight: 15,
-                                                                                                    thumbRadius: 7.5,
-                                                                                                    showRope: true,
-                                                                                                    color: defaultPalette.tertiary,
-                                                                                                    ropeLength: 300 / 8,
-                                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
-                                                                                                    onChanged: (val) {
-                                                                                                      setState(() {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          LetterSpacingAttribute((val * 100).ceil().toString()),
-                                                                                                        );
-                                                                                                      });
-                                                                                                    }),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                        //LetterSpacing
-                                                                                        //+ -
-                                                                                        Expanded(
-                                                                                          flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              Positioned(
-                                                                                                top: -4,
-                                                                                                right: 4,
-                                                                                                height: 35,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = int.parse(letterSpaceController.text) + 1;
-
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        LetterSpacingAttribute((val).toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.add,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              Positioned(
-                                                                                                bottom: 5,
-                                                                                                right: 4,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  // isTapped: false,
-                                                                                                  // toggleOnTap: true,
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = (int.parse(letterSpaceController.text) - 1).clamp(0, 100);
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        LetterSpacingAttribute((val).toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.minus,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        )
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-
-                                                                                const SizedBox(
-                                                                                  height: 20,
-                                                                                ),
-                                                                                //WordSpacing
-                                                                                ClipRRect(
-                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                  child: Container(
-                                                                                    decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                    height: 70,
-                                                                                    width: width,
-                                                                                    child: Row(
-                                                                                      children: [
-                                                                                        //WordSpacing
-                                                                                        //Icon title slider field
-                                                                                        Expanded(
-                                                                                          flex: (1600 * vDividerPosition).ceil(),
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              //WordSpacing
-                                                                                              //Row font and title
-                                                                                              GestureDetector(
-                                                                                                onTap: () {
-                                                                                                },
-                                                                                                //WordSpacing
-                                                                                                //Row font and title
-                                                                                                child: Padding(
-                                                                                                  padding: const EdgeInsets.only(top: 5, left: 5),
-                                                                                                  //WordSpacing
-                                                                                                  //Row font and title
-                                                                                                  child: Row(
-                                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                    children: [
-                                                                                                      //WordSpacing
-                                                                                                      //icon
-                                                                                                      const Expanded(
-                                                                                                          flex: 100,
-                                                                                                          child: Icon(
-                                                                                                            TablerIcons.spacing_horizontal,
-                                                                                                            size: 18,
-                                                                                                          )),
-                                                                                                      //WordSpacing
-                                                                                                      //title
-                                                                                                      vDividerPosition > 0.45
-                                                                                                          ? Expanded(
-                                                                                                              flex: 700,
-                                                                                                              child: Container(
-                                                                                                                height: 18,
-                                                                                                                alignment: Alignment.bottomLeft,
-                                                                                                                child: const Text(
-                                                                                                                  '  Word Space',
-                                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                ),
-                                                                                                              ))
-                                                                                                          : Container(),
-                                                                                                    ],
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              //WordSpacing
-                                                                                              //TextField
-                                                                                              TextField(
-                                                                                                onTapOutside: (event) {
-                                                                                                  // fontSizeFocus.unfocus();
-                                                                                                },
-                                                                                                onSubmitted: (value) {
-                                                                                                  item.textEditorController.formatSelection(
-                                                                                                    WordSpacingAttribute((value).toString()),
-                                                                                                  );
-                                                                                                },
-                                                                                                controller: wordSpaceController,
-                                                                                                inputFormatters: [
-                                                                                                  NumericInputFormatter(maxValue: 100),
-                                                                                                ],cursorColor: defaultPalette.black,
-                                                                                                // selectionControls: MaterialTextSelectionControls(),
-                                                                                                textAlign: TextAlign.right,
-                                                                                                scrollPadding: const EdgeInsets.all(0),
-                                                                                                textAlignVertical: TextAlignVertical.top,
-                                                                                                decoration: InputDecoration(
-                                                                                                  contentPadding: const EdgeInsets.all(0),
-
-                                                                                                  // filled: true,
-                                                                                                  // fillColor: defaultPalette.primary,
-                                                                                                  enabledBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                  focusedBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                ),
-                                                                                                keyboardType: TextInputType.number,
-                                                                                              ),
-                                                                                              //WordSpacing
-                                                                                              //Balloon Slider
-                                                                                              Positioned(
-                                                                                                bottom: 0,
-                                                                                                width: width * 0.6,
-                                                                                                child: BalloonSlider(
-                                                                                                    trackHeight: 15,
-                                                                                                    thumbRadius: 7.5,
-                                                                                                    showRope: true,
-                                                                                                    color: defaultPalette.tertiary,
-                                                                                                    ropeLength: 300 / 8,
-                                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value) ?? 0.toString()) / 100,
-                                                                                                    onChanged: (val) {
-                                                                                                      setState(() {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          WordSpacingAttribute((val * 100).ceil().toString()),
-                                                                                                        );
-                                                                                                      });
-                                                                                                    }),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                        //WordSpacing
-                                                                                        //+ -
-                                                                                        Expanded(
-                                                                                          flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              Positioned(
-                                                                                                top: -4,
-                                                                                                right: 4,
-                                                                                                height: 35,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = int.parse(wordSpaceController.text) + 1;
-
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        WordSpacingAttribute((val).toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.add,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              Positioned(
-                                                                                                bottom: 5,
-                                                                                                right: 4,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  // isTapped: false,
-                                                                                                  // toggleOnTap: true,
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = (int.parse(wordSpaceController.text) - 1).clamp(0, 100);
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        WordSpacingAttribute((val).toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.minus,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        )
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                //
-                                                                                const SizedBox(
-                                                                                  height: 20,
-                                                                                ),
-                                                                                //LineHeight
-                                                                                ClipRRect(
-                                                                                  borderRadius: BorderRadius.circular(10),
-                                                                                  child: Container(
-                                                                                    decoration: BoxDecoration(color: defaultPalette.primary, border: Border.all(width: 2, strokeAlign: BorderSide.strokeAlignInside), borderRadius: BorderRadius.circular(8)),
-                                                                                    height: 70,
-                                                                                    width: width,
-                                                                                    child: Row(
-                                                                                      children: [
-                                                                                        //LineHeight
-                                                                                        //Icon title slider field
-                                                                                        Expanded(
-                                                                                          flex: (1600 * vDividerPosition).ceil(),
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              //LineHeight
-                                                                                              //Row font and title
-                                                                                              GestureDetector(
-                                                                                                onTap: () {
-                                                                                                },
-                                                                                                //LineHeight
-                                                                                                //Row font and title
-                                                                                                child: Padding(
-                                                                                                  padding: const EdgeInsets.only(top: 5, left: 5),
-                                                                                                  //LineHeight
-                                                                                                  //Row font and title
-                                                                                                  child: Row(
-                                                                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                                    children: [
-                                                                                                      //LineHeight
-                                                                                                      //icon
-                                                                                                      const Expanded(
-                                                                                                          flex: 100,
-                                                                                                          child: Icon(
-                                                                                                            TablerIcons.spacing_vertical,
-                                                                                                            size: 18,
-                                                                                                          )),
-                                                                                                      //LineHeight
-                                                                                                      //title
-                                                                                                      vDividerPosition > 0.45
-                                                                                                          ? Expanded(
-                                                                                                              flex: 700,
-                                                                                                              child: Container(
-                                                                                                                height: 18,
-                                                                                                                alignment: Alignment.bottomLeft,
-                                                                                                                child: const Text(
-                                                                                                                  '  Line Space',
-                                                                                                                  style: TextStyle(fontSize: 12, textBaseline: TextBaseline.ideographic),
-                                                                                                                ),
-                                                                                                              ))
-                                                                                                          : Container(),
-                                                                                                    ],
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              //LineHeight
-                                                                                              //TextField
-                                                                                              TextField(
-                                                                                                onTapOutside: (event) {
-                                                                                                  // fontSizeFocus.unfocus();
-                                                                                                },
-                                                                                                onSubmitted: (value) {
-                                                                                                  item.textEditorController.formatSelection(
-                                                                                                    LineHeightAttribute((value).toString()),
-                                                                                                  );
-                                                                                                },
-                                                                                                controller: lineSpaceController,
-                                                                                                inputFormatters: [
-                                                                                                  NumericInputFormatter(maxValue: 100),
-                                                                                                ],cursorColor: defaultPalette.black,
-                                                                                                // selectionControls: MaterialTextSelectionControls(),
-                                                                                                textAlign: TextAlign.right,
-                                                                                                scrollPadding: const EdgeInsets.all(0),
-                                                                                                textAlignVertical: TextAlignVertical.top,
-                                                                                                decoration: InputDecoration(
-                                                                                                  contentPadding: const EdgeInsets.all(0),
-
-                                                                                                  // filled: true,
-                                                                                                  // fillColor: defaultPalette.primary,
-                                                                                                  enabledBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                  focusedBorder: OutlineInputBorder(
-                                                                                                    borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                    borderRadius: BorderRadius.circular(2.0), // Same as border
-                                                                                                  ),
-                                                                                                ),
-                                                                                                keyboardType: TextInputType.number,
-                                                                                              ),
-                                                                                              //LineHeight
-                                                                                              //Balloon Slider
-                                                                                              Positioned(
-                                                                                                bottom: 0,
-                                                                                                width: width * 0.6,
-                                                                                                child: BalloonSlider(
-                                                                                                    trackHeight: 15,
-                                                                                                    thumbRadius: 7.5,
-                                                                                                    showRope: true,
-                                                                                                    color: defaultPalette.tertiary,
-                                                                                                    ropeLength: 300 / 8,
-                                                                                                    value: double.parse((item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value) ?? 0.toString()) / 100,
-                                                                                                    onChanged: (val) {
-                                                                                                      setState(() {
-                                                                                                        item.textEditorController.formatSelection(
-                                                                                                          LineHeightAttribute((val * 100).ceil().toString()),
-                                                                                                        );
-                                                                                                      });
-                                                                                                    }),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                        //LineHeight
-                                                                                        //+ -
-                                                                                        Expanded(
-                                                                                          flex: vDividerPosition > 0.45 ? (450 * vDividerPosition).ceil() : 1,
-                                                                                          child: Stack(
-                                                                                            children: [
-                                                                                              Positioned(
-                                                                                                top: -4,
-                                                                                                right: 4,
-                                                                                                height: 35,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = int.parse(lineSpaceController.text) + 1;
-
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        LineHeightAttribute((val).toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.add,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                              Positioned(
-                                                                                                bottom: 5,
-                                                                                                right: 4,
-                                                                                                child: ElevatedLayerButton(
-                                                                                                  // isTapped: false,
-                                                                                                  // toggleOnTap: true,
-                                                                                                  onClick: () {
-                                                                                                    setState(() {
-                                                                                                      var val = (int.parse(lineSpaceController.text) - 1).clamp(0, 100);
-                                                                                                      item.textEditorController.formatSelection(
-                                                                                                        LineHeightAttribute((val).toString()),
-                                                                                                      );
-                                                                                                    });
-                                                                                                  },
-                                                                                                  buttonHeight: 32,
-                                                                                                  buttonWidth: 65 * vDividerPosition,
-                                                                                                  borderRadius: BorderRadius.circular(100),
-                                                                                                  animationDuration: const Duration(milliseconds: 100),
-                                                                                                  animationCurve: Curves.ease,
-                                                                                                  topDecoration: BoxDecoration(
-                                                                                                    color: Colors.white,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                  topLayerChild: const Icon(
-                                                                                                    IconsaxPlusLinear.minus,
-                                                                                                    size: 20,
-                                                                                                  ),
-                                                                                                  baseDecoration: BoxDecoration(
-                                                                                                    color: Colors.green,
-                                                                                                    border: Border.all(),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        )
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                                //
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        //Colors
-                                                                        SingleChildScrollView(
-                                                                          child:
-                                                                              Container(
-                                                                            width:
-                                                                                width,
-                                                                            height:
-                                                                                sHeight * (hDividerPosition - appbarHeight * 1.2),
-                                                                            // decoration: BoxDecoration(border: Border.all(width: 2), borderRadius: BorderRadius.circular(12)),
-                                                                            // padding: EdgeInsets.only(bottom: 10),
-                                                                            // color:
-                                                                            // Colors.amberAccent,
-                                                                            child: TabContainer(
-                                                                                controller: tabcunt,
-                                                                                tabEdge: TabEdge.top,
-                                                                                tabsStart: 0,
-                                                                                tabExtent: 30,
-                                                                                childPadding: const EdgeInsets.symmetric(vertical: 0),
-                                                                                colors: [
-                                                                                  Colors.grey.withOpacity(.4),
-                                                                                  Colors.grey.withOpacity(.4)
-                                                                                  // hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value),
-                                                                                  // hexToColor(item.textEditorController.getSelectionStyle().attributes['background']?.value),
-                                                                                ],
-                                                                                selectedTextStyle: TextStyle(
-                                                                                  color: defaultPalette.black,
-                                                                                  fontSize: 14,
-                                                                                ),
-                                                                                unselectedTextStyle: const TextStyle(
-                                                                                  color: Colors.black,
-                                                                                  fontSize: 13.0,
-                                                                                ),
-                                                                                // borderRadius: BorderRadius.circular(20),
-                                                                                // tabBorderRadius: BorderRadius.circular(20),
-                                                                                tabs: [
-                                                                                  const Text(
-                                                                                    'Font',
-                                                                                  ),
-                                                                                  const Text('Bg')
-                                                                                ],
-                                                                                children: [
-                                                                                  //FONT COLOR
-                                                                                  DefaultTabController(
-                                                                                    length: 2,
-                                                                                    child: ClipRRect(
-                                                                                      borderRadius: BorderRadius.circular(8),
-                                                                                      child: Column(
-                                                                                        children: [
-                                                                                          //FONT COLOR
-                                                                                          //HEX TEXT FIEKLD
-                                                                                          Container(
-                                                                                            height: hDividerPosition < 0.25 ? textFieldHeight * 1.5 : textFieldHeight * 1.3,
-                                                                                            margin: EdgeInsets.only(top: hDividerPosition < 0.25 ? 10 : 0),
-                                                                                            padding: const EdgeInsets.all(5),
-                                                                                            child: Stack(
-                                                                                              children: [
-                                                                                                TextFormField(
-                                                                                                  onTapOutside: (event) {},
-                                                                                                  controller: hexController,
-                                                                                                  inputFormatters: [
-                                                                                                    HexColorInputFormatter()
-                                                                                                  ],
-                                                                                                  onFieldSubmitted: (value) {
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      ColorAttribute('#${value}'),
-                                                                                                    );
-                                                                                                  },
-                                                                                                  style: TextStyle(color: defaultPalette.black),
-                                                                                                  cursorColor: defaultPalette.secondary,
-                                                                                                  textAlign: TextAlign.center,
-                                                                                                  textAlignVertical: TextAlignVertical.center,
-                                                                                                  decoration: InputDecoration(
-                                                                                                    contentPadding: const EdgeInsets.all(0),
-                                                                                                    prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                    suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                    filled: true,
-                                                                                                    fillColor: defaultPalette.primary,
-                                                                                                    border: OutlineInputBorder(
-                                                                                                      borderRadius: BorderRadius.circular(10.0),
-                                                                                                    ),
-                                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                      borderRadius: BorderRadius.circular(12.0),
-                                                                                                    ),
-                                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
-                                                                                                      borderRadius: BorderRadius.circular(10.0),
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                  keyboardType: TextInputType.number,
-                                                                                                ),
-                                                                                                if (vDividerPosition > 0.45) ...[
-                                                                                                  if (vDividerPosition > 0.48)
-                                                                                                    Positioned(
-                                                                                                      top: (textFieldHeight / 2) - 10,
-                                                                                                      left: 10,
-                                                                                                      child: GestureDetector(
-                                                                                                        child: Icon(
-                                                                                                          IconsaxPlusLinear.text,
-                                                                                                          size: 20,
-                                                                                                          color: hexToColor(hexController.text),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                ]
-                                                                                              ],
-                                                                                            ),
-                                                                                          ),
-                                                                                          //
-                                                                                          if (hDividerPosition > 0.2) ...[
-                                                                                            //FONT COLOR
-                                                                                            //PICKER ND EVERYHTING
-                                                                                            Expanded(
-                                                                                              child: TabBarView(
-                                                                                                physics: const NeverScrollableScrollPhysics(),
-                                                                                                children: [],
-                                                                                              ),
-                                                                                            ),
-                                                                                            if (hDividerPosition > 0.25)
-                                                                                              TabBar(
-                                                                                                dividerHeight: 0,
-                                                                                                indicatorSize: TabBarIndicatorSize.label,
-                                                                                                indicatorColor: defaultPalette.tertiary,
-                                                                                                labelColor: defaultPalette.tertiary,
-                                                                                                labelPadding: const EdgeInsets.all(0),
-                                                                                                tabs: [
-                                                                                                  //FONT COLOR
-                                                                                                  Tab(
-                                                                                                    height: 30,
-                                                                                                    child: Container(
-                                                                                                      padding: const EdgeInsets.all(2),
-                                                                                                      // margin: EdgeInsets.only(left: 5, right: 5),
-                                                                                                      height: 30,
-                                                                                                      width: width,
-                                                                                                      alignment: Alignment.center,
-                                                                                                      decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(8))),
-                                                                                                      child: Text(
-                                                                                                        'Picker',
-                                                                                                        style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ), //FONT COLOR
-                                                                                                  Tab(
-                                                                                                    height: 30,
-                                                                                                    child: Container(
-                                                                                                      padding: const EdgeInsets.all(2),
-                                                                                                      // margin: EdgeInsets.only(right: 5, left: 5),
-                                                                                                      alignment: Alignment.center,
-                                                                                                      height: 30,
-                                                                                                      width: width,
-                                                                                                      decoration: BoxDecoration(color: defaultPalette.primary.withOpacity(0.7), borderRadius: const BorderRadius.only(bottomRight: Radius.circular(8))),
-                                                                                                      child: Text(
-                                                                                                        'Palette',
-                                                                                                        style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                ],
-                                                                                              ),
-                                                                                          ] //
-                                                                                        ],
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                  //BG COLORRR
-                                                                                  DefaultTabController(
-                                                                                    length: 2,
-                                                                                    child: ClipRRect(
-                                                                                      borderRadius: BorderRadius.circular(8),
-                                                                                      child: Column(
-                                                                                        children: [
-                                                                                          //Background color
-                                                                                          //HEX TEXT FIEKLD
-                                                                                          Container(
-                                                                                            height: hDividerPosition < 0.25 ? textFieldHeight * 1.5 : textFieldHeight * 1.3,
-                                                                                            margin: EdgeInsets.only(top: hDividerPosition < 0.25 ? 10 : 0),
-                                                                                            padding: const EdgeInsets.all(5),
-                                                                                            child: Stack(
-                                                                                              children: [
-                                                                                                TextFormField(
-                                                                                                  onTapOutside: (event) {
-                                                                                                    // Focus.unfocus();
-                                                                                                  },
-                                                                                                  // focusNode: marginTopFocus,
-                                                                                                  controller: bghexController,
-                                                                                                  inputFormatters: [
-                                                                                                    HexColorInputFormatter()
-                                                                                                    // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                                                                    // NumericInputFormatter(maxValue: (documentPropertiesList[currentPageIndex].pageFormatController.height / 1.11 - double.parse(documentPropertiesList[currentPageIndex].marginBottomController.text))),
-                                                                                                  ],
-                                                                                                  onFieldSubmitted: (value) {
-                                                                                                    item.textEditorController.formatSelection(
-                                                                                                      BackgroundAttribute(value),
-                                                                                                    );
-                                                                                                    FocusScope.of(context).previousFocus();
-                                                                                                  },
-                                                                                                  style: TextStyle(color: defaultPalette.black),
-                                                                                                  cursorColor: defaultPalette.secondary,
-                                                                                                  textAlign: TextAlign.center,
-                                                                                                  textAlignVertical: TextAlignVertical.center,
-                                                                                                  decoration: InputDecoration(
-                                                                                                    contentPadding: const EdgeInsets.all(0),
-                                                                                                    prefixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                    suffixIconConstraints: BoxConstraints(minWidth: presuConstraintsMinW),
-                                                                                                    filled: true,
-                                                                                                    fillColor: defaultPalette.primary,
-                                                                                                    border: OutlineInputBorder(
-                                                                                                      // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                                                      borderRadius: BorderRadius.circular(10.0), // Replace with your desired radius
-                                                                                                    ),
-                                                                                                    enabledBorder: OutlineInputBorder(
-                                                                                                      borderSide: BorderSide(width: 2, color: defaultPalette.transparent),
-                                                                                                      borderRadius: BorderRadius.circular(12.0), // Same as border
-                                                                                                    ),
-                                                                                                    focusedBorder: OutlineInputBorder(
-                                                                                                      borderSide: BorderSide(width: 3, color: defaultPalette.transparent),
-                                                                                                      borderRadius: BorderRadius.circular(10.0), // Same as border
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                  keyboardType: TextInputType.number,
-                                                                                                  // onChanged: (value) => _updatePdfPreview(''),
-                                                                                                ),
-                                                                                                if (vDividerPosition > 0.45) ...[
-                                                                                                  if (vDividerPosition > 0.48)
-                                                                                                    Positioned(
-                                                                                                      top: (textFieldHeight / 2) - 14,
-                                                                                                      left: 6,
-                                                                                                      child: GestureDetector(
-                                                                                                        child: Icon(
-                                                                                                          IconsaxPlusBold.text,
-                                                                                                          size: 28,
-                                                                                                          color: hexToColor(bghexController.text),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                ]
-                                                                                              ],
-                                                                                            ),
-                                                                                          ),
-                                                                                          //
-                                                                                          if (hDividerPosition > 0.2) ...[
-                                                                                            //Background color
-                                                                                            //PICKER ND EVERYHTING
-                                                                                            Expanded(
-                                                                                              child: TabBarView(
-                                                                                                physics: const NeverScrollableScrollPhysics(),
-                                                                                                children: [],
-                                                                                              ),
-                                                                                            ),
-                                                                                            if (hDividerPosition > 0.25)
-                                                                                              TabBar(
-                                                                                                dividerHeight: 0,
-                                                                                                indicatorSize: TabBarIndicatorSize.label,
-                                                                                                indicatorColor: defaultPalette.tertiary,
-                                                                                                labelColor: defaultPalette.tertiary,
-                                                                                                labelPadding: const EdgeInsets.all(0),
-                                                                                                tabs: [
-                                                                                                  //FONT COLOR
-                                                                                                  Tab(
-                                                                                                    height: 30,
-                                                                                                    child: Container(
-                                                                                                      padding: const EdgeInsets.all(2),
-                                                                                                      // margin: EdgeInsets.only(left: 5, right: 5),
-                                                                                                      height: 30,
-                                                                                                      width: width,
-                                                                                                      alignment: Alignment.center,
-                                                                                                      decoration: BoxDecoration(
-                                                                                                        color: defaultPalette.primary.withOpacity(0.7),
-                                                                                                      ),
-                                                                                                      child: Text(
-                                                                                                        'Picker',
-                                                                                                        style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ), //FONT COLOR
-                                                                                                  Tab(
-                                                                                                    height: 30,
-                                                                                                    child: Container(
-                                                                                                      padding: const EdgeInsets.all(2),
-                                                                                                      alignment: Alignment.center,
-                                                                                                      height: 30,
-                                                                                                      width: width,
-                                                                                                      decoration: BoxDecoration(
-                                                                                                        color: defaultPalette.primary.withOpacity(0.7),
-                                                                                                      ),
-                                                                                                      child: Text(
-                                                                                                        'Palette',
-                                                                                                        style: GoogleFonts.lexend(fontSize: 12),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                ],
-                                                                                              ),
-                                                                                          ] //
-                                                                                        ],
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                ]),
-                                                                            //
-                                                                          ),
-                                                                        )
-                                                                      ],
-                                                                    );
-                                                                  },
-                                                                ),
-                                                              ),
-                                                            ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              //Text SIDEBAR
-                                              AnimatedPositioned(
-                                                  left:  0,
-                                                  top: 0,
-                                                  duration: Durations.long4,
-                                                  child: PlayableToolbarWidget(
-                                                      itemsGutter: 0,
-                                                      toolbarBackgroundRadius:
-                                                          0,
-                                                      toolbarWidth: 44,
-                                                      toolbarShadow:
-                                                          defaultPalette.black
-                                                              .withOpacity(
-                                                                  0.05),
-                                                      toolbarHorizontalPadding:
-                                                          0,
-                                                      toolbarHeight: sHeight *
-                                                          hDividerPosition,
-                                                      itemsOffset: 0,
-                                                      toolbarItems: [
-                                                        ListItemModel(
-                                                          isTapped: isTapped[0],
-                                                          onTap: () {
-                                                            var item = _sheetItemIterator(
-                                                                    panelIndex.id,
-                                                                    spreadSheetList[
-                                                                        currentPageIndex])
-                                                                as SheetText;
-                                                            item.focusNode
-                                                                .unfocus();
-                                                            setState(() {
-                                                              
-                                                            });
-                                                            for (var i = 0;
-                                                                i <
-                                                                    isTapped
-                                                                        .length;
-                                                                i++) {
-                                                              setState(() {
-                                                                isTapped[i] =
-                                                                    false;
-                                                              });
-                                                            }
-                                                            setState(() {
-                                                              isTapped[1] =
-                                                                  true;
-                                                            });
-                                                          },
-                                                          title: 'Duh',
-                                                          color: defaultPalette
-                                                              .tertiary,
-                                                          icon: TablerIcons.x,
-                                                        ),
-                                                        ListItemModel(
-                                                          isTapped: isTapped[1],
-                                                          onTap: () {
-                                                            for (var i = 0;
-                                                                i <
-                                                                    isTapped
-                                                                        .length;
-                                                                i++) {
-                                                              setState(() {
-                                                                isTapped[i] =
-                                                                    false;
-                                                              });
-                                                            }
-                                                            setState(() {
-                                                              isTapped[1] =
-                                                                  true;
-                                                              textStyleTabControler
-                                                                  .animateToPage(
-                                                                      0,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                            });
-                                                          },
-                                                          title: 'Font',
-                                                          color: defaultPalette
-                                                              .primary,
-                                                          icon: TablerIcons
-                                                              .typography,
-                                                        ),
-                                                        ListItemModel(
-                                                          isTapped: isTapped[2],
-                                                          onTap: () {
-                                                            for (var i = 0;
-                                                                i <
-                                                                    isTapped
-                                                                        .length;
-                                                                i++) {
-                                                              setState(() {
-                                                                isTapped[i] =
-                                                                    false;
-                                                              });
-                                                            }
-                                                            setState(() {
-                                                              isTapped[2] =
-                                                                  true;
-                                                              textStyleTabControler
-                                                                  .animateToPage(
-                                                                      1,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                            });
-                                                          },
-                                                          title: 'Format',
-                                                          color: defaultPalette
-                                                              .primary,
-                                                          icon:
-                                                              TablerIcons.bold,
-                                                        ),
-                                                        //sizespace
-                                                        ListItemModel(
-                                                          isTapped: isTapped[3],
-                                                          onTap: () {
-                                                            for (var i = 0;
-                                                                i <
-                                                                    isTapped
-                                                                        .length;
-                                                                i++) {
-                                                              setState(() {
-                                                                isTapped[i] =
-                                                                    false;
-                                                              });
-                                                            }
-                                                            setState(() {
-                                                              isTapped[3] =
-                                                                  true;
-                                                              textStyleTabControler
-                                                                  .animateToPage(
-                                                                      2,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                            });
-                                                          },
-                                                          title: 'Size',
-                                                          color: defaultPalette
-                                                              .primary,
-                                                          icon: TablerIcons
-                                                              .text_size,
-                                                        ),
-                                                        //paint
-                                                        ListItemModel(
-                                                          isTapped: isTapped[4],
-                                                          onTap: () {
-                                                            for (var i = 0;
-                                                                i <
-                                                                    isTapped
-                                                                        .length;
-                                                                i++) {
-                                                              setState(() {
-                                                                isTapped[i] =
-                                                                    false;
-                                                              });
-                                                            }
-                                                            setState(() {
-                                                              isTapped[4] =
-                                                                  true;
-                                                              textStyleTabControler
-                                                                  .animateToPage(
-                                                                      3,
-                                                                      duration:
-                                                                          Durations
-                                                                              .medium1,
-                                                                      curve: Curves
-                                                                          .easeIn);
-                                                            });
-                                                          },
-                                                          title: 'Color',
-                                                          color: defaultPalette
-                                                              .primary,
-                                                          icon:
-                                                              TablerIcons.paint,
-                                                        ),
-                                                      ]))
-                                            ],
-                                          ),
-                                        )),
-
-                                    ////////////////////RIGHT SCREEN PDF PREVIEW
-
-                                    Expanded(
-                                      flex: ((1 - vDividerPosition) * 10000)
-                                          .toInt(),
-                                      child: AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        // color: Colors.green,
-                                        child: const Center(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              //emulating the pdf preview
-                              Positioned(
-                                top: sHeight * appbarHeight / 6,
-                                left: (sWidth * vDividerPosition),
-                                // right: 0,
-                                // width: 2480 ,
-                                // height: sHeight * hDividerPosition+126,
-                                child: Transform.scale(
-                                  scale: (1 - vDividerPosition) * 0.48,
-                                  // scale: 1,
-                                  alignment: Alignment.topLeft,
-                                  child: Container(
-                                    // width: 2480,
-                                    // height: (sWidth-64)*sqrt2 ,
-                                    height: (sHeight) *
-                                        hDividerPosition /
-                                        ((1 - vDividerPosition) * 0.48),
-                                    padding: const EdgeInsets.only(
-                                        bottom: 25, top: 25, right: 40),
-                                    decoration: BoxDecoration(boxShadow: [
-                                      BoxShadow(
-                                          blurRadius: 500,
-                                          offset: const Offset(5, 5),
-                                          color: defaultPalette.black
-                                              .withOpacity(0.06))
-                                    ]),
-                                    alignment: Alignment.center,
-                                    child: _generateWid(sWidth, sHeight),
+                                  child: Opacity(
+                                    opacity: 0.35,
+                                    child: LineChart(LineChartData(
+                                        lineBarsData: [LineChartBarData()],
+                                        titlesData:
+                                            const FlTitlesData(show: false),
+                                        gridData: FlGridData(
+                                            getDrawingVerticalLine: (value) => FlLine(
+                                                color: defaultPalette.primary
+                                                    .withOpacity(0.8),
+                                                dashArray: [5, 5],
+                                                strokeWidth: 1),
+                                            getDrawingHorizontalLine: (value) =>
+                                                FlLine(
+                                                    color: defaultPalette.primary
+                                                        .withOpacity(0.8),
+                                                    dashArray: [5, 5],
+                                                    strokeWidth: 1),
+                                            show: true,
+                                            horizontalInterval: 5,
+                                            verticalInterval: 30),
+                                        borderData: FlBorderData(show: false),
+                                        minY: 0,
+                                        maxY: 50,
+                                        maxX: dateTimeNow.millisecondsSinceEpoch
+                                                    .ceilToDouble() /
+                                                500 +
+                                            250,
+                                        minX: dateTimeNow.millisecondsSinceEpoch
+                                                .ceilToDouble() /
+                                            500)),
                                   ),
                                 ),
                               ),
-                              ///////////VERTICAL GRIP
-                              Positioned(
-                                left: vDividerPosition * sWidth - 37,
-                                top: 17,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 50),
-                                  width: 32,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                      color: defaultPalette.tertiary,
-                                      borderRadius: BorderRadius.circular(8)),
-                                  child: GestureDetector(
-                                    onPanUpdate: (details) {
-                                      double newPosition = (vDividerPosition +
-                                              details.delta.dx /
-                                                  context.size!.width)
-                                          .clamp(0.4, 0.85);
-                                      _updatevDividerPosition(newPosition);
-                                    },
-                                    child: Icon(
-                                      TablerIcons.grip_vertical,
-                                      color: defaultPalette.black,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                        //////////Spread SHEET Layout
-                        Expanded(
-                          flex:
-                              (((1 - appbarHeight) - hDividerPosition) * 10000)
-                                  .round(),
-                          child: Column(
-                            children: [
-                              ////////TOP TOOL BAR
-                              Container(
-                                height: sHeight / 20,
-                                width: sWidth,
-                                color: defaultPalette.white,
-                                ///////TOP TOOL BAR
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    ///Resize handle
-                                    GestureDetector(
-                                        onPanUpdate: (details) {
-                                          double newPosition =
-                                              (hDividerPosition +
-                                                      details.delta.dy /
-                                                          context.size!.height)
-                                                  .clamp(0.2, 0.85);
-                                          _updatehDividerPosition(newPosition);
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              color: defaultPalette.black
-                                                  .withOpacity(0.9)),
-                                          child: Icon(
-                                            TablerIcons.grip_horizontal,
-                                            color: defaultPalette.white,
-                                            size: 20,
-                                          ),
-                                        )),
-
-                                    ///clearLayout Button
-                                    IconButton(
-                                        onPressed: () {
-                                          FocusScope.of(context).unfocus();
-                                          
-                                          _confirmDeleteLayout(
-                                              deletePage: false);
-                                        },
-                                        icon: Transform.rotate(
-                                          angle: math.pi / 4,
-                                          child: Icon(
-                                            IconsaxPlusLinear.add,
-
-                                            // size: 40,
-                                            color: defaultPalette.black,
-                                          ),
-                                        )),
-                                    //ADD TEXT
-                                    IconButton(
-                                        onPressed: () {
-                                          print(
-                                              '________addText pressed LD_________');
-                                        },
-                                        icon: Icon(
-                                          CupertinoIcons.plus_bubble,
-                                          // size: 40,
-                                          color: defaultPalette.black,
-                                        )),
-                                    //Add Image
-                                    IconButton(
-                                        onPressed: () async {
-                                          // pw.Page pdf = await exportDelegate
-                                          //     .exportToPdfPage('2');
-                                          // setState(() {
-                                          //   genpdf.addPage(pdf);
-                                          // });
-                                          _capturePng();
-                                        },
-                                        icon: Icon(
-                                          IconsaxPlusLinear.gallery_add,
-                                          // size: 40,
-                                          color: defaultPalette.black,
-                                        )),
-                                    //Add table
-                                    IconButton(
-                                        onPressed: () {},
-                                        icon: Icon(
-                                          CupertinoIcons.table,
-                                          // size: 40,
-                                          color: defaultPalette.black,
-                                        )),
-                                    //Duplpicate
-                                    IconButton(
-                                        onPressed: (){},
-                                        icon: Icon(
-                                          CupertinoIcons.plus_square_on_square,
-                                          // size: 40,
-                                          color: defaultPalette.black,
-                                        )),
-                                    IconButton(
-                                        onPressed: () => _removeTextField(),
-                                        icon: Icon(
-                                          Icons.delete,
-                                          // size: 40,
-                                          color: defaultPalette.black,
-                                        )),
-                                  ],
-                                ),
-                              ),
-                              ////// SPREADSHEET
-                              Expanded(
-                                flex: (8 * 10000),
+                          //
+                          //
+                          //
+                          //
+                          //
+                          //Spread SHEET Layout //Desktop WEB
+                          Positioned(
+                            left: (sWidth * wH1DividerPosition),
+                            width: sWidth *
+                                (1 - wH1DividerPosition - wH2DividerPosition),
+                            // flex: ((1 - wH1DividerPosition - wH2DividerPosition) *
+                            //         10000)
+                            //     .round(),
+                            top: Platform.isAndroid ? 35 : 35,
+                            height: Platform.isAndroid
+                                ? sHeight * 0.85
+                                : sHeight - 40,
+                            child: GestureDetector(
+                              onTap: () {
+                                _unfocusAll();
+                                setState(() {
+                                  // panelIndex.runTimeType = null;
+                                  panelIndex.parentId = '';
+                                  panelIndex.id = '';
+                                  if (whichPropertyTabIsClicked !=1) {
+                                  whichPropertyTabIsClicked = 1;
+                                  Future.delayed(Durations.short1).then(
+                                    (value) {
+                                      print("YUHUUUUUUUU");
+                                      whichPropertyTabIsClicked = 1;
+                                      propertyCardsController.swipeDefault();
+                                    },
+                                  );
+                                }
+                                });
+                              },
+                              onSecondaryTap: () {
+                                print("YUHUUUUUUUU");
+                              },
+                              child: CustomBorder(
+                                color: defaultPalette.extras[0],
+                                radius: Radius.circular(20),
+                                strokeWidth: 2,
+                                dashPattern: [30, 10],
+                                strokeCap: StrokeCap.butt,
+                                animateBorder: true,
+                                dashRadius: Radius.circular(50),
+                                animateDuration: Duration(milliseconds: 5500),
                                 child: Container(
-                                  // height: sHeight / 20,
-                                  width: sWidth,
-                                  color: defaultPalette.black.withOpacity(.9),
-                                  child: Stack(
-                                    children: [
-                                      // botomGraph
-                                      IgnorePointer(
-                                        ignoring: true,
-                                        child: AnimatedContainer(
-                                          duration: Durations.extralong1,
-                                          height: sHeight,
-                                          width: sWidth,
-                                          alignment: Alignment.centerRight,
-                                          decoration: BoxDecoration(
-                                            color:
-                                                Colors.white.withOpacity(0.0),
-                                          ),
-                                          padding: const EdgeInsets.only(
-                                            top: 0,
-                                          ),
-                                          //layGraph
-                                          child: Opacity(
-                                            opacity: 0.35,
-                                            child: LineChart(LineChartData(
-                                                lineBarsData: [
-                                                  LineChartBarData()
-                                                ],
-                                                titlesData: const FlTitlesData(
-                                                    show: false),
-                                                gridData: const FlGridData(
-                                                    show: true,
-                                                    horizontalInterval: 10,
-                                                    verticalInterval: 30),
-                                                borderData:
-                                                    FlBorderData(show: false),
-                                                minY: 0,
-                                                maxY: 50,
-                                                maxX: dateTimeNow
-                                                            .millisecondsSinceEpoch
-                                                            .ceilToDouble() /
-                                                        500 +
-                                                    250,
-                                                minX: dateTimeNow
-                                                        .millisecondsSinceEpoch
-                                                        .ceilToDouble() /
-                                                    500)),
+                                  decoration: BoxDecoration(
+                                    color: defaultPalette.extras[0],
+                                    borderRadius: BorderRadius.circular(20),
+                                    // border: Border.all(color: defaultPalette.tertiary,strokeAlign: BorderSide.strokeAlignOutside,width: 4)
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical:3, horizontal: 2).copyWith(right: 0),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: Stack(
+                                      children: [
+                                        // Graph //Desktop WEB
+                                        IgnorePointer(
+                                          ignoring: true,
+                                          child: AnimatedContainer(
+                                            duration: Durations.extralong1,
+                                            height: sHeight,
+                                            width: sWidth,
+                                            alignment: Alignment.centerRight,
+              
+                                            padding: const EdgeInsets.only(
+                                              top: 0,
+                                            ),
+                                            //layGraph
+                                            child: Opacity(
+                                              opacity: 0.35,
+                                              child: LineChart(LineChartData(
+                                                  lineBarsData: [
+                                                    LineChartBarData()
+                                                  ],
+                                                  titlesData: const FlTitlesData(
+                                                      show: false),
+                                                  gridData: FlGridData(
+                                                      getDrawingVerticalLine: (value) => FlLine(
+                                                          color: defaultPalette
+                                                              .primary
+                                                              .withOpacity(0.2),
+                                                          dashArray: [5, 5]),
+                                                      getDrawingHorizontalLine:
+                                                          (value) => FlLine(
+                                                              color: defaultPalette
+                                                                  .primary
+                                                                  .withOpacity(0.2),
+                                                              dashArray: [5, 5]),
+                                                      show: true,
+                                                      horizontalInterval: 10,
+                                                      verticalInterval: 30),
+                                                  borderData: FlBorderData(show: false),
+                                                  minY: 0,
+                                                  maxY: 50,
+                                                  maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500 + 250,
+                                                  minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      //Main SpreadSheet
-                                      ReorderableListView.builder(
-                                        footer: null,
-                                        header: null,
-                                        // scrollDirection: Axis.horizontal,
-                                        itemExtentBuilder: null,
-                                        proxyDecorator:
-                                            (child, index, animation) {
-                                          return child;
-                                        },
-                                        padding: const EdgeInsets.all(0),
-                                        onReorder:
-                                            (int oldIndex, int newIndex) {
-                                          setState(() {
-                                            if (newIndex > oldIndex) {
-                                              newIndex -= 1;
-                                            }
-                                            final item = spreadSheetList[
-                                                    currentPageIndex]
-                                                .removeAt(oldIndex);
-                                            spreadSheetList[currentPageIndex]
-                                                .insert(newIndex, item);
-                                          });
-                                        },
-                                        itemCount:
-                                            spreadSheetList[currentPageIndex]
-                                                .length,
-                                        itemBuilder: (context, index) {
-                                          print(
-                                              'hello hello sprdsheetBuilding: ${spreadSheetList[currentPageIndex][index]}');
-                                          if (spreadSheetList[currentPageIndex]
-                                              [index] is SheetText) {
-                                            var sheetText =
-                                                spreadSheetList[
-                                                        currentPageIndex][index]
-                                                    as SheetText;
-                                            return Stack(
-                                              key: ValueKey(sheetText
-                                                  .id), // Ensure each item has a unique key
-                                              children: [
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    FocusScope.of(context)
-                                                        .unfocus();
-                                                    var isTrue = false;
-                                                    SheetItem? itemE;
-                                                    if (panelIndex.id ==
-                                                        sheetText.id) {
-                                                      isTrue = true;
-                                                    }
-                                                    setState(() {
-                                                      itemE = _sheetItemIterator(
-                                                          sheetText.id,
-                                                          spreadSheetList[
-                                                              currentPageIndex]);
-
-                                                      if (itemE != null) {
-                                                        index = _sheetListIterator(
-                                                                itemE!.parentId,
-                                                                spreadSheetList[
-                                                                    currentPageIndex])
-                                                            .indexOf(itemE!);
-                                                       
-                                                      } else {
-                                                        
-                                                      }
-
-                                                      // index = temp ?? index;
-
-                                                      if (hDividerPosition >
-                                                          0.48) {
-                                                        hDividerPosition = 0.4;
-                                                      }
-                                                    });
-                                                    // Future.delayed(Duration.zero)
-                                                    //     .then((_) {
-                                                    //   textStylePageController
-                                                    //       .jumpToPage(panelIndex
-                                                    //           .panelIndex);
-                                                    // });
-                                                    Future.delayed(
-                                                            Durations.short1)
-                                                        .then((h) {
-                                                      if (!isTrue) {
-                                                        textStyleTabControler
-                                                            .animateToPage(0,
-                                                                curve: Curves
-                                                                    .bounceIn,
-                                                                duration:
-                                                                    Durations
-                                                                        .short1);
-                                                        for (var i = 0;
-                                                            i < isTapped.length;
-                                                            i++) {
-                                                          setState(() {
-                                                            isTapped[i] = false;
-                                                          });
-                                                        }
-                                                        setState(() {
-                                                          isTapped[1] = true;
-                                                        });
-                                                      }
-                                                    });
-
-                                                    print('clicked');
-
-                                                    print(panelIndex);
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 4,
-                                                            bottom: 8,
-                                                            left: 20,
-                                                            right: 20),
-                                                    margin:
-                                                        const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      color: defaultPalette
-                                                          .primary,
-                                                      border: Border.all(
-                                                        width: panelIndex.id ==
-                                                                sheetText
-                                                                    .id
-                                                            ? 4
-                                                            : 2,
-                                                        color: panelIndex.id ==
-                                                                sheetText
-                                                                    .id
-                                                            ? defaultPalette
-                                                                .tertiary
-                                                            : defaultPalette
-                                                                .black,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Column(
-                                                      children: [
-                                                        Container(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  bottom: 4),
-                                                          child: Text(
-                                                              'id : ${sheetText.id}',
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          10)),
-                                                        ),
-                                                        QuillEditor(
-                                                          configurations:
-                                                              sheetText
-                                                                  .textEditorConfigurations,
-                                                          focusNode:
-                                                              sheetText
-                                                                  .focusNode,
-                                                          scrollController:
-                                                              sheetText
-                                                                  .scrollController,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
+                                        //Main SpreadSheet //Desktop WEB
+                                        _buildListWidget(spreadSheetList[currentPageIndex])
+                                        
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+              
+                          //
+                          //
+                          //////////PROPERTIES SECTION
+                          Positioned(
+                            width: sWidth * (wH2DividerPosition),
+                            top: Platform.isAndroid ? 35 : 0,
+                            height: Platform.isAndroid
+                                ? sHeight * 0.85
+                                : sHeight * 0.9,
+                            left: sWidth * (1 - wH2DividerPosition),
+                            child: Stack(
+                              children: [
+                                //animatedborders Properties page, text, list tab animatedborders on the top right
+                                Container(
+                                  height: (50),
+                                  margin:
+                                      EdgeInsets.only(top: 29, left: 0, right: 6),
+                                  padding: EdgeInsets.only(bottom: 0),
+                                  decoration: BoxDecoration(
+                                    color: defaultPalette.transparent,
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                          flex: 1,
+                                          child: Padding(
+                                            padding:
+                                                EdgeInsets.only(left: 9, top: 10),
+                                            child: CustomBorder(
+                                              color: whichPropertyTabIsClicked ==
+                                                      1
+                                                  ? defaultPalette.primary
+                                                  : defaultPalette.transparent,
+                                              animateDuration:
+                                                  const Duration(seconds: 1),
+                                              animateBorder: true,
+                                              radius: const Radius.circular(10),
+                                              dashPattern: const [15, 10],
+                                              strokeWidth: 4,
+                                              child: SizedBox(
+                                                height: 45,
+                                                width: _getPropertiesButtonWidth(
+                                                    'page'),
+                                              ),
+                                            ),
+                                          )),
+                                      //text field properties button border
+                                      if (panelIndex.id != '')
+                                        Expanded(
+                                            flex: 2,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 4, top: 8),
+                                              child: CustomBorder(
+                                                color:
+                                                    whichPropertyTabIsClicked == 2
+                                                        ? defaultPalette.primary
+                                                        : defaultPalette
+                                                            .transparent,
+                                                radius: const Radius.circular(8),
+                                                dashPattern: const [5, 1],
+                                                strokeWidth: 5,
+                                                child: SizedBox(
+                                                  height: 43,
+                                                  width: (2 *
+                                                      (sWidth *
+                                                          (wH2DividerPosition)) /
+                                                      5),
                                                 ),
-                                              ],
-                                            );
-                                          } else if (spreadSheetList[
-                                                  currentPageIndex][index]
-                                              is SheetList) {
-                                            return Container(
-                                              key: ValueKey((spreadSheetList[
-                                                          currentPageIndex]
-                                                      [index] as SheetList)
-                                                  .id),
-                                              margin: EdgeInsets.only(left: 5),
-                                              child: _buildListWidget(
-                                                  spreadSheetList[
-                                                          currentPageIndex]
-                                                      [index] as SheetList),
-                                            );
-                                          }
-                                          return Container(
-                                            key: ValueKey(const Uuid().v4()),
-                                            color: Colors.amberAccent,
-                                            height: 12,
-                                          );
-                                        },
-                                      ),
+                                              ),
+                                            )),
+                                      //sheet list properties button border
+                                      if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("LI"))
+                                        Expanded(
+                                            flex: 2,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 5, top: 8),
+                                              child: CustomBorder(
+                                                color:
+                                                    whichPropertyTabIsClicked == 3
+                                                        ? defaultPalette.primary
+                                                        : defaultPalette
+                                                            .transparent,
+                                                radius: const Radius.circular(6),
+                                                dashPattern: const [5, 1],
+                                                strokeWidth: 5,
+                                                child: SizedBox(
+                                                  height: 45,
+                                                  width: 2 *
+                                                      (sWidth *
+                                                          (wH2DividerPosition)) /
+                                                      5,
+                                                ),
+                                              ),
+                                            )),
+                                      //sheet table properties button border
+                                      if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("TB"))
+                                        Expanded(
+                                            flex: 2,
+                                            child: Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 5, top: 8),
+                                              child: CustomBorder(
+                                                color:
+                                                    whichPropertyTabIsClicked == 4
+                                                        ? defaultPalette.primary
+                                                        : defaultPalette
+                                                            .transparent,
+                                                radius: const Radius.circular(6),
+                                                dashPattern: const [5, 1],
+                                                strokeWidth: 4,
+                                                child: SizedBox(
+                                                  height: 45,
+                                                  width: 2 *
+                                                      (sWidth *
+                                                          (wH2DividerPosition)) /
+                                                      5,
+                                                ),
+                                              ),
+                                            )),
+                                    
                                     ],
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  //
-                  // Windows top bar mobile
-                  if (Platform.isWindows)
-                    GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onPanStart: (details) {
-                        appWindow.startDragging();
-                      },
-                      onDoubleTap: () {
-                        appWindow.maximizeOrRestore();
-                      },
-                      child: Container(
-                        color: Colors.transparent,
-                        height: 40,
-                        child: Consumer(builder: (context, ref, c) {
-                          return Stack(
-                            children: [
-                              AnimatedPositioned(
-                                right: 0,
-                                duration: Durations.short4,
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: AnimatedContainer(
-                                    duration: Durations.short4,
-                                    padding: const EdgeInsets.only(
-                                        right: 8, bottom: 4),
-                                    margin: const EdgeInsets.only(top: 4),
-                                    decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          bottomLeft: Radius.circular(12),
-                                        )),
-                                    child: Row(
-                                      children: [
-                                        //minimize button
-                                        ElevatedLayerButton(
-                                          // isTapped: false,
-                                          // toggleOnTap: true,
+                                //buttons Properties page, text, list tab browser buttons on the top right
+                                Container(
+                                  height: (50),
+                                  margin:
+                                      EdgeInsets.only(top: 29, left: 0, right: 6),
+                                  padding: EdgeInsets.only(bottom: 0),
+                                  decoration: BoxDecoration(
+                                    color: defaultPalette.transparent,
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      //page properties button button
+                                      Expanded(
+                                        flex: 1,
+                                        child: ElevatedLayerButton(
+                                          // isTapped: false,t
                                           onClick: () {
-                                            Future.delayed(Duration.zero)
-                                                .then((y) {
-                                              appWindow.minimize();
+                                            setState(() {
+                                              whichPropertyTabIsClicked = 1;
+                                              Future.delayed(Durations.short1).then(
+                                                (value) {
+                                                  print("YUHUUUUUUUU");
+                                                  whichPropertyTabIsClicked = 1;
+                                                  propertyCardsController.swipeDefault();
+                                                },
+                                              );       
                                             });
                                           },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
-                                          borderRadius:
-                                              BorderRadius.circular(5),
+                                          buttonHeight: 50,
+                                          buttonWidth:
+                                              _getPropertiesButtonWidth('page'),
+                                          borderRadius: BorderRadius.circular(8),
                                           animationDuration:
-                                              const Duration(milliseconds: 1),
+                                              const Duration(milliseconds: 100),
                                           animationCurve: Curves.ease,
                                           topDecoration: BoxDecoration(
                                             color: Colors.white,
                                             border: Border.all(),
                                           ),
                                           topLayerChild: const Icon(
-                                            TablerIcons.rectangle,
-                                            size: 15,
+                                            TablerIcons.script,
+                                            size: 20,
                                             // color: Colors.blue,
                                           ),
+                                          subfac: 10,
                                           baseDecoration: BoxDecoration(
-                                            color: Colors.green,
+                                            color: defaultPalette.extras[0],
                                             border: Border.all(),
                                           ),
                                         ),
-                                        //
-                                        //maximize button
-                                        ElevatedLayerButton(
-                                          // isTapped: false,
-                                          // toggleOnTap: true,
-                                          onClick: () {
-                                            Future.delayed(Durations.short1)
-                                                .then((y) {
-                                              appWindow.maximizeOrRestore();
-                                            });
-                                          },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          animationDuration:
-                                              const Duration(milliseconds: 1),
-                                          animationCurve: Curves.ease,
-                                          topDecoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border: Border.all(),
-                                          ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.triangle,
-                                            size: 14,
-                                            // color: Colors.amber,
-                                          ),
-                                          baseDecoration: BoxDecoration(
-                                            color: Colors.green,
-                                            border: Border.all(),
+                                      ),
+                                      //text field properties button button
+                                      if (panelIndex.id != '' && item.id != '')
+                                        Expanded(
+                                          flex: 2,
+                                          child: Stack(
+                                            children: [
+                                              //The green panel
+                                              Container(
+                                                margin: EdgeInsets.only(
+                                                    top: 10, left: 4),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.tertiary,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
+                                                  border: Border.all(),
+                                                ),
+                                              ),
+                                              //text tabs buttons
+                                              Positioned.fill(
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(
+                                                    top: 22,
+                                                    left: 4,
+                                                    bottom: 3
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        defaultPalette.transparent,
+                                                    borderRadius:
+                                                        BorderRadius.circular(2),
+                                                    // border: Border.all(),
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      //button that switched the tab to text formatting
+                                                      Positioned(
+                                                        bottom:0, left:0,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              whichPropertyTabIsClicked = 2;
+                                                              whichTextPropertyTabIsClicked = 0;
+                                                              Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
+                                                              _findItem();  
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth: (_getPropertiesButtonWidth(
+                                                                  'sheet-list')/3)-2,
+                                                          borderRadius:
+                                                              BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                              milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.typeface,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth:1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //button that switched the tab to text font
+                                                      Positioned(
+                                                        bottom:0, 
+                                                        right:(_getPropertiesButtonWidth('text-field')/3) -2 ,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              whichPropertyTabIsClicked = 2;
+                                                              whichTextPropertyTabIsClicked = 1;
+                                                              Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
+                                                              _findItem();  
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth:( _getPropertiesButtonWidth(
+                                                            'text-field')/3)-2,
+                                                          borderRadius: BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                          milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.currency_florin,
+                                                            size: 13,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth: 1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //button that switched the tab to text SuperDecoration
+                                                      Positioned(
+                                                        bottom:0, right:3,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
+                                                      
+                                                              whichPropertyTabIsClicked = 2;
+                                                              whichTextPropertyTabIsClicked = 2;
+                                                              Future.delayed(Duration.zero).then((value) => textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked),);
+                                                              _findItem();  
+                                                              decorationIndex = -1;
+                                                              isListDecorationLibraryToggled = false;
+                                                              isListDecorationPropertiesToggled = false;
+                                                              showDecorationLayers = false;
+                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                              textDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                      
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth:( _getPropertiesButtonWidth(
+                                                            'text-field')/3)-2,
+                                                          borderRadius: BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                          milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.sparkles,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth: 1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            
+                                                          ),
+                                                        ),
+                                                      ),
+                                              
+                                                    ],
+                                                  )
+                                                ),
+                                              ),
+                                              // the property tab switch main button
+                                              Positioned(
+                                                top: -2,
+                                                right: 0,
+                                                child: ElevatedLayerButton(
+                                                  // isTapped: false,0
+                                                  onClick: () {
+                                                    setState(() {
+                                                      var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
+                                                       
+                                                        
+                                                      whichPropertyTabIsClicked = 2;
+                                                      // propertyTabController.jumpToPage(1);
+                                                      textPropertyCardsController
+                                                          .animateTo(Offset(1, 1),
+                                                              duration:
+                                                                  Duration.zero,
+                                                              curve: Curves.linear);
+                                                     _findItem(); 
+                                                     decorationIndex = -1;
+                                                      isListDecorationLibraryToggled = false;
+                                                      isListDecorationPropertiesToggled = false;
+                                                      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                      textDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                      
+              
+                                                    });
+                                                  },
+                                                  buttonHeight: 30,
+                                                  buttonWidth: _getPropertiesButtonWidth('text-field') + 2,
+                                                  borderRadius:
+                                                      BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
+                                                  animationDuration: const Duration(
+                                                      milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceAround,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      const Icon(
+                                                        TablerIcons
+                                                            .text_recognition,
+                                                        size: 15,
+                                                        // color: Colors.blue,
+                                                      ),
+                                                      Text(
+                                                        'text',
+                                                        style: GoogleFonts.bungee(
+                                                            color: defaultPalette
+                                                                .black,
+                                                            fontSize: 12),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  subfac: 10,
+                                                  depth: 3,
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    // border: Border.all(),
+                                                  ),
+                                                ),
+                                              )
+                                            ],
                                           ),
                                         ),
-                                        //close button
-                                        ElevatedLayerButton(
-                                          // isTapped: false,
-                                          // toggleOnTap: true,
-                                          onClick: () {
-                                            Future.delayed(Duration.zero)
-                                                .then((y) {
-                                              appWindow.close();
-                                            });
-                                          },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          animationDuration:
-                                              const Duration(milliseconds: 1),
-                                          animationCurve: Curves.ease,
-                                          topDecoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border: Border.all(),
-                                          ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.circle,
-                                            size: 15,
-                                            // color: Colors.red,
-                                          ),
-                                          baseDecoration: BoxDecoration(
-                                            color: Colors.green,
-                                            border: Border.all(),
+                                      //sheetlist properties button button on top the whole thing
+                                      if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("LI"))
+                                        Expanded(
+                                          flex: 2,
+                                          child: Stack(
+                                            children: [
+                                              //Yellow Panel behind
+                                              Container(
+                                                margin: EdgeInsets.only(
+                                                    top: 9, left: 5),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.extras[1],
+                                                  borderRadius: BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
+                                                  border: Border.all(),
+                                                ),
+                                              ),
+                                              //list tabs buttons
+                                              Positioned.fill(
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(
+                                                    top: 22,
+                                                    left: 4,
+                                                    bottom: 3
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:defaultPalette.transparent,
+                                                    borderRadius:BorderRadius.circular(2),
+                                                    // border: Border.all(),
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        bottom:0, left:0,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                            if (whichPropertyTabIsClicked != 3) {
+                                                                whichPropertyTabIsClicked = 3;
+                                                                _findSheetListItem();
+                                                              }
+                                                              if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=0) {
+                                                                  Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(0),);
+                                                                  
+                                                                  whichListPropertyTabIsClicked =0;
+                                                                } else {
+                                                                  print('heryaa');
+                                                                  Future.delayed(Durations.short4).then((value) => listPropertyCardsController.swipeDefault(),);
+                                                                  
+                                                                }
+                                                                
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth: (_getPropertiesButtonWidth(
+                                                                  'sheet-list')/2)-5,
+                                                          borderRadius:
+                                                              BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                              milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.list_tree,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth:1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            
+                                                          ),
+                                                        ),
+                                                      ),
+                                              
+                                                      Positioned(
+                                                        bottom:0, right:3,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              if (whichPropertyTabIsClicked != 3) {
+                                                                var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                whichPropertyTabIsClicked = 3;
+                                                                _findSheetListItem();
+                                                                decorationIndex = -1;
+                                                                isListDecorationLibraryToggled = false;
+                                                                isListDecorationPropertiesToggled = false;
+                                                                showDecorationLayers = false;
+                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                                listDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                              
+                                                              }
+                                                              if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=1) {
+                                                                  Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(1),);
+                                                                  
+                                                                  whichListPropertyTabIsClicked =1;
+                                                                } else {
+                                                                  // print('heryaa');
+                                                                  Future.delayed(Durations.short4).then((value) => listPropertyCardsController.setCardIndex(1),);
+                                                                  
+                                                                }
+                                                              // listPropertyCardsController.swipeDefault();
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth:( _getPropertiesButtonWidth(
+                                                            'sheet-list')/2) -5,
+                                                          borderRadius: BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                          milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: defaultPalette.primary,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.sparkles,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth: 1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            
+                                                          ),
+                                                        ),
+                                                      ),
+                                              
+                                                    ],
+                                                  )
+                                                ),
+                                              ),
+              
+                                              //the propety tab switch main button to list properties
+                                              Positioned(
+                                                top:-2,
+                                                right:0,
+                                                child: ElevatedLayerButton(
+                                                  onClick: () {
+                                                    setState(() {
+                                                      if (whichPropertyTabIsClicked != 3) {
+                                                        var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
+                                                        whichPropertyTabIsClicked = 3;
+                                                        _findSheetListItem();
+                                                        decorationIndex = -1;
+                                                        isListDecorationLibraryToggled = false;
+                                                        isListDecorationPropertiesToggled = false;
+                                                        showDecorationLayers = false;
+                                                        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                        listDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                      
+                                                      }
+                                                    });
+                                                  },
+                                                  buttonHeight: 30,
+                                                  buttonWidth:
+                                                      _getPropertiesButtonWidth(
+                                                          'sheet-list'),
+                                                  borderRadius:BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
+                                                  animationDuration: const Duration(
+                                                      milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceAround,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      const Icon(
+                                                        TablerIcons
+                                                            .brackets_contain,
+                                                        size: 15,
+                                                      ),
+                                                      Text(
+                                                        'List',
+                                                        style: GoogleFonts.bungee(
+                                                            color: defaultPalette
+                                                                .black,
+                                                            fontSize: 12),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  subfac: 10,
+                                                  depth: 3,
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    
+                                                  ),
+                                                ),
+                                              
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    //
+                                      //sheettable properties button button on top of the whole thing
+                                      if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("TB"))
+                                        Expanded(
+                                          flex: 2,
+                                          child: Stack(
+                                            children: [
+                                              //Amethyst Panel behind
+                                              Container(
+                                                margin: EdgeInsets.only(
+                                                    top: 9, left: 5),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.extras[3],
+                                                  borderRadius:
+                                                      BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
+                                                  border: Border.all(),
+                                                ),
+                                              ),
+                                              //table tabs buttons
+                                              Positioned.fill(
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(
+                                                    top: 22,
+                                                    left: 4,
+                                                    bottom: 3
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        defaultPalette.transparent,
+                                                    borderRadius:
+                                                        BorderRadius.circular(2),
+                                                    // border: Border.all(),
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      Positioned(
+                                                        bottom:0, left:0,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              if (whichPropertyTabIsClicked != 4) {
+                                                                var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                whichPropertyTabIsClicked = 4;
+                                                                // _findSheetListItem();
+                                                                decorationIndex = -1;
+                                                                isListDecorationLibraryToggled = false;
+                                                                isListDecorationPropertiesToggled = false;
+                                                                // showDecorationLayers = false;
+                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                                tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                            
+                                                              }
+                                                              if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
+                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
+                                                                  
+                                                                whichTablePropertyTabIsClicked =1;
+                                                              } else {
+                                                                print('heryaa');
+                                                                Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
+                                                                
+                                                              }
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth: (_getPropertiesButtonWidth(
+                                                                  'sheet-list')/2)-5,
+                                                          borderRadius:
+                                                              BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                              milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.list_tree,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth:1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                           
+                                                          ),
+                                                        ),
+                                                      ),
+                                             
+                                                      Positioned(
+                                                        bottom:0, right:3,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                          if (whichPropertyTabIsClicked != 4) {
+                                                                var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                whichPropertyTabIsClicked = 4;
+                                                                // _findSheetListItem();
+                                                                decorationIndex = -1;
+                                                                isListDecorationLibraryToggled = false;
+                                                                isListDecorationPropertiesToggled = false;
+                                                                // showDecorationLayers = false;
+                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                                tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                            
+                                                              }
+                                                              if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
+                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
+                                                                  
+                                                                  whichTablePropertyTabIsClicked =1;
+                                                                } else {
+                                                                  print('heryaa');
+                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
+                                                                  
+                                                                }
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth:( _getPropertiesButtonWidth(
+                                                            'sheet-list')/2) -5,
+                                                          borderRadius: BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                          milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: defaultPalette.primary,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.sparkles,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth: 1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                           
+                                                          ),
+                                                        ),
+                                                      ),
+                                             
+                                                    ],
+                                                  )
+                                                ),
+                                              ),
+                                      
+                                              //the propety tab switch main button to table properties
+                                              Positioned(
+                                                top:-2,
+                                                right:0,
+                                                child: ElevatedLayerButton(
+                                                  // isTapped: false,
+                                                  // toggleOnTap: true,
+                                                  onClick: () {
+                                                    setState(() {
+                                                      if (whichPropertyTabIsClicked != 4) {
+                                                        var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                        whichPropertyTabIsClicked = 4;
+                                                        // _findSheetListItem();
+                                                        decorationIndex = -1;
+                                                        isListDecorationLibraryToggled = false;
+                                                        isListDecorationPropertiesToggled = false;
+                                                        // showDecorationLayers = false;
+                                                        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                        tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                            
+                                                      }
+                                                    });
+                                                  },
+                                                  buttonHeight: 30,
+                                                  buttonWidth:
+                                                      _getPropertiesButtonWidth(
+                                                          'sheet-list'),
+                                                  borderRadius:BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
+                                                  animationDuration: const Duration(
+                                                      milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceAround,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.center,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.table_chart_outlined,
+                                                        size: 14,
+                                                      ),
+                                                      Text(
+                                                        'Table',
+                                                        style: GoogleFonts.bungee(
+                                                            color: defaultPalette.black,
+                                                            fontSize: 12),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  subfac: 10,
+                                                  depth:3,
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    // border: Border.all(),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      
+                                    ],
                                   ),
                                 ),
+                                //Content inside properties CARDS Main Parent
+                                Container(
+                                  padding: EdgeInsets.only(top: 73),
+                                  child: FadeInLeft(child: _getProperTiesCards()),
+                                ),
+                                
+                                //the place to render the preview for decoration before displaying
+                                // Positioned(
+                                //   left: -1000, // Move off-screen
+                                //   top: -1000,
+                                //   height: sHeight/5,
+                                //   width: sHeight/5,
+                                //   child: RepaintBoundary(
+                                //     key: previewBoxKey,
+                                //     child:  buildDecoratedContainer(sheetListItem.listDecoration, SizedBox(width:30,height:30), true),
+                                //   ),
+                                // ),
+                              ],
+                            ),
+                          ),
+                          //
+                          //
+                          //
+                          //RESIZE HANDLE VERTICAL 2
+                          Positioned(
+                              top: Platform.isAndroid ? 35 : 0,
+                              left: sWidth * (1 - wH2DividerPosition) - 3,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.resizeColumn,
+                                child: GestureDetector(
+                                  onPanUpdate: (details) {
+                                    double newPosition = ((0.9 -
+                                                wH2DividerPosition -
+                                                wH1DividerPosition) +
+                                            details.delta.dx /
+                                                context.size!.width)
+                                        .clamp(0.1, 0.6);
+                                    setState(() {
+                                      wH2DividerPosition =
+                                          (newPosition - .9 + wH1DividerPosition)
+                                              .abs()
+                                              .clamp(0.21, 0.48);
+                                    });
+                                  },
+                                  child: Container(
+                                    color: Colors.transparent,
+                                    height: sHeight,
+                                    width: 8,
+                                  ),
+                                ),
+                              )),
+                          //RESIZE HANDLE VERTICAL 1
+                          Positioned(
+                              top: Platform.isAndroid ? 35 : 0,
+                              left: (sWidth * wH1DividerPosition) - 5,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.resizeColumn,
+                                
+                                child: GestureDetector(
+                                  onPanUpdate: (details) {
+                                    double newPosition = (wH1DividerPosition +
+                                            details.delta.dx /
+                                                context.size!.width)
+                                        .clamp((50/sWidth), 0.4);
+                                    setState(() {
+                                      wH1DividerPosition = newPosition;
+                                    });
+                                  },
+                                  child: Container(
+                                    color: Colors.transparent,
+                                    height: sHeight,
+                                    width: 10,
+                                  ),
+                                ),
+                              )),
+                          //
+                        ],
+                      ),
+                    ),
+                    // Windows top bar
+                    if (Platform.isWindows)
+                      GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onPanStart: (details) {
+                          appWindow.startDragging();
+                        },
+                        onDoubleTap: () {
+                          appWindow.maximizeOrRestore();
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          height: 40,
+                          child: Consumer(builder: (context, ref, c) {
+                            return Stack(
+                              children: [
+                                AnimatedPositioned(
+                                  right: 0,
+                                  top: -2,
+                                  duration: Durations.short4,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: AnimatedContainer(
+                                      duration: Durations.short4,
+                                      padding: const EdgeInsets.only(
+                                          right: 8, bottom: 4),
+                                      margin: const EdgeInsets.only(top: 0),
+                                      decoration: const BoxDecoration(
+                                          color: Colors.transparent,
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(12),
+                                            bottomLeft: Radius.circular(12),
+                                          )),
+                                      child: Row(
+                                        children: [
+                                          //minimize button
+                                          ElevatedLayerButton(
+                                            // isTapped: false,
+                                            // toggleOnTap: true,
+                                            depth: 2,
+                                            onClick: () {
+                                              Future.delayed(Duration.zero)
+                                                  .then((y) {
+                                                appWindow.minimize();
+                                              });
+                                            },
+                                            buttonHeight: 30,
+                                            buttonWidth: 30,
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            animationDuration:
+                                                const Duration(milliseconds: 10),
+                                            animationCurve: Curves.ease,
+                                            topDecoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            topLayerChild: const Icon(
+                                              TablerIcons.rectangle,
+                                              size: 15,
+                                              // color: Colors.blue,
+                                            ),
+                                            baseDecoration: BoxDecoration(
+                                              color: Colors.green,
+                                              border: Border.all(),
+                                            ),
+                                          ),
+                                          //
+                                          //maximize button
+                                          ElevatedLayerButton(
+                                            // isTapped: false,
+                                            // toggleOnTap: true,
+                                            depth: 2,
+                                            onClick: () {
+                                              Future.delayed(Durations.short1)
+                                                  .then((y) {
+                                                appWindow.maximizeOrRestore();
+                                              });
+                                            },
+                                            buttonHeight: 30,
+                                            buttonWidth: 30,
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            animationDuration:
+                                                const Duration(milliseconds: 1),
+                                            animationCurve: Curves.ease,
+                                            topDecoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            topLayerChild: const Icon(
+                                              TablerIcons.triangle,
+                                              size: 14,
+                                              // color: Colors.amber,
+                                            ),
+                                            baseDecoration: BoxDecoration(
+                                              color: Colors.green,
+                                              border: Border.all(),
+                                            ),
+                                          ),
+                                          //close button
+                                          ElevatedLayerButton(
+                                            // isTapped: false,
+                                            // toggleOnTap: true,
+                                            depth: 2,
+                                            onClick: () {
+                                              Future.delayed(Duration.zero)
+                                                  .then((y) {
+                                                appWindow.close();
+                                              });
+                                            },
+                                            buttonHeight: 30,
+                                            buttonWidth: 30,
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            animationDuration:
+                                                const Duration(milliseconds: 1),
+                                            animationCurve: Curves.ease,
+                                            topDecoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            topLayerChild: const Icon(
+                                              TablerIcons.circle,
+                                              size: 15,
+                                              // color: Colors.red,
+                                            ),
+                                            baseDecoration: BoxDecoration(
+                                              color: Colors.green,
+                                              border: Border.all(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      //
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ),
+              
+                    //
+                    //BILLBLAZE MAIN TITLE //Desktop WEB
+                    AnimatedPositioned(
+                      duration: defaultDuration,
+                      top: Platform.isAndroid ? 30 : 5,
+                      left: Platform.isAndroid ? 45 : 60,
+                      child: AnimatedTextKit(
+                        // key: ValueKey(appinioLoop),
+                        animatedTexts: [
+                          TypewriterAnimatedText("Bill\nBlaze.",
+                              textStyle: GoogleFonts.abrilFatface(
+                                  fontSize: Platform.isAndroid
+                                      ? titleFontSize / 3.5
+                                      : 15,
+                                  color: const Color(0xFF000000).withOpacity(0.8),
+                                  height: 0.9),
+                              speed: const Duration(milliseconds: 100)),
+                          TypewriterAnimatedText("Bill\nBlaze.",
+                              textStyle: GoogleFonts.zcoolKuaiLe(
+                                  fontSize: Platform.isAndroid
+                                      ? titleFontSize / 3.5
+                                      : 15,
+                                  color: const Color(0xFF000000).withOpacity(0.8),
+                                  height: 0.9),
+                              speed: const Duration(milliseconds: 100)),
+                          TypewriterAnimatedText("Bill\nBlaze.",
+                              textStyle: GoogleFonts.splash(
+                                  fontSize: Platform.isAndroid
+                                      ? titleFontSize / 3.5
+                                      : 15,
+                                  color: const Color(0xFF000000).withOpacity(0.8),
+                                  height: 0.9),
+                              speed: const Duration(milliseconds: 100)),
+                          TypewriterAnimatedText("Bill\nBlaze",
+                              textStyle: GoogleFonts.libreBarcode39ExtendedText(
+                                  fontSize: Platform.isAndroid
+                                      ? titleFontSize / 3.5
+                                      : 15,
+                                  letterSpacing: 0,
+                                  height: 1),
+                              speed: const Duration(milliseconds: 100)),
+                          TypewriterAnimatedText("Bill\nBlaze.",
+                              textStyle: GoogleFonts.redactedScript(
+                                  fontSize: Platform.isAndroid
+                                      ? titleFontSize / 3.5
+                                      : 15,
+                                  color: const Color(0xFF000000).withOpacity(0.8),
+                                  height: 0.9),
+                              speed: const Duration(milliseconds: 100)),
+                        ],
+                        // totalRepeatCount: 1,
+                        repeatForever: true,
+                        pause: const Duration(milliseconds: 30000),
+                        displayFullTextOnTap: true,
+                        stopPauseOnTap: true,
+                      ),
+                    ),
+                    //
+                    //SIDE BAR BUTTON //Desktop WEB
+                    AnimatedPositioned(
+                      duration: sideBarPosDuration,
+                      top: (sHeight / 20) - (sHeight / 18),
+                      left: -10,
+                      child: ElevatedLayerButton(
+                        // isTapped: false,
+                        // toggleOnTap: true,
+                        onClick: () {
+                          saveLayout();
+                          ref
+                              .read(propertyCardIndexProvider.notifier)
+                              .update((s) => s = 0);
+                          Navigator.pop(context);
+                        },
+                        buttonHeight: Platform.isWindows ? 60 : 50,
+                        buttonWidth: Platform.isWindows ? 60 : 50,
+                        borderRadius: BorderRadius.circular(100),
+                        animationDuration: const Duration(milliseconds: 100),
+                        animationCurve: Curves.ease,
+                        topDecoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(),
+                        ),
+                        topLayerChild: Icon(
+                          IconsaxPlusLinear.element_3,
+                          size: Platform.isWindows ? 20 : 15,
+                        ),
+                        baseDecoration: BoxDecoration(
+                          color: Colors.green,
+                          border: Border.all(),
+                        ),
+                      ),
+                    ),
+                    //
+                    //Layout Name Rename
+                    Positioned(
+                      top: 0,
+                      height: Platform.isAndroid ? 30 : 35,
+                      width: sWidth / 7,
+                      left: Platform.isAndroid ? sWidth / 2.5 : sWidth / 2,
+                      // width: (sWidth * wH2DividerPosition - 10) * 0.3,
+                      child: IntrinsicWidth(
+                        child: Focus(
+                          onFocusChange: _onFieldFocusChange,
+                          child: TextFormField(
+                            focusNode: layoutNamefocusNode,
+                            cursorColor: defaultPalette.primary,
+                            controller: layoutName,
+              
+                            textAlignVertical: TextAlignVertical.top,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              contentPadding:
+                                  const EdgeInsets.symmetric(horizontal: 5),
+                              filled: true,
+                              fillColor: defaultPalette.transparent,
+                              border: OutlineInputBorder(
+                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
+                                borderRadius: BorderRadius.circular(
+                                    5), // Replace with your desired radius
                               ),
-                            ],
-                          );
-                        }),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 0, color: defaultPalette.transparent),
+                                borderRadius:
+                                    BorderRadius.circular(5), // Same as border
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 1.2,
+                                    color: defaultPalette.transparent),
+                                borderRadius:
+                                    BorderRadius.circular(6), // Same as border
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  width: 3,
+                                  color: nameExists
+                                      ? layoutName.text == initialLayoutName
+                                          ? defaultPalette.extras[1]
+                                          : Colors.red
+                                      : defaultPalette.transparent,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(5), // Same as border
+                              ),
+                            ),
+                            // keyboardType: TextInputType.number,
+                            style: GoogleFonts.bungee(
+                                color: defaultPalette.black, fontSize: 12),
+                            onChanged: (value) {
+                              _checkLayoutName();
+                            },
+                          ),
+                        ),
                       ),
                     ),
-
-                  //
-                  //BILLBLAZE MAIN TITLE
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: topPadPosDistance - (topPadPosDistance / 1.1),
-                    left: leftPadPosDistance + (sWidth / 25),
-                    child: AnimatedTextKit(
-                      // key: ValueKey(appinioLoop),
-                      animatedTexts: [
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.abrilFatface(
-                                fontSize: titleFontSize / 4,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.zcoolKuaiLe(
-                                fontSize: titleFontSize / 4,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.splash(
-                                fontSize: titleFontSize / 4,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze",
-                            textStyle: GoogleFonts.libreBarcode39ExtendedText(
-                                fontSize: titleFontSize / 4,
-                                letterSpacing: 0,
-                                height: 1),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.redactedScript(
-                                fontSize: titleFontSize / 4,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.fascinateInline(
-                                fontSize: titleFontSize / 4,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                        TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.nabla(
-                                fontSize: titleFontSize / 4,
-                                color: const Color(0xFF000000).withOpacity(0.8),
-                                height: 0.9),
-                            speed: const Duration(milliseconds: 100)),
-                      ],
-                      // totalRepeatCount: 1,
-                      repeatForever: true,
-                      pause: const Duration(milliseconds: 30000),
-                      displayFullTextOnTap: true,
-                      stopPauseOnTap: true,
-                    ),
-                  ),
-                  //
-                  //SIDE BAR BUTTON
-                  AnimatedPositioned(
-                    duration: sideBarPosDuration,
-                    top: (sHeight / 20) - (sHeight / 18),
-                    left: -20,
-                    child: ElevatedLayerButton(
-                      // isTapped: false,
-                      // toggleOnTap: true,
-                      onClick: () {
-                        var lm = Boxes.getLayouts()
-                            .values
-                            .toList()
-                            .cast<LayoutModel>();
-                        lm[keyIndex].docPropsList =
-                            docPropToBox(documentPropertiesList);
-                        lm[keyIndex].spreadSheetList =
-                            spreadSheetToBox(spreadSheetList);
-                        lm[keyIndex].save();
-                        Navigator.pop(context);
-                      },
-                      buttonHeight: 60,
-                      buttonWidth: 60,
-                      borderRadius: BorderRadius.circular(100),
-                      animationDuration: const Duration(milliseconds: 100),
-                      animationCurve: Curves.ease,
-                      topDecoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(),
-                      ),
-                      topLayerChild: const Icon(
-                        IconsaxPlusLinear.element_3,
-                        size: 20,
-                      ),
-                      baseDecoration: BoxDecoration(
-                        color: Colors.green,
-                        border: Border.all(),
-                      ),
-                    ),
-                  ),
-                  //
-                ],
+                  ],
+                ),
               ),
             ),
           ));
-    }
+    } 
     //
   }
 
@@ -8630,6 +4469,113 @@ Future<void> _initialize() async {
     .show(context);
     }
 
+    child(controller, physics) => ReorderableListView.builder(
+    shrinkWrap: true,
+    buildDefaultDragHandles: false,
+    scrollDirection: sheetList.direction,
+    scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
+    physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
+    proxyDecorator: (child, index, animation) {
+  return Container(child: child); },
+  itemBuilder: (context, index) {
+  // print('hello hello sprdListBuilding: ${sheetList[index]}');
+  if (sheetList[index] is SheetText) {
+    var sheetText = sheetList[index] as SheetText;
+    return ReorderableDragStartListener(
+      index: index,
+      key: ValueKey(sheetText.id),
+      child: IntrinsicWidth(
+        child: IntrinsicHeight(
+          child: Stack(
+            children: [
+              GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                      
+                      setState(() {
+                        panelIndex = panelIndex.copyWith(
+                            id: sheetText.id,
+                            parentId: sheetList.id);
+                      
+                        panelIndex.parentId = sheetList.id;
+                        whichPropertyTabIsClicked = 2;
+                      
+                        if (hDividerPosition > 0.48) {
+                          hDividerPosition = 0.4;
+                        }
+                        item = sheetText;
+                        _findItem();
+                      });
+                      
+                      print('clicked');
+                      print(sheetListItem.id);
+                      
+                      print(panelIndex);
+                    },
+                    onSecondaryLongPressDown: (d) {
+                      onRightClick(sheetText, d, index);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          // bottom: 2,
+                          left: 2,
+                          top: 4,
+                          right: 2),
+                      child: buildSheetTextWidget(sheetList[index] as SheetText)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+    // buildlistw
+  } else if (sheetList[index] is SheetList) {
+    return ReorderableDragStartListener(
+      index: index,
+      key: ValueKey(sheetList[index].id),
+      child: Container(
+          margin: EdgeInsets.only(top: 4),
+          width:sheetList.id == spreadSheetList[currentPageIndex].id?
+          sWidth
+          : findSheetListBuildWidth(
+                      sheetList[index] as SheetList) <=
+                  50
+              ? 50
+              : findSheetListBuildWidth(
+                  sheetList[index] as SheetList),
+          child: _buildListWidget(
+              sheetList[index] as SheetList)),
+    );
+  }
+    else if(sheetList[index] is SheetTable){
+    return ReorderableDragStartListener(
+      key: ValueKey(sheetList[index].id),
+      index: index,
+      child: buildSheetTableWidget(sheetList[index] as SheetTable)
+      );
+  
+  }
+  return Container(
+    key: ValueKey(const Uuid().v4()),
+    color: Colors.amberAccent,
+    height: 12,
+    // buildlistw
+  );
+  },
+  itemCount: sheetList.length,
+  onReorder: (oldIndex, newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final item = sheetList.removeAt(oldIndex);
+      // buildlistw
+      sheetList.insert(newIndex, item);
+    });
+  },
+  );
+  
+
     return Stack(
       children: [
         GestureDetector(
@@ -8680,10 +4626,12 @@ Future<void> _initialize() async {
               : findSheetListBuildWidth(sheetList) <= 50
                 ? 50
                 : findSheetListBuildWidth(sheetList),
-              height: findSheetListBuildHeight(sheetList) <= 50
+              height:sheetList.id == spreadSheetList[currentPageIndex].id
+              ? sHeight
+              : findSheetListBuildHeight(sheetList) <= 50
                 ? 50
                 : findSheetListBuildHeight(sheetList),
-              padding: const EdgeInsets.only(top: 0, left: 1, right: 1.5),
+              padding: const EdgeInsets.only(top: 0, left: 1, right: 1),
                                 
               // buildlistw
               decoration: BoxDecoration(
@@ -8724,7 +4672,9 @@ Future<void> _initialize() async {
                               color: defaultPalette.primary,
                               borderRadius:
                                   BorderRadius.circular(99999)),
-                            width:sheetList.direction == Axis.vertical? 4:60,
+                            width:sheetList.id == spreadSheetList[currentPageIndex].id
+                            ? 3
+                            : sheetList.direction == Axis.vertical? 4:60,
                             height:sheetList.direction == Axis.vertical? 60:4,
                           );
                         },)
@@ -8732,111 +4682,24 @@ Future<void> _initialize() async {
                       );
                     },
                     child: Padding(
-                        padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?3.5:0),
-                      child: ReorderableListView.builder(
-                        buildDefaultDragHandles: false,
-                        scrollDirection: sheetList.direction,
-                        scrollController: controller,
+                      padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
+                        sheetList.id == spreadSheetList[currentPageIndex].id
+                        ?3:3.5
+                        :0),
+                      child: spreadSheetList[currentPageIndex].id == sheetList.id
+                      ? MinimapScrollbarWidget(
+                        controller: controller,
                         physics: physics,
-                        proxyDecorator: (child, index, animation) {
-                      return Container(child: child); },
-                      itemBuilder: (context, index) {
-                      // print('hello hello sprdListBuilding: ${sheetList[index]}');
-                      if (sheetList[index] is SheetText) {
-                        var sheetText = sheetList[index] as SheetText;
-                        return ReorderableDragStartListener(
-                          index: index,
-                          key: ValueKey(sheetText.id),
-                          child: IntrinsicWidth(
-                            child: IntrinsicHeight(
-                              child: Stack(
-                                children: [
-                                  GestureDetector(
-                                        onTap: () {
-                                          FocusScope.of(context).unfocus();
-                                          
-                                          setState(() {
-                                            panelIndex = panelIndex.copyWith(
-                                                id: sheetText.id,
-                                                parentId: sheetList.id);
-                                          
-                                            panelIndex.parentId = sheetList.id;
-                                            whichPropertyTabIsClicked = 2;
-                                          
-                                            if (hDividerPosition > 0.48) {
-                                              hDividerPosition = 0.4;
-                                            }
-                                            item = sheetText;
-                                            _findItem();
-                                          });
-                                          
-                                          print('clicked');
-                                          print(sheetListItem.id);
-                                          
-                                          print(panelIndex);
-                                        },
-                                        onSecondaryLongPressDown: (d) {
-                                          onRightClick(sheetText, d, index);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              // bottom: 2,
-                                              left: 2,
-                                              top: 4,
-                                              right: 2),
-                                          child: buildSheetTextWidget(sheetList[index] as SheetText)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                        // buildlistw
-                      } else if (sheetList[index] is SheetList) {
-                        return ReorderableDragStartListener(
-                          index: index,
-                          key: ValueKey(sheetList[index].id),
-                          child: Container(
-                              margin: EdgeInsets.only(top: 4),
-                              width:sheetList.id == spreadSheetList[currentPageIndex].id?
-                              sWidth
-                              : findSheetListBuildWidth(
-                                          sheetList[index] as SheetList) <=
-                                      50
-                                  ? 50
-                                  : findSheetListBuildWidth(
-                                      sheetList[index] as SheetList),
-                              child: _buildListWidget(
-                                  sheetList[index] as SheetList)),
-                        );
-                      }
-                       else if(sheetList[index] is SheetTable){
-                        return ReorderableDragStartListener(
-                          key: ValueKey(sheetList[index].id),
-                          index: index,
-                          child: buildSheetTableWidget(sheetList[index] as SheetTable)
-                          );
-                      
-                      }
-                      return Container(
-                        key: ValueKey(const Uuid().v4()),
-                        color: Colors.amberAccent,
-                        height: 12,
-                        // buildlistw
-                      );
-                      },
-                      itemCount: sheetList.length,
-                      onReorder: (oldIndex, newIndex) {
-                        setState(() {
-                          if (newIndex > oldIndex) {
-                            newIndex -= 1;
-                          }
-                          final item = sheetList.removeAt(oldIndex);
-                          // buildlistw
-                          sheetList.insert(newIndex, item);
-                        });
-                      },
-                      ),
+                        scaleFactor: 0.08,
+                        miniSize: 20,
+                        imageUpdateInterval: 500000,
+                        child: SizedBox(
+                          width:sheetList.id == spreadSheetList[currentPageIndex].id
+                          ?sWidth
+                          : findSheetListBuildWidth(sheetList) <= 50
+                            ? 50
+                            : findSheetListBuildWidth(sheetList),
+                          child: child(controller,physics))) : child(controller,physics)
                       ),
                       );
                       }
@@ -8844,6 +4707,7 @@ Future<void> _initialize() async {
                   ),
                 ),
               ),
+            
             ),
           ),
         ),
@@ -11466,124 +7330,124 @@ Future<void> _initialize() async {
                                   const SizedBox(
                                       height:5
                                     ),
-                                //FONT Title and SIZE AND SPACINGS  
-                                Container(
-                                margin: EdgeInsets.only(left:2, right:2),
-                                padding: EdgeInsets.all(5),
-                                decoration: BoxDecoration(
-                                color:defaultPalette.primary,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: defaultPalette.extras[0], width: 2)
-                                ),
-                                //FONT Title and SIZE AND SPACINGS
-                                child:  Column(
-                                  children: [
-                                    Container(
-                                    width: width,
-                                    padding: EdgeInsets.all(6).copyWith(left:8),
-                                    margin: EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: defaultPalette.secondary,
-                                      borderRadius: BorderRadius.circular(15),
-                                      border: Border.all(
-                                        width: 2,
-                                        color: defaultPalette.extras[0])
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text('FO \nNT ',
-                                        textAlign: TextAlign.start,
-                                        style: TextStyle(
-                                          height: 1,
-                                          fontFamily:
-                                              GoogleFonts.quintessential()
-                                                  .fontFamily,
-                                          // letterSpacing:-1,
-                                          fontWeight: FontWeight.w900,        
-                                          color: defaultPalette
-                                              .extras[0],
-                                        fontSize: 10)),
-                                        Text('കുടും \nബം ',
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                                height: 0.6,
-                                                fontFamily: GoogleFonts.chilanka().fontFamily,
-                                                color: defaultPalette.extras[0],
-                                                fontSize: 15)),
-                                        Text('書体 \n活字体 ',
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                                height: 1,
-                                                letterSpacing: -0.2,
-                                                fontFamily:
-                                                    GoogleFonts.zenAntiqueSoft()
-                                                        .fontFamily,
-                                                color: defaultPalette
-                                                    .extras[0],
-                                                fontSize: 10)),  
-                                        Text('𐤫𐤲𐤦𐤳 \n𐤨𐤯𐤦𐤫 ',
-                                            textAlign: TextAlign.start,
-                                            style: TextStyle(
-                                                height: 1,
-                                                letterSpacing:-1,
-                                                fontFamily:
-                                                    GoogleFonts.notoSansLydian()
-                                                        .fontFamily,
-                                                fontWeight: FontWeight.w900,         
-                                                color: defaultPalette
-                                                    .extras[0],
-                                                fontSize: 10)),                       
-                                                ],
-                                              ),
+                                  //FONT Title and SIZE AND SPACINGS  
+                                  Container(
+                                  margin: EdgeInsets.only(left:2, right:2),
+                                  padding: EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                  color:defaultPalette.primary,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: defaultPalette.extras[0], width: 2)
                                   ),
-                                  titleTile('font', TablerIcons.currency_florin),
-                                  Row(
+                                  //FONT Title and SIZE AND SPACINGS
+                                  child:  Column(
                                     children: [
-                                      Expanded(
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                            whichTextPropertyTabIsClicked = 1;
-                                            textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked);
-                                          });
-                                          },
-                                          child: Container(
-                                            alignment:Alignment(0,0),
-                                            padding:EdgeInsets.all(2),
-                                            decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(10), 
-                                            color:defaultPalette.secondary,
-                                            border: Border.all(
-                                              width:0.2
-                                            )
+                                      Container(
+                                      width: width,
+                                      padding: EdgeInsets.all(6).copyWith(left:8),
+                                      margin: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: defaultPalette.secondary,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(
+                                          width: 2,
+                                          color: defaultPalette.extras[0])
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('FO \nNT ',
+                                          textAlign: TextAlign.start,
+                                          style: TextStyle(
+                                            height: 1,
+                                            fontFamily:
+                                                GoogleFonts.quintessential()
+                                                    .fontFamily,
+                                            // letterSpacing:-1,
+                                            fontWeight: FontWeight.w900,        
+                                            color: defaultPalette
+                                                .extras[0],
+                                          fontSize: 10)),
+                                          Text('കുടും \nബം ',
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                  height: 0.6,
+                                                  fontFamily: GoogleFonts.chilanka().fontFamily,
+                                                  color: defaultPalette.extras[0],
+                                                  fontSize: 15)),
+                                          Text('書体 \n活字体 ',
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                  height: 1,
+                                                  letterSpacing: -0.2,
+                                                  fontFamily:
+                                                      GoogleFonts.zenAntiqueSoft()
+                                                          .fontFamily,
+                                                  color: defaultPalette
+                                                      .extras[0],
+                                                  fontSize: 10)),  
+                                          Text('𐤫𐤲𐤦𐤳 \n𐤨𐤯𐤦𐤫 ',
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                  height: 1,
+                                                  letterSpacing:-1,
+                                                  fontFamily:
+                                                      GoogleFonts.notoSansLydian()
+                                                          .fontFamily,
+                                                  fontWeight: FontWeight.w900,         
+                                                  color: defaultPalette
+                                                      .extras[0],
+                                                  fontSize: 10)),                       
+                                                  ],
+                                                ),
+                                    ),
+                                    titleTile('font', TablerIcons.currency_florin),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                              whichTextPropertyTabIsClicked = 1;
+                                              textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked);
+                                            });
+                                            },
+                                            child: Container(
+                                              alignment:Alignment(0,0),
+                                              padding:EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10), 
+                                              color:defaultPalette.secondary,
+                                              border: Border.all(
+                                                width:0.2
+                                              )
+                                              ),
+                                              child: Text((item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes[Attribute.font.key]
+                                                    ?.value
+                                                    ?.replaceAll( RegExp(r'_regular'), '') ?? 'mixFonts'),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                  fontFamily: (item.textEditorController
+                                                    .getSelectionStyle()
+                                                    .attributes[
+                                                        Attribute.font.key]
+                                                  ?.value )
+                                                  ),        
+                                                          ),
                                             ),
-                                            child: Text((item.textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes[Attribute.font.key]
-                                                  ?.value
-                                                  ?.replaceAll( RegExp(r'_regular'), '') ?? 'mixFonts'),
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                fontFamily: (item.textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes[
-                                                      Attribute.font.key]
-                                                ?.value )
-                                                ),        
-                                                        ),
                                           ),
                                         ),
-                                      ),
+                                      ],
+                                    ),
+                                    Row(children:fontPropertyTile(0)),
+                                    Row(children:fontPropertyTile(1)),
+                                    Row(children:fontPropertyTile(2)),
+                                    Row(children:fontPropertyTile(3)),
                                     ],
-                                  ),
-                                  Row(children:fontPropertyTile(0)),
-                                  Row(children:fontPropertyTile(1)),
-                                  Row(children:fontPropertyTile(2)),
-                                  Row(children:fontPropertyTile(3)),
-                                  ],
-                                  ),
-                                  ),
+                                    ),
+                                    ),
                                   
                                   const SizedBox(
                                       height:5
@@ -11675,22 +7539,50 @@ Future<void> _initialize() async {
                                             ),
                                           ),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(0.0),
-                                          child: DecoratedBox(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.fromBorderSide(
-                                                BorderSide.none,
-                                              ),
-                                              color: hexToColor(item.textEditorController
-                                                .getSelectionStyle()
-                                                .attributes['color']
-                                                ?.value),
+                                        DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border:const Border.fromBorderSide(
+                                              BorderSide.none,
                                             ),
-                                            child: SizedBox(
-                                              width: 15,
-                                              height: 15,
+                                            color: hexToColor(item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes['color']
+                                              ?.value),
+                                          ),
+                                          child:const SizedBox(
+                                            width: 15,
+                                            height: 15,
+                                          ),
+                                        ),
+                                        const SizedBox(width:2) ,
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(9999),
+                                          child: Material(
+                                            color: defaultPalette.transparent,
+                                            child: InkWell(
+                                              focusColor: defaultPalette.primary,
+                                              hoverColor: defaultPalette.primary,
+                                              highlightColor: defaultPalette.primary,
+                                              onTap: () {
+                                                EyeDropper.enableEyeDropper(context, (p0) {
+                                                  Color color = (p0?? hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value) );
+                                                  setState(() {
+                                                  item.textEditorController
+                                                      .formatSelection(
+                                                    ColorAttribute(
+                                                        '#${colorToHex(color)}'),
+                                                  );
+                                                  hexController.text =
+                                                      '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                
+                                                });
+                                                },);
+                                              },
+                                              child: const Icon(
+                                                TablerIcons.color_picker,
+                                                size: 19,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -11734,6 +7626,7 @@ Future<void> _initialize() async {
                                             );
                                             hexController.text =
                                                 '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                          
                                           });
                                           },
                                       ),
@@ -16681,22 +12574,37 @@ Future<void> _initialize() async {
                                   borderRadius:
                                 BorderRadius.circular(60),
                                   child: MultipleBalloons(
-                                  minSize: 5,
-                                  maxSize: 20,
+                                  minSize: 15,
+                                  maxSize: 30,
                                   maxSpeed: 1.5,
-                                  maxSwayAmount: 10,
+                                  maxSwayAmount: 25,
                                   minSwayAmount: 2,
                                   balloonCount: 8,
                                   colors: [
-                                    defaultPalette.extras[0],
-                                    defaultPalette.extras[9],
-                                    defaultPalette.extras[6],
-                                    defaultPalette.extras[3],
-                                    defaultPalette.tertiary,
-                                    defaultPalette.extras[1],
-                                    defaultPalette.extras[3],
-                                    defaultPalette.tertiary,
-                                  ],
+                                    whichPropertyTabIsClicked ==2
+                                    ? defaultPalette.tertiary
+                                    : whichPropertyTabIsClicked ==3
+                                    ? defaultPalette.extras[1]
+                                    : defaultPalette.extras[3],
+                                    
+                                    whichPropertyTabIsClicked ==2
+                                    ? defaultPalette.tertiary
+                                    : whichPropertyTabIsClicked ==3
+                                    ? defaultPalette.extras[1]
+                                    : defaultPalette.extras[3],
+                                    defaultPalette.secondary,
+
+                                  ]
+                                  // [
+                                  //   defaultPalette.extras[0],
+                                  //   defaultPalette.extras[9],
+                                  //   defaultPalette.extras[6],
+                                  //   defaultPalette.extras[3],
+                                  //   defaultPalette.tertiary,
+                                  //   defaultPalette.extras[1],
+                                  //   defaultPalette.extras[3],
+                                  //   defaultPalette.tertiary,
+                                  // ],
                                 ),
                                 ),
                               ),
@@ -16740,9 +12648,7 @@ Future<void> _initialize() async {
                                       Padding(
                                         padding: const EdgeInsets.only(left:2.0),
                                         child: Text(
-                                          '' +sheetDecorationList[inx].id =='yo'
-                                          ?''
-                                          : (decorationIndex == -1  
+                                          '' + (decorationIndex == -1  
                                           ? (sheetDecorationList[inx] as SuperDecoration) 
                                           : sheetDecorationList[itinx]).runtimeType.toString()
                                           .replaceAll(RegExp(r'Decoration'), '')
@@ -16820,19 +12726,11 @@ Future<void> _initialize() async {
 
                                               try {
                                                 if (currentItemDecoration is SuperDecoration) {
-                                                  var updatedDecoration = currentItemDecoration.copyWith(name: value);
-                                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                                  if (index != -1) {
-                                                    sheetDecorationList[index] = updatedDecoration;
-                                                    // Update the name in the sheetListItem
-                                                  }
+                                                  currentItemDecoration= currentItemDecoration.copyWith(name: value);
+                                                  sheetDecorationList[itinx] = currentItemDecoration;
                                                 } else if (currentItemDecoration is ItemDecoration) {
-                                                  var updatedDecoration = currentItemDecoration.copyWith(name: value);
-                                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                                  if (index != -1) {
-                                                    sheetDecorationList[index] = updatedDecoration;
-                                                    // Update the name in the sheetListItem
-                                                    }
+                                                  currentItemDecoration = currentItemDecoration.copyWith(name: value);
+                                                  sheetDecorationList[itinx] = currentItemDecoration;
                                                 }
                                               } on Exception catch (e) {
                                                 print('Error updating decoration: $e');
@@ -17637,17 +13535,17 @@ Future<void> _initialize() async {
                                   if (decorationIndex != -1 && !isListDecorationLibraryToggled && itinx !=-1)
                                     if (sheetDecorationList[itinx]
                                       is ItemDecoration)
-                                    ...buildItemDecorationEditor(
+                                    ...buildItemDecorationEditor(context,
                                         (sheetDecorationList[itinx]
                                             as ItemDecoration), shadowLayerIndex: sheetDecorationVariables[decorationIndex].listShadowLayerSelectedIndex),
                                   //If selected layer is superdecoration
                                   if (decorationIndex != -1 && !isListDecorationLibraryToggled && itinx !=-1)
                                     if (sheetDecorationList[itinx]
                                       is SuperDecoration)
-                                        ...buildSuperDecorationEditor(sheetDecorationList[itinx]
+                                        ...buildSuperDecorationEditor(context,sheetDecorationList[itinx]
                                             as SuperDecoration),
                                   if(decorationIndex == -1 && !isListDecorationLibraryToggled )
-                                  ...buildSuperDecorationEditor(sheetDecorationList[inx] as SuperDecoration),
+                                  ...buildSuperDecorationEditor(context,sheetDecorationList[inx] as SuperDecoration),
                                             
                                   //THE LIBRARY FOR DECORATION          
                                   if(isListDecorationLibraryToggled)
@@ -18333,7 +14231,7 @@ Future<void> _initialize() async {
                                                         itinx = int.tryParse((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
        
                                                         var itemDecoration = sheetDecorationList[itinx];
-                                                        listDecorationNameController .text =itemDecoration.name;
+                                                        itemDecorationNameController .text =itemDecoration.name;
                                                         isListDecorationLibraryToggled =false;
                                                         print(decorationIndex);
                                                         // updateListDecorationVariables(sIndex: -1);
@@ -18573,6 +14471,7 @@ Future<void> _initialize() async {
   }
 
   List<Widget> buildSuperDecorationEditor(
+    BuildContext context,
     SuperDecoration superDecoration,
   ){
     if(superDecoration.itemDecorationList.isEmpty){
@@ -18637,7 +14536,7 @@ Future<void> _initialize() async {
               ),
             ),
             if(sheetDecorationVariables[index].isExpanded)
-            ...buildItemDecorationEditor(itemDecoration, index: index, shadowLayerIndex: sheetDecorationVariables[index].listShadowLayerSelectedIndex)
+            ...buildItemDecorationEditor(context, itemDecoration, index: index, shadowLayerIndex: sheetDecorationVariables[index].listShadowLayerSelectedIndex)
           ]);
       } else {
         return GestureDetector(
@@ -18706,6 +14605,7 @@ Future<void> _initialize() async {
   }
 
   List<Widget> buildItemDecorationEditor(
+    BuildContext context,
     ItemDecoration itemDecoration,
     {
       int index = -1,
@@ -18807,7 +14707,7 @@ Future<void> _initialize() async {
           pinned['decoration']['image']['filterQuality'] ||
           pinned['decoration']['image']['invertColors'] ||
           pinned['decoration']['boxShadow'])
-        buildDecorationEditor(itemDecoration, index: index, shadowLayerIndex: shadowLayerIndex),
+        buildDecorationEditor(context, itemDecoration, index: index, shadowLayerIndex: shadowLayerIndex),
     ];
   }
 
@@ -18924,10 +14824,7 @@ Future<void> _initialize() async {
               currentItemDecoration.copyWith(
                   padding: inset);
         }
-        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-        if (index != -1) {
-          sheetDecorationList[index] = currentItemDecoration;
-        }
+        sheetDecorationList[tmpinx] = currentItemDecoration;
       });
     }
 
@@ -18979,10 +14876,7 @@ Future<void> _initialize() async {
               currentItemDecoration.copyWith(
                   padding: inset);
         }
-        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-        if (index != -1) {
-          sheetDecorationList[index] = currentItemDecoration;
-        }
+        sheetDecorationList[tmpinx] = currentItemDecoration;
       });
     }
 
@@ -19187,10 +15081,7 @@ Future<void> _initialize() async {
                                   false;
                             }
                           }
-                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                          if (index != -1) {
-                            sheetDecorationList[index] = currentItemDecoration;
-                          }
+                          sheetDecorationList[tmpinx] = currentItemDecoration;
 
 
                         });
@@ -19949,6 +15840,7 @@ Future<void> _initialize() async {
   }
 
   Widget buildDecorationEditor(
+    BuildContext context,
     ItemDecoration? itemDecoration,
     {
       int index =-1,
@@ -20144,10 +16036,7 @@ Future<void> _initialize() async {
                         );
 
                         // Update the decoration in the sheetDecorationList
-                        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                        if (index != -1) {
-                          sheetDecorationList[index] = currentItemDecoration;
-                        }
+                        sheetDecorationList[tmpinx] = currentItemDecoration;
  
                       });
 
@@ -20241,10 +16130,7 @@ Future<void> _initialize() async {
                             );
 
                             // Update the decoration in the sheetDecorationList
-                            int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                            if (index != -1) {
-                              sheetDecorationList[index] = currentItemDecoration;
-                            }
+                            sheetDecorationList[tmpinx] = currentItemDecoration;
  
                           });
                         },
@@ -20409,10 +16295,7 @@ Future<void> _initialize() async {
                                         decoration: currentItemDecoration
                                             .decoration
                                             .copyWith(color: hexToColor(value)));
-                              int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                            if (index != -1) {
-                              sheetDecorationList[index] = currentItemDecoration;
-                            }
+                              sheetDecorationList[tmpinx] = currentItemDecoration;
                               });
                             },
                             textAlignVertical: TextAlignVertical.top,
@@ -20461,6 +16344,35 @@ Future<void> _initialize() async {
                       ),
                       SizedBox(
                         width: 2,
+                      ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(9999),
+                        child: Material(
+                          color: defaultPalette.transparent,
+                          child: InkWell(
+                            focusColor: defaultPalette.primary,
+                            hoverColor: defaultPalette.primary,
+                            highlightColor: defaultPalette.primary,
+                            onTap: () {
+                              EyeDropper.enableEyeDropper(context, (value) {
+                                setState(() {
+                                currentItemDecoration =
+                                    currentItemDecoration.copyWith(
+                                        decoration: currentItemDecoration
+                                            .decoration
+                                            .copyWith(color: value));
+                                
+                                  sheetDecorationList[tmpinx] = currentItemDecoration;
+                                
+                              });
+                              },);
+                            },
+                            child: const Icon(
+                              TablerIcons.color_picker,
+                              size: 19,
+                            ),
+                          ),
+                        ),
                       ),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(500),
@@ -20550,12 +16462,9 @@ Future<void> _initialize() async {
                                           (currentItemDecoration
                                             .decoration
                                             .color ??defaultPalette.transparent).alpha)));
-                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                            
+                                           
                                   setState(() { 
-                                  if (index != -1) {
-                                    sheetDecorationList[index] = currentItemDecoration;
-                                  }
+                                  sheetDecorationList[tmpinx] = currentItemDecoration;
                                   });
                                 },
                               ),
@@ -20578,12 +16487,9 @@ Future<void> _initialize() async {
                                             .decoration
                                             .copyWith(color: value.toColor().withAlpha((currentItemDecoration
                                                     .decoration.color ??defaultPalette.transparent).alpha)));
-                                      int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                  
+                                      
                                       setState(() {
-                                      if (index != -1) {
-                                        sheetDecorationList[index] = currentItemDecoration;
-                                      }
+                                      sheetDecorationList[tmpinx] = currentItemDecoration;
                                       });
                                     },
                                   ),
@@ -20602,13 +16508,9 @@ Future<void> _initialize() async {
                           currentItemDecoration =currentItemDecoration.copyWith(decoration: currentItemDecoration.decoration
                                     .copyWith(color: (currentItemDecoration.decoration.color ??
                                                 defaultPalette.transparent).withAlpha(value)));
-                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                          
                           
                           setState(() {
-                          if (index != -1) {
-                            sheetDecorationList[index] = currentItemDecoration;
-                          }
+                          sheetDecorationList[tmpinx] = currentItemDecoration;
                           });
                         },
                       ),
@@ -20667,10 +16569,7 @@ Future<void> _initialize() async {
                                       .copyWith(
                                           border: Border.all(
                                               color: hexToColor(value))));
-                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                          if (index != -1) {
-                            sheetDecorationList[index] = currentItemDecoration;
-                          }                    
+                          sheetDecorationList[tmpinx] = currentItemDecoration;                   
                         });
                       },
                       textAlignVertical: TextAlignVertical.top,
@@ -20721,6 +16620,36 @@ Future<void> _initialize() async {
                 ),
                 SizedBox(
                   width: 2,
+                ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(9999),
+                  child: Material(
+                    color: defaultPalette.transparent,
+                    child: InkWell(
+                      focusColor: defaultPalette.primary,
+                      hoverColor: defaultPalette.primary,
+                      highlightColor: defaultPalette.primary,
+                      onTap: () {
+                        EyeDropper.enableEyeDropper(context, (value) {
+                          setState(() {
+                          currentItemDecoration =
+                        currentItemDecoration.copyWith(
+                            decoration: currentItemDecoration.decoration
+                                .copyWith(
+                                    border: Border.all(
+                                        color: value?? defaultPalette.extras[0])));
+                          
+                          sheetDecorationList[tmpinx] = currentItemDecoration;
+                          
+                        });
+                        },);
+                      },
+                      child: const Icon(
+                        TablerIcons.color_picker,
+                        size: 19,
+                      ),
+                    ),
+                  ),
                 ),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(500),
@@ -20992,10 +16921,7 @@ Future<void> _initialize() async {
                                 ),
                               ));        
                             setState(() {
-                              int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }
+                              sheetDecorationList[tmpinx] = currentItemDecoration;
                             });
                           },
                         ),
@@ -21031,10 +16957,7 @@ Future<void> _initialize() async {
                                 ),
                               ));        
                             setState(() {
-                              int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }
+                              sheetDecorationList[tmpinx] = currentItemDecoration;
                             });
                           },
                         ),
@@ -21062,7 +16985,7 @@ Future<void> _initialize() async {
           SizedBox(width: 2, height: 3),
         ],
         if (currentItemDecoration.pinned['decoration']['boxShadow']) ...[
-          buildShadowEditor(shadowLayerIndex: shadowLayerIndex, sIndex: index),
+          buildShadowEditor(context, shadowLayerIndex: shadowLayerIndex, sIndex: index),
           SizedBox(width: 2, height: 2),
         ],
 
@@ -21082,6 +17005,7 @@ Future<void> _initialize() async {
   }
 
   Widget buildShadowEditor(
+    BuildContext context,
     {
       int sIndex = -1,
       int shadowLayerIndex = -1,
@@ -21175,10 +17099,7 @@ Future<void> _initialize() async {
                   transform: currentItemDecoration.transform
                   );
                
-               int inx = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                if (inx != -1) {
-                  sheetDecorationList[inx] = currentItemDecoration;
-                }
+               sheetDecorationList[tmpinx] = currentItemDecoration;
               });
             },
             child: Text(
@@ -21248,12 +17169,7 @@ Future<void> _initialize() async {
                   pinned: currentItemDecoration.pinned,
                   transform: currentItemDecoration.transform
                   );
-                int inx = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                if (inx != -1) {
-                setState(() {
-                  sheetDecorationList[inx] = currentItemDecoration;
-                });
-                }        
+                sheetDecorationList[tmpinx] = currentItemDecoration;      
               });
             },
           ),
@@ -21390,10 +17306,7 @@ Future<void> _initialize() async {
                                                 .decoration
                                                 .copyWith(
                                                     boxShadow: currentShadow));
-                                    int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                    if (index != -1) {
-                                      sheetDecorationList[index] = currentItemDecoration;
-                                    } 
+                                    sheetDecorationList[tmpinx] = currentItemDecoration;
                                     sheetDecorationVariables[sIndex].listShadowFocusNodes = List.generate( 
                                       currentItemDecoration.decoration.boxShadow!.length,(index) => List.generate( 5,(index) => FocusNode(),)
                                     ,);     
@@ -21549,10 +17462,7 @@ Future<void> _initialize() async {
                                                   pinned: currentItemDecoration.pinned,
                                                   transform: currentItemDecoration.transform
                                                   );    
-                                               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                                if (index != -1) {
-                                                  sheetDecorationList[index] = currentItemDecoration;
-                                                }                         
+                                               sheetDecorationList[tmpinx] = currentItemDecoration;                       
                                               });
                                             },
                                             // textAlignVertical: TextAlignVertical.top,
@@ -21804,10 +17714,7 @@ Future<void> _initialize() async {
                                                   pinned: currentItemDecoration.pinned,
                                                   transform: currentItemDecoration.transform
                                                   );    
-                                               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                                if (index != -1) {
-                                                  sheetDecorationList[index] = currentItemDecoration;
-                                                }          
+                                               sheetDecorationList[tmpinx] = currentItemDecoration;       
                                           sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = (shadowLayerIndex -
                                                                 1)
                                                             .clamp(0,
@@ -21857,10 +17764,7 @@ Future<void> _initialize() async {
                                                   pinned: currentItemDecoration.pinned,
                                                   transform: currentItemDecoration.transform
                                                   );    
-                                               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                                if (index != -1) {
-                                                  sheetDecorationList[index] = currentItemDecoration;
-                                                }          
+                                               sheetDecorationList[tmpinx] = currentItemDecoration;         
                                           sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = shadowLayerIndex +1;            
                                           //  shadowLayerIndex = currentShadow.length-1;
                                         });
@@ -21891,15 +17795,64 @@ Future<void> _initialize() async {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Text(
-                          ' ${(ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
-                          style: GoogleFonts.lexend(
-                              fontSize: 14,
-                              letterSpacing: -1,
-                              color: defaultPalette.extras[0]),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Text(
+                                ' ${(ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
+                                style: GoogleFonts.lexend(
+                                    fontSize: 14,
+                                    letterSpacing: -1,
+                                    color: defaultPalette.extras[0]),
+                              ),
+                            ),
+                          ),
+                          ClipRRect(
+                        borderRadius: BorderRadius.circular(9999),
+                        child: Material(
+                          color: defaultPalette.transparent,
+                          child: InkWell(
+                            focusColor: defaultPalette.primary,
+                            hoverColor: defaultPalette.primary,
+                            highlightColor: defaultPalette.primary,
+                            onTap: () {
+                              EyeDropper.enableEyeDropper(context, (value) {
+                                setState(() {
+                                  currentShadow[
+                                      shadowLayerIndex] = currentShadow[
+                                          shadowLayerIndex]
+                                      .copyWith(
+                                          color: value);
+                                  currentItemDecoration =
+                                      currentItemDecoration.copyWith(
+                                          decoration: currentItemDecoration.decoration
+                                              .copyWith(boxShadow: currentShadow));
+                                  currentItemDecoration = ItemDecoration(
+                                  id:currentItemDecoration.id,
+                                  alignment: currentItemDecoration.alignment,
+                                  decoration: currentItemDecoration.decoration
+                                        .copyWith(boxShadow: [...currentShadow]),
+                                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
+                                  margin: currentItemDecoration.margin,
+                                  padding: currentItemDecoration.padding,
+                                  name: currentItemDecoration.name,
+                                  pinned: currentItemDecoration.pinned,
+                                  transform: currentItemDecoration.transform
+                                  );    
+                                sheetDecorationList[tmpinx] = currentItemDecoration;                  
+                          });
+                              },);
+                            },
+                            child: const Icon(
+                              TablerIcons.color_picker,
+                              size: 19,
+                            ),
+                          ),
                         ),
+                      ),
+                        ],
                       ),
                       //list Wheel COLOR
                       WheelPicker(
@@ -21933,10 +17886,7 @@ Future<void> _initialize() async {
                             pinned: currentItemDecoration.pinned,
                             transform: currentItemDecoration.transform
                             );    
-                          int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                          if (index != -1) {
-                            sheetDecorationList[index] = currentItemDecoration;
-                          }                      
+                          sheetDecorationList[tmpinx] = currentItemDecoration;                  
                           });
                           
                         },
@@ -21967,10 +17917,7 @@ Future<void> _initialize() async {
                               pinned: currentItemDecoration.pinned,
                               transform: currentItemDecoration.transform
                               );    
-                            int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                            if (index != -1) {
-                              sheetDecorationList[index] = currentItemDecoration;
-                            }                        
+                            sheetDecorationList[tmpinx] = currentItemDecoration;                  
                           });
                           
                         },
@@ -22162,10 +18109,7 @@ Future<void> _initialize() async {
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-              if (index != -1) {
-                sheetDecorationList[index] = currentItemDecoration;
-              }
+              sheetDecorationList[tmpinx] = currentItemDecoration;
             }
           };
         } else if (value is FilterQuality) {
@@ -22184,10 +18128,7 @@ Future<void> _initialize() async {
                 filterQuality: value,
                 invertColors: currentDecorationImage.invertColors,
               )));
-               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }
+              sheetDecorationList[tmpinx] = currentItemDecoration;
             }
           };
         } else if (value is double) {
@@ -22209,10 +18150,7 @@ Future<void> _initialize() async {
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }
+             sheetDecorationList[tmpinx] = currentItemDecoration;
             }
 
             currentItemDecoration = currentItemDecoration.copyWith(
@@ -22237,10 +18175,7 @@ Future<void> _initialize() async {
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }
+              sheetDecorationList[tmpinx] = currentItemDecoration;
             }
 
             currentItemDecoration = currentItemDecoration.copyWith(
@@ -22262,10 +18197,7 @@ Future<void> _initialize() async {
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-               int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }
+              sheetDecorationList[tmpinx] = currentItemDecoration;
             }
           };
         }
@@ -22343,10 +18275,7 @@ Future<void> _initialize() async {
 
                 currentItemDecoration = currentItemDecoration.copyWith(
                     decoration: currentItemDecoration.decoration);
-                 int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }    
+                sheetDecorationList[tmpinx] = currentItemDecoration; 
               });
             },
             child: Icon(
@@ -22414,10 +18343,7 @@ Future<void> _initialize() async {
 
                   currentItemDecoration = currentItemDecoration.copyWith(
                       decoration: currentItemDecoration.decoration);
-                   int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }    
+                  sheetDecorationList[tmpinx] = currentItemDecoration; 
                 });
               },
             ),
@@ -22497,10 +18423,7 @@ Future<void> _initialize() async {
 
                 currentItemDecoration = currentItemDecoration.copyWith(
                     decoration: currentItemDecoration.decoration);
-                 int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }    
+                sheetDecorationList[tmpinx] = currentItemDecoration;
               });
             },
             child: Row(
@@ -22571,10 +18494,7 @@ Future<void> _initialize() async {
 
                   currentItemDecoration = currentItemDecoration.copyWith(
                       decoration: currentItemDecoration.decoration);
-                   int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }    
+                  sheetDecorationList[tmpinx] = currentItemDecoration;
                 });
               },
             ),
@@ -22699,10 +18619,7 @@ Future<void> _initialize() async {
                                   fit: currentDecorationImage !=null
                                     ? currentDecorationImage.fit
                                     : BoxFit.fitWidth)));
-                         int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                          if (index != -1) {
-                            sheetDecorationList[index] = currentItemDecoration;
-                          }                          
+                         sheetDecorationList[tmpinx] = currentItemDecoration;                     
                         });
                       }
                     }
@@ -22757,10 +18674,7 @@ Future<void> _initialize() async {
                                                     .fit
                                                 : BoxFit
                                                     .fitWidth)));
-                                      int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                      if (index != -1) {
-                                        sheetDecorationList[index] = currentItemDecoration;
-                                      }               
+                                    sheetDecorationList[tmpinx] = currentItemDecoration;             
                                     });
                                   }
                                 }, Icon(TablerIcons.photo_plus, size: 15),
@@ -22786,10 +18700,7 @@ Future<void> _initialize() async {
                                                   currentItemDecoration
                                                       .decoration
                                                       .backgroundBlendMode));
-                                  int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                                  if (index != -1) {
-                                    sheetDecorationList[index] = currentItemDecoration;
-                                  }                    
+                                sheetDecorationList[tmpinx] = currentItemDecoration;                  
                                 }, Icon(TablerIcons.trash, size: 15),
                                     isSelected: true),
                               ],
@@ -22970,10 +18881,7 @@ Future<void> _initialize() async {
                           currentItemDecoration =
                               currentItemDecoration.copyWith(
                                   decoration: currentItemDecoration.decoration);
-                           int index = sheetDecorationList.indexWhere((decoration) => decoration.id == currentItemDecoration.id);
-                              if (index != -1) {
-                                sheetDecorationList[index] = currentItemDecoration;
-                              }        
+                         sheetDecorationList[tmpinx] = currentItemDecoration;     
                         });
                       },
                       animationCurve: Curves.easeInOutExpo,
