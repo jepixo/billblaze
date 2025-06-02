@@ -140,7 +140,7 @@ ColorPalette againPalette = ColorPalette(
       
       Color(0xff4C1A57),//7
       
-      Color(0xff401F3E),//9
-      Color(0xff3C91E6),//10
-      Color(0xff083d77),//11
+      Color(0xff401F3E),//8
+      Color(0xff3C91E6),//9
+      Color(0xff083d77),//10
     ]);
