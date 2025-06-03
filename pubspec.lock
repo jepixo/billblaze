@@ -973,14 +973,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  minimap_scrollbar:
-    dependency: "direct main"
-    description:
-      name: minimap_scrollbar
-      sha256: "2801bced4cb5951614ca0bad0c06820776e7f6c1cb303d777e5991f04a7e2d2d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
   mobkit_dashed_border:
     dependency: "direct main"
     description:

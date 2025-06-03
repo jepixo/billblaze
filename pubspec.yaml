@@ -63,7 +63,6 @@ dependencies:
   cool_background_animation: ^0.0.6 
   axis_layout: ^1.0.1
   two_dimensional_scrollables: ^0.3.4
-  minimap_scrollbar: ^0.1.0
 
 dev_dependencies:
   hive_generator: ^2.0.1
