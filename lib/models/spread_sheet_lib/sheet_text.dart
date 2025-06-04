@@ -19,11 +19,19 @@ class SheetTextBox extends SheetItem {
   final List<Map<String, dynamic>> textEditorController;
   @HiveField(3)
   final SuperDecorationBox textDecoration;
+  @HiveField(4)
+  String name;
+  @HiveField(5)
+  bool hide;
+
+
   SheetTextBox({
     required this.textDecoration,
     required this.textEditorController,
     required super.id,
     required super.parentId,
+    required this.hide,
+    required this.name,
   });
 
   
@@ -35,6 +43,8 @@ class SheetText extends SheetItem {
   final FocusNode focusNode;
   final ScrollController scrollController;
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
+  String name;
+  bool hide;
   SuperDecoration textDecoration;
   //
   SheetText._({
@@ -43,6 +53,8 @@ class SheetText extends SheetItem {
     required this.textEditorController,
     required this.textEditorConfigurations,
     required this.textDecoration,
+    required this.name,
+    required this.hide,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -60,6 +72,8 @@ class SheetText extends SheetItem {
     QuillSimpleToolbar? toolBarConfigurations,
     QuillEditorConfigurations? textEditorConfigurations,
     required SuperDecoration textDecoration,
+    required String name,
+    required bool hide,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -80,7 +94,9 @@ class SheetText extends SheetItem {
         id: id,
         parentId: parentId,
         textEditorConfigurations: configurations,
-        textDecoration: textDecoration
+        textDecoration: textDecoration,
+        hide: hide,
+        name: name,
         );
   }
 
@@ -105,6 +121,8 @@ class SheetText extends SheetItem {
     String? id,
     String? parentId,
     SuperDecoration? textDecoration,
+    String? name,
+    bool? hide,
   }) {
     return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -113,6 +131,8 @@ class SheetText extends SheetItem {
       id: id ?? this.id,
       parentId: parentId ?? this.parentId,
       textDecoration: textDecoration ?? this.textDecoration,
+      hide: hide??this.hide,
+      name: name??this.name
     );
   }
 
@@ -124,6 +144,8 @@ class SheetText extends SheetItem {
             textEditorController.document.toDelta().toJson(),
         id: item.id,
         parentId: item.parentId,
+        hide: hide,
+        name: name,
         textDecoration: item.textDecoration.toSuperDecorationBox());
   }
 }

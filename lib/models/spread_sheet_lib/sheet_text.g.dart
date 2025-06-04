@@ -23,17 +23,23 @@ class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
           .toList(),
       id: fields[0] as String,
       parentId: fields[1] as String,
+      hide: fields[5] as bool,
+      name: fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTextBox obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(2)
       ..write(obj.textEditorController)
       ..writeByte(3)
       ..write(obj.textDecoration)
+      ..writeByte(4)
+      ..write(obj.name)
+      ..writeByte(5)
+      ..write(obj.hide)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

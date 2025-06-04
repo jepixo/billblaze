@@ -130,7 +130,9 @@ class SheetTableCellBox extends SheetItem {
         findItem: findItem, 
         textFieldTapDown: textFieldTapDown, 
         docString: sheetItem.textEditorController,
-        textDecoration: sheetItem.textDecoration.toSuperDecoration()
+        textDecoration: sheetItem.textDecoration.toSuperDecoration(),
+        hide: sheetItem.hide,
+        name: sheetItem.name,
         );
     }
     else if (sheetItem is SheetListBox){
@@ -148,6 +150,8 @@ class SheetTableCellBox extends SheetItem {
     required String parentId,
     required Function findItem,
     required Function textFieldTapDown,
+    required String name,
+    required bool hide,
     required List<Map<String, dynamic>>
         docString, // Use List<Map<String, dynamic>> directly
     required SuperDecoration textDecoration,
@@ -248,6 +252,8 @@ class SheetTableCellBox extends SheetItem {
 
     
     return SheetText(
+      name:name,
+      hide:hide,
       textEditorController: textController,
       textEditorConfigurations: textEditorConfigurations,
       id: newId,
