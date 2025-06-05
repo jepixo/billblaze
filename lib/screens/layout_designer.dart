@@ -235,7 +235,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   final FocusNode layoutNamefocusNode = FocusNode();
   final FocusNode decorationNameFocusNode = FocusNode();
   final FocusNode textDecorationNameFocusNode = FocusNode();
-  List<FocusNode> fontFocusNodes = List.generate(6, (e)=>FocusNode());
+  List<FocusNode> fontFocusNodes = List.generate(7, (e)=>FocusNode());
   zz.TransformationController transformationcontroller = zz.TransformationController();
   late TabController tabcunt;
   
@@ -307,7 +307,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool showDecorationLayers = true;
   bool isTableDecorationModeDropped = false;
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
-  SheetText item = SheetText(id: 'yo',parentId: 'yo', textDecoration: SuperDecoration(id: 'yo'),);
+  SheetText item = SheetText(
+    hide:true,
+    name: 'yo',
+    id: 'yo',parentId: 'yo', textDecoration: SuperDecoration(id: 'yo'),);
   SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration: SuperDecoration(id: 'yo'), sheetList: [],);
   late SheetTable sheetTableItem;
   var dragBackupValue;
@@ -439,13 +442,12 @@ Future<void> _initialize() async {
       var x = 80 / sHeight;
       wH1DividerPosition = wH1DividerPosition.clamp(50/sWidth,1);
       wVDividerPosition = wVDividerPosition.clamp(x, 1);
-      if (!ref.read(pgPropsEnableProvider)) {
-        wVDividerPosition = 20 / sHeight;
-      }
-      if (!hasRenderedOnce) {
+      wH2DividerPosition = wH2DividerPosition.clamp((170/sWidth), 0.48);
+      
+      // if (!hasRenderedOnce) {
         // Capture the image the first time the widget is inserted into the tree
         _renderPagePreviewOnProperties();
-      }
+      // }
     });
   }
 
@@ -544,6 +546,8 @@ Future<void> _initialize() async {
               docString: item.textEditorController,
               id: item.id,
               parentId: item.parentId,
+              name: item.name,
+              hide: item.hide,
               textDecoration: item.textDecoration.toSuperDecoration()
               );
           tEItem = tEItem.copyWith(
@@ -579,6 +583,8 @@ Future<void> _initialize() async {
             docString: item.textEditorController,
             id: item.id,
             parentId: item.parentId,
+            name: item.name,
+            hide: item.hide,
             textDecoration: item.textDecoration.toSuperDecoration()
             );
         tEItem = tEItem.copyWith(
@@ -600,6 +606,8 @@ Future<void> _initialize() async {
     String id = '',
     String parentId = '',
     bool shouldReturn = false,
+    bool hide = false,
+    String name = 'unlabeled',
     List<Map<String, dynamic>>?
         docString, // Use List<Map<String, dynamic>> directly
     required SuperDecoration textDecoration,
@@ -712,6 +720,8 @@ Future<void> _initialize() async {
     if (!shouldReturn) {
       setState(() {
         spreadSheetList[currentPageIndex].add(SheetText(
+            name:name,
+            hide:hide,
             textEditorController: textController,
             textEditorConfigurations: textEditorConfigurations,
             id: newId,
@@ -721,16 +731,21 @@ Future<void> _initialize() async {
         var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
         lm[keyIndex].spreadSheetList[currentPageIndex].sheetList.add(
             SheetTextBox(
+                name:name,
+                hide:hide,
                 textEditorController:
                     textController.document.toDelta().toJson(),
                 id: newId,
                 parentId: spreadSheetList[currentPageIndex].id,
                 textDecoration: textDecoration.toSuperDecorationBox()));
         lm[keyIndex].save();
+        saveDecorations(sheetDecorationList);
       });
     }
 
     return SheetText(
+      name:name,
+      hide:hide,
       textEditorController: textController,
       textEditorConfigurations: textEditorConfigurations,
       id: newId,
@@ -870,7 +885,10 @@ Future<void> _initialize() async {
   }
 
   SheetItem _sheetTableItemIterator(String id, SheetTable sheetTable) {
-    SheetItem requiredItem = SheetText(id: 'yo', parentId: '', textDecoration: SuperDecoration(id: ''));
+    SheetItem requiredItem = SheetText(
+      name:'unlabeled',
+      hide:true,
+      id: 'yo', parentId: '', textDecoration: SuperDecoration(id: ''));
     for (var i = 0; i < sheetTable.rowData.length; i++) {
       for (var v = 0; v < sheetTable.columnData.length; v++){
         // print('Length: ${sheetTable.cellData[i].length}');
@@ -1335,7 +1353,7 @@ Future<void> _initialize() async {
                           List.generate(sheetList.sheetList.length, (index) {
                         final sheetTextItem = sheetList.sheetList[index];
       
-                        if (sheetTextItem is SheetText) {
+                        if (sheetTextItem is SheetText && !sheetTextItem.hide) {
                           // print('in buildSheetListWidget item is: $item');
                           var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
         
@@ -1569,7 +1587,8 @@ Future<void> _initialize() async {
       borderRadius:BorderRadius.circular(0),
       child: buildDecoratedContainer(
         decor,
-         QuillEditor(
+        !sheetText.hide?
+        QuillEditor(
           key: ValueKey(sheetText.id),
           configurations: QuillEditorConfigurations(
             scrollable: false,
@@ -1604,7 +1623,8 @@ Future<void> _initialize() async {
           ),
           focusNode: FocusNode(),
           scrollController: ScrollController(),
-        ), false
+        ) : SizedBox(), 
+        false
       ),
     );
                                        
@@ -2079,7 +2099,8 @@ Future<void> _initialize() async {
     });
     } on Exception catch (e) {
       setState(() {
-      item = SheetText(id: '', parentId: '', textDecoration: SuperDecoration(id:'yo'));
+      item = SheetText(id: '', parentId: '', textDecoration: SuperDecoration(id:'yo'),name:'unlabeled',
+            hide:true,);
       panelIndex.id = '';
     });
     }
@@ -2435,7 +2456,7 @@ Future<void> _initialize() async {
                                                   rowData: defaultSheetTableRowData(newId, newDecoration.id),
                                                   pinnedColumns: 1,
                                                   pinnedRows: 1,
-                                                  sheetTableDecoration: SuperDecoration(id: newDecoration.id)
+                                                  sheetTableDecoration: newDecoration
                                                   )
                                               );
                                             });
@@ -3535,15 +3556,16 @@ Future<void> _initialize() async {
                                             details.delta.dx /
                                                 context.size!.width)
                                         .clamp(0.1, 0.6);
+
                                     setState(() {
                                       wH2DividerPosition =
                                           (newPosition - .9 + wH1DividerPosition)
                                               .abs()
-                                              .clamp(0.21, 0.48);
+                                              .clamp((170/sWidth), 0.48);
                                     });
                                   },
                                   child: Container(
-                                    color: Colors.transparent,
+                                    color: defaultPalette.transparent,
                                     height: sHeight,
                                     width: 8,
                                   ),
@@ -5316,23 +5338,62 @@ Future<void> _initialize() async {
       borderRadius:
           BorderRadius.circular(10),
     ),
-    child: Row(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          child: const Icon(
-            TablerIcons.cursor_text,
-            size: 15,
-          ),
+        if(sheetText.name != 'unlabeled')
+        ...[Text(
+          sheetText.name,
+          style: GoogleFonts.lexend(
+            letterSpacing: -1,
+            height:0.9,
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+            color: defaultPalette.black),
         ),
-        Expanded(
-          child: QuillEditor(
-            configurations: sheetText
-                .textEditorConfigurations,
-            focusNode:
-                sheetText.focusNode,
-            scrollController:
-                ScrollController(),
-          ),
+        SizedBox(height:2),],
+        Row(
+          children: [
+            Container(
+              child: const Icon(
+                TablerIcons.cursor_text,
+                size: 15,
+              ),
+            ),
+            Expanded(
+              child: QuillEditor(
+                configurations: sheetText
+                    .textEditorConfigurations,
+                focusNode:
+                    sheetText.focusNode,
+                scrollController:
+                    ScrollController(),
+              ),
+            ),
+            if(sheetText.hide)
+            ...[
+            SizedBox(width:2),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(9999),
+              child: Material(
+                color: defaultPalette.transparent,
+                child: InkWell(
+                  focusColor: defaultPalette.primary,
+                  hoverColor: defaultPalette.primary,
+                  highlightColor: defaultPalette.primary,
+                  onTap: () {
+                    setState(() {
+                      sheetText.hide = !sheetText.hide;
+                    });
+                  },
+                  child: const Icon(
+                    TablerIcons.eye_closed,
+                    size: 15,
+                  ),
+                ),
+              ),
+            ),]
+          ],
         ),
       ],
     ),
@@ -5346,7 +5407,7 @@ Future<void> _initialize() async {
     sheetTable.rowData.forEach((element) => tableHeight += element.size,);
     sheetTable.columnData.forEach((element) => tableWidth += element.size,);
     return Padding(
-      padding: const EdgeInsets.all(4).copyWith(right:3),
+      padding: const EdgeInsets.all(4).copyWith(right:4),
       child: GestureDetector(
       onTap: () {
       _findSheetTableItem(sheetTable);
@@ -5363,7 +5424,7 @@ Future<void> _initialize() async {
           BorderSide(
           strokeAlign:
               BorderSide.strokeAlignOutside,
-          width: 3,
+          width: 2,
           color:defaultPalette.extras[3],): BorderSide.none
         ),
       ),
@@ -6138,6 +6199,9 @@ Future<void> _initialize() async {
                   TextEditingController()
                   ..text =
                       '${(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'.0$'), '') ?? '0')}',
+                  TextEditingController()
+                  ..text =
+                      '${item.name}',
                 
                  ];
                 
@@ -6588,7 +6652,7 @@ Future<void> _initialize() async {
                                   //Selected Text
                                   Container(
                                     width: width,
-                                    padding: EdgeInsets.all(6).copyWith(left:8),
+                                    padding: EdgeInsets.all(4).copyWith(left:8),
                                     margin: EdgeInsets.all(2),
                                     decoration: BoxDecoration(
                                       color: defaultPalette.secondary,
@@ -6611,6 +6675,114 @@ Future<void> _initialize() async {
                                           ],
                                         ),
                                       ),
+                                  //'label'
+                                  Row(
+                                    children: [
+                                      Expanded(child: titleTile('label', TablerIcons.signature, fontSize:15)),
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: 20,
+                                          child: TextField(
+                                            focusNode: fontFocusNodes[6],
+                                            controller: fontTextControllers[4],
+                                            enabled: !item.parentId.startsWith('TB'),
+                                            onSubmitted: (value) {
+                                              setState(() {
+                                                item.name = value;
+                                              });
+                                            },
+                                            textAlignVertical: TextAlignVertical.top,
+                                            textAlign: TextAlign.end,
+                                            cursorColor: defaultPalette.tertiary,
+                                            decoration: InputDecoration(
+                                              contentPadding: const EdgeInsets.only(left: 2),
+                                              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                              hoverColor: defaultPalette.transparent,
+                                              filled: true,
+                                              fillColor: defaultPalette.transparent,
+                                              border: InputBorder.none,
+                                              enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              disabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            style: GoogleFonts.lexend(
+                                                letterSpacing: -1,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                                color: defaultPalette.black),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width:2)  
+                                    ],
+                                  ), 
+                                  
+                                  const SizedBox(
+                                        height:4
+                                      ),
+                                  //'hide'
+                                  Container(
+                                    margin: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10), 
+                                    color:defaultPalette.secondary,
+                                    border: Border.all(
+                                      width:0.2
+                                    ),),
+                                    child: AnimatedToggleSwitch<bool>.dual(
+                                      current: item.hide,
+                                      first: false,
+                                      second: true,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          item.hide = value;    
+                                        });
+                                      },
+                                      animationCurve: Curves.easeInOutExpo,
+                                      animationDuration: Durations.medium4,
+                                      borderWidth:
+                                          2, // backgroundColor is set independently of the current selection
+                                      styleBuilder: (value) => ToggleStyle(
+                                          borderRadius: BorderRadius.circular(10),
+                                          indicatorBorderRadius: BorderRadius.circular(15),
+                                          borderColor: defaultPalette.secondary,
+                                          backgroundColor: defaultPalette.secondary,
+                                          indicatorBorder:
+                                              Border.all(
+                                                width: 1.2,
+                                                color: defaultPalette.extras[0]),
+                                          indicatorColor: defaultPalette
+                                              .primary), // indicatorColor changes and animates its value with the selection
+                                      iconBuilder: (value) {
+                                        return Icon(
+                                            value == false
+                                                ? Icons.remove_red_eye_outlined
+                                                : TablerIcons.eye_closed,
+                                            size: 18,
+                                            color: defaultPalette.extras[0]);
+                                      },
+                                      textBuilder: (value) {
+                                        return Text(
+                                          value == false ? 'visible' : 'hidden',
+                                          style: GoogleFonts.lexend(
+                                                letterSpacing: -1,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                                color: defaultPalette.black),
+                                        );
+                                      },
+                                      height: 23,
+                                      spacing: (width) - 100,
+                                    ),
+                                  ),
+                                  
                                   ],
                                   ),
                                   ),
@@ -7511,8 +7683,19 @@ Future<void> _initialize() async {
                                               controller: hexController,
                                               onSubmitted: (value) {
                                                 setState(() {
+                                                  item.textEditorController
+                                                .formatSelection(
+                                                  ColorAttribute(
+                                                  value),
+                                                  );
+                                                  hexController.text =
+                                                      '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                
                                                 });
                                               },
+                                              inputFormatters: [
+                                                HexColorInputFormatter()
+                                              ],
                                               textAlignVertical: TextAlignVertical.top,
                                               textAlign: TextAlign.center,
                                               cursorColor: defaultPalette.tertiary,
@@ -8777,10 +8960,6 @@ Future<void> _initialize() async {
                       whichTableDecorationIsClicked = s;
                       selectedDecorationTitle = p;
                       isTableDecorationModeDropped = false;
-                      // print('HEY ANM '+selectedDecorationTitle+whichTableDecorationIsClicked.toString());
-                      int rwinx = int.tryParse(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-4;
-                      int clinx = int.tryParse(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-4;
-                      int tbinx = int.tryParse(sheetTableItem.sheetTableDecoration.id.substring(sheetTableItem.sheetTableDecoration.id.indexOf('/') + 1))??-4;
                       _findSheetTableItem(sheetTableItem, updateVariables: false);
                     });
                   },
@@ -8814,6 +8993,7 @@ Future<void> _initialize() async {
               
               List<Widget> tablePropertyTile(int s, String name, IconData icon) {
                 return [
+                  SizedBox(width:2),
                   MouseRegion(
                     cursor: s!=5? SystemMouseCursors.resizeLeftRight: SystemMouseCursors.basic,
                     child: GestureDetector(
@@ -8948,44 +9128,13 @@ Future<void> _initialize() async {
                 ];
                 }
 
-              Row tableDataTile(String s, String p, IconData icon){
-                return Row(
-                  children: [
-                    Icon(icon,
-                      size: 16,
-                    ),
-                    Text( ' $s ',
-                      style: GoogleFonts.lexend(
-                          fontSize: 14,
-                          letterSpacing: -1,
-                          color: defaultPalette.extras[0]),
-                    ),
-                    Expanded(
-                      flex: 10,
-                      child: SizedBox(
-                        child: Text( ' $p ',
-                        textAlign: TextAlign.end,
-                        style: GoogleFonts.lexend(
-                            fontSize: 14,
-                            letterSpacing: -1,
-                            color: defaultPalette.extras[0]),
-                    ),
-                      ), 
-                    ),
-                    SizedBox(
-                      width: 2,
-                    ),
-                  ],
-                );
-              }
-
               Widget tableAxisCard(int axis) {
                 return Stack(
                   children: [
                     //BackgroundColor
                     Container(
                       width: width,
-                      height: 185,
+                      height: 195,
                       padding: EdgeInsets.only(left: 1),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
@@ -8999,6 +9148,7 @@ Future<void> _initialize() async {
                       left: 8,
                       top: 8,
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           ClipRRect(
                             borderRadius:BorderRadius.circular(99999),
@@ -9025,13 +9175,15 @@ Future<void> _initialize() async {
                                         { 
                                           
                                           return SheetTableCell(
-                                          id: '${numberToColumnLabel(index)}'+sheetTableItem.rowData.length.toString(), 
+                                          id: '${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(), 
                                           parentId: sheetTableItem.id, 
                                           sheetItem: _addTextField(
                                             parentId: sheetTableItem.id,
                                             textDecoration: sheetTableItem.sheetTableDecoration,
                                             shouldReturn: true,
                                             isCell: true,
+                                            hide:false,
+                                            name:'${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(),
                                             ));
                                         }
                                         )
@@ -9048,13 +9200,15 @@ Future<void> _initialize() async {
 
                                         sheetTableItem.cellData[i].add(
                                           SheetTableCell(
-                                            id: '${numberToColumnLabel(sheetTableItem.cellData[i].length)}'+i.toString(), 
+                                            id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+i.toString(), 
                                             parentId: parentId, 
                                             sheetItem: _addTextField(
                                             parentId: sheetTableItem.id,
                                             textDecoration: sheetTableItem.sheetTableDecoration,
                                             shouldReturn: true,
                                             isCell: true,
+                                            hide: false,
+                                            name: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString()
                                             )
                                             )
 
@@ -9065,174 +9219,191 @@ Future<void> _initialize() async {
                                 },
                                 child: Icon(
                                   TablerIcons.plus,
-                                  size: 20,
+                                  size:23,
                                 ),
                               ),
                             ),
                           ),
+                          Icon(
+                            axis == 0? TablerIcons.layout_rows : TablerIcons.layout_columns,
+                            size:28,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                              axis==0? ' rows ':' columns ',
+                              maxLines: 1,
+                              style: GoogleFonts.lexend(
+                                height: 0.8,
+                                fontSize:20,
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(
+                                height:4
+                              ),
+                              Text(
+                              '    id: '+ (axis==0? sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].id:sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].id),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.lexend(
+                                  height: 0.8,
+                                  fontSize: 8,
+                                  letterSpacing: -1,
+                                  fontWeight: FontWeight.w500),
+                              ),                        
+                            ],
+                          ),
                           SizedBox(
                             width: 2,
                           ),
-                          Icon(
-                            axis == 0? TablerIcons.layout_rows : TablerIcons.layout_columns,
-                            size: 20,
-                          ),
-                          Text(
-                          axis==0? ' rows ':' columns ',
-                          maxLines: 1,
-                          style: GoogleFonts.lexend(
-                            height: 0.8,
-                            fontSize: 18,
-                            letterSpacing: -1,
-                            fontWeight: FontWeight.w500),
-                        ),
                         ],
                       ),
                     ),
                     //Properties of AXIS editor, textfields and decor display
                     Positioned(
                         left: 42,
-                        top: 35,
-                        child: Container(
-                          width:width - 49,
-                          height: 143,
-                          padding: EdgeInsets.only(
-                            left: 1,
-                          ),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: defaultPalette.secondary,
-                            border: Border.all(),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: ClipRRect(
-                            borderRadius:BorderRadius.circular(15),
-                            child: ScrollConfiguration(
-                              behavior:
-                                  ScrollBehavior().copyWith(scrollbars: false),
-                              child: DynMouseScroll(
-                                  durationMS: 500,
-                                  scrollSpeed: 1,
-                                  builder: (context, controller, physics) {
-                                    return SingleChildScrollView(
-                                      controller: controller,
-                                      physics: physics,
-                                      padding: EdgeInsets.only(left:2, right:3),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(
-                                            height:8
-                                          ),
-                                          // titleTile(
-                                          // ' properties ', 
-                                          // TablerIcons.transform_point,
-                                          // fontSize: 15
-                                          // ),
-                                          ...axis==0?
-                                          [
-                                          Row(children:tablePropertyTile(2,' size', TablerIcons.ruler_measure_2)),
-                                          Row(children:tablePropertyTile(3,' min', TablerIcons.point_filled)),
-                                          Row(children:tablePropertyTile(4,' max', TablerIcons.circle_filled)),
-                                          ]
-                                          :
-                                          [
-                                          Row(children:tablePropertyTile(5,' size', TablerIcons.ruler_measure)),
-                                          Row(children:tablePropertyTile(6,' min', TablerIcons.point_filled)),
-                                          Row(children:tablePropertyTile(7,' max', TablerIcons.circle_filled)),
-                                          ],
-                                          const SizedBox(
-                                            height:3
-                                          ),
-                                          //Hex for shadow color editor
-                                          titleTile(
-                                          (axis==0?'row':'col')+' decor ', 
-                                          TablerIcons.sparkles,
-                                          fontSize: 15
-                                          ),   
-                                          GestureDetector(
-                                            onTap:(){
-                                              whichTableDecorationIsClicked = axis==0? 2:3;
-                                              tablePropertyCardsController.setCardIndex(1);
-                                              whichTablePropertyTabIsClicked =1;
-                                              _findSheetTableItem(sheetTableItem, updateVariables: false);
-                                            },
-                                            child: ClipRRect(
-                                              borderRadius:BorderRadius.circular(15).copyWith(
-                                                  // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                ),
-                                              child: Stack(
-                                                children: [
-                                                  Container(
-                                                    width:width,
-                                                    height:45,
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(),
-                                                      borderRadius:BorderRadius.circular(15).copyWith(
-                                                          // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                          ),
-                                                      color: defaultPalette.primary,),
-                                                  
-                                                    child: buildDecoratedContainer(
-                                                     (axis==0? rowDecoration:columnDecoration) as SuperDecoration, 
-                                                      SizedBox(
-                                                        width:width,
-                                                        height:45,
-                                                      ),
-                                                      true)
-                                                  ),
-                                                  Container(
-                                                    width:width,
-                                                    height:45,
-                                                    alignment: Alignment(-0.8, 0),
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:BorderRadius.circular(15).copyWith(
-                                                      // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                      ),
-                                                  color: defaultPalette.transparent,),
-                                                    child: Text(
-                                                      axis==0? rowDecoration.name : columnDecoration.name,
-                                                      maxLines: 1,
-                                                      textAlign: TextAlign.center,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
-                                                        shadows: [
-                                                          BoxShadow(
-                                                            spreadRadius: 10,
-                                                            blurRadius: 45,
-                                                            color: defaultPalette.extras[0]
-                                                          ),
-                                                          BoxShadow(
-                                                            spreadRadius: 20,
-                                                            blurRadius: 1.5,
-                                                            color: defaultPalette.extras[0]
-                                                          ),
-                                                        ],
-                                                        color: defaultPalette.primary,
-                                                        fontSize: 15,
-                                                        letterSpacing: -1,
-                                                        fontWeight: FontWeight.w500),
-                                                    ),
-                                                  ),
-                                                ],
+                        top: 45,
+                        child: Column(
+                          children: [
+                            Container(
+                              width:width - 49,
+                              height: 75,
+                              padding: EdgeInsets.only(
+                                left: 1,
+                              ),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: defaultPalette.secondary,
+                                border: Border.all(
+                                  color: defaultPalette.extras[0],
+                                  width: 1
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: ClipRRect(
+                                borderRadius:BorderRadius.circular(15),
+                                child: ScrollConfiguration(
+                                  behavior:
+                                      ScrollBehavior().copyWith(scrollbars: false),
+                                  child: DynMouseScroll(
+                                      durationMS: 500,
+                                      scrollSpeed: 1,
+                                      builder: (context, controller, physics) {
+                                        return SingleChildScrollView(
+                                          controller: controller,
+                                          physics: physics,
+                                          padding: EdgeInsets.only(left:2, right:3),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              const SizedBox(
+                                                height:5
                                               ),
-                                            ),
-                                          ), 
-                                          const SizedBox(
-                                            height:3
+                                              ...axis==0?
+                                              [
+                                              Row(children:tablePropertyTile(2,' size', TablerIcons.ruler_measure_2)),
+                                              Row(children:tablePropertyTile(3,' min', TablerIcons.point_filled)),
+                                              Row(children:tablePropertyTile(4,' max', TablerIcons.circle)),
+                                              ]
+                                              :
+                                              [
+                                              Row(children:tablePropertyTile(5,' size', TablerIcons.ruler_measure)),
+                                              Row(children:tablePropertyTile(6,' min', TablerIcons.point_filled)),
+                                              Row(children:tablePropertyTile(7,' max', TablerIcons.circle)),
+                                              ],
+                                              const SizedBox(
+                                                height:3
+                                              ),
+                                              
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    );
-                                  }),
+                                        );
+                                      }),
+                                ),
+                              ),
                             ),
-                          ),
+                            SizedBox(
+                              width:width - 49,
+                              child: Row(
+                                children: [Expanded(
+                                  child: titleTile(
+                                  (axis==0?'row':'col')+' decor ', 
+                                  TablerIcons.sparkles,
+                                  fontSize: 14
+                                  ),
+                                ),]
+                              ),
+                            ),   
+                            //decoration button for row or column
+                            ElevatedLayerButton(
+                              onClick:(){
+                                whichTableDecorationIsClicked = axis==0? 2:3;
+                                tablePropertyCardsController.setCardIndex(1);
+                                whichTablePropertyTabIsClicked =1;
+                                _findSheetTableItem(sheetTableItem, updateVariables: false);
+                              },
+                              buttonHeight: 48,
+                              buttonWidth: (width-48.2),
+                              borderRadius: BorderRadius.circular(15),
+                              animationDuration: const Duration( milliseconds: 100),
+                              animationCurve: Curves.ease,
+                              topDecoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(),
+                              ),
+                              topLayerChild: Row(
+                                children: [
+                                  Container(
+                                    margin: EdgeInsets.all(4),
+                                    width:35,height:35,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: buildDecoratedContainer(
+                                        (axis ==0? rowDecoration: columnDecoration) as SuperDecoration, 
+                                        SizedBox(
+                                          width:width,
+                                          height:35,
+                                        ),
+                                        true),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      sheetTableDecoration.name,
+                                      maxLines: 1,
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.lexend(
+                                        color: defaultPalette.extras[0],
+                                        fontSize: 15,
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                  
+                                ],
+                              ),
+                              subfac: 5,
+                              depth:3.5,
+                              baseDecoration: BoxDecoration(
+                                color: defaultPalette.secondary,
+                                border: Border.all(),
+                              ),
+                            ),
+                            const SizedBox(
+                              height:3
+                            ),
+                          ],
                         )),
                     //THE LAYERS AND SCROLLBAR OF SHADOWLAYERS IN DECORATION EDITOR
                     Positioned(
-                      top: 38,
+                      top: 42,
                       left: 8,
                       child: Column(
                         children: [
@@ -9260,8 +9431,8 @@ Future<void> _initialize() async {
                                         return Container(
                                           margin:EdgeInsets.only(top:0),
                                           decoration: BoxDecoration(
-                                              border: Border.all(),
-                                              color: defaultPalette.secondary,
+                                              border: Border.all(color: defaultPalette.extras[3],),
+                                              color: defaultPalette.extras[3],
                                               borderRadius:
                                                   BorderRadius.circular(2)),
                                           width: 5,
@@ -9340,17 +9511,17 @@ Future<void> _initialize() async {
                                               borderRadius:
                                                   BorderRadius.circular(5),
                                               child: Padding(
-                                                padding: EdgeInsets.only(bottom: 2),
+                                                padding: EdgeInsets.only(bottom: 0),
                                                 child: Material(
                                                   color: defaultPalette.transparent,
                                                   child: InkWell(
-                                                    hoverColor: defaultPalette.secondary,
+                                                    hoverColor: defaultPalette.extras[3],
                                                     splashColor:
                                                         defaultPalette
-                                                            .secondary,
+                                                            .extras[3],
                                                     highlightColor:
                                                         defaultPalette
-                                                            .secondary,
+                                                            .extras[3],
                                                     onTap: () {
                                                       setState(() {
                                                         if (axis==0) {
@@ -9362,7 +9533,7 @@ Future<void> _initialize() async {
                                                     },
                                                     child: Container(
                                                       margin:
-                                                          EdgeInsets.only(
+                                                          EdgeInsets.only( bottom:1,
                                                               right: 1),
                                                       padding:
                                                           EdgeInsets.only(
@@ -9373,14 +9544,16 @@ Future<void> _initialize() async {
                                                             border: (axis==0? sheetTableVariables.rowLayerIndex:sheetTableVariables.columnLayerIndex) ==
                                                                     i
                                                                 ? Border
-                                                                    .all()
+                                                                    .all(
+                                                                      color: defaultPalette.extras[3],
+                                                                    )
                                                                 //   top: BorderSide(), bottom: BorderSide(),left: BorderSide(), right: BorderSide.none
                                                                 // )
                                                                 : null,
                                                             color: (axis==0? sheetTableVariables.rowLayerIndex:sheetTableVariables.columnLayerIndex) ==
                                                                     i
                                                                 ? defaultPalette
-                                                                    .secondary
+                                                                    .extras[3]
                                                                 : null,
                                                             borderRadius:
                                                                 BorderRadius.circular(
@@ -9388,10 +9561,12 @@ Future<void> _initialize() async {
                                                       child: Text(
                                                         ' ${axis ==0? i+1:numberToColumnLabel(i+1)}',
                                                         style: GoogleFonts.lexend(
-                                                            fontSize: axis==0? 15:14,
+                                                            fontSize: axis==0? 17:15,
                                                             letterSpacing:
                                                                 -1,
-                                                            color: defaultPalette
+                                                            color:(axis==0? sheetTableVariables.rowLayerIndex:sheetTableVariables.columnLayerIndex) ==
+                                                                    i
+                                                                ? defaultPalette.primary: defaultPalette
                                                                 .extras[0]),
                                                       ),
                                                     ),
@@ -9451,7 +9626,7 @@ Future<void> _initialize() async {
                                                   defaultPalette.transparent),
                                           child: Icon(
                                             TablerIcons.trash,
-                                            size: 14,
+                                            size: 18,
                                           )),
                                     ),
                                   ),
@@ -9463,8 +9638,7 @@ Future<void> _initialize() async {
                           ],
                         )),
                       ],
-                    );
-                                           
+                    );             
               }
 
               return Stack(
@@ -9571,209 +9745,125 @@ Future<void> _initialize() async {
                                       ),
                                       child: Column(
                                         children: [
-                                      titleTile(
-                                        ' tableProperties', 
-                                        TablerIcons.table,
-                                        fontSize: 20
-                                        ),  
-                                      const SizedBox(
-                                            height:2
-                                          ),
-                                      Row(
-                                        children: [
-                                          const SizedBox(
-                                            width:4
-                                          ),
-                                          Expanded(
-                                            child: Text('id: ${sheetTableItem.id}',
-                                              textAlign: TextAlign.start,
-                                              maxLines:1,
-                                              style: TextStyle(
-                                                height: 1,
-                                                fontFamily: GoogleFonts.lexend().fontFamily,
-                                                letterSpacing:-0.5,
-                                                overflow: TextOverflow.ellipsis,
-                                                fontWeight: FontWeight.w400,        
-                                                color: defaultPalette.extras[0],
-                                                fontSize: 8)),
-                                          ),
-                                        ],
-                                      ),  
+                                        const SizedBox(
+                                          height:3
+                                        ),
+                                        Row(
+                                          children: [
+                                            const Icon(TablerIcons.table,
+                                              size:30,
+                                              weight: 600,
+                                            ),
+                                            const SizedBox(
+                                              width:3
+                                            ),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: [
+                                                  Text('tableProperties',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.lexend(
+                                                    height: 0.9,
+                                                    fontSize:18,
+                                                    letterSpacing: -1,
+                                                    fontWeight: FontWeight.w500),
+                                                  ),
+                                                  const SizedBox(
+                                                    height:4
+                                                  ),
+                                                  Text(
+                                                  'id: '+ (sheetTableItem.id),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.lexend(
+                                                      height: 1,
+                                                      fontSize: 8,
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w500),
+                                                  ),                        
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       const SizedBox(
                                             height:8
                                           ),
-                                      tableDataTile(
-                                      'cells', 
-                                      '${sheetTableItem.columnData.length*sheetTableItem.rowData.length}', 
-                                      // Icons.dataset_outlined
-                                      TablerIcons.border_all
+                                      // cells and rows and columns count
+                                      Container(
+                                        padding: EdgeInsets.all(0).copyWith(left:4,right: 4),
+                                        height: 25,
+                                        decoration: BoxDecoration(
+                                        color: defaultPalette.secondary,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(
+                                          width: 2,
+                                          color: defaultPalette.extras[0]),
+                                        ),
+                                        child:Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Icon(TablerIcons.border_all, size:16),
+                                            Expanded(
+                                              child: Text( '${sheetTableItem.columnData.length*sheetTableItem.rowData.length}', 
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.lexend(
+                                                  fontSize:13,
+                                                  letterSpacing: -1,
+                                                  color: defaultPalette.extras[0]),
+                                              ),
+                                            ),
+                                            Container(
+                                              height: 35,
+                                              width: 2,
+                                              color: defaultPalette.extras[0],
+
+                                            ),
+                                            SizedBox(width: 2,),
+                                            Icon(TablerIcons.layout_rows, size:16),
+                                            Expanded(
+                                              child: Text( '${sheetTableItem.rowData.length}', 
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.lexend(
+                                                  fontSize:13,
+                                                  letterSpacing: -1,
+                                                  color: defaultPalette.extras[0]),
+                                              ),
+                                            ),
+                                            Container(
+                                              height: 35,
+                                              width: 2,
+                                              color: defaultPalette.extras[0],
+
+                                            ),
+                                            SizedBox(width: 2,),
+                                            Icon(TablerIcons.layout_columns, size:16),
+                                            Expanded(
+                                              child: Text( '${sheetTableItem.columnData.length}', 
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.lexend(
+                                                  fontSize:13,
+                                                  letterSpacing: -1,
+                                                  color: defaultPalette.extras[0]),
+                                              ),
+                                            ),
+                                     
+                                          ],
+                                        ) ,
                                       ),
-                                      tableDataTile(
-                                      'rows', 
-                                      '${sheetTableItem.rowData.length}', 
-                                      TablerIcons.layout_rows
-                                      ),
-                                      tableDataTile(
-                                      'columns', 
-                                      '${sheetTableItem.columnData.length}', 
-                                      TablerIcons.layout_columns
-                                      ),
+                                      const SizedBox(
+                                            height:8
+                                          ),
                                       // Row(mainAxisAlignment:MainAxisAlignment.spaceBetween, children:tablePropertyTile(0, 'pinnedRows', TablerIcons.layout_sidebar)),
                                       Row(mainAxisAlignment:MainAxisAlignment.spaceBetween, children:tablePropertyTile(1, 'pinnedColumns', TablerIcons.layout_navbar)),
                                       const SizedBox(
                                             height:4
                                           ),
-                                      //decoration in table properties
-                                      titleTile(
-                                        ' decor ', 
-                                        TablerIcons.sparkles,
-                                        fontSize: 18
-                                        ),   
-                                      GestureDetector(
-                                        onTap:(){
-                                          whichTableDecorationIsClicked = 0;
-                                          tablePropertyCardsController.setCardIndex(1);
-                                          whichTablePropertyTabIsClicked =1;
-                                          _findSheetTableItem(sheetTableItem, updateVariables: false);
-                                        },
-                                        child: ClipRRect(
-                                          borderRadius:BorderRadius.circular(15).copyWith(
-                                              // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                            ),
-                                          child: Stack(
-                                            children: [
-                                              Container(
-                                                width:width,
-                                                height:45,
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(),
-                                                  borderRadius:BorderRadius.circular(15).copyWith(
-                                                      // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                      ),
-                                                  color: defaultPalette.primary,),
-                                              
-                                                child: buildDecoratedContainer(
-                                                  sheetTableDecoration as SuperDecoration, 
-                                                  SizedBox(
-                                                    width:width,
-                                                    height:45,
-                                                    
-                                                  ),
-                                                  true)
-                                              ),
-                                              Container(
-                                                width:width,
-                                                height:45,
-                                                alignment: Alignment(-0.8, 0),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:BorderRadius.circular(15).copyWith(
-                                                  // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                  ),
-                                              color: defaultPalette.transparent,),
-                                                child: Text(
-                                                  sheetTableDecoration.name,
-                                                  maxLines: 1,
-                                                  textAlign: TextAlign.center,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
-                                                    shadows: [
-                                                      BoxShadow(
-                                                        spreadRadius: 10,
-                                                        blurRadius: 45,
-                                                        color: defaultPalette.extras[0]
-                                                      ),
-                                                      BoxShadow(
-                                                        spreadRadius: 20,
-                                                        blurRadius: 1.5,
-                                                        color: defaultPalette.extras[0]
-                                                      ),
-                                                    ],
-                                                    color: defaultPalette.primary,
-                                                    fontSize: 15,
-                                                    letterSpacing: -1,
-                                                    fontWeight: FontWeight.w500),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )    
-                                      ,
-                                      //decoration in table properties
-                                      titleTile(
-                                        ' bg decor ', 
-                                        TablerIcons.sparkles,
-                                        fontSize: 18
-                                        ),   
-                                      GestureDetector(
-                                        onTap:(){
-                                          whichTableDecorationIsClicked = 1;
-                                          tablePropertyCardsController.setCardIndex(1);
-                                          whichTablePropertyTabIsClicked =1;
-                                          _findSheetTableItem(sheetTableItem, updateVariables: false);
-                                        },
-                                        child: ClipRRect(
-                                          borderRadius:BorderRadius.circular(15).copyWith(
-                                              // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                            ),
-                                          child: Stack(
-                                            children: [
-                                              Container(
-                                                width:width,
-                                                height:45,
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(),
-                                                  borderRadius:BorderRadius.circular(15).copyWith(
-                                                      // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                      ),
-                                                  color: defaultPalette.primary,),
-                                              
-                                                child: buildDecoratedContainer(
-                                                  sheetTableDecoration as SuperDecoration, 
-                                                  SizedBox(
-                                                    width:width,
-                                                    height:45,
-                                                    
-                                                  ),
-                                                  true)
-                                              ),
-                                              Container(
-                                                width:width,
-                                                height:45,
-                                                alignment: Alignment(-0.8, 0),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:BorderRadius.circular(15).copyWith(
-                                                  // topLeft: Radius.circular(0), topRight: Radius.circular(0)
-                                                  ),
-                                              color: defaultPalette.transparent,),
-                                                child: Text(
-                                                  sheetTableDecoration.name,
-                                                  maxLines: 1,
-                                                  textAlign: TextAlign.center,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
-                                                    shadows: [
-                                                      BoxShadow(
-                                                        spreadRadius: 10,
-                                                        blurRadius: 45,
-                                                        color: defaultPalette.extras[0]
-                                                      ),
-                                                      BoxShadow(
-                                                        spreadRadius: 20,
-                                                        blurRadius: 1.5,
-                                                        color: defaultPalette.extras[0]
-                                                      ),
-                                                    ],
-                                                    color: defaultPalette.primary,
-                                                    fontSize: 15,
-                                                    letterSpacing: -1,
-                                                    fontWeight: FontWeight.w500),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )    
+                                      
                                       
                                       ],
                                       ),
@@ -9781,6 +9871,150 @@ Future<void> _initialize() async {
                                       const SizedBox(
                                             height:8
                                           ),
+                                      //decoration in table properties
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              children: [
+                                                titleTile(
+                                                  ' decor ', 
+                                                  TablerIcons.sparkles,
+                                                  fontSize: 15
+                                                  ),   
+                                                ElevatedLayerButton(
+                                                  onClick: (){
+                                                    setState(() {
+                                                    whichTableDecorationIsClicked = 0;
+                                                    tablePropertyCardsController.setCardIndex(1);
+                                                    whichTablePropertyTabIsClicked =1;
+                                                    _findSheetTableItem(sheetTableItem, updateVariables: false);
+                                                  });
+                                                  },
+                                                  buttonHeight: 50,
+                                                  buttonWidth: (width-12.5)/2,
+                                                  borderRadius: BorderRadius.circular(15),
+                                                  animationDuration: const Duration( milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    children: [
+                                                      Container(
+                                                        margin: EdgeInsets.all(4),
+                                                        width:35,height:35,
+                                                        child: ClipRRect(
+                                                          borderRadius: BorderRadius.circular(15),
+                                                          child: buildDecoratedContainer(
+                                                            sheetTableDecoration as SuperDecoration, 
+                                                            SizedBox(
+                                                              width:width,
+                                                              height:35,
+                                                            ),
+                                                            true),
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        child: Text(
+                                                          sheetTableDecoration.name,
+                                                          maxLines: 1,
+                                                          textAlign: TextAlign.center,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: GoogleFonts.lexend(
+                                                            color: defaultPalette.extras[0],
+                                                            fontSize: 15,
+                                                            letterSpacing: -1,
+                                                            fontWeight: FontWeight.w500),
+                                                        ),
+                                                      ),
+                                                      
+                                                    ],
+                                                  ),
+                                                  subfac: 5,
+                                                  depth:3.5,
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[3],
+                                                    border: Border.all(),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          //bgdecoration in table properties
+                                          Expanded(
+                                            child: Column(
+                                              children: [
+                                                titleTile(
+                                                  ' bg decor ', 
+                                                  TablerIcons.sparkles,
+                                                  fontSize: 15
+                                                  ),   
+                                                ElevatedLayerButton(
+                                                  onClick: (){
+                                                    whichTableDecorationIsClicked = 1;
+                                                    tablePropertyCardsController.setCardIndex(1);
+                                                    whichTablePropertyTabIsClicked =1;
+                                                    _findSheetTableItem(sheetTableItem, updateVariables: false);
+                                                  },
+                                                  buttonHeight: 50,
+                                                  buttonWidth: (width-12.5)/2,
+                                                  borderRadius: BorderRadius.circular(15),
+                                                  animationDuration: const Duration( milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    children: [
+                                                      Container(
+                                                        margin: EdgeInsets.all(4),
+                                                        width:35,height:35,
+                                                        child: ClipRRect(
+                                                          borderRadius: BorderRadius.circular(15),
+                                                          child: buildDecoratedContainer(
+                                                            sheetTablebgDecoration as SuperDecoration, 
+                                                            SizedBox(
+                                                              width:width,
+                                                              height:35,
+                                                            ),
+                                                            true),
+                                                        ),
+                                                      ),
+                                                        Expanded(
+                                                          child: Text(
+                                                            sheetTablebgDecoration.name,
+                                                            maxLines: 1,
+                                                            textAlign: TextAlign.center,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              color: defaultPalette.extras[0],
+                                                              fontSize: 15,
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500),
+                                                          ),
+                                                        ),
+                                                      
+                                                    ],
+                                                  ),
+                                                  subfac: 5,
+                                                  depth:3.5,
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[3],
+                                                    border: Border.all(),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                            height:8
+                                          ),
+                                      //row and column property cards
                                       ...[
                                           tableAxisCard(0),
                                           const SizedBox(
@@ -9791,7 +10025,7 @@ Future<void> _initialize() async {
                                       const SizedBox(
                                             height:5
                                           ),
-                                    ],
+                                      ],
                                   ));
                               }
                             )
@@ -13749,10 +13983,38 @@ Future<void> _initialize() async {
                                                       break;
                                                     case 4:
                                                       if(whichTableDecorationIsClicked == 0){
-                                                        sheetTableItem.sheetTableDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
                                                         updateSheetDecorationvariables(e);
                                                         decorationIndex =-1;
                                                         itemDecorationPath..clear()..add(e.id);
+                                                        
+                                                        for (var i = 0; i < sheetTableItem.cellData.length; i++) {
+                                                         var row = sheetTableItem.cellData[i];
+                                                          for (var j = 0; j < row.length; j++) {
+                                                            var cell = row[j];
+                                                            if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.columnData[j].columnDecoration) {
+                                                              print('cell');
+                                                              sheetTableItem.columnData[j].columnDecoration = sheetDecorationList[tmpinx].id;
+                                                            }
+                                                            if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.rowData[i].rowDecoration) {
+                                                              print('bell');
+                                                              sheetTableItem.rowData[i].rowDecoration = sheetDecorationList[tmpinx].id;
+                                                            }
+                                                            print('sell');
+                                                            print((cell.sheetItem as SheetText).textDecoration.id);
+                                                            print(sheetTableItem.sheetTableDecoration.id );
+                                                            print('sell');
+                                                            if (cell.sheetItem is SheetText && ((cell.sheetItem as SheetText).textDecoration.id ==
+                                                                  sheetTableItem.sheetTableDecoration.id )) {
+                                                            print(cell.sheetItem);   
+                                                            print('dell');
+                                                            (cell.sheetItem as SheetText).textDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                            
+                                                          }
+                                                          }
+                                                        }
+                                                        sheetTableItem.sheetTableDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                        
+                                                      
                                                       } else if(whichTableDecorationIsClicked == 1){
                                                         sheetTableItem.sheetTablebgDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
                                                         updateSheetDecorationvariables(e);
@@ -18944,7 +19206,9 @@ Future<void> _initialize() async {
           docString: [],
           findItem: _findItem,
           textFieldTapDown: textFieldTapDown,
-          textDecoration: sheetTableDecoration
+          textDecoration: sheetTableDecoration,
+          hide: false,
+          name:'${numberToColumnLabel(col+1)}${row+1}'
           ),
         rowSpan: 1,
         colSpan: 1,
@@ -18957,7 +19221,7 @@ Future<void> _initialize() async {
   List<SheetTableColumn> defaultSheetTableColumnData(String parentId, String columnDecoration) {
   return List.generate(8, (index) {
     return SheetTableColumn(
-      id: 'TBc-${ const Uuid().v4()}',
+      id: 'CL-${ const Uuid().v4()}',
       parentId: parentId,
       size: 80, 
       columnDecoration: columnDecoration
@@ -18969,7 +19233,7 @@ Future<void> _initialize() async {
 
   return List.generate(5, (index) {
     return SheetTableRow(
-      id: 'TBr-${ const Uuid().v4()}',
+      id: 'RW-${ const Uuid().v4()}',
       parentId: parentId,
       size: 30,
       rowDecoration: rowDecoration
