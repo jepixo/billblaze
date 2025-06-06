@@ -21,7 +21,7 @@ class SheetTableCellBoxAdapter extends TypeAdapter<SheetTableCellBox> {
       parentId: fields[1] as String,
       data: fields[2] as String,
       sheetItem: fields[3] as SheetItem,
-      isLocked: fields[4] as bool,
+      isVisible: fields[4] as bool,
       hasError: fields[5] as bool,
       colSpan: fields[7] as int,
       rowSpan: fields[6] as int,
@@ -40,7 +40,7 @@ class SheetTableCellBoxAdapter extends TypeAdapter<SheetTableCellBox> {
       ..writeByte(3)
       ..write(obj.sheetItem)
       ..writeByte(4)
-      ..write(obj.isLocked)
+      ..write(obj.isVisible)
       ..writeByte(5)
       ..write(obj.hasError)
       ..writeByte(6)

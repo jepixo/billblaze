@@ -18,7 +18,7 @@ part 'sheet_table_cell.g.dart';
 class SheetTableCell extends SheetItem {
   String data;
   SheetItem sheetItem;
-  bool isLocked= false;
+  bool isVisible= true;
   bool hasError = false;
   int rowSpan =1;
   int colSpan =1;
@@ -31,7 +31,7 @@ class SheetTableCell extends SheetItem {
     required super.parentId,
     this.data ='',
     required this.sheetItem,
-    this.isLocked = false,
+    this.isVisible = true,
     this.hasError = false,
     this.colSpan =1,
     this.rowSpan =1,
@@ -49,7 +49,7 @@ class SheetTableCell extends SheetItem {
       colSpan: colSpan,
       rowSpan: rowSpan,
       hasError: hasError,
-      isLocked: isLocked,
+      isVisible: isVisible,
       errorMessage: errorMessage,
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRuleBox(),
@@ -78,7 +78,7 @@ class SheetTableCellBox extends SheetItem {
   @HiveField(3)
   SheetItem sheetItem;
   @HiveField(4)
-  bool isLocked= false;
+  bool isVisible= true;
   @HiveField(5)
   bool hasError = false;
   @HiveField(6)
@@ -97,7 +97,7 @@ class SheetTableCellBox extends SheetItem {
     required super.parentId,
     this.data ='',
     required this.sheetItem,
-    this.isLocked = false,
+    this.isVisible = true,
     this.hasError = false,
     this.colSpan =1,
     this.rowSpan =1,
@@ -115,7 +115,7 @@ class SheetTableCellBox extends SheetItem {
       colSpan: colSpan,
       rowSpan: rowSpan,
       hasError: hasError,
-      isLocked: isLocked,
+      isVisible: isVisible,
       errorMessage: errorMessage,
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRule(),
@@ -157,7 +157,7 @@ class SheetTableCellBox extends SheetItem {
     required SuperDecoration textDecoration,
   }) {
     Delta delta;
-    print('DocString: $docString');
+    // print('DocString: $docString');
 
     try {
       if (docString.isNotEmpty) {
@@ -171,7 +171,7 @@ class SheetTableCellBox extends SheetItem {
         delta =
             Delta(); // Default to an empty Delta if docString is null or empty
       }
-      print('Decoded Delta: $delta');
+      // print('Decoded Delta: $delta');
     } catch (e) {
       // Handle error if any occurs
       print('Error converting to Delta: $e');
