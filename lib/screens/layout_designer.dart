@@ -338,7 +338,7 @@ Future<void> _initialize() async {
         .getDecorations()
         .values
         .map((box) {
-          print(box.id);
+          // print(box.id);
           if (box is ItemDecorationBox) {
             return {'type': 'ItemDecoration', 'value': box.itemDecoration};
           } else {
@@ -361,7 +361,7 @@ Future<void> _initialize() async {
     int indexA = int.parse(a.id.split('/').last);
     int indexB = int.parse(b.id.split('/').last);
     return indexA.compareTo(indexB);
-  });;
+  });
     filteredDecorations = sheetDecorationList;
 
     // ─── 5) Your original Hive & layout logic ──────────────────────────────
@@ -401,10 +401,10 @@ Future<void> _initialize() async {
 
     // ─── 6) Controllers & listeners ────────────────────────────────────────
     tabcunt = TabController(length: 2, vsync: this);
-    globalKeys = List.generate(1000, (_) => GlobalKey());
+    globalKeys = List.generate(10000, (_) => GlobalKey());
     fetchFonts();
     // _findItem();
-    _unfocusAll();
+    // _unfocusAll();
     // _findSheetListItem();
     
     fontsTabContainerController = TabController(length: 6, vsync: this)
@@ -436,7 +436,6 @@ Future<void> _initialize() async {
   // _____ Initialization Done _______________________________________________
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     setState(() {
       var x = 80 / sHeight;
@@ -446,7 +445,9 @@ Future<void> _initialize() async {
       
       // if (!hasRenderedOnce) {
         // Capture the image the first time the widget is inserted into the tree
-        _renderPagePreviewOnProperties();
+        if (!isLoading) {
+          _renderPagePreviewOnProperties();
+        }
       // }
     });
   }
@@ -571,7 +572,7 @@ Future<void> _initialize() async {
   }
 
   SheetList boxToSheetList(SheetListBox sheetListBox,) {
-        print('B PARENT: '+ sheetListBox.parentId );
+        // print('B PARENT: '+ sheetListBox.parentId );
     SheetList sheetList = sheetListBox.toSheetList(_findItem,textFieldTapDown);
     sheetList.sheetList = [];
     for (var item in sheetListBox.sheetList) {
@@ -1262,8 +1263,9 @@ Future<void> _initialize() async {
                       }
                       
                     }
-                  
-
+                  whichPropertyTabIsClicked = 1;
+                  propertyCardsController.animateTo(Offset(1, 1),
+                          duration: Durations.short1, curve: Curves.linear);
                   });
                   await _unfocusAll();
                 },
@@ -1536,8 +1538,7 @@ Future<void> _initialize() async {
       child: TableView.builder(
         rowCount:(sheetTable).rowData.length,
         columnCount: (sheetTable).columnData.length,
-        pinnedColumnCount: (sheetTable).pinnedColumns,
-        pinnedRowCount: (sheetTable).pinnedRows,
+        // pinnedRowCount: (sheetTable).pinnedRows,
         columnBuilder: (int i) {
           
           return TableSpan(
@@ -1983,6 +1984,8 @@ Future<void> _initialize() async {
 
   Future<void> _renderPagePreviewOnProperties() async {
     try {
+      await WidgetsBinding.instance.endOfFrame;
+      await Future.delayed(Duration(milliseconds: 16));
       Uint8List? newImage = await captureImageAsPng(currentPageIndex);
       if (newImage != null) {
         setState(() {
@@ -2138,6 +2141,7 @@ Future<void> _initialize() async {
   void _findSheetTableItem(SheetTable? sheetTable,{
     bool updateVariables = true
   }){
+    _findItem();
     setState(() {
         if (sheetTable == null) {
           try {
@@ -2181,8 +2185,17 @@ Future<void> _initialize() async {
           default:
         }
         print('sheetDecorationVariables initiated.');
-        print(sheetTableItem.sheetTableDecoration.id);
-        print(' '+ sheetDecorationVariables.length.toString());
+        // print(sheetTableItem.sheetTableDecoration.id);
+        // print(' '+ sheetDecorationVariables.length.toString());
+        
+        if (item.parentId == sheetTableItem.id) {
+          var (row, col) = parseCellId(item.name);
+          print(row);
+          print(col);
+          sheetTableVariables.rowLayerIndex = row;
+          sheetTableVariables.columnLayerIndex = col;
+        }
+        
       });
   }
 
@@ -2699,7 +2712,6 @@ Future<void> _initialize() async {
                               ),
                             ),
                           ),
-              
                           //
                           //
                           //////////PROPERTIES SECTION
@@ -3340,8 +3352,63 @@ Future<void> _initialize() async {
                                                   ),
                                                   child: Stack(
                                                     children: [
+                                                      //table property tab
                                                       Positioned(
                                                         bottom:0, left:0,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              if (whichPropertyTabIsClicked != 4) {
+                                                                var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                whichPropertyTabIsClicked = 4;
+                                                                // _findSheetListItem();
+                                                                decorationIndex = -1;
+                                                                isListDecorationLibraryToggled = false;
+                                                                isListDecorationPropertiesToggled = false;
+                                                                // showDecorationLayers = false;
+                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                                tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                            
+                                                              }
+                                                              if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=0) {
+                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(0),);
+                                                                  
+                                                                whichTablePropertyTabIsClicked =0;
+                                                              } else {
+                                                                print('heryaa');
+                                                                Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(0),);
+                                                                
+                                                              }
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth: (_getPropertiesButtonWidth(
+                                                                  'sheet-list')/3)-2,
+                                                          borderRadius:
+                                                              BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                              milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.table_options,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth:1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                           
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //cell property tab
+                                                      Positioned(
+                                                        bottom:0,
+                                                        right:(_getPropertiesButtonWidth('text-field')/3) -2 ,
                                                         child: ElevatedLayerButton(
                                                           onClick: () {
                                                             setState(() {
@@ -3370,7 +3437,7 @@ Future<void> _initialize() async {
                                                           },
                                                           buttonHeight: 21,
                                                           buttonWidth: (_getPropertiesButtonWidth(
-                                                                  'sheet-list')/2)-5,
+                                                                  'sheet-list')/3)-2,
                                                           borderRadius:
                                                               BorderRadius.circular(5),
                                                           animationDuration: const Duration(
@@ -3381,7 +3448,7 @@ Future<void> _initialize() async {
                                                             border: Border.all(),
                                                           ),
                                                           topLayerChild: const Icon(
-                                                            TablerIcons.list_tree,
+                                                            Icons.dataset_outlined,
                                                             size: 12,
                                                           ),
                                                           subfac: 5,
@@ -3392,38 +3459,50 @@ Future<void> _initialize() async {
                                                           ),
                                                         ),
                                                       ),
-                                             
+                                                      //table decoration
                                                       Positioned(
                                                         bottom:0, right:3,
                                                         child: ElevatedLayerButton(
                                                           onClick: () {
                                                             setState(() {
-                                                          if (whichPropertyTabIsClicked != 4) {
-                                                                var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
-                                                                whichPropertyTabIsClicked = 4;
-                                                                // _findSheetListItem();
-                                                                decorationIndex = -1;
-                                                                isListDecorationLibraryToggled = false;
-                                                                isListDecorationPropertiesToggled = false;
-                                                                // showDecorationLayers = false;
-                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                                tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
-                                                            
-                                                              }
-                                                              if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
-                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                  
-                                                                  whichTablePropertyTabIsClicked =1;
-                                                                } else {
-                                                                  print('heryaa');
-                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                  
-                                                                }
+                                                            var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                            if (whichPropertyTabIsClicked != 4) {
+                                                              whichPropertyTabIsClicked = 4;
+                                                              // _findSheetListItem();
+                                                              decorationIndex = -1;
+                                                              isListDecorationLibraryToggled = false;
+                                                              isListDecorationPropertiesToggled = false;
+                                                              // showDecorationLayers = false;
+                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                              tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                          
+                                                            }
+                                                            if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=2) {
+                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(2),);
+                                                              
+                                                              whichTablePropertyTabIsClicked =2;
+                                                            } else {
+                                                              print('heryaa');
+                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(2),);
+                                                              
+                                                            }
+                                                            decorationIndex = -1;
+                                                            isListDecorationLibraryToggled = false;
+                                                            isListDecorationPropertiesToggled = false;
+                                                            // switch (whichTableDecorationIsClicked) {
+                                                            //   case 0:
+                                                            //     updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                            //     tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;  
+                                                                
+                                                            //     break;
+                                                            //   default:
+                                                            // }
+                                                            _findSheetTableItem(sheetTableItem, updateVariables: false);
                                                             });
                                                           },
                                                           buttonHeight: 21,
                                                           buttonWidth:( _getPropertiesButtonWidth(
-                                                            'sheet-list')/2) -5,
+                                                            'sheet-list')/3) -2,
                                                           borderRadius: BorderRadius.circular(5),
                                                           animationDuration: const Duration(
                                                           milliseconds: 100),
@@ -4464,7 +4543,7 @@ Future<void> _initialize() async {
     void onRightClick(SheetText sheetText, LongPressDownDetails d, int index) {
       setState(() {
     panelIndex.id = sheetText.id;
-    panelIndex.parentId = sheetText.id;
+    panelIndex.parentId = sheetText.parentId;
     });
     print('secondaryyyTapppppp');
     
@@ -4498,104 +4577,103 @@ Future<void> _initialize() async {
     scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
     physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
     proxyDecorator: (child, index, animation) {
-  return Container(child: child); },
-  itemBuilder: (context, index) {
-  // print('hello hello sprdListBuilding: ${sheetList[index]}');
-  if (sheetList[index] is SheetText) {
-    var sheetText = sheetList[index] as SheetText;
-    return ReorderableDragStartListener(
-      index: index,
-      key: ValueKey(sheetText.id),
-      child: IntrinsicWidth(
-        child: IntrinsicHeight(
-          child: Stack(
-            children: [
-              GestureDetector(
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-                      
-                      setState(() {
-                        panelIndex = panelIndex.copyWith(
-                            id: sheetText.id,
-                            parentId: sheetList.id);
-                      
-                        panelIndex.parentId = sheetList.id;
-                        whichPropertyTabIsClicked = 2;
-                      
-                        if (hDividerPosition > 0.48) {
-                          hDividerPosition = 0.4;
-                        }
-                        item = sheetText;
-                        _findItem();
-                      });
-                      
-                      print('clicked');
-                      print(sheetListItem.id);
-                      
-                      print(panelIndex);
-                    },
-                    onSecondaryLongPressDown: (d) {
-                      onRightClick(sheetText, d, index);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          // bottom: 2,
-                          left: 2,
-                          top: 4,
-                          right: 2),
-                      child: buildSheetTextWidget(sheetList[index] as SheetText)),
+      return Container(child: child); },
+      itemBuilder: (context, index) {
+      // print('hello hello sprdListBuilding: ${sheetList[index]}');
+      if (sheetList[index] is SheetText) {
+        var sheetText = sheetList[index] as SheetText;
+        return ReorderableDragStartListener(
+          index: index,
+          key: ValueKey(sheetText.id),
+          child: IntrinsicWidth(
+            child: IntrinsicHeight(
+              child: Stack(
+                children: [
+                  GestureDetector(
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          
+                          setState(() {
+                            panelIndex = panelIndex.copyWith(
+                                id: sheetText.id,
+                                parentId: sheetList.id);
+                          
+                            panelIndex.parentId = sheetList.id;
+                            whichPropertyTabIsClicked = 2;
+                          
+                            if (hDividerPosition > 0.48) {
+                              hDividerPosition = 0.4;
+                            }
+                            item = sheetText;
+                            _findItem();
+                          });
+                          
+                          print('clicked');
+                          print(sheetListItem.id);
+                          
+                          print(panelIndex);
+                        },
+                        onSecondaryLongPressDown: (d) {
+                          onRightClick(sheetText, d, index);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              // bottom: 2,
+                              left: 2,
+                              top: 4,
+                              right: 2),
+                          child: buildSheetTextWidget(sheetList[index] as SheetText)),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        );
-    // buildlistw
-  } else if (sheetList[index] is SheetList) {
-    return ReorderableDragStartListener(
-      index: index,
-      key: ValueKey(sheetList[index].id),
-      child: Container(
-          margin: EdgeInsets.only(top: 4),
-          width:sheetList.id == spreadSheetList[currentPageIndex].id?
-          sWidth
-          : findSheetListBuildWidth(
-                      sheetList[index] as SheetList) <=
-                  50
-              ? 50
+            );
+        // buildlistw
+      } else if (sheetList[index] is SheetList) {
+        return ReorderableDragStartListener(
+          index: index,
+          key: ValueKey(sheetList[index].id),
+          child: Container(
+              margin: EdgeInsets.only(top: 4),
+              width:sheetList.id == spreadSheetList[currentPageIndex].id?
+              sWidth
               : findSheetListBuildWidth(
-                  sheetList[index] as SheetList),
-          child: _buildListWidget(
-              sheetList[index] as SheetList)),
-    );
-  }
-    else if(sheetList[index] is SheetTable){
-    return ReorderableDragStartListener(
-      key: ValueKey(sheetList[index].id),
-      index: index,
-      child: buildSheetTableWidget(sheetList[index] as SheetTable)
-      );
-  
-  }
-  return Container(
-    key: ValueKey(const Uuid().v4()),
-    color: Colors.amberAccent,
-    height: 12,
-    // buildlistw
-  );
-  },
-  itemCount: sheetList.length,
-  onReorder: (oldIndex, newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
+                          sheetList[index] as SheetList) <=
+                      50
+                  ? 50
+                  : findSheetListBuildWidth(
+                      sheetList[index] as SheetList),
+              child: _buildListWidget(
+                  sheetList[index] as SheetList)),
+        );
       }
-      final item = sheetList.removeAt(oldIndex);
-      // buildlistw
-      sheetList.insert(newIndex, item);
-    });
-  },
-  );
+        else if(sheetList[index] is SheetTable){
+        return ReorderableDragStartListener(
+          key: ValueKey(sheetList[index].id),
+          index: index,
+          child: buildSheetTableWidget(sheetList[index] as SheetTable)
+          );
+      }
+      return Container(
+        key: ValueKey(const Uuid().v4()),
+        color: Colors.amberAccent,
+        height: 12,
+        // buildlistw
+      );
+      },
+      itemCount: sheetList.length,
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          final item = sheetList.removeAt(oldIndex);
+          // buildlistw
+          sheetList.insert(newIndex, item);
+        });
+      },
+      );
   
 
     return Stack(
@@ -4744,7 +4822,6 @@ Future<void> _initialize() async {
                   setState(() {
                     panelIndex.parentId = sheetList.id;
                     // panelIndex.runTimeType = sheetList.runtimeType;
-                    panelIndex.id = '';
                   });
                   
                   List<ContextMenuEntry> buildSheetListContextMenuEntries(
@@ -5401,263 +5478,274 @@ Future<void> _initialize() async {
                                       
 }
 
+  
   Widget buildSheetTableWidget(SheetTable sheetTable){
     var tableHeight = 0.0;
     var tableWidth = 0.0;
     sheetTable.rowData.forEach((element) => tableHeight += element.size,);
-    sheetTable.columnData.forEach((element) => tableWidth += element.size,);
-    return Padding(
-      padding: const EdgeInsets.all(4).copyWith(right:4),
+    sheetTable.columnData.forEach((element) => tableWidth += element.size+16,);
+    Widget alphabetHeader(String s, int ind){
+      return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
       child: GestureDetector(
-      onTap: () {
-      _findSheetTableItem(sheetTable);
-      },
-      child: Container(
-      padding: EdgeInsets.only(right:5),
-      width: tableWidth+15,
-      decoration: BoxDecoration(color:defaultPalette.primary,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.fromBorderSide(
-          panelIndex.parentId ==
-                  sheetTable.id
-              ?
-          BorderSide(
-          strokeAlign:
-              BorderSide.strokeAlignOutside,
-          width: 2,
-          color:defaultPalette.extras[3],): BorderSide.none
+        onHorizontalDragUpdate: (details) {
+          // Accumulate deltas without setState
+          // print(details.delta.dx);
+          _showOverlayAt(details.globalPosition + Offset(5,0), 
+          sheetTable.columnData[ind - 1].size.toStringAsFixed(0), numberToColumnLabel(ind ));
+           final col = ind  - 1;
+          setState(() {
+            sheetTable.columnData[col].size = (sheetTable.columnData[col].size + details.delta.dx)
+            .clamp(sheetTable.columnData[col].minSize, sheetTable.columnData[col].maxSize);
+          });
+          // print(sheetTable.columnData[col].size);
+        },
+        onHorizontalDragEnd: (_) {
+         
+          _hideOverlay();
+        },
+        child: Container(
+          width: sheetTable.columnData[ind-1].size+14,
+          height: 18,
+          margin: const EdgeInsets.only(bottom:3, left:1,right:1),
+          alignment: Alignment(0, 0),
+          decoration: BoxDecoration(
+            color: defaultPalette.primary,
+            border: Border(
+              top: BorderSide.none,
+              left: BorderSide.none,
+              bottom: BorderSide.none,
+              right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.2))
+              ),
+              // borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(vicinity.column == (sheetTable as SheetTable).columnData.length-1?12:0))
+          ),
+          child: Text('${s}',
+          style: GoogleFonts.lexend(
+            letterSpacing: -1,
+            fontSize: 12
+          ),
+          ),
+        )));
+      }
+
+    Widget numberSideHeader(int ind){
+      return Padding(
+        padding: const EdgeInsets.only(right:2.0),
+        child: MouseRegion(
+            cursor: SystemMouseCursors.resizeRow,
+            child: GestureDetector(
+              onVerticalDragStart: (c) {
+                
+              },
+              onVerticalDragUpdate: (details) {
+                // Accumulate deltas without setState
+                // _showOverlayAt(details.globalPosition + Offset(5,0), 
+                // sheetTable.rowData[ind - 1].size.toStringAsFixed(0),  ind.toString());
+                final row = ind - 1;
+                 _showOverlayAt(details.globalPosition + Offset(5,0), 
+                  sheetTable.rowData[ind - 1].size.toStringAsFixed(0), ind.toString() );
+                setState(() {
+                  sheetTable.rowData[row].size = (sheetTable.rowData[row].size + details.delta.dy)
+                  .clamp(sheetTable.rowData[row].minSize, sheetTable.rowData[row].maxSize);
+                });
+              },
+              onVerticalDragEnd: (_) {
+                
+                _hideOverlay();
+              },
+              child: Container(
+              height:  sheetTable.rowData[ind - 1].size,
+              width:15,
+              margin: const EdgeInsets.symmetric(vertical: 1),
+              alignment: Alignment(0, 0),
+              decoration: BoxDecoration(
+                color: defaultPalette.primary,
+                border: Border(
+                  top: BorderSide.none,
+                  left: BorderSide.none,
+                  bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                  right: BorderSide.none),
+              ),
+              child: Text('${ind}',
+              style: GoogleFonts.lexend(
+                letterSpacing: -1,
+                fontSize: 13
+              ),
+              ),
+            ),
+          ),
         ),
-      ),
-      height:tableHeight
-      +18 //height of A B C row
-      +20,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12).copyWith(topRight: Radius.circular(8)),
-        child: DynMouseScroll(
-          builder: (context, controller1, physics1) {
-            return DynMouseScroll(
-          builder: (context, controller2, physics2) {
-            return Stack(
+      );
+    }
+
+      //return to builTableWidget
+      return GestureDetector(
+        onTap: () {
+        _findSheetTableItem(sheetTable);
+        },
+        child: Container(
+          margin: const EdgeInsets.all(4).copyWith(right:4),
+          height:tableHeight+18+30,
+          width:tableWidth,
+          decoration:BoxDecoration(
+            color:defaultPalette.primary,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.fromBorderSide(
+                panelIndex.parentId == sheetTable.id ?
+                BorderSide(
+                strokeAlign:
+                    BorderSide.strokeAlignOutside,
+                width: 2,
+                color:defaultPalette.extras[3],): BorderSide.none
+              ),
+            ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Stack(
               children: [
+                // the grey bg for table cells
                 Container(
-                  margin: EdgeInsets.only(top:18, left:15, bottom: 5,),
+                  margin: EdgeInsets.only(top:19, left:15, bottom: 5,right: 6),
                   decoration: BoxDecoration(
                   color:defaultPalette.secondary,
                   borderRadius: BorderRadius.circular(3)
                 ),
                 ),
-                Padding(
-                  //this is for having a secondary colored lined at the edge of the table when you scroll
-                  padding: const EdgeInsets.only(right: 2.0),
-                  child: TableView.builder(
-                    horizontalDetails: ScrollableDetails.horizontal(
-                      controller: controller2,
-                      physics: physics2,
-                                                  
-                    ),
-                    verticalDetails: ScrollableDetails.vertical(
-                      controller: controller1,
-                      physics: physics1
-                    ),
-                    cacheExtent: 4,
-                    rowCount:(sheetTable).rowData.length+1,
-                    columnCount: (sheetTable).columnData.length+1,
-                    pinnedColumnCount: (sheetTable).pinnedColumns,
-                    pinnedRowCount: (sheetTable).pinnedRows,
-                    columnBuilder: (int i) {
-                      if(i ==0){
-                        return const TableSpan(
-                          extent:FixedTableSpanExtent(17));
-                      }
-                      return TableSpan(
-                        extent: FixedTableSpanExtent((sheetTable as SheetTable).columnData[i-1].size),
-                        // padding: SpanPadding.all(3)
-                        );
-                    },
-                    rowBuilder: (int i) {
-                      if(i ==0){
-                        return const TableSpan(extent:FixedTableSpanExtent(20));
-                      }
-                      return TableSpan(
-                        extent: FixedTableSpanExtent((sheetTable as SheetTable).rowData[i -1].size),
-                        );
-                    }, 
-                    cellBuilder: (BuildContext context, TableVicinity vicinity) {
-                      //top corner useless piece
-                        if(vicinity.row==0 && vicinity.column==0 ){
-                        return TableViewCell(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ColoredBox(
+                // the Table
+                Row(
+                  children: [
+                    // 1,2,3,4 numbers side
+                    Column(
+                      children:[ 
+                        Container(
+                          height:22.5,
+                          alignment: Alignment(0, 0),
+                          decoration: BoxDecoration(
                             color: defaultPalette.primary,
-                            child: Center(
-                              child: Text(''),
-                            ),
+                            border: Border(
+                              top: BorderSide.none,
+                              left: BorderSide.none,
+                              bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                              right: BorderSide.none),
                           ),
                         ),
-                      );
-                      }
-                      //topbar A B C D
-                      if(vicinity.row==0 && vicinity.column!=0 ){
-                        return TableViewCell(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom:2),
-                          child: MouseRegion(
-                              cursor: SystemMouseCursors.resizeColumn,
-                              child: GestureDetector(
-                                onHorizontalDragStart: (c) {
-                                  _pendingDelta = 0;
-                                  
-                                },
-                                onHorizontalDragUpdate: (details) {
-                                  // Accumulate deltas without setState
-                                  _pendingDelta = (_pendingDelta ?? 0) + details.delta.dx;
-                                  final int deltaInt = _pendingDelta!.round();
-                                  final String label = deltaInt > 0
-                                      ? ' +$deltaInt'
-                                      : ' $deltaInt';
-                                  _showOverlayAt(details.globalPosition + Offset(5,0), 
-                                  sheetTable.columnData[vicinity.column - 1].size.toStringAsFixed(0)+ label, numberToColumnLabel(vicinity.column));
-                                },
-                                onHorizontalDragEnd: (_) {
-                                  final col = vicinity.column - 1;
-                                  final rawNewSize = sheetTable.columnData[col].size + (_pendingDelta ?? 0);
-                                  final newSize = rawNewSize.floorToDouble()
-                                    .clamp(sheetTable.columnData[col].minSize, sheetTable.columnData[col].maxSize);
-                                  setState(() {
-                                    sheetTable.columnData[col].size = newSize;
-                                  });
-                                  _pendingDelta = null;
-                                  _hideOverlay();
-                                },
-                                child: Container(
-                                  alignment: Alignment(0, 0),
-                                  decoration: BoxDecoration(
-                                    color: defaultPalette.primary,
-                                    border: Border(
-                                      top: BorderSide.none,
-                                      left: BorderSide.none,
-                                      bottom: BorderSide.none,
-                                      right: BorderSide(color: defaultPalette.extras[0].withOpacity(0.2))
-                                      ),
-                                      // borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(vicinity.column == (sheetTable as SheetTable).columnData.length-1?12:0))
-                                  ),
-                                  child: Text('${numberToColumnLabel(vicinity.column)}',
-                                  style: GoogleFonts.lexend(
-                                    letterSpacing: -1,
-                                    fontSize: 12
-                                  ),
-                                  ),
+                        ...sheetTable.rowData.asMap().entries.map((rowEntry){
+                        return numberSideHeader(rowEntry.key+1);
+                      }).toList()
+                      ],
+                    ),
+                    // ABCD and Cells
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(right: 8),
+                        child: ScrollConfiguration(
+                          behavior: ScrollBehavior()
+                              .copyWith(scrollbars: false),
+                          child: DynMouseScroll(
+                              durationMS: 500,
+                              scrollSpeed: 1,
+                              builder: (context, controller, physics) {
+                                return ScrollbarUltima(
+                                  alwaysShowThumb: true,
+                                  controller: controller,
+                                  scrollbarPosition:
+                                      ScrollbarPosition.bottom,
+                                  backgroundColor: defaultPalette.primary,
+                                  isDraggable: true,
+                                  maxDynamicThumbLength: 90,
+                                  thumbBuilder:
+                                      (context, animation, widgetStates) {
+                                    return Container(
+                                      margin: EdgeInsets.only(bottom: 7.5),
+                                      decoration: BoxDecoration(
+                                          // border: Border.all(
+                                          //   color:defaultPalette.extras[0].withOpacity(0.4)
+                                          // ),
+                                          color: defaultPalette.primary,
+                                          borderRadius:
+                                              BorderRadius.circular(2)),
+                                      height: 6,
+                                    );
+                                  },
+                                  child: SingleChildScrollView(
+                                  padding: EdgeInsets.only(bottom: 4),
+                                  controller: controller,
+                                  physics: physics,
+                                  scrollDirection:Axis.horizontal,
+                                  child: SizedBox(
+                                    width: tableWidth+1,
+                                    child: Column(
+                                      children:[
+                                        //A B C D Headers
+                                        Row(
+                                        children: [
+                                          SizedBox(width:1),
+                                          ...sheetTable.columnData.asMap().entries.map((colEntry){
+                                          return alphabetHeader(numberToColumnLabel(colEntry.key+1), colEntry.key+1);
+                                        }).toList()],
+                                        ),
+                                        Expanded(
+                                          child: CustomMultiChildLayout(
+                                            delegate: SheetLayoutDelegate(
+                                              cells: sheetTable.cellData,
+                                              columnData: sheetTable.columnData,
+                                              rowData: sheetTable.rowData,
+                                            ),
+                                            children:[
+                                            for (var rowEntry in sheetTable.cellData)
+                                              for (var cell in rowEntry)
+                                                if (cell.isVisible)
+                                                  LayoutId(
+                                                    id: cell.id, // like "A1", "B3"
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        var (row, col) = parseCellId(cell.id);
+                                                        setState(() {
+                                                          item = cell.sheetItem as SheetText;
+                                                          panelIndex.id = cell.sheetItem.id;
+                                                          panelIndex.parentId = cell.sheetItem.parentId;
+                                                          sheetTableItem = sheetTable;
+                                                          _findSheetTableItem(sheetTable);
+                                                          sheetTableVariables.rowLayerIndex = row;
+                                                          sheetTableVariables.columnLayerIndex = col;
+                                                          whichTablePropertyTabIsClicked = 1;
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          color: defaultPalette.primary,
+                                                          borderRadius: BorderRadius.circular(2),
+                                                        ),
+                                                        margin: const EdgeInsets.all(1),
+                                                        child: buildSheetTableTextWidget(cell.sheetItem as SheetText),
+                                                      ),
+                                                    ),
+                                                  )
+                                          ],
+                                          ),
+                                        ),
+
+                                        
+                                      ]
+                                      
+                                    ),
+                                  )
                                 ),
-                            ),
-                          ),
-                        ),
-                      );
-                      }
-                      //left 1 2 3 4 5
-                      if(vicinity.column==0 ){
-                        return TableViewCell(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right:2.0),
-                          child: MouseRegion(
-                              cursor: SystemMouseCursors.resizeRow,
-                              child: GestureDetector(
-                                onVerticalDragStart: (c) {
-                                  _pendingDelta = 0;
-                                  
-                                },
-                                onVerticalDragUpdate: (details) {
-                                  // Accumulate deltas without setState
-                                  _pendingDelta = (_pendingDelta ?? 0) + details.delta.dy;
-                                  final int deltaInt = _pendingDelta!.round();
-                                  final String label = deltaInt > 0
-                                      ? ' +$deltaInt'
-                                      : ' $deltaInt';
-                                  _showOverlayAt(details.globalPosition + Offset(5,0), 
-                                  sheetTable.rowData[vicinity.row - 1].size.toStringAsFixed(0)+ label,  vicinity.row.toString());
-                                },
-                                onVerticalDragEnd: (_) {
-                                  final row = vicinity.row - 1;
-                                  final rawNewSize = sheetTable.rowData[row].size + (_pendingDelta ?? 0);
-                                  final newSize = rawNewSize.floorToDouble()
-                                    .clamp(sheetTable.rowData[row].minSize, sheetTable.rowData[row].maxSize);
-                                  setState(() {
-                                    sheetTable.rowData[row].size = newSize;
-                                  });
-                                  _pendingDelta = null;
-                                  _hideOverlay();
-                                },
-                                child: Container(
-                                alignment: Alignment(0, 0),
-                                decoration: BoxDecoration(
-                                  color: defaultPalette.primary,
-                                  border: Border(
-                                    top: BorderSide.none,
-                                    left: BorderSide.none,
-                                    bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
-                                    right: BorderSide.none),
-                                ),
-                                child: Text('${vicinity.row}',
-                                style: GoogleFonts.lexend(
-                                  letterSpacing: -1,
-                                  fontSize: 13
-                                ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                      }
-                      var rowIndex =  vicinity.row-1;
-                      var columnIndex = vicinity.column-1;                      
-                      return TableViewCell(
-                        columnMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].colSpan,
-                        columnMergeStart: vicinity.column,
-                        rowMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].rowSpan,
-                        rowMergeStart: vicinity.row,
-                        child: Padding(
-                          padding: const EdgeInsets.all(1),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: defaultPalette.primary,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: () {
-                            if (sheetTable.cellData[rowIndex][columnIndex].sheetItem is SheetText){
-                            return GestureDetector(
-                              onTap:(){
-                              setState(() {
-                                item = sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText;
-                                panelIndex.id = sheetTable.cellData[rowIndex][columnIndex].sheetItem.id;
-                                panelIndex.parentId = sheetTable.cellData[rowIndex][columnIndex].sheetItem.parentId;
-                                sheetTableItem = sheetTable;
-                                // print('sheetDecorationVariables.length');
-                                _findSheetTableItem(sheetTable);
-                                // updateSheetDecorationvariables((sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText).textDecoration);
-                                //print(sheetDecorationVariables.length);
-                                // whichPropertyTabIsClicked =2;
-                              });
-                              },
-                              child: buildSheetTableTextWidget(sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText));
+                              );
                             }
-                            return SizedBox();
-                            }()
-                            ),
+                          ),
                         ),
-                      );
-                    }),
-                  ),
-                ],
-                );
-                }
-                );
-              }),
+                      ),
+                    )
+                  
+                  ],
+                ),
+              
+              ],
             ),
           ),
-              ),
-    );
-                      
+        ),
+      );
   }
 
   Widget buildSheetTableTextWidget(SheetText sheetText) {
@@ -7502,7 +7590,7 @@ Future<void> _initialize() async {
                                   const SizedBox(
                                       height:5
                                     ),
-                                  //FONT Title and SIZE AND SPACINGS  
+                                  //SIZE AND SPACINGS  of FONT
                                   Container(
                                   margin: EdgeInsets.only(left:2, right:2),
                                   padding: EdgeInsets.all(5),
@@ -7511,7 +7599,7 @@ Future<void> _initialize() async {
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(color: defaultPalette.extras[0], width: 2)
                                   ),
-                                  //FONT Title and SIZE AND SPACINGS
+                                  // SIZE AND SPACINGS of FONT
                                   child:  Column(
                                     children: [
                                       Container(
@@ -7580,8 +7668,9 @@ Future<void> _initialize() async {
                                           child: GestureDetector(
                                             onTap: () {
                                               setState(() {
-                                              whichTextPropertyTabIsClicked = 1;
-                                              textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked);
+                                              // whichTextPropertyTabIsClicked = 1;
+                                              // textPropertyCardsController.setCardIndex(whichTextPropertyTabIsClicked);
+                                              controller.animateTo( 700, duration: Durations.extralong1, curve: Curves.easeInCirc);
                                             });
                                             },
                                             child: Container(
@@ -7624,7 +7713,8 @@ Future<void> _initialize() async {
                                   const SizedBox(
                                       height:5
                                     ),
-                                  //FONT Color 
+                                  
+                                  //Color of FONT
                                   Container(
                                   margin: EdgeInsets.only(left:2, right:2),
                                   padding: EdgeInsets.all(5),
@@ -7867,6 +7957,462 @@ Future<void> _initialize() async {
                                   ),
                                   
                                   const SizedBox(
+                                      height:5
+                                  ),
+                                  //FONT LIBRARY CARD
+                                  Stack(
+                                    children: [
+                                      //tab system of fonts
+                                      Container(
+                                        height: 350,
+                                        width: width + 3,
+                                        decoration: BoxDecoration(
+                                          color:defaultPalette.primary,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(width:2, color: defaultPalette.extras[0])
+                                        ),
+                                        margin: const EdgeInsets.only( left: 2, bottom: 0, right: 0),
+                                        padding:EdgeInsets.all(5).copyWith(top: 75),    
+                                        child: ClipRRect(
+                                          borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(20),
+                                              topRight: Radius.circular(20),
+                                              bottomLeft: Radius.circular(20),
+                                              bottomRight: Radius.circular(20)),
+                                          child: TabContainer(
+                                            tabs: [
+                                              Icon(
+                                                TablerIcons.search,
+                                                size: selectedFontCategory == 'search'
+                                                    ? 0
+                                                    : 15,
+                                                color: defaultPalette.extras[0],
+                                              ),
+                                              Icon(
+                                                TablerIcons.circle,
+                                                size: 12,
+                                                color:fontsTabContainerController.index ==1?  defaultPalette.primary: defaultPalette.extras[0],
+                                              ),
+                                              Icon(
+                                                TablerIcons.circles,
+                                                size: 12,
+                                                color:fontsTabContainerController.index ==2?  defaultPalette.primary: defaultPalette.extras[0],
+                                              ),
+                                              Icon(
+                                                TablerIcons.circle_dashed,
+                                                size: 12,
+                                                color:fontsTabContainerController.index ==3?  defaultPalette.primary: defaultPalette.extras[0],
+                                              ),
+                                              Icon(
+                                                TablerIcons.oval_vertical,
+                                                size: 12,
+                                                color:fontsTabContainerController.index ==4?  defaultPalette.primary: defaultPalette.extras[0],
+                                              ),
+                                              Icon(
+                                                TablerIcons.grain,
+                                                size: 12,
+                                                color:fontsTabContainerController.index ==5?  defaultPalette.primary: defaultPalette.extras[0],
+                                              ),
+                                            ],
+                                            tabEdge: TabEdge.left,
+                                            controller: fontsTabContainerController,
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(10),
+                                              topRight: Radius.circular(22),
+                                              bottomLeft: Radius.circular(22),
+                                              bottomRight: Radius.circular(22)),
+                                            tabExtent: 20,
+                                            tabsStart: 0,
+                                            tabsEnd: 1,
+                                            colors: [
+                                              defaultPalette.extras[0],
+                                              defaultPalette.extras[0],
+                                              defaultPalette.extras[0],
+                                              defaultPalette.extras[0],
+                                              defaultPalette.extras[0],
+                                              defaultPalette.extras[0],
+                                            ],
+                                            duration: Durations.short4,
+                                            selectedTextStyle: GoogleFonts.abrilFatface(
+                                              fontSize: 14,
+                                              color: defaultPalette.extras[0],
+                                            ),
+                                            unselectedTextStyle: GoogleFonts.abrilFatface(
+                                              fontSize: 12,
+                                              color: defaultPalette.primary,
+                                            ),
+                                            children: [
+                                              //SEARCH RESULT TAB
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.secondary,
+                                                  borderRadius: const BorderRadius.only(
+                                                      topLeft: Radius.circular(10),
+                                                      topRight: Radius.circular(10),
+                                                      bottomLeft: Radius.circular(22),
+                                                      bottomRight: Radius.circular(22)),
+                                                ),
+                                                margin: const EdgeInsets.only(
+                                                    top: 55,
+                                                    left: 3,
+                                                    right: 3,
+                                                    bottom: 3),
+                                                child: ClipRRect(
+                                                  borderRadius: const BorderRadius.only(
+                                                      topLeft: Radius.circular(10),
+                                                      topRight: Radius.circular(10),
+                                                      bottomLeft: Radius.circular(22),
+                                                      bottomRight: Radius.circular(22)),
+                                                  child: GridView.builder(
+                                                    gridDelegate:
+                                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount: fCrossAxisCount,
+                                                      childAspectRatio: 2.8,
+                                                      crossAxisSpacing: 5,
+                                                      mainAxisSpacing: 0,
+                                                    ),
+                                                    itemCount: filteredFonts.length,
+                                                    itemBuilder: (context, index) {
+                                                      final fontName =
+                                                          filteredFonts[index];
+                                      
+                                                      return Padding(
+                                                        padding: const EdgeInsets.only(top:6, left:4, right:4, bottom: 0),
+                                                        child: TextButton(
+                                                          style: TextButton.styleFrom(
+                                                          backgroundColor: item
+                                                              .textEditorController
+                                                              .getSelectionStyle()
+                                                              .attributes[
+                                                                  Attribute
+                                                                      .font
+                                                                      .key]
+                                                              ?.value ==
+                                                          GoogleFonts.getFont(
+                                                                  fontName)
+                                                              .fontFamily
+                                                      ? defaultPalette
+                                                          .tertiary
+                                                      : defaultPalette
+                                                          .primary,
+                                                  foregroundColor:
+                                                      defaultPalette
+                                                          .extras[0],
+                                                  minimumSize: Size(75, 75),
+                                                  shape: RoundedRectangleBorder(
+                                                    side: BorderSide(width: 0.4),
+                                                              borderRadius: BorderRadius.circular(5)
+                                                      ),
+                                                    ),
+                                                    onPressed: () {
+                                                      item.textEditorController.formatSelection(
+                                                      Attribute.fromKeyValue(
+                                                        Attribute.font.key,
+                                                        GoogleFonts.getFont( fontName).fontFamily == 'Clear'
+                                                            ? null
+                                                            : GoogleFonts.getFont( fontName).fontFamily,
+                                                        ),
+                                                      );
+                                                      setState(() {});
+                                                    },
+                                                    child: Text(
+                                                      fontName,
+                                                      textAlign: TextAlign.center,
+                                                      style: GoogleFonts.getFont(
+                                                          fontName,
+                                                          fontSize: 14),
+                                                      maxLines: 1,
+                                                    )),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                              //OTHER FONT CATEGORIES TABS
+                                              ...categorizedFonts.keys.map((category) {
+                                                final fontsInCategory =
+                                                    categorizedFonts[category]!
+                                                        .where((font) =>
+                                                            GoogleFonts.asMap()
+                                                                .containsKey(font))
+                                                        .toList();
+                                      
+                                                if (fontsInCategory.isEmpty) {
+                                                  return Center(
+                                                    child: Text(
+                                                      'No fonts available in this category.',
+                                                      style: TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 16),
+                                                    ),
+                                                  );
+                                                }
+                                                final fontName = fontsInCategory[index];
+                                                return Container(
+                                                  decoration: BoxDecoration(
+                                                    color: defaultPalette.secondary,
+                                                    border: Border.all(),
+                                                    borderRadius: const BorderRadius.only(
+                                                      topLeft: Radius.circular(10),
+                                                      topRight: Radius.circular(20),
+                                                      bottomLeft: Radius.circular(10),
+                                                      bottomRight: Radius.circular(20)),
+                                                  ),
+                                                  margin: const EdgeInsets.only(
+                                                      top: 3,
+                                                      left: 3,
+                                                      right: 3,
+                                                      bottom: 32),
+                                                  child: ClipRRect(
+                                                    borderRadius: const BorderRadius.only(
+                                                        topLeft: Radius.circular(10),
+                                                        topRight: Radius.circular(20),
+                                                        bottomLeft: Radius.circular(10),
+                                                        bottomRight: Radius.circular(20)),
+                                                    child: DynMouseScroll(
+                                                        durationMS: 500,
+                                                        scrollSpeed: 1,
+                                                        builder: (context, controller, physics) {
+                                                          return ScrollbarUltima(
+                                                            alwaysShowThumb: true,
+                                                            controller: controller,
+                                                            scrollbarPosition:
+                                                                ScrollbarPosition.right,
+                                                            backgroundColor: defaultPalette.primary,
+                                                            isDraggable: true,
+                                                            maxDynamicThumbLength: 300,
+                                                            minDynamicThumbLength: 80,
+                                                            thumbBuilder:
+                                                                (context, animation, widgetStates) {
+                                                              return Container(
+                                                                margin: EdgeInsets.symmetric(vertical: 12),
+                                                                decoration: BoxDecoration(
+                                                                    border: Border.all(),
+                                                                    color: defaultPalette.primary,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(2)),
+                                                                width: 6,
+                                                              );
+                                                            },
+                                                            child: GridView.builder(
+                                                              gridDelegate:
+                                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                                crossAxisCount:
+                                                                    fCrossAxisCount,
+                                                                childAspectRatio: 2.5,
+                                                                crossAxisSpacing: 0,
+                                                                mainAxisSpacing: 0,
+                                                              ),
+                                                              itemCount:
+                                                                  fontsInCategory.length,
+                                                              controller: controller,
+                                                              physics: physics,
+                                                              itemBuilder:
+                                                                  (context, index) {
+                                                                final fontName =
+                                                                    fontsInCategory[index];
+                                                                                                  
+                                                                return Container(
+                                                                  padding: const EdgeInsets.only(
+                                                                        top:6, left:4, right:4,
+                                                                          bottom: 0),
+                                                                  child: TextButton(
+                                                                    style: TextButton.styleFrom(
+                                                                      backgroundColor: item
+                                                                          .textEditorController
+                                                                          .getSelectionStyle()
+                                                                          .attributes[Attribute.font.key]
+                                                                          ?.value == GoogleFonts.getFont(fontName).fontFamily
+                                                                          ? defaultPalette.tertiary
+                                                                          : defaultPalette.primary,
+                                                                      foregroundColor: defaultPalette.extras[0],
+                                                                      minimumSize:Size(75, 80),
+                                                                      shape:
+                                                                          RoundedRectangleBorder(
+                                                                            side: BorderSide(width: 0.4),
+                                                                            borderRadius: BorderRadius.circular(5)
+                                                                          ),
+                                                                    ),
+                                                                    onPressed: () {
+                                                                      item.textEditorController
+                                                                          .formatSelection(
+                                                                        Attribute
+                                                                            .fromKeyValue(
+                                                                          Attribute
+                                                                              .font.key,
+                                                                          GoogleFonts.getFont(fontName)
+                                                                                      .fontFamily ==
+                                                                                  'Clear'
+                                                                              ? null
+                                                                              : GoogleFonts.getFont(
+                                                                                      fontName)
+                                                                                  .fontFamily,
+                                                                        ),
+                                                                      );
+                                                                      setState(() {});
+                                                                    },
+                                                                    child: Text(
+                                                                      fontName,
+                                                                      textAlign: TextAlign
+                                                                          .center,
+                                                                      style: GoogleFonts.getFont(
+                                                                          color: defaultPalette
+                                                                              .extras[0],
+                                                                          fontName,
+                                                                          fontSize: 14),
+                                                                      maxLines: 1,
+                                                                    )),
+                                                              
+                                                                );
+                                                              },
+                                                            ),
+                                                          );
+                                                        }),
+                                                  ),
+                                                );
+                                              }).toList()
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      
+                                      //FONT TITLE TEXT
+                                      Container(
+                                        width: width,
+                                        height: 75,
+                                        margin: EdgeInsets.only(top:12),
+                                        decoration: BoxDecoration(
+                                        ),
+                                        child:Stack(
+                                          children: [
+                                            Positioned(
+                                              top: 0,
+                                              left: 17,
+                                              width: width,
+                                              child: Text('font',
+                                                  textAlign: TextAlign.start,
+                                                  style: GoogleFonts.raleway(
+                                                    letterSpacing:-0.3,
+                                                    height: 1,
+                                                    fontWeight: FontWeight.w800,
+                                                    foreground: Paint()
+                                                    ..style=PaintingStyle.stroke
+                                                    ..strokeWidth=0
+                                                    ,
+                                                    fontSize: 25)
+                                                    )),
+                                            Positioned(
+                                              top: 2,
+                                              left: 60,
+                                              child: Text('Library',
+                                                  textAlign: TextAlign.start,
+                                                  style: GoogleFonts.mrDafoe(
+                                                    height: 1,
+                                                    letterSpacing:-0.5,
+                                                    color: defaultPalette.extras[0],
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 22)
+                                                    )),
+                                            Row(
+                                            children: [
+                                              Expanded(
+                                                child: Container(
+                                                  width:width,
+                                                  height:25,
+                                                  alignment:Alignment(0,0),
+                                                  margin: EdgeInsets.all(12).copyWith(top: 32,right: 5),
+                                                  decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(10), 
+                                                  color:defaultPalette.secondary,
+                                                  border: Border.all(
+                                                    width:0.2
+                                                  )
+                                                  ),
+                                                  child: Text((item.textEditorController
+                                                        .getSelectionStyle()
+                                                        .attributes[Attribute.font.key]
+                                                        ?.value
+                                                        ?.replaceAll( RegExp(r'_regular'), '') ?? 'mixFonts'),
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                      fontFamily: (item.textEditorController
+                                                        .getSelectionStyle()
+                                                        .attributes[
+                                                            Attribute.font.key]
+                                                      ?.value )
+                                                      ),        
+                                                ),
+                                                ),
+                                              ),
+                                            ],
+                                                                                        )        
+                                          ],
+                                        )
+                                      ),
+                                      
+                                      //CURRENT TAB
+                                      Positioned(
+                                          left: 45,
+                                          bottom: 8,
+                                          width: width,
+                                          child: Text(
+                                              selectedFontCategory == 'search'
+                                                  ? ''
+                                                  : selectedFontCategory,
+                                              textAlign: TextAlign.start,
+                                              maxLines: 1,
+                                              style: GoogleFonts.leagueSpartan(
+                                                  color: defaultPalette.primary,
+                                                  fontSize: (width / 7).clamp(10, 20),
+                                                  letterSpacing: 0))),
+                                      //
+                                      if (selectedFontCategory == 'search')
+                                        //Search BAR TEXTFIELDFORM
+                                        Positioned(
+                                          right: 15,
+                                          top: 75,
+                                          width: width-16,
+                                          child: TextFormField(
+                                            style: GoogleFonts.bungee(
+                                                color: defaultPalette.primary,
+                                                fontSize: (width / 6).clamp(5, 15)),
+                                            cursorColor: defaultPalette.tertiary,
+                                            decoration: InputDecoration(
+                                              // labelText: 'Search Fonts',
+                                              contentPadding: EdgeInsets.all(0),
+                                              hintText: 'Type to search fonts...',
+                                              focusColor: defaultPalette.primary,
+                                              hintStyle: GoogleFonts.leagueSpartan(
+                                                  fontSize: 15,
+                                                  color: defaultPalette.primary),
+                                              prefixIcon: Icon(TablerIcons.search,
+                                                  color: defaultPalette.primary),
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                                gapPadding: 2,
+                                                borderRadius: BorderRadius.circular(22),
+                                              ),
+                                            ),
+                                            onChanged: (query) {
+                                              setState(() {
+                                                filteredFonts = categorizedFonts.entries
+                                                    .expand((entry) => entry.value)
+                                                    .where((font) =>
+                                                        font.toLowerCase().contains(query
+                                                            .toLowerCase()) &&
+                                                        GoogleFonts.asMap().containsKey(
+                                                            font)) 
+                                                    .toList();
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                  
+                                      ],
+                                    ),
+
+                                  
+                                  const SizedBox(
                                       height:2
                                   ),
                                 ],
@@ -7886,6 +8432,7 @@ Future<void> _initialize() async {
                       child: Stack(
                         children: [
                           //GRAPH BEHIND FONT CARD
+                          ...[
                           Padding(
                             padding: const EdgeInsets.all(10),
                             child: ClipRRect(
@@ -7929,443 +8476,28 @@ Future<void> _initialize() async {
                               ),
                             ),
                           ),
-
-                          //FONT CARD
+                          Container(
+                            width: width+10,
+                            margin: EdgeInsets.only(left:6,top: 5),
+                            color: defaultPalette.transparent
+                          ),
+                          ],
+                          //functions drivers and conditional formatting
                           Container(
                             height: sHeight * 0.9,
-                            width: width + 3,
                             decoration: BoxDecoration(
-                              color:defaultPalette.primary,
-                              borderRadius: BorderRadius.circular(25),
-                              border: Border.all(width:2, color: defaultPalette.extras[0])
                             ),
-                            margin: const EdgeInsets.only(
-                                top: 150, left: 12, bottom: 18, right: 0),
-                            padding:EdgeInsets.all(5),    
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(22),
-                                  topRight: Radius.circular(22),
-                                  bottomLeft: Radius.circular(22),
-                                  bottomRight: Radius.circular(22)),
-                              child: TabContainer(
-                                tabs: [
-                                  Icon(
-                                    TablerIcons.search,
-                                    size: selectedFontCategory == 'search'
-                                        ? 0
-                                        : 15,
-                                    color: defaultPalette.extras[0],
-                                  ),
-                                  Icon(
-                                    TablerIcons.circle,
-                                    size: 15,
-                                    color:fontsTabContainerController.index ==1?  defaultPalette.primary: defaultPalette.extras[0],
-                                  ),
-                                  Icon(
-                                    TablerIcons.circles,
-                                    size: 15,
-                                    color:fontsTabContainerController.index ==2?  defaultPalette.primary: defaultPalette.extras[0],
-                                  ),
-                                  Icon(
-                                    TablerIcons.circle_dashed,
-                                    size: 15,
-                                    color:fontsTabContainerController.index ==3?  defaultPalette.primary: defaultPalette.extras[0],
-                                  ),
-                                  Icon(
-                                    TablerIcons.oval_vertical,
-                                    size: 15,
-                                    color:fontsTabContainerController.index ==4?  defaultPalette.primary: defaultPalette.extras[0],
-                                  ),
-                                  Icon(
-                                    TablerIcons.grain,
-                                    size: 15,
-                                    color:fontsTabContainerController.index ==5?  defaultPalette.primary: defaultPalette.extras[0],
-                                  ),
-                                ],
-                                tabEdge: TabEdge.left,
-                                controller: fontsTabContainerController,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(22),
-                                  bottomLeft: Radius.circular(22),
-                                  bottomRight: Radius.circular(22)),
-                                tabExtent: 25,
-                                tabsStart: 0,
-                                tabsEnd: 1,
-                                colors: [
-                                  defaultPalette.extras[0],
-                                  defaultPalette.extras[0],
-                                  defaultPalette.extras[0],
-                                  defaultPalette.extras[0],
-                                  defaultPalette.extras[0],
-                                  defaultPalette.extras[0],
-                                ],
-                                selectedTextStyle: GoogleFonts.abrilFatface(
-                                  fontSize: 14,
-                                  color: defaultPalette.extras[0],
-                                ),
-                                unselectedTextStyle: GoogleFonts.abrilFatface(
-                                  fontSize: 12,
-                                  color: defaultPalette.primary,
-                                ),
-                                children: [
-                                  //SEARCH RESULT TAB
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: defaultPalette.secondary,
-                                      borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(10),
-                                          bottomLeft: Radius.circular(22),
-                                          bottomRight: Radius.circular(22)),
-                                    ),
-                                    margin: const EdgeInsets.only(
-                                        top: 55,
-                                        left: 3,
-                                        right: 3,
-                                        bottom: 3),
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(10),
-                                          bottomLeft: Radius.circular(22),
-                                          bottomRight: Radius.circular(22)),
-                                      child: GridView.builder(
-                                        gridDelegate:
-                                            SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: fCrossAxisCount,
-                                          childAspectRatio: 2.8,
-                                          crossAxisSpacing: 5,
-                                          mainAxisSpacing: 0,
-                                        ),
-                                        itemCount: filteredFonts.length,
-                                        itemBuilder: (context, index) {
-                                          final fontName =
-                                              filteredFonts[index];
-
-                                          return Padding(
-                                            padding: const EdgeInsets.only(top:6, left:4, right:4, bottom: 0),
-                                            child: TextButton(
-                                              style: TextButton.styleFrom(
-                                              backgroundColor: item
-                                                          .textEditorController
-                                                          .getSelectionStyle()
-                                                          .attributes[
-                                                              Attribute
-                                                                  .font
-                                                                  .key]
-                                                          ?.value ==
-                                                      GoogleFonts.getFont(
-                                                              fontName)
-                                                          .fontFamily
-                                                  ? defaultPalette
-                                                      .tertiary
-                                                  : defaultPalette
-                                                      .primary,
-                                              foregroundColor:
-                                                  defaultPalette
-                                                      .extras[0],
-                                              minimumSize: Size(75, 75),
-                                              shape: RoundedRectangleBorder(
-                                                side: BorderSide(width: 0.4),
-                                                          borderRadius: BorderRadius.circular(5)
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  item.textEditorController.formatSelection(
-                                                  Attribute.fromKeyValue(
-                                                    Attribute.font.key,
-                                                    GoogleFonts.getFont( fontName).fontFamily == 'Clear'
-                                                        ? null
-                                                        : GoogleFonts.getFont( fontName).fontFamily,
-                                                    ),
-                                                  );
-                                                  setState(() {});
-                                                },
-                                                child: Text(
-                                                  fontName,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.getFont(
-                                                      fontName,
-                                                      fontSize: 14),
-                                                  maxLines: 1,
-                                                )),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  //OTHER FONT CATEGORIES TABS
-                                  ...categorizedFonts.keys.map((category) {
-                                    final fontsInCategory =
-                                        categorizedFonts[category]!
-                                            .where((font) =>
-                                                GoogleFonts.asMap()
-                                                    .containsKey(font))
-                                            .toList();
-
-                                    if (fontsInCategory.isEmpty) {
-                                      return Center(
-                                        child: Text(
-                                          'No fonts available in this category.',
-                                          style: TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 16),
-                                        ),
-                                      );
-                                    }
-                                    final fontName = fontsInCategory[index];
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        color: defaultPalette.secondary,
-                                        border: Border.all(),
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(22),
-                                          bottomLeft: Radius.circular(10),
-                                          bottomRight: Radius.circular(22)),
-                                      ),
-                                      margin: const EdgeInsets.only(
-                                          top: 3,
-                                          left: 3,
-                                          right: 3,
-                                          bottom: 35),
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(10),
-                                            topRight: Radius.circular(22),
-                                            bottomLeft: Radius.circular(10),
-                                            bottomRight: Radius.circular(22)),
-                                        child: DynMouseScroll(
-                                            durationMS: 500,
-                                            scrollSpeed: 1,
-                                            builder: (context, controller,
-                                                physics) {
-                                              return GridView.builder(
-                                                gridDelegate:
-                                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                                  crossAxisCount:
-                                                      fCrossAxisCount,
-                                                  childAspectRatio: 2.5,
-                                                  crossAxisSpacing: 0,
-                                                  mainAxisSpacing: 0,
-                                                ),
-                                                itemCount:
-                                                    fontsInCategory.length,
-                                                controller: controller,
-                                                physics: physics,
-                                                itemBuilder:
-                                                    (context, index) {
-                                                  final fontName =
-                                                      fontsInCategory[index];
-
-                                                  return Container(
-                                                    padding: const EdgeInsets.only(
-                                                          top:6, left:4, right:4,
-                                                            bottom: 0),
-                                                    child: TextButton(
-                                                      style: TextButton.styleFrom(
-                                                        backgroundColor: item
-                                                            .textEditorController
-                                                            .getSelectionStyle()
-                                                            .attributes[Attribute.font.key]
-                                                            ?.value == GoogleFonts.getFont(fontName).fontFamily
-                                                            ? defaultPalette.tertiary
-                                                            : defaultPalette.primary,
-                                                        foregroundColor: defaultPalette.extras[0],
-                                                        minimumSize:Size(75, 80),
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                              side: BorderSide(width: 0.4),
-                                                              borderRadius: BorderRadius.circular(5)
-                                                            ),
-                                                      ),
-                                                      onPressed: () {
-                                                        item.textEditorController
-                                                            .formatSelection(
-                                                          Attribute
-                                                              .fromKeyValue(
-                                                            Attribute
-                                                                .font.key,
-                                                            GoogleFonts.getFont(fontName)
-                                                                        .fontFamily ==
-                                                                    'Clear'
-                                                                ? null
-                                                                : GoogleFonts.getFont(
-                                                                        fontName)
-                                                                    .fontFamily,
-                                                          ),
-                                                        );
-                                                        setState(() {});
-                                                      },
-                                                      child: Text(
-                                                        fontName,
-                                                        textAlign: TextAlign
-                                                            .center,
-                                                        style: GoogleFonts.getFont(
-                                                            color: defaultPalette
-                                                                .extras[0],
-                                                            fontName,
-                                                            fontSize: 14),
-                                                        maxLines: 1,
-                                                      )),
-                                                
-                                                  );
-                                                },
-                                              );
-                                            }),
-                                      ),
-                                    );
-                                  }).toList()
-                                ],
-                              ),
+                            margin: EdgeInsets.only(
+                              top: 15,
+                              bottom: index == whichTextPropertyTabIsClicked? 15: 18,
+                              left: 10,
+                              right: 13),
+                            child: Text(
+                              item.textEditorConfigurations.controller.document.toDelta().toJson().toList().toString()
                             ),
-                          ),
+                          )
 
-                          //SELECTED FONT white STRIP
-                          Positioned(
-                              left: 15,
-                              top:110,
-                              width: width -4,
-                              child: Container(
-                                width: width-15,
-                                padding: const EdgeInsets.only(
-                                    right: 10, top: 3, bottom: 3),
-                                margin: EdgeInsets.only(
-                                    right: index == currentCardIndex ? 0 : 5),
-                                decoration: BoxDecoration(
-                                    color: defaultPalette.primary,
-                                    border: Border.all(color:defaultPalette.extras[0], width:2),
-                                    borderRadius: BorderRadius.circular(15)
-                                  ),
-                                child: Text(
-                                    (item.textEditorController
-                                            .getSelectionStyle()
-                                            .attributes[Attribute.font.key]
-                                            ?.value
-                                            ?.replaceAll(
-                                                RegExp(r'_regular'), '') ??
-                                        'mixFonts'),
-                                    textAlign: TextAlign.end,
-                                    maxLines: 1,
-                                    style: TextStyle(
-                                        fontFamily: (item.textEditorController
-                                                .getSelectionStyle()
-                                                .attributes[
-                                                    Attribute.font.key]
-                                                ?.value ??
-                                            null),
-                                        color: defaultPalette.extras[0],
-                                        fontSize:
-                                            (width / 20).clamp(15, 20))),
-                              )),
-                        
-
-                          //FONT TITLE TEXT
-                          ...[
-                            Positioned(
-                              top: 10,
-                              left: 30,
-                              width: width +12,
-                              child: Text('FONT',
-                                  textAlign: TextAlign.start,
-                                  style: GoogleFonts.bebasNeue(
-                                    letterSpacing:-1,
-                                    color: defaultPalette.primary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 75)
-                                    )),
-                          Positioned(
-                              top: 10,
-                              left: 30,
-                              width: width +12,
-                              child: Text('FONT',
-                                  textAlign: TextAlign.start,
-                                  style: GoogleFonts.bebasNeue(
-                                    letterSpacing:-1,
-                                    // color: defaultPalette.primary,
-                                    fontWeight: FontWeight.w800,
-                                    foreground: Paint()
-                                    ..style=PaintingStyle.stroke
-                                    ..strokeWidth=0
-                                    ,
-                                    fontSize: 75)
-                                    )),
                           ],
-                          Positioned(
-                              top: 60,
-                              left: 45,
-                              child: Transform.rotate(
-                                angle:-pi/15,
-                                child: Text('Library',
-                                    textAlign: TextAlign.start,
-                                    style: GoogleFonts.greatVibes(
-                                      letterSpacing:-1,
-                                      color: defaultPalette.extras[0],
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 50)
-                                      ),
-                              )),            
-                          
-                          //CURRENT TAB
-                          Positioned(
-                              left: 58,
-                              bottom: 28,
-                              width: width,
-                              child: Text(
-                                  selectedFontCategory == 'search'
-                                      ? ''
-                                      : selectedFontCategory,
-                                  textAlign: TextAlign.start,
-                                  maxLines: 1,
-                                  style: GoogleFonts.leagueSpartan(
-                                      color: defaultPalette.primary,
-                                      fontSize: (width / 7).clamp(10, 20),
-                                      letterSpacing: 0))),
-                          //
-                          if (selectedFontCategory == 'search')
-                            //Search BAR TEXTFIELDFORM
-                            Positioned(
-                              right: 25,
-                              top: 158,
-                              width: width-16,
-                              child: TextFormField(
-                                style: GoogleFonts.bungee(
-                                    color: defaultPalette.primary,
-                                    fontSize: (width / 6).clamp(5, 15)),
-                                cursorColor: defaultPalette.tertiary,
-                                decoration: InputDecoration(
-                                  // labelText: 'Search Fonts',
-                                  contentPadding: EdgeInsets.all(0),
-                                  hintText: 'Type to search fonts...',
-                                  focusColor: defaultPalette.primary,
-                                  hintStyle: GoogleFonts.leagueSpartan(
-                                      fontSize: 15,
-                                      color: defaultPalette.primary),
-                                  prefixIcon: Icon(TablerIcons.search,
-                                      color: defaultPalette.primary),
-                                  border: OutlineInputBorder(
-                                    borderSide: BorderSide.none,
-                                    gapPadding: 2,
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                onChanged: (query) {
-                                  setState(() {
-                                    filteredFonts = categorizedFonts.entries
-                                        .expand((entry) => entry.value)
-                                        .where((font) =>
-                                            font.toLowerCase().contains(query
-                                                .toLowerCase()) &&
-                                            GoogleFonts.asMap().containsKey(
-                                                font)) 
-                                        .toList();
-                                  });
-                                },
-                              ),
-                            ),
-                        ],
                       ),
                     ),
 
@@ -8894,7 +9026,7 @@ Future<void> _initialize() async {
             duration: Duration(milliseconds: 150),
             backgroundCardScale: 1,
             loop: true,
-            cardCount: 2,
+            cardCount: 3,
             allowUnSwipe: true,
             allowUnlimitedUnSwipe: true,
             initialIndex: whichTablePropertyTabIsClicked,
@@ -8941,14 +9073,15 @@ Future<void> _initialize() async {
               List<TextEditingController> tableTextControllers=[
                 TextEditingController()..text= (sheetTableItem.pinnedRows-1).toString(),
                 TextEditingController()..text= (sheetTableItem.pinnedColumns-1).toString(),
-                TextEditingController()..text= sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].size.toString().replaceAll(RegExp(r'.0$'),''),
+                TextEditingController()..text= sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].size.toStringAsFixed(2).replaceAll(RegExp(r'.0$'),''),
                 TextEditingController()..text=sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize.toString().replaceAll(RegExp(r'.0$'),''),
                 TextEditingController()..text=sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize.toString().replaceAll(RegExp(r'.0$'),''),
-                TextEditingController()..text= sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].size.toString().replaceAll(RegExp(r'.0$'),''),
+                TextEditingController()..text= sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].size.toStringAsFixed(2).replaceAll(RegExp(r'.0$'),''),
                 TextEditingController()..text=sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize.toString().replaceAll(RegExp(r'.0$'),''),
                 TextEditingController()..text=sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize.toString().replaceAll(RegExp(r'.0$'),''),
-                
-                
+                TextEditingController()..text=sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].rowSpan.toString().replaceAll(RegExp(r'.0$'),''),
+                TextEditingController()..text= sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].colSpan.toString().replaceAll(RegExp(r'.0$'),''),
+                    
               ];
               
               Widget switchTableDecorationTile (int s, String p, double top){
@@ -8963,7 +9096,10 @@ Future<void> _initialize() async {
                       _findSheetTableItem(sheetTableItem, updateVariables: false);
                     });
                   },
-                  child: Text( p,style: GoogleFonts.lexend(
+                  child: Text( p,
+                  maxLines: 1,
+                  overflow:TextOverflow.ellipsis,
+                  style: GoogleFonts.lexend(
                   fontSize: 15,
                   letterSpacing:-1,
                   )),
@@ -9042,7 +9178,15 @@ Future<void> _initialize() async {
                               break;  
                             case 7:
                               sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, double.infinity);
-                              break;       
+                              break;     
+                            case 8:
+                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].rowSpan=(parsedValue.round()).clamp(1, (sheetTableItem.rowData.length-sheetTableVariables.rowLayerIndex));
+                              applySpans(sheetTableItem);
+                              break;  
+                            case 9:
+                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].colSpan=(parsedValue.round()).clamp(1, (sheetTableItem.columnData.length-sheetTableVariables.columnLayerIndex));
+                              applySpans(sheetTableItem);
+                              break;        
                           }
                           
                         });
@@ -9119,6 +9263,12 @@ Future<void> _initialize() async {
                             case 7:
                               sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, double.infinity);
                               break;  
+                            case 8:
+                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].rowSpan=(parsedValue).ceil().clamp(1, sheetTableItem.rowData.length);
+                              break;  
+                            case 9:
+                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].colSpan=(parsedValue).ceil().clamp(1, sheetTableItem.columnData.length);
+                              break;      
                           }
                           });
                         },
@@ -9200,7 +9350,7 @@ Future<void> _initialize() async {
 
                                         sheetTableItem.cellData[i].add(
                                           SheetTableCell(
-                                            id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+i.toString(), 
+                                            id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(), 
                                             parentId: parentId, 
                                             sheetItem: _addTextField(
                                             parentId: sheetTableItem.id,
@@ -9226,35 +9376,35 @@ Future<void> _initialize() async {
                           ),
                           Icon(
                             axis == 0? TablerIcons.layout_rows : TablerIcons.layout_columns,
-                            size:28,
+                            size:24,
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Text(
-                              axis==0? ' rows ':' columns ',
+                              axis==0? 'rows ':'columns ',
                               maxLines: 1,
                               style: GoogleFonts.lexend(
-                                height: 0.8,
+                                height: 0.7,
                                 fontSize:20,
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w500),
                               ),
-                              const SizedBox(
-                                height:4
-                              ),
-                              Text(
-                              '    id: '+ (axis==0? sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].id:sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].id),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.lexend(
-                                  height: 0.8,
-                                  fontSize: 8,
-                                  letterSpacing: -1,
-                                  fontWeight: FontWeight.w500),
-                              ),                        
+                              // const SizedBox(
+                              //   height:4
+                              // ),
+                              // Text(
+                              // '  id: '+ (axis==0? sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].id:sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].id),
+                              //   maxLines: 1,
+                              //   overflow: TextOverflow.ellipsis,
+                              //   textAlign: TextAlign.center,
+                              //   style: GoogleFonts.lexend(
+                              //     height: 0.8,
+                              //     fontSize: 8,
+                              //     letterSpacing: -1,
+                              //     fontWeight: FontWeight.w500),
+                              // ),                        
                             ],
                           ),
                           SizedBox(
@@ -9267,68 +9417,11 @@ Future<void> _initialize() async {
                     Positioned(
                         left: 42,
                         top: 45,
+                        height:140,
+                        width:width - 49,
                         child: Column(
                           children: [
-                            Container(
-                              width:width - 49,
-                              height: 75,
-                              padding: EdgeInsets.only(
-                                left: 1,
-                              ),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: defaultPalette.secondary,
-                                border: Border.all(
-                                  color: defaultPalette.extras[0],
-                                  width: 1
-                                ),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: ClipRRect(
-                                borderRadius:BorderRadius.circular(15),
-                                child: ScrollConfiguration(
-                                  behavior:
-                                      ScrollBehavior().copyWith(scrollbars: false),
-                                  child: DynMouseScroll(
-                                      durationMS: 500,
-                                      scrollSpeed: 1,
-                                      builder: (context, controller, physics) {
-                                        return SingleChildScrollView(
-                                          controller: controller,
-                                          physics: physics,
-                                          padding: EdgeInsets.only(left:2, right:3),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              const SizedBox(
-                                                height:5
-                                              ),
-                                              ...axis==0?
-                                              [
-                                              Row(children:tablePropertyTile(2,' size', TablerIcons.ruler_measure_2)),
-                                              Row(children:tablePropertyTile(3,' min', TablerIcons.point_filled)),
-                                              Row(children:tablePropertyTile(4,' max', TablerIcons.circle)),
-                                              ]
-                                              :
-                                              [
-                                              Row(children:tablePropertyTile(5,' size', TablerIcons.ruler_measure)),
-                                              Row(children:tablePropertyTile(6,' min', TablerIcons.point_filled)),
-                                              Row(children:tablePropertyTile(7,' max', TablerIcons.circle)),
-                                              ],
-                                              const SizedBox(
-                                                height:3
-                                              ),
-                                              
-                                            ],
-                                          ),
-                                        );
-                                      }),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
+                              SizedBox(
                               width:width - 49,
                               child: Row(
                                 children: [Expanded(
@@ -9344,8 +9437,8 @@ Future<void> _initialize() async {
                             ElevatedLayerButton(
                               onClick:(){
                                 whichTableDecorationIsClicked = axis==0? 2:3;
-                                tablePropertyCardsController.setCardIndex(1);
-                                whichTablePropertyTabIsClicked =1;
+                                tablePropertyCardsController.setCardIndex(2);
+                                whichTablePropertyTabIsClicked =2;
                                 _findSheetTableItem(sheetTableItem, updateVariables: false);
                               },
                               buttonHeight: 48,
@@ -9362,6 +9455,9 @@ Future<void> _initialize() async {
                                   Container(
                                     margin: EdgeInsets.all(4),
                                     width:35,height:35,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(15),
+                                      border: Border.all()),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(15),
                                       child: buildDecoratedContainer(
@@ -9390,26 +9486,45 @@ Future<void> _initialize() async {
                                 ],
                               ),
                               subfac: 5,
-                              depth:3.5,
+                              depth:2,
                               baseDecoration: BoxDecoration(
-                                color: defaultPalette.secondary,
-                                border: Border.all(),
+                                color: defaultPalette.extras[3],
+                                // border: Border.all(),
                               ),
                             ),
                             const SizedBox(
                               height:3
                             ),
+                             const SizedBox(
+                                height:5
+                              ),
+                              ...axis==0?
+                              [
+                              Row(children:tablePropertyTile(2,' size', TablerIcons.ruler_measure_2)),
+                              Row(children:tablePropertyTile(3,' min', TablerIcons.point_filled)),
+                              Row(children:tablePropertyTile(4,' max', TablerIcons.circle)),
+                              ]
+                              :
+                              [
+                              Row(children:tablePropertyTile(5,' size', TablerIcons.ruler_measure)),
+                              Row(children:tablePropertyTile(6,' min', TablerIcons.point_filled)),
+                              Row(children:tablePropertyTile(7,' max', TablerIcons.circle)),
+                              ],
+                              const SizedBox(
+                                height:3
+                              ),
+                            
                           ],
                         )),
                     //THE LAYERS AND SCROLLBAR OF SHADOWLAYERS IN DECORATION EDITOR
                     Positioned(
                       top: 42,
-                      left: 8,
+                      left:2,
                       child: Column(
                         children: [
                           SizedBox(
                             width: 31,
-                            height: 120,
+                            height: 122,
                             child: ScrollConfiguration(
                               behavior: ScrollBehavior()
                                   .copyWith(scrollbars: false),
@@ -9421,7 +9536,7 @@ Future<void> _initialize() async {
                                       alwaysShowThumb: true,
                                       controller: controller,
                                       scrollbarPosition:
-                                          ScrollbarPosition.right,
+                                          ScrollbarPosition.left,
                                       backgroundColor: defaultPalette.primary,
                                       scrollbarLength: 120,
                                       isDraggable: true,
@@ -9440,7 +9555,7 @@ Future<void> _initialize() async {
                                       },
                                       child: Padding(
                                         padding:
-                                            const EdgeInsets.only(right: 7.0),
+                                            const EdgeInsets.only(left: 7.0),
                                         child: ReorderableListView(
                                           onReorder: (oldIndex, newIndex) {
                                             setState(() {
@@ -9598,13 +9713,13 @@ Future<void> _initialize() async {
                                       highlightColor: defaultPalette.secondary,
                                       onTap: () {
                                         setState(() {
-                                         if (axis == 0) {
+                                         if (axis == 0 && sheetTableItem.rowData.length>1 ) {
                                           sheetTableItem.rowData.removeAt(sheetTableVariables.rowLayerIndex);
                                           sheetTableItem.cellData.removeAt(sheetTableVariables.rowLayerIndex);
                                           if (sheetTableVariables.rowLayerIndex == sheetTableItem.rowData.length) {
                                             sheetTableVariables.rowLayerIndex--;
                                           }
-                                         } else {
+                                         } else if(axis == 1 &&sheetTableItem.columnData.length>1 ){
                                           sheetTableItem.columnData.removeAt(sheetTableVariables.columnLayerIndex);
                                           for (var i = 0; i < sheetTableItem.rowData.length; i++) {
 
@@ -9615,6 +9730,7 @@ Future<void> _initialize() async {
                                          if (sheetTableVariables.columnLayerIndex == sheetTableItem.columnData.length) {
                                             sheetTableVariables.columnLayerIndex--;
                                           }
+                                         reassignCellIds(sheetTableItem); 
                                         });
                                       },
                                       child: Container(
@@ -9886,8 +10002,8 @@ Future<void> _initialize() async {
                                                   onClick: (){
                                                     setState(() {
                                                     whichTableDecorationIsClicked = 0;
-                                                    tablePropertyCardsController.setCardIndex(1);
-                                                    whichTablePropertyTabIsClicked =1;
+                                                    tablePropertyCardsController.setCardIndex(2);
+                                                    whichTablePropertyTabIsClicked =2;
                                                     _findSheetTableItem(sheetTableItem, updateVariables: false);
                                                   });
                                                   },
@@ -9905,6 +10021,9 @@ Future<void> _initialize() async {
                                                       Container(
                                                         margin: EdgeInsets.all(4),
                                                         width:35,height:35,
+                                                        decoration: BoxDecoration(
+                                                          borderRadius: BorderRadius.circular(15),
+                                                          border: Border.all()),
                                                         child: ClipRRect(
                                                           borderRadius: BorderRadius.circular(15),
                                                           child: buildDecoratedContainer(
@@ -9954,8 +10073,8 @@ Future<void> _initialize() async {
                                                 ElevatedLayerButton(
                                                   onClick: (){
                                                     whichTableDecorationIsClicked = 1;
-                                                    tablePropertyCardsController.setCardIndex(1);
-                                                    whichTablePropertyTabIsClicked =1;
+                                                    tablePropertyCardsController.setCardIndex(2);
+                                                    whichTablePropertyTabIsClicked =2;
                                                     _findSheetTableItem(sheetTableItem, updateVariables: false);
                                                   },
                                                   buttonHeight: 50,
@@ -9972,6 +10091,9 @@ Future<void> _initialize() async {
                                                       Container(
                                                         margin: EdgeInsets.all(4),
                                                         width:35,height:35,
+                                                        decoration: BoxDecoration(
+                                                          borderRadius: BorderRadius.circular(15),
+                                                          border: Border.all()),
                                                         child: ClipRRect(
                                                           borderRadius: BorderRadius.circular(15),
                                                           child: buildDecoratedContainer(
@@ -10034,7 +10156,106 @@ Future<void> _initialize() async {
                       )
                     )
                   ],
-                  if (index == 1) ...[
+                  
+                  if(index==1) ...[
+                    Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.all(15).copyWith(left: 12, right: 14),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: ScrollConfiguration(
+                            behavior: ScrollBehavior().copyWith(scrollbars: false),
+                            child: DynMouseScroll(
+                              durationMS: 500,
+                              scrollSpeed: 1,
+                              builder: (context, controller, physics) {
+                                return SingleChildScrollView(
+                                  controller: controller,
+                                  physics: physics,
+                                  child: Column(
+                                      children:[
+                                        Container(
+                                        margin: EdgeInsets.only(top:4, left:2, right:2),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                        color:defaultPalette.primary,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: defaultPalette.extras[0], width: 2)),
+                                        child:  Stack(
+                                          children: [
+                                            Positioned(
+                                              right:0,
+                                              child: Text((sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].id),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.center,
+                                                      style: GoogleFonts.mitr(
+                                                        color:defaultPalette.extras[0].withOpacity(0.1),
+                                                        height: 1,
+                                                        fontSize:90,
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500),
+                                                    ),
+                                            ),   
+                                            Column(
+                                            children: [
+                                            const SizedBox(
+                                              height:3
+                                            ),
+                                            Row(
+                                              children: [
+                                                const Icon(TablerIcons.border_all,
+                                                  size:30,
+                                                  weight: 600,
+                                                ),
+                                                const SizedBox(
+                                                  width:3
+                                                ),
+                                                //title and id of cell data
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      Text('cellProperties',
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.lexend(
+                                                        height: 0.9,
+                                                        fontSize:18,
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500),
+                                                      ),                  
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(
+                                                height:8
+                                              ),     
+                                          // Row(mainAxisAlignment:MainAxisAlignment.spaceBetween, children:tablePropertyTile(0, 'pinnedRows', TablerIcons.layout_sidebar)),
+                                          Row(children:tablePropertyTile(8, ' rowSpan', TablerIcons.table_row)),
+                                          Row(children:tablePropertyTile(9, ' colSpan', TablerIcons.table_column)),
+                                          const SizedBox( height:4 ),
+                                          
+                                          
+                                          ],
+                                          ),
+                                          ],
+                                        ),
+                                        ),
+                                      ],
+                                    ),
+                                 );
+                               }
+                             ),
+                           ),
+                         ),
+                       ),
+                     )
+                  ],
+                  if (index == 2) ...[
                   ...buildSuperDecorationSwiperInterface(
                     whichTableDecorationIsClicked ==0
                     ? tableDecorationPath
@@ -10085,7 +10306,11 @@ Future<void> _initialize() async {
                                     width: width-90,
                                     child: Row(
                                       children: [
-                                        Expanded(child: Text(selectedDecorationTitle,style: GoogleFonts.rockSalt())),
+                                        Expanded(child: Text(
+                                          selectedDecorationTitle,
+                                          maxLines: 1,
+                                          overflow:TextOverflow.ellipsis,
+                                          style: GoogleFonts.rockSalt())),
                                         Icon(TablerIcons.transfer_vertical, size:18),
                                         SizedBox(width:2)
                                       ],
@@ -10103,7 +10328,7 @@ Future<void> _initialize() async {
                       )
                     ),
         
-                    ],
+                  ],
                   
                 ]
               );
@@ -12518,7 +12743,7 @@ Future<void> _initialize() async {
       }
     }
 
-    return Container(child: current);
+    return current;
   }
 
   List<Widget> buildSuperDecorationSwiperInterface(List<String> itemDecorationPath, TextEditingController itemDecorationNameController){
@@ -12675,7 +12900,7 @@ Future<void> _initialize() async {
                         
                         ElevatedLayerButton(
                           subfac: 2,
-                          depth: 2,
+                          depth: 1.7,
                           onClick: () {
                             
                           
@@ -12708,7 +12933,7 @@ Future<void> _initialize() async {
                         SizedBox(height: 2),
                         ElevatedLayerButton(
                           subfac: 2,
-                          depth: 2,
+                          depth: 1.7,
                           onClick: () {
                             setState(() {
                               isListDecorationPropertiesToggled =
@@ -12739,7 +12964,7 @@ Future<void> _initialize() async {
                         //add new itemdecoration Layer
                         ElevatedLayerButton(
                           subfac: 2,
-                          depth: 2,
+                          depth: 1.7,
                           onClick: () {
                             setState(() {
                               var itemDecoId = 'dITM-${ const Uuid().v4()}/'+sheetDecorationList.length.toString();
@@ -12749,10 +12974,12 @@ Future<void> _initialize() async {
                               if ((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length < 70) {
                                 // Add the new decoration to the main list
                                 sheetDecorationList.add(itemDecoration);
-                                (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.add(itemDecoId);
+                                print('added to main list');
+                                (sheetDecorationList[inx] as SuperDecoration).itemDecorationList =  [...(sheetDecorationList[inx] as SuperDecoration).itemDecorationList, itemDecoId];
+                                print('added to super list');
                                 // Get the reference to the SuperDecoration from the list
                                 
-                                  updateSheetDecorationvariables(sheetDecorationList[inx] as  SuperDecoration);
+                                updateSheetDecorationvariables(sheetDecorationList[inx] as  SuperDecoration);
                                 
                               } else {
                                 print('Guys come on, turn this into a super now');
@@ -12892,6 +13119,7 @@ Future<void> _initialize() async {
                                             height: 1.5,
                                             fontSize: 16,
                                           ),
+                                          overflow: TextOverflow.ellipsis
                                         ),
                                       )
                                       
@@ -19197,7 +19425,7 @@ Future<void> _initialize() async {
       var newId = 'TX-${ const Uuid().v4()}'; 
 
       return SheetTableCell(
-        id: '${numberToColumnLabel(col)}${row+1}',
+        id: '${numberToColumnLabel(col+1)}${row+1}',
         parentId: parentId,
         data: content,
         sheetItem: addTextField(
@@ -19214,9 +19442,9 @@ Future<void> _initialize() async {
         colSpan: 1,
       );
       
+      });
     });
-  });
-}
+  }
 
   List<SheetTableColumn> defaultSheetTableColumnData(String parentId, String columnDecoration) {
   return List.generate(8, (index) {
@@ -19241,16 +19469,50 @@ Future<void> _initialize() async {
   });
 }
 
-  String numberToColumnLabel(int number) {
-    String result = '';
-    while (number > 0) {
-      number--; // Excel columns are 1-indexed, so adjust
-      result = String.fromCharCode((number % 26) + 65) + result;
-      number ~/= 26;
+  void applySpans(SheetTable sheetTable) {
+      final rows = sheetTable.cellData.length;
+      final cols = sheetTable.columnData.length;
+      for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < sheetTable.cellData[r].length; c++) {
+          sheetTable.cellData[r][c].isVisible = true;
+        }
+      }
+      print('running apply spans');
+      for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < cols; col++) {
+          final cell = sheetTable.cellData[row][col];
+          if (!cell.isVisible) continue;
+
+          for (int dr = 0; dr < cell.rowSpan; dr++) {
+            for (int dc = 0; dc < cell.colSpan; dc++) {
+              final r = row + dr;
+              final c = col + dc;
+
+              if (r == row && c == col) continue;
+              if (r < rows && c < sheetTable.cellData[r].length) {
+                sheetTable.cellData[r][c].isVisible = false;
+              }
+            }
+          }
+        }
+      }
     }
-    return result;
+
+  void reassignCellIds(SheetTable sheetTable) {
+    for (int row = 0; row < sheetTable.cellData.length; row++) {
+      for (int col = 0; col < sheetTable.cellData[row].length; col++) {
+        final cell = sheetTable.cellData[row][col];
+        final newId = '${numberToColumnLabel(col + 1)}${row + 1}';
+
+        cell.id = newId;
+
+        if (cell.sheetItem is SheetText) {
+          (cell.sheetItem as SheetText).name = newId;
+        }
+      }
+    }
   }
-                                  
+                            
 
 }
 
@@ -19272,7 +19534,7 @@ Future<void> _initialize() async {
     if (attribute.key == 'lineHeight') {
       String? lineHeight = attribute.value as String?;
       return TextStyle(
-        height: double.parse(lineHeight ?? '0'),
+        height: double.parse(lineHeight ?? '1'),
       );
     }
 
@@ -19280,7 +19542,34 @@ Future<void> _initialize() async {
     return const TextStyle();
   }
 
+  (int row, int col) parseCellId(String id) {
+    final match = RegExp(r'^([A-Z]+)(\d+)$').firstMatch(id);
+    if (match == null) throw FormatException("Invalid cell id format: $id");
+    final col = columnLabelToNumber(match.group(1)!);
+    final row = int.parse(match.group(2)!) - 1;
+    return (row, col);
+  }
+  
+  String numberToColumnLabel(int number) {
+    String result = '';
+    while (number > 0) {
+      number--; // Excel columns are 1-indexed, so adjust
+      result = String.fromCharCode((number % 26) + 65) + result;
+      number ~/= 26;
+    }
+    return result;
+  }
 
+  int columnLabelToNumber(String columnLabel) {
+    int result = 0;
+    for (int i = 0; i < columnLabel.length; i++) {
+      result *= 26;
+      result += columnLabel.codeUnitAt(i) - 'A'.codeUnitAt(0) + 1;
+    }
+    return result - 1; // 0-indexed
+  }
+
+      
 class WordSpacingAttribute extends Attribute<String?> {
   static const _key = 'wordSpacing';
   const WordSpacingAttribute(String? value)
@@ -19367,6 +19656,67 @@ class SmoothScrollBehavior extends MaterialScrollBehavior {
       BouncingScrollPhysics(), // or ClampingScrollPhysics()
     );
   }
+}
+
+class SheetLayoutDelegate extends MultiChildLayoutDelegate {
+  final List<List<SheetTableCell>> cells;
+  final List<SheetTableColumn> columnData;
+  final List<SheetTableRow> rowData;
+
+  SheetLayoutDelegate({
+    required this.cells,
+    required this.columnData,
+    required this.rowData,
+  });
+
+  @override
+void performLayout(Size size) {
+  for (var rowList in cells) {
+    for (var cell in rowList) {
+      if (!cell.isVisible) continue;
+
+      final (row, col) = parseCellId(cell.id);
+
+      final layoutId = cell.id;
+
+      if (hasChild(layoutId)) {
+        double top = 0.0;
+        for (int i = 0; i < row; i++) {
+          top += rowData[i].size + 2 * 1;
+        }
+
+        double left = 0.0;
+        for (int i = 0; i < col; i++) {
+          left += columnData[i].size + 14 + 2 * 1;
+        }
+
+        final double width = columnData
+          .skip(col)
+          .take(cell.colSpan)
+          .fold(0.0, (a, b) => a + b.size)
+          + (14 + 2 * 1) * cell.colSpan;
+
+        final double height = rowData
+          .skip(row)
+          .take(cell.rowSpan)
+          .fold(0.0, (a, b) => a + b.size)
+          + (2 * 1) * cell.rowSpan;
+
+
+        layoutChild(
+          layoutId,
+          BoxConstraints.tight(Size(width, height)),
+        );
+
+        positionChild(layoutId, Offset(left, top));
+      }
+    }
+  }
+}
+
+
+  @override
+  bool shouldRelayout(covariant SheetLayoutDelegate oldDelegate) => true;
 }
 
 class SheetDecorationVariables {

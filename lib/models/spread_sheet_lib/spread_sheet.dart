@@ -11,7 +11,7 @@ var parentId = Uuid().v4();
 @HiveType(typeId: 1)
 class SheetItem extends HiveObject {
   @HiveField(0)
-  final String id;
+  String id;
   @HiveField(1)
   String parentId;
 
