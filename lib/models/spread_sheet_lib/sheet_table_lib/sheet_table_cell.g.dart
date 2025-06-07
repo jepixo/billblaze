@@ -19,44 +19,47 @@ class SheetTableCellBoxAdapter extends TypeAdapter<SheetTableCellBox> {
     return SheetTableCellBox(
       id: fields[0] as String,
       parentId: fields[1] as String,
-      data: fields[2] as String,
-      sheetItem: fields[3] as SheetItem,
-      isVisible: fields[4] as bool,
-      hasError: fields[5] as bool,
-      colSpan: fields[7] as int,
-      rowSpan: fields[6] as int,
-      errorMessage: fields[9] as String?,
-      validationRule: fields[10] as ValidationRuleBox?,
-      ownerId: fields[8] as String?,
+      data: fields[3] as String,
+      sheetItem: fields[4] as SheetItem,
+      isVisible: fields[5] as bool,
+      hasError: fields[6] as bool,
+      colSpan: fields[8] as int,
+      rowSpan: fields[7] as int,
+      errorMessage: fields[10] as String?,
+      validationRule: fields[11] as ValidationRuleBox?,
+      ownerId: fields[9] as String?,
+      indexPath: fields[2] as IndexPath,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableCellBox obj) {
     writer
-      ..writeByte(11)
-      ..writeByte(2)
-      ..write(obj.data)
+      ..writeByte(12)
       ..writeByte(3)
-      ..write(obj.sheetItem)
+      ..write(obj.data)
       ..writeByte(4)
-      ..write(obj.isVisible)
+      ..write(obj.sheetItem)
       ..writeByte(5)
-      ..write(obj.hasError)
+      ..write(obj.isVisible)
       ..writeByte(6)
-      ..write(obj.rowSpan)
+      ..write(obj.hasError)
       ..writeByte(7)
-      ..write(obj.colSpan)
+      ..write(obj.rowSpan)
       ..writeByte(8)
-      ..write(obj.ownerId)
+      ..write(obj.colSpan)
       ..writeByte(9)
-      ..write(obj.errorMessage)
+      ..write(obj.ownerId)
       ..writeByte(10)
+      ..write(obj.errorMessage)
+      ..writeByte(11)
       ..write(obj.validationRule)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.parentId);
+      ..write(obj.parentId)
+      ..writeByte(2)
+      ..write(obj.indexPath);
   }
 
   @override

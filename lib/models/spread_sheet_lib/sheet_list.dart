@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first 
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
@@ -6,23 +7,23 @@ import 'package:billblaze/providers/box_provider.dart';
 import 'package:flutter/material.dart'; 
 import 'package:hive/hive.dart';
 
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 
 part 'sheet_list.g.dart';
 
 @HiveType(typeId: 2)
 class SheetListBox extends SheetItem {
-  @HiveField(2)
-  List<SheetItem> sheetList;
   @HiveField(3)
-  bool direction; 
+  List<SheetItem> sheetList;
   @HiveField(4)
-  int mainAxisAlignment;
+  bool direction; 
   @HiveField(5)
-  int crossAxisAlignment;  
+  int mainAxisAlignment;
   @HiveField(6)
-  String decorationId;
+  int crossAxisAlignment;  
   @HiveField(7)
+  String decorationId;
+  @HiveField(8)
   int mainAxisSize;
 
   SheetListBox(
@@ -35,6 +36,7 @@ class SheetListBox extends SheetItem {
       this.crossAxisAlignment = 0,
       this.mainAxisSize =0,
       required this.decorationId, 
+      required super.indexPath,
       });
 
   SheetList toSheetList(Function findItem, Function textFieldTapDown) {
@@ -48,6 +50,7 @@ class SheetListBox extends SheetItem {
         crossAxisAlignment: CrossAxisAlignment.values[crossAxisAlignment],
         mainAxisSize: MainAxisSize.values[mainAxisSize],
         listDecoration: Boxes.getSuperDecoration(decorationId).toSuperDecoration(),
+        indexPath: indexPath,
         );
   }
 
@@ -74,18 +77,19 @@ class SheetList extends SheetItem {
   MainAxisAlignment mainAxisAlignment;
   CrossAxisAlignment crossAxisAlignment;
   MainAxisSize mainAxisSize;
-
   SheetList(
-      {required String id,
-      required String parentId,
+      {
+      required super.id,
+      required super.parentId,
+      required super.indexPath,
       required this.sheetList,
       this.direction = Axis.vertical,
       required this.listDecoration,
       this.mainAxisAlignment = MainAxisAlignment.start,
       this.crossAxisAlignment = CrossAxisAlignment.start,
       this.mainAxisSize = MainAxisSize.min,
-      this.size = const Size(0, 0)})
-      : super(id: id, parentId: parentId);
+      this.size = const Size(0, 0),
+      });
 
   SheetListBox toSheetListBox() {
     return SheetListBox(
@@ -97,6 +101,7 @@ class SheetList extends SheetItem {
         crossAxisAlignment: crossAxisAlignment.index,
         mainAxisAlignment: mainAxisAlignment.index,
         mainAxisSize: mainAxisSize.index,
+        indexPath: indexPath,
          );
          
   }
@@ -198,7 +203,9 @@ class SheetList extends SheetItem {
       MainAxisAlignment? mainAxisAlignment,
       CrossAxisAlignment? crossAxisAlignment,
       MainAxisSize? mainAxisSize,
-      SuperDecoration? listDecoration}) {
+      SuperDecoration? listDecoration,
+      IndexPath? indexPath,
+      }) {
     return SheetList(
       id: id?? super.id,
       parentId:parentId?? super.parentId,
@@ -208,7 +215,8 @@ class SheetList extends SheetItem {
       mainAxisAlignment: mainAxisAlignment ?? this.mainAxisAlignment,
       crossAxisAlignment: crossAxisAlignment ?? this.crossAxisAlignment,
       listDecoration: listDecoration ?? this.listDecoration,
-      mainAxisSize: mainAxisSize ?? this.mainAxisSize
+      mainAxisSize: mainAxisSize ?? this.mainAxisSize,
+      indexPath: indexPath ?? this.indexPath,
     );
   }
 }

@@ -13,6 +13,7 @@ import 'package:billblaze/home.dart';
 import 'package:billblaze/components/pickers/hsv_picker.dart';
 import 'package:billblaze/components/pickers/wheel_picker.dart';
 import 'package:billblaze/components/widgets/alpha_picker.dart';
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
@@ -23,6 +24,7 @@ import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_quill/extensions.dart';
+import 'package:flutter_syntax_view/flutter_syntax_view.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
@@ -53,7 +55,7 @@ import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:billblaze/colors.dart';
 // import 'package:printing/printing.dart';
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
@@ -89,15 +91,22 @@ import '../components/elevated_button.dart';
 class PanelIndex {
   String id;
   String parentId = '';
-  PanelIndex({required this.id, this.parentId = '', });
+  IndexPath itemIndexPath;
+  IndexPath? parentIndexPath;
+  PanelIndex({required this.id, this.parentId = '', required this.itemIndexPath, required this.parentIndexPath});
 
   PanelIndex copyWith({
     String? id,
     String? parentId,
+    IndexPath? itemIndexPath,
+    IndexPath? parentIndexPath,
   }) {
     return PanelIndex(
         id: id ?? this.id,
-        parentId: parentId ?? this.parentId);
+        parentId: parentId ?? this.parentId,
+        itemIndexPath: itemIndexPath ?? this.itemIndexPath,
+        parentIndexPath: parentIndexPath ?? this.parentIndexPath,
+        );
   }
 
   @override
@@ -208,10 +217,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   double pdfPreviewPaddingScaleFactor = 1;
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
-  double? _pendingDelta;
   DateTime dateTimeNow = DateTime.now();
   List<SelectedIndex> selectedIndex = [];
-  PanelIndex panelIndex = PanelIndex(id: '', parentId: '');
+  PanelIndex panelIndex = PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
   List<SheetList?> sheetListClipboard =[null,null];
   PageController pageViewIndicatorController = PageController();
   PageController textStyleTabControler = PageController();
@@ -310,12 +318,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   SheetText item = SheetText(
     hide:true,
     name: 'yo',
-    id: 'yo',parentId: 'yo', textDecoration: SuperDecoration(id: 'yo'),);
-  SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration: SuperDecoration(id: 'yo'), sheetList: [],);
+    id: 'yo',
+    parentId: 'yo', 
+    textDecoration: SuperDecoration(id: 'yo'),
+    indexPath: IndexPath(index:-1)
+    );
+  SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration: SuperDecoration(id: 'yo'), sheetList: [],indexPath: IndexPath(index:-1));
   late SheetTable sheetTableItem;
   var dragBackupValue;
   OverlayEntry? _overlay;
-
   //
   //
   //
@@ -327,9 +338,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initialize();
     });
+    
   }
 
-Future<void> _initialize() async {
+  Future<void> _initialize() async {
     if (!mounted) return;
     setState(() => isLoading = true);
 
@@ -357,11 +369,11 @@ Future<void> _initialize() async {
 
     // ─── 4) Back on main isolate: assign your lists ─────────────────────────
     sheetDecorationList = decoded
-  ..sort((a, b) {
-    int indexA = int.parse(a.id.split('/').last);
-    int indexB = int.parse(b.id.split('/').last);
-    return indexA.compareTo(indexB);
-  });
+    ..sort((a, b) {
+      int indexA = int.parse(a.id.split('/').last);
+      int indexB = int.parse(b.id.split('/').last);
+      return indexA.compareTo(indexB);
+    });
     filteredDecorations = sheetDecorationList;
 
     // ─── 5) Your original Hive & layout logic ──────────────────────────────
@@ -410,7 +422,6 @@ Future<void> _initialize() async {
     fontsTabContainerController = TabController(length: 6, vsync: this)
       ..animateTo(1)
       ..addListener(_onFontsTabChanged);
-
     // ─── 7) Done ────────────────────────────────────────────────────────────
     if (!mounted) return;
     setState(() {
@@ -418,6 +429,7 @@ Future<void> _initialize() async {
       // sheetListItem = spreadSheetList[currentPageIndex];
     });
     setState(() => isLoading = false);
+    _renderPagePreviewOnProperties();
   }
 
   // ─── Tab change handlers ─────────────────────────────────────────────────
@@ -549,7 +561,8 @@ Future<void> _initialize() async {
               parentId: item.parentId,
               name: item.name,
               hide: item.hide,
-              textDecoration: item.textDecoration.toSuperDecoration()
+              textDecoration: item.textDecoration.toSuperDecoration(),
+              indexPath: item.indexPath,
               );
           tEItem = tEItem.copyWith(
               id: item.id,
@@ -586,7 +599,8 @@ Future<void> _initialize() async {
             parentId: item.parentId,
             name: item.name,
             hide: item.hide,
-            textDecoration: item.textDecoration.toSuperDecoration()
+            textDecoration: item.textDecoration.toSuperDecoration(),
+            indexPath: item.indexPath
             );
         tEItem = tEItem.copyWith(
             id: item.id,
@@ -612,6 +626,7 @@ Future<void> _initialize() async {
     List<Map<String, dynamic>>?
         docString, // Use List<Map<String, dynamic>> directly
     required SuperDecoration textDecoration,
+    required IndexPath indexPath,
     bool isCell = false
   }) {
     Delta delta;
@@ -714,7 +729,7 @@ Future<void> _initialize() async {
         return textEditorBuilder(rawEditor, newId, isCell: isCell);
       },
       onTapDown: (details, p1) {
-        return textFieldTapDown(details, newId);
+        return textFieldTapDown(details, newId, indexPath);
       },
     );
     
@@ -727,6 +742,7 @@ Future<void> _initialize() async {
             textEditorConfigurations: textEditorConfigurations,
             id: newId,
             parentId: spreadSheetList[currentPageIndex].id,
+            indexPath: indexPath,
             textDecoration: textDecoration));
 
         var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
@@ -737,6 +753,7 @@ Future<void> _initialize() async {
                 textEditorController:
                     textController.document.toDelta().toJson(),
                 id: newId,
+                indexPath: indexPath,
                 parentId: spreadSheetList[currentPageIndex].id,
                 textDecoration: textDecoration.toSuperDecorationBox()));
         lm[keyIndex].save();
@@ -752,6 +769,7 @@ Future<void> _initialize() async {
       id: newId,
       parentId:
           parentId.isNotEmpty ? parentId : spreadSheetList[currentPageIndex].id,
+      indexPath: indexPath,
       textDecoration: textDecoration, // Use parentId if not empty
     );
   }
@@ -810,6 +828,9 @@ Future<void> _initialize() async {
   }
 
   SheetList _sheetListIterator(String id, SheetList sheetList) {
+    // print('Length: ${sheetList.length}');
+    print('id for search: $id');
+
     if (sheetList.id == id) {
       return sheetList;
     }
@@ -827,6 +848,8 @@ Future<void> _initialize() async {
   }
 
   SheetList? _listIterator(String id, SheetList sheetList) {
+    // print('Length: ${sheetList.length}');
+    print('id for search: $id');
     if (sheetList.id == id) {
       return sheetList;
     }
@@ -836,7 +859,7 @@ Future<void> _initialize() async {
       }
       if (sheetList[i] is SheetList) {
         try {
-          return _sheetListIterator(id, sheetList[i] as SheetList);
+          return _listIterator(id, sheetList[i] as SheetList);
         } catch (e) {
           // Continue searching in the remaining items
         }
@@ -847,7 +870,7 @@ Future<void> _initialize() async {
 
   SheetItem _sheetItemIterator(String id, SheetList sheetList, {bool shouldReturn = false}) {
     // print('Length: ${sheetList.length}');
-    // print('id for search: $id');
+    print('id for search: $id');
 
     for (var i = 0; i < sheetList.length; i++) {
       // print('item id in iterator: ${sheetList[i].id}');
@@ -881,7 +904,7 @@ Future<void> _initialize() async {
     if (!shouldReturn) {
       throw Exception('SheetItem with id $id not found');
     } else {
-      return SheetItem(id: 'yo', parentId: '');
+      return SheetItem(id: 'yo', parentId: '', indexPath: IndexPath(index:-1));
     }
   }
 
@@ -889,11 +912,11 @@ Future<void> _initialize() async {
     SheetItem requiredItem = SheetText(
       name:'unlabeled',
       hide:true,
-      id: 'yo', parentId: '', textDecoration: SuperDecoration(id: ''));
+      id: 'yo', parentId: '', textDecoration: SuperDecoration(id: ''),indexPath: IndexPath(index:-1));
     for (var i = 0; i < sheetTable.rowData.length; i++) {
       for (var v = 0; v < sheetTable.columnData.length; v++){
         // print('Length: ${sheetTable.cellData[i].length}');
-        // print('id for search: $id');
+        print('id for search: $id');
         // print('item id in iterator: ${sheetTable.cellData[i][v].sheetItem.id}');
         // print('item in iterator: ${sheetTable.cellData[i][v].sheetItem}');
 
@@ -966,7 +989,10 @@ Future<void> _initialize() async {
                     spreadSheetList[currentPageIndex].sheetList = [];
                     panelIndex = PanelIndex(
                         id: panelIndex.id,
-                        parentId: panelIndex.parentId);
+                        parentId: panelIndex.parentId,
+                        itemIndexPath: panelIndex.itemIndexPath,
+                        parentIndexPath: panelIndex.parentIndexPath,
+                        );
                     return;
                   }
 
@@ -987,6 +1013,8 @@ Future<void> _initialize() async {
                     id: spreadSheetList[currentPageIndex].id,
                     // runTimeType: spreadSheetList[currentPageIndex].runtimeType,
                     parentId: spreadSheetList[currentPageIndex].parentId,
+                    itemIndexPath: spreadSheetList[currentPageIndex].indexPath,
+                    parentIndexPath: spreadSheetList[currentPageIndex].indexPath.parent,
                   );
 
                   // Reassign pageNumberController for the new sequence
@@ -1002,7 +1030,8 @@ Future<void> _initialize() async {
                 spreadSheetList[currentPageIndex].sheetList = [];
                 panelIndex = PanelIndex(
                     id: panelIndex.id,
-                    // runTimeType: panelIndex.runTimeType,
+                    itemIndexPath: panelIndex.itemIndexPath,
+                    parentIndexPath: panelIndex.parentIndexPath,
                     parentId: panelIndex.parentId);
               });
 
@@ -1018,7 +1047,7 @@ Future<void> _initialize() async {
   void _removeTextField() {
     setState(() {
       // spreadSheetList[currentPageIndex].removeAt(panelIndex.panelIndex);
-      panelIndex = PanelIndex(id: '', parentId: '');
+      panelIndex = PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
     });
   }
 
@@ -1247,7 +1276,7 @@ Future<void> _initialize() async {
                       whichPropertyTabIsClicked = 1;
                       Future.delayed(Durations.short1).then(
                         (value) {
-                          print("YUHUUUUUUUU");
+                          // print("YUHUUUUUUUU");
                           propertyCardsController.setCardIndex(currentPageIndex);
                           propertyCardsController.animateTo(Offset(1, 1),
                           duration: Durations.short1, curve: Curves.linear);
@@ -1338,6 +1367,7 @@ Future<void> _initialize() async {
     return GestureDetector(
       onDoubleTap:(){
         panelIndex.parentId = sheetList.id;
+        panelIndex.parentIndexPath = sheetList.indexPath;
         _findSheetListItem();
       },
       child: buildDecoratedContainer(
@@ -1457,7 +1487,7 @@ Future<void> _initialize() async {
                           List.generate(sheetList.sheetList.length, (index) {
                         final item = sheetList.sheetList[index];
       
-                        if (item is SheetText) {
+                        if (item is SheetText && !item.hide) {
                           // print('in buildSheetListWidget item is: $item');
                           var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-171;
         
@@ -1737,7 +1767,9 @@ Future<void> _initialize() async {
         id: id,
         parentId: parentId,
         sheetList: [],
-        listDecoration: newDecoration);
+        listDecoration: newDecoration,
+        indexPath: IndexPath(index: spreadSheetList.length)
+        );
 
     setState(() {
       spreadSheetList.add(newsheetlist);
@@ -1794,11 +1826,14 @@ Future<void> _initialize() async {
         id: id,
         parentId: parentId,
         sheetList: [],
-        listDecoration: newDecoration);
+        listDecoration: newDecoration,
+        indexPath: IndexPath(index:-1)
+        );
 
     // Add the new SheetList at the specified index
     setState(() {
       spreadSheetList.insert(index, newSheetList);
+      _reassignSpreadSheetIndexPath(spreadSheetList);
     });
 
     lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
@@ -1806,10 +1841,10 @@ Future<void> _initialize() async {
 
     // Update the selectedIndex list at the specified index
     setState(() {
-      print('pageCount in addPage after: $pageCount');
+      // print('pageCount in addPage after: $pageCount');
       selectedIndex.insert(index, SelectedIndex(id: id, selectedIndexes: []));
-      print('id: $id');
-      print(selectedIndex);
+      // print('id: $id');
+      // print(selectedIndex);
       panelIndex.id='';
       panelIndex.parentId='';
     });
@@ -1839,6 +1874,7 @@ Future<void> _initialize() async {
       currentPageIndex = targetIndex;
       panelIndex.id='';
       panelIndex.parentId='';
+      _reassignSpreadSheetIndexPath(spreadSheetList);
 
     });
   }
@@ -1886,7 +1922,9 @@ Future<void> _initialize() async {
           parentId: spreadSheetList[sourceIndex].parentId,
           sheetList: List.from(spreadSheetList[sourceIndex].sheetList),
           listDecoration: SuperDecoration.fromJson(
-              spreadSheetList[sourceIndex].listDecoration.toJson()));
+              spreadSheetList[sourceIndex].listDecoration.toJson()),
+          indexPath: spreadSheetList[sourceIndex].indexPath
+              );
 
       // Insert the duplicated sheet at the target index
       spreadSheetList.insert(targetIndex, duplicatedSheetList);
@@ -1907,15 +1945,34 @@ Future<void> _initialize() async {
       
       panelIndex.id='';
       panelIndex.parentId='';
+      _reassignSpreadSheetIndexPath(spreadSheetList);
     });
   }
 
-  void animateToPage(int page) {
-    var duration = const Duration(milliseconds: 300);
-    var curve = Curves.easeIn;
-    pageViewIndicatorController.animateToPage(page,
-        duration: duration, curve: curve);
+  void _reassignSpreadSheetIndexPath(List<SheetList> spreadSheetList) {
+
+    for (int i = 0; i < spreadSheetList.length; i++) {
+      setState(() {
+        spreadSheetList[i].indexPath.index =i;
+      });
+    }
+    
   }
+
+  void _reassignSheetListIndexPath(SheetList sheetList){
+    
+    for (var i = 0; i < sheetList.length; i++) {
+      setState(() {
+        sheetList[i].indexPath.index = i;
+      });
+    }
+  }
+  // void animateToPage(int page) {
+  //   var duration = const Duration(milliseconds: 300);
+  //   var curve = Curves.easeIn;
+  //   pageViewIndicatorController.animateToPage(page,
+  //       duration: duration, curve: curve);
+  // }
 
   Future<void> _capturePng() async {
     setState(() {
@@ -2089,9 +2146,9 @@ Future<void> _initialize() async {
   void _findItem() {
     print('findItem called');
     try {
-      item =
-          _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
-              as SheetText;
+      item = getItemAtPath(panelIndex.itemIndexPath) as SheetText;
+          // _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
+          //     as SheetText;
       setState(() {
       var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
       textDecorationNameController.text = item.textDecoration.name;
@@ -2103,7 +2160,7 @@ Future<void> _initialize() async {
     } on Exception catch (e) {
       setState(() {
       item = SheetText(id: '', parentId: '', textDecoration: SuperDecoration(id:'yo'),name:'unlabeled',
-            hide:true,);
+            hide:true,indexPath: IndexPath(index:-1));
       panelIndex.id = '';
     });
     }
@@ -2113,17 +2170,18 @@ Future<void> _initialize() async {
   void _findSheetListItem() {
     try {
       if (panelIndex.parentId.startsWith('LI')) {
-        sheetListItem = _sheetListIterator(
-            panelIndex.parentId, spreadSheetList[currentPageIndex]);
-            print('sheetDecorationVariables hello.');
-            print(sheetListItem.parentId);
+        // sheetListItem = _sheetListIterator(
+        //     panelIndex.parentId, spreadSheetList[currentPageIndex]);
+        sheetListItem = getItemAtPath(panelIndex.parentIndexPath!) as SheetList;
+            // print('sheetDecorationVariables hello.');
+            // print(sheetListItem.parentId);
       setState(() {
         var tmpinx = int.tryParse(sheetListItem.listDecoration.id.substring(sheetListItem.listDecoration.id.indexOf('/') + 1))??-111;
         listDecorationNameController.text = sheetListItem.listDecoration.name;
         decorationIndex = -1;
         updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-        print('sheetDecorationVariables initiated.');
-        print(sheetListItem.listDecoration.id);
+        // print('sheetDecorationVariables initiated.');
+        // print(sheetListItem.listDecoration.id);
         // print(sheetListItem.listDecoration.itemDecorationList);
         // print(sheetDecorationVariables);
         // print(sheetDecorationVariables[0].isExpanded);
@@ -2145,7 +2203,8 @@ Future<void> _initialize() async {
     setState(() {
         if (sheetTable == null) {
           try {
-            sheetTable = _sheetTableIterator(panelIndex.parentId, spreadSheetList[currentPageIndex])!;
+            sheetTable =  getItemAtPath(panelIndex.parentIndexPath!) as SheetTable;
+            // _sheetTableIterator(panelIndex.parentId, spreadSheetList[currentPageIndex])!;
           } on Exception catch (e) {
             print('sheettable not found');
             return;
@@ -2157,6 +2216,7 @@ Future<void> _initialize() async {
         var clinx = int.tryParse(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-42;
         sheetTableItem = sheetTable!;
         panelIndex.parentId = sheetTable!.id;
+        panelIndex.parentIndexPath = sheetTable!.indexPath;
         whichPropertyTabIsClicked = 4;
         decorationIndex=-1;
         if(updateVariables) updateSheetTableVariables(sheetTable!);
@@ -2184,14 +2244,14 @@ Future<void> _initialize() async {
             break;
           default:
         }
-        print('sheetDecorationVariables initiated.');
+        // print('sheetDecorationVariables initiated.');
         // print(sheetTableItem.sheetTableDecoration.id);
         // print(' '+ sheetDecorationVariables.length.toString());
         
         if (item.parentId == sheetTableItem.id) {
           var (row, col) = parseCellId(item.name);
-          print(row);
-          print(col);
+          // print(row);
+          // print(col);
           sheetTableVariables.rowLayerIndex = row;
           sheetTableVariables.columnLayerIndex = col;
         }
@@ -2298,8 +2358,51 @@ Future<void> _initialize() async {
     _overlay = null;
   }
 
+  SheetItem getItemAtPath(IndexPath indexPath) {
+    List<int> path = indexPath.toList();
+    SheetItem? current;
+    // print(indexPath.toString());
+    notfound(){
+      print('not found');
+      return SheetItem(id: 'yo', parentId: '', indexPath: IndexPath(index: -1));
+    }
+    int i = 0;
+    while (i < path.length) {
+      int index = path[i];
+
+      if (i == 0) {
+        if (index < 0 || index >= spreadSheetList.length) return notfound();
+        current = spreadSheetList[index];
+        i++;
+      } else if (current is SheetList) {
+        if (index < 0 || index >= current.sheetList.length) return notfound();
+        current = current.sheetList[index];
+        i++;
+      } else if (current is SheetTable) {
+        if (i + 1 >= path.length) {
+          // If there's only one more index, we are selecting the whole table itself
+          return current;
+        }
+
+        int row = path[i];
+        int column = path[i + 1];
+
+        if (row < 0 || row >= current.cellData.length) return notfound();
+        if (column < 0 || column >= current.cellData[row].length) return notfound();
+
+        current = current.cellData[row][column].sheetItem;
+        i += 2;
+      } else {
+        return current ?? notfound(); // Hit a leaf like SheetText or similar
+      }
+    }
+
+    return current ?? notfound();
+  }
+
+
   ////BUUILDDDDDDDD
-  ///BUILDDD
+  ///BUILDDDDD
   ///BUILDDDDDDD
   @override
   Widget build(BuildContext context) {
@@ -2309,6 +2412,7 @@ Future<void> _initialize() async {
     Duration sideBarPosDuration = const Duration(milliseconds: 300);
     Duration defaultDuration = const Duration(milliseconds: 300);
     double titleFontSize = sHeight / 11;
+    // print('Height of SpreadSheet in build: '+ (sHeight-40).toString());
     if (isLoading) {
       return Container(
         alignment:Alignment(0,0),
@@ -2435,7 +2539,12 @@ Future<void> _initialize() async {
                                                 '________addText pressed LD_________');
                                             // print(
                                             //     'panelId from addtextfield: ${panelIndex.id}');
-                                            _addTextField(textDecoration: newSuperDecoration());
+                                            _addTextField(
+                                              textDecoration: newSuperDecoration(),
+                                              indexPath: IndexPath(
+                                                parent: spreadSheetList[currentPageIndex].indexPath,
+                                                index: spreadSheetList[currentPageIndex].length)
+                                              );
                                           },
                                           icon: Icon(
                                             CupertinoIcons.plus_bubble,
@@ -2460,16 +2569,20 @@ Future<void> _initialize() async {
                                             setState(() {
                                               String newId = 'TB-${ const Uuid().v4()}';
                                               var newDecoration = newSuperDecoration();
+                                              var newIndexPath = IndexPath(
+                                                    parent: spreadSheetList[currentPageIndex].indexPath,
+                                                    index: spreadSheetList[currentPageIndex].length);
                                               spreadSheetList[currentPageIndex].add(
                                                 SheetTable(
                                                   id: newId, 
                                                   parentId: spreadSheetList[currentPageIndex].id,
-                                                  cellData: defaultSheetTableCellData(newId, newDecoration),
-                                                  columnData: defaultSheetTableColumnData(newId, newDecoration.id),
-                                                  rowData: defaultSheetTableRowData(newId, newDecoration.id),
+                                                  cellData: defaultSheetTableCellData(newId, newDecoration,newIndexPath),
+                                                  columnData: defaultSheetTableColumnData(newId, newDecoration.id,newIndexPath),
+                                                  rowData: defaultSheetTableRowData(newId, newDecoration.id,newIndexPath),
                                                   pinnedColumns: 1,
                                                   pinnedRows: 1,
-                                                  sheetTableDecoration: newDecoration
+                                                  sheetTableDecoration: newDecoration,
+                                                  indexPath: newIndexPath
                                                   )
                                               );
                                             });
@@ -2611,16 +2724,15 @@ Future<void> _initialize() async {
                             // flex: ((1 - wH1DividerPosition - wH2DividerPosition) *
                             //         10000)
                             //     .round(),
-                            top: Platform.isAndroid ? 35 : 35,
-                            height: Platform.isAndroid
-                                ? sHeight * 0.85
-                                : sHeight - 40,
+                            top:  35,
+                            height: sHeight - 40,
                             child: GestureDetector(
                               onTap: () {
                                 _unfocusAll();
                                 setState(() {
                                   // panelIndex.runTimeType = null;
                                   panelIndex.parentId = '';
+                                  panelIndex.parentIndexPath = null;
                                   panelIndex.id = '';
                                   if (whichPropertyTabIsClicked !=1) {
                                   whichPropertyTabIsClicked = 1;
@@ -4026,556 +4138,26 @@ Future<void> _initialize() async {
   }
 
   Widget _buildListWidget(SheetList sheetList) {
-
-    List<ContextMenuEntry>
-    buildContextMenuEntries(
-        QuillController
-            textEditorController, int index, SheetText sheetText) {
-    var entries = <ContextMenuEntry>[];
-
-    bool hasSelection = textEditorController
-          .selection.start !=
-      textEditorController.selection.end;
-
-    // Cut
-    if (hasSelection) {
-    entries.add(MenuItem(
-      label: 'Cut',
-      icon: TablerIcons.cut,
-      onSelected: () {
-        var selectedText =
-            textEditorController.document
-                .getPlainText(
-          textEditorController
-              .selection.start,
-          textEditorController
-              .selection.end,
-        );
-        Clipboard.setData(ClipboardData(
-            text: selectedText));
-        textEditorController.replaceText(
-          textEditorController
-              .selection.start,
-          textEditorController
-                  .selection.end -
-              textEditorController
-                  .selection.start,
-          '',
-          null,
-        );
-      },
-    ));
-    }
-
-    // Copy
-    if (hasSelection) {
-    entries.add(MenuItem(
-      label: 'Copy',
-      icon: TablerIcons.copy,
-      onSelected: () {
-        var selectedText =
-            textEditorController.document
-                .getPlainText(
-          textEditorController
-              .selection.start,
-          textEditorController
-              .selection.end,
-        );
-        Clipboard.setData(ClipboardData(
-            text: selectedText));
-      },
-    ));
-    }
-
-    // Paste
-    entries.add(MenuItem(
-    label: 'Paste',
-    icon: TablerIcons.clipboard,
-    onSelected: () async {
-      var data = await Clipboard.getData(
-          'text/plain');
-      if (data != null) {
-        int baseOffset =
-            textEditorController
-                .selection.baseOffset;
-        if (textEditorController
-            .selection.isCollapsed) {
-          textEditorController
-              .replaceText(
-            baseOffset,
-            0, // No text to replace
-            data.text!,
-            null,
-          );
-        } else {
-          textEditorController
-              .replaceText(
-            baseOffset,
-            textEditorController.selection
-                    .extentOffset -
-                baseOffset,
-            data.text!,
-            null,
-          );
-        }
-      }
-    },
-    ));
-
-    // Select All
-    entries.add(MenuItem(
-    label: 'Select All',
-    icon: TablerIcons.select_all,
-    onSelected: () {
-      textEditorController
-          .updateSelection(
-              TextSelection(
-                baseOffset: 0,
-                extentOffset:
-                    textEditorController
-                        .document.length,
-              ),
-              ChangeSource.local);
-    },
-    ));
-
-    entries.add(const MenuDivider());
-
-    // Undo
-    if (textEditorController.hasUndo) {
-    entries.add(MenuItem(
-      label: 'Undo',
-      icon: TablerIcons.corner_up_left,
-      onSelected: () {
-        textEditorController.undo();
-      },
-    ));
-    } else {
-    entries.add(const MenuItem(
-      label: 'Undo',
-      icon: TablerIcons.corner_up_left,
-      onSelected: null,
-    ));
-    }
-
-    // Redo
-    if (textEditorController.hasRedo) {
-    entries.add(MenuItem(
-      label: 'Redo',
-      icon: TablerIcons.corner_down_right,
-      onSelected: () {
-        textEditorController.redo();
-      },
-    ));
-    } else {
-    entries.add(const MenuItem(
-      label: 'Redo',
-      icon: TablerIcons.corner_down_right,
-      onSelected: null,
-    ));
-    }
-    entries.addAll([
-    const MenuHeader(text: 'ops'),
-    //ADD ITEMS
-    MenuItem.submenu(
-        label: 'Add',
-        icon: TablerIcons.new_section,
-        items: [
-          MenuItem.submenu(
-              label: 'Text',
-              icon: TablerIcons
-                  .text_recognition,
-              items: [
-                //add text before the selected one
-                MenuItem(
-                  label: 'Before',
-                  icon: TablerIcons
-                      .row_insert_top,
-                  onSelected: () {
-                    setState(() {
-                    var newItem = _addTextField( shouldReturn:  true,textDecoration: newSuperDecoration());
-                    sheetList.insert( index, newItem);
-                    });
-                  },
-                ),
-                //add text after the selected one
-                MenuItem(
-                  label: 'After',
-                  icon: TablerIcons
-                      .row_insert_bottom,
-                  onSelected: () {
-                    setState(() {
-                    var newItem = _addTextField( shouldReturn:  true,textDecoration:newSuperDecoration());
-                    
-                    if (index<sheetList.length) {
-                      
-                      sheetList.insert(
-                          index+1,
-                          newItem);
-                    } else {
-                      sheetList.add(
-                          newItem);
-                    }
-                      
-                    });
-                  },
-                ),
-                //add a new row with a new textfield inside at the current index
-                MenuItem(
-                  label: 'In a New List',
-                  icon: TablerIcons
-                      .code_plus,
-                  onSelected: () {
-                    setState(() {
-                      var newItem = _addTextField( shouldReturn:  true,textDecoration: newSuperDecoration());
-                    
-                      var newId =
-                          'LI-${ const Uuid()
-                              .v4()}';
-                      sheetList.insert(
-                      index,
-                      SheetList(
-                      direction:
-                        Axis.vertical,
-                      id: newId,
-                      parentId: sheetList.id,
-                      listDecoration: newSuperDecoration(),
-                      sheetList: [
-                        newItem
-                      ]
-                      ));
-                      print('plused');
-                      print(sheetList.id);
-                    });
-                  },
-                ),
-              ]),
-          MenuItem.submenu(
-              label: 'List',
-              icon: TablerIcons
-                  .brackets_contain_start,
-              items: [
-                //add row before the selected one
-                MenuItem(
-                  label: 'Row Before',
-                  icon: TablerIcons
-                      .row_insert_top,
-                  onSelected: () {
-                    setState(() {
-                    var newId ='LI-${ const Uuid()
-                              .v4()}';
-                    sheetList.insert(
-                    index,
-                    SheetList(
-                    direction:
-                      Axis.horizontal,
-                    id: newId,
-                    parentId: sheetList.id,
-                    listDecoration: newSuperDecoration(),
-                    sheetList: [
-                    ]
-                    ));
-
-                    });
-                  },
-                ),
-                //add row after the selected one
-                MenuItem(
-                  label: 'Row After',
-                  icon: TablerIcons
-                      .row_insert_bottom,
-                  onSelected: () {
-                    setState(() {
-                    var newId ='LI-${ const Uuid()
-                              .v4()}';
-                    
-
-                    if (index<sheetList.length) {
-                      
-                      sheetList.insert(
-                      index+1,
-                      SheetList(
-                      direction:
-                        Axis.horizontal,
-                      id: newId,
-                      parentId: sheetList.id,
-                      listDecoration: newSuperDecoration(),
-                      sheetList: []
-                      ));    
-                    } else {
-                      sheetList.add(
-                        SheetList(
-                        direction:
-                          Axis.vertical,
-                        id: newId,
-                        parentId: sheetList.id,
-                        listDecoration: newSuperDecoration(),
-                        sheetList: [
-                        ]
-                        ));
-                        }
-                      
-                    });
-                  },
-                ),
-                
-                //add column before the selected one
-                MenuItem(
-                  label: 'Column Before',
-                  icon: TablerIcons
-                      .row_insert_top,
-                  onSelected: () {
-                    setState(() {
-                    var newId ='LI-${ const Uuid()
-                              .v4()}';
-                    sheetList.insert(
-                    index,
-                    SheetList(
-                    direction:
-                      Axis.vertical,
-                    id: newId,
-                    parentId: sheetList.id,
-                    listDecoration:  newSuperDecoration(),
-                    sheetList: [
-                    ]
-                    ));
-
-                    });
-                  },
-                ),
-                //add column after the selected one
-                MenuItem(
-                  label: 'Column After',
-                  icon: TablerIcons
-                      .row_insert_bottom,
-                  onSelected: () {
-                    setState(() {
-                    var newId ='LI-${ const Uuid()
-                              .v4()}';
-                    
-
-                    if (index<sheetList.length) {
-                      
-                      sheetList.insert(
-                      index+1,
-                      SheetList(
-                      direction:
-                        Axis.vertical,
-                      id: newId,
-                      parentId: sheetList.id,
-                      listDecoration: newSuperDecoration(),
-                      sheetList: []
-                      ));    
-                    } else {
-                      sheetList.add(
-                        SheetList(
-                        direction:
-                          Axis.vertical,
-                        id: newId,
-                        parentId: sheetList.id,
-                        listDecoration: newSuperDecoration(),
-                        sheetList: [
-                        ]
-                        ));
-                        }
-                      
-                    });
-                  },
-                ),
-                
-              ])    
-        ]),
-    //Wrap ITEMS
-    MenuItem.submenu(
-        label: 'Wrap',
-        icon: TablerIcons.brackets_contain,
-        items: [
-          MenuItem(
-            label: 'In a Row',
-            icon: TablerIcons.layout_rows ,
-            onSelected: () {
-              setState(() {
-                
-                  var item = sheetList.removeAt(index);
-                  var newId = 'LI-${ const Uuid()
-                              .v4()}';              
-                  item.parentId = newId;     
-                  sheetList.insert(
-                  index,
-                  SheetList(
-                  direction:
-                    Axis.horizontal,
-                  id: newId,
-                  parentId: sheetList.id,
-                  listDecoration:  newSuperDecoration(),
-                  sheetList: [
-                    item
-                  ]
-                  ));
-
-                  panelIndex.id = item.id;
-                  panelIndex.parentId = item.parentId;
-                  print(
-                      'Updated index of text editor: $index');
-                
-              });
-            },
-          ),
-          MenuItem(
-            label: 'In a Column',
-            icon: TablerIcons
-                .layout_columns,
-            onSelected: () {
-              setState(() {
-                
-                  var item = sheetList.removeAt(index);
-                  var newId ='LI-${ const Uuid()
-                              .v4()}';              
-                  item.parentId = newId;  
-                  sheetList.insert(
-                  index,
-                  SheetList(
-                  direction:
-                    Axis.vertical,
-                  id: newId,
-                  parentId: sheetList.id,
-                  listDecoration: newSuperDecoration(),
-                  sheetList: [
-                    item
-                  ]
-                  ));
-
-                  panelIndex.id = item.id;
-                  panelIndex.parentId = item.parentId;
-                  _findSheetListItem();
-                  print(
-                      'Updated index of text editor: $index');
-                
-              });
-            },
-          ),
-              
-        ]),
-    //Clear Field
-    MenuItem(
-      label: 'Clear',
-      icon: TablerIcons.square_rounded_x,
-      onSelected: () async {
-        await showAdaptiveDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title:
-                  Text('Confirm Clear'),
-              content: Text(
-                  'This will clear the text from current Text Field. Are you sure?'),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      setState(() {
-                        sheetText
-                                .textEditorController
-                                .document =
-                            Document();
-                      });
-                      Navigator.pop(
-                          context);
-                    },
-                    child: Text('Yes')),
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(
-                          context);
-                    },
-                    child: Text('No')),
-              ],
-            );
-          },
-        );
-      },
-    ),
-    //Delete
-    MenuItem(
-      label: 'Delete',
-      icon: TablerIcons.trash,
-      onSelected: () async {
-        await showAdaptiveDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text(
-                  'Confirm Delete'),
-              content: const Text(
-                  'This will DELETE the current Text Field with its contents. Are you sure?'),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      setState(() {
-                        sheetList
-                            .removeAt(
-                                index);
-                        panelIndex.id =
-                            '';
-                      });
-                      Navigator.pop(
-                          context);
-                    },
-                    child: const Text(
-                        'Yes')),
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(
-                          context);
-                    },
-                    child:
-                        const Text('No')),
-              ],
-            );
-          },
-        );
-      },
-    )
-    ]);
-
-    return entries;
-    }
-
-    void onRightClick(SheetText sheetText, LongPressDownDetails d, int index) {
-      setState(() {
-    panelIndex.id = sheetText.id;
-    panelIndex.parentId = sheetText.parentId;
-    });
-    print('secondaryyyTapppppp');
+    print('rebuilding listWidget');
     
-    final entries = buildContextMenuEntries(
-    sheetText.textEditorController, index, sheetText);
-    ContextMenu(
-        entries: entries,
-        boxDecoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: defaultPalette
-                    .black
-                    .withOpacity(0.3),
-                blurRadius: 2,
-              )
-            ],
-            color: defaultPalette.primary,
-            borderRadius:
-                BorderRadius.circular(
-                    10)),
-        position: Offset(
-            d.globalPosition.dx,
-            d.globalPosition.dy))
-    .show(context);
-    }
-
     child(controller, physics) => ReorderableListView.builder(
     shrinkWrap: true,
     buildDefaultDragHandles: false,
     scrollDirection: sheetList.direction,
     scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
     physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
+    itemCount: sheetList.length,
+    onReorder: (oldIndex, newIndex) {
+      setState(() {
+        if (newIndex > oldIndex) {
+          newIndex -= 1;
+        }
+        final item = sheetList.removeAt(oldIndex);
+        // buildlistw
+        sheetList.insert(newIndex, item);
+        _reassignSheetListIndexPath(sheetList);
+      });
+    },
     proxyDecorator: (child, index, animation) {
       return Container(child: child); },
       itemBuilder: (context, index) {
@@ -4594,16 +4176,13 @@ Future<void> _initialize() async {
                           FocusScope.of(context).unfocus();
                           
                           setState(() {
-                            panelIndex = panelIndex.copyWith(
-                                id: sheetText.id,
-                                parentId: sheetList.id);
-                          
+                            panelIndex.id = sheetText.id;
+                            panelIndex.itemIndexPath = sheetText.indexPath;
                             panelIndex.parentId = sheetList.id;
+                            panelIndex.parentIndexPath = sheetList.indexPath;
+                            
                             whichPropertyTabIsClicked = 2;
                           
-                            if (hDividerPosition > 0.48) {
-                              hDividerPosition = 0.4;
-                            }
                             item = sheetText;
                             _findItem();
                           });
@@ -4614,7 +4193,7 @@ Future<void> _initialize() async {
                           print(panelIndex);
                         },
                         onSecondaryLongPressDown: (d) {
-                          onRightClick(sheetText, d, index);
+                          onRightClick(sheetText, d, index,sheetList);
                         },
                         child: Padding(
                           padding: const EdgeInsets.only(
@@ -4662,26 +4241,16 @@ Future<void> _initialize() async {
         // buildlistw
       );
       },
-      itemCount: sheetList.length,
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          if (newIndex > oldIndex) {
-            newIndex -= 1;
-          }
-          final item = sheetList.removeAt(oldIndex);
-          // buildlistw
-          sheetList.insert(newIndex, item);
-        });
-      },
+      
       );
   
-
     return Stack(
       children: [
         GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () {
             setState(() {
+              panelIndex.parentIndexPath = sheetList.indexPath;
               panelIndex.parentId = sheetList.id;
               _findSheetListItem();
               whichPropertyTabIsClicked = 3;
@@ -4757,49 +4326,47 @@ Future<void> _initialize() async {
                     alwaysShowThumb: true,
                     controller: controller,
                     scrollbarPosition: sheetList.direction == Axis.vertical?
-                        ScrollbarPosition.right : ScrollbarPosition.bottom,
+                      ScrollbarPosition.right : ScrollbarPosition.bottom,
                     backgroundColor: defaultPalette.primary,
                     isDraggable: true,
-                    maxDynamicThumbLength:80,
+                    maxDynamicThumbLength: 80,
                     thumbBuilder:
                         (context, animation, widgetStates) {
-                      return Column(
-                        children: List.generate(1, (index) {
-                          return Container(
-                            margin: EdgeInsets.only(bottom: 5, top:5),
-                            decoration: BoxDecoration(
-                              border: Border.all(),
-                              color: defaultPalette.primary,
-                              borderRadius:
-                                  BorderRadius.circular(99999)),
-                            width:sheetList.id == spreadSheetList[currentPageIndex].id
-                            ? 3
-                            : sheetList.direction == Axis.vertical? 4:60,
-                            height:sheetList.direction == Axis.vertical? 60:4,
-                          );
-                        },)
-                        
+                      return Container(
+                        margin: EdgeInsets.symmetric(
+                          vertical:5,
+                          horizontal: sheetList.direction == Axis.vertical? 0:5
+                          ),
+                        decoration: BoxDecoration(
+                          border: Border.all(),
+                          color: defaultPalette.primary,
+                          borderRadius:
+                              BorderRadius.circular(99999)),
+                        width:sheetList.id == spreadSheetList[currentPageIndex].id
+                        ? 3
+                        : sheetList.direction == Axis.vertical? 4:60,
+                        height:sheetList.direction == Axis.vertical? 60:5,
                       );
                     },
                     child: Padding(
                       padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
                         sheetList.id == spreadSheetList[currentPageIndex].id
-                        ?3:3.5
+                        ?3 : 3.5
                         :0),
                       child: spreadSheetList[currentPageIndex].id == sheetList.id
                       ? MinimapScrollbarWidget(
                         controller: controller,
                         physics: physics,
                         scaleFactor: 0.08,
-                        miniSize: 20,
-                        imageUpdateInterval: 500000,
+                        miniSize: 30,
+                        imageUpdateInterval: 5000000,
                         child: SizedBox(
                           width:sheetList.id == spreadSheetList[currentPageIndex].id
                           ?sWidth
                           : findSheetListBuildWidth(sheetList) <= 50
                             ? 50
                             : findSheetListBuildWidth(sheetList),
-                          child: child(controller,physics))) : child(controller,physics)
+                          child: sheetList.isEmpty? SizedBox(height:50, width:100): child(controller,physics))) : child(controller,physics)
                       ),
                       );
                       }
@@ -4812,7 +4379,7 @@ Future<void> _initialize() async {
           ),
         ),
         if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
-          Positioned(
+        Positioned(
             top: 0,
             child: SlideInLeft(
               duration: Durations.short2,
@@ -4841,6 +4408,7 @@ Future<void> _initialize() async {
                           sheetListClipboard[0] = null;
                           sheetListClipboard[1] = (_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
                           _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList.removeWhere((element) => element==sheetListItem,);
+                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));
                           print(sheetListClipboard );
                           print(sheetListClipboard[1]?.id );
                         });
@@ -4872,76 +4440,88 @@ Future<void> _initialize() async {
                         List<SheetItem> deepCopySheetList(
                           List<SheetItem> sheetList, {
                           required String parentIdOverride, // 👈 added param
+                          required IndexPath indexPath,
                           Set<String>? visited,
                           int depth = 0,
                           int maxDepth = 50,
                         }) {
                           visited ??= <String>{};
 
-                          return sheetList.map((e) {
+                          return sheetList.asMap().entries.map((e) {
+                            var childIndexPath = IndexPath(
+                              parent: indexPath,
+                              index: e.key,
+                              );
                             if (depth > maxDepth) {
                               throw Exception("Too deeply nested structure");
                             }
 
-                            if (visited!.contains(e.id)) {
-                              throw Exception("Recursive structure detected: ${e.id}");
+                            if (visited!.contains(e.value.id)) {
+                              throw Exception("Recursive structure detected: ${e.value.id}");
                             }
 
-                            visited.add(e.id);
+                            visited.add(e.value.id);
 
-                            if (e is SheetText) {
+                            if (e.value is SheetText) {
                              
 
                               return _addTextField(
-                                docString: e.textEditorConfigurations.controller.document.toDelta().toJson(),
+                                docString: (e.value as SheetText).textEditorConfigurations.controller.document.toDelta().toJson(),
                                 id: 'TX-${ const Uuid().v4()}',
                                 parentId: parentIdOverride,
                                 shouldReturn: true,
-                                textDecoration: e.textDecoration
-
+                                textDecoration: (e.value as SheetText).textDecoration,
+                                indexPath: childIndexPath
                                 );
-                            }
-
-                            if (e is SheetList) {
+                            } else if (e.value is SheetList) {
                               final newId = 'LI-${ const Uuid().v4()}';
                               return SheetList(
                                 id: newId,
                                 parentId: parentIdOverride, // 👈 Apply to this nested list
-                                direction: e.direction,
-                                crossAxisAlignment: e.crossAxisAlignment,
-                                mainAxisAlignment: e.mainAxisAlignment,
-                                mainAxisSize: e.mainAxisSize,
-                                size: e.size,
-                                listDecoration: SuperDecoration.fromJson(e.listDecoration.toJson()),
+                                direction: (e.value as SheetList).direction,
+                                crossAxisAlignment: (e.value as SheetList).crossAxisAlignment,
+                                mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
+                                mainAxisSize: (e.value as SheetList).mainAxisSize,
+                                size: (e.value as SheetList).size,
+                                listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
                                 sheetList: deepCopySheetList(
-                                  e.sheetList,
+                                  (e.value as SheetList).sheetList,
                                   parentIdOverride: newId, // 👈 Recursive update to children
                                   visited: {...visited},
                                   depth: depth + 1,
+                                  indexPath: childIndexPath,
                                 ),
+                                indexPath: childIndexPath,
                               );
                             }
 
-                            throw Exception("Unknown SheetItem type: ${e.runtimeType}");
+                            throw Exception("Unknown or Unaccounted SheetItem type in paste: ${e.value.runtimeType}");
                           }).toList();
                         }
 
 
-                        final isCopied = sheetListClipboard[0] == null;
-                        final originalItem = isCopied
+                        final isNotCopied = sheetListClipboard[0] == null;
+                        final originalItem = isNotCopied
                             ? sheetListClipboard[1]!
                             : sheetListClipboard[0]!;
-                        final newId = isCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
+                        final newId = isNotCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
+                        var newIndexPath = IndexPath(
+                          parent:_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0);
 
                         final newSheetList = deepCopySheetList(
                           originalItem.sheetList,
                           parentIdOverride: newId, // 👈 Pass new parentId to apply to all children
+                          indexPath: newIndexPath
                         );
+
+                        
 
                         final newItem = originalItem.copyWith(
                           id: newId,
                           parentId: sheetListItem.id,
                           sheetList: newSheetList,
+                          indexPath: newIndexPath
                         );
 
 
@@ -4949,8 +4529,9 @@ Future<void> _initialize() async {
                           _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex])
                               .insert(0, newItem);
                         });
-
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
                         saveLayout();
+                        sheetListClipboard[1] = null;
 
 
                       },
@@ -4976,11 +4557,18 @@ Future<void> _initialize() async {
                             .row_insert_top,
                         onSelected: () {
                           setState(() {
-                          var newItem = _addTextField( shouldReturn:  true,textDecoration:  newSuperDecoration());
+                          var newItem = _addTextField( 
+                            shouldReturn:  true,
+                            textDecoration:  newSuperDecoration(),
+                            indexPath: IndexPath(
+                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                              index: 0)
+                            );
                     
                           _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
                             _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
                             , newItem);
+                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
                           });
                         },
                       ),
@@ -4991,7 +4579,13 @@ Future<void> _initialize() async {
                             .row_insert_bottom,
                         onSelected: () {
                           setState(() {
-                          var newItem = _addTextField( shouldReturn:  true,textDecoration:  newSuperDecoration());
+                          var newItem = _addTextField( 
+                            shouldReturn:  true,
+                            textDecoration:  newSuperDecoration(),
+                            indexPath: IndexPath(
+                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                              index: 0)
+                            );
                     
                           var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
                           if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
@@ -5003,6 +4597,7 @@ Future<void> _initialize() async {
                             _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
                                 newItem);
                           }
+                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
                           });
                           
                         },
@@ -5017,7 +4612,13 @@ Future<void> _initialize() async {
                           icon: TablerIcons.row_insert_top,
                           onSelected: () {
                             setState(() {
-                            var newItem = _addTextField( shouldReturn:  true,textDecoration: newSuperDecoration());
+                            var newItem = _addTextField( 
+                              shouldReturn:  true,
+                              textDecoration: newSuperDecoration(),
+                              indexPath: IndexPath(
+                              parent:sheetList.indexPath,
+                              index: 0)
+                              );
                      
                             var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
                             if (index<sheetList.length) {
@@ -5027,7 +4628,8 @@ Future<void> _initialize() async {
                               sheetList.add(
                                   newItem);
                             }
-                              
+                            _reassignSheetListIndexPath(sheetList);  
+                            
                             });
                           },
                         ),
@@ -5038,7 +4640,13 @@ Future<void> _initialize() async {
                               .row_insert_bottom,
                           onSelected: () {
                             setState(() {
-                              var newItem = _addTextField( shouldReturn:  true,textDecoration:  newSuperDecoration());
+                              var newItem = _addTextField( 
+                                shouldReturn:  true,
+                                textDecoration:  newSuperDecoration(),
+                                indexPath: IndexPath(
+                                parent:sheetList.indexPath,
+                                index: sheetList.length)
+                                  );
                      
                               
                                 sheetList.add(
@@ -5075,8 +4683,13 @@ Future<void> _initialize() async {
                           parentId: sheetList.id,
                           listDecoration: newSuperDecoration(),
                           sheetList: [
-                          ]
+                          ],
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0)
                           ));
+                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                          
                           });
                         },
                       ),
@@ -5099,8 +4712,13 @@ Future<void> _initialize() async {
                             id: newId,
                             parentId: sheetList.id,
                             listDecoration:  newSuperDecoration(),
-                            sheetList: []
-                            ));
+                            sheetList: [],
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0)
+                          ));
+                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                          
                           } else {
                             _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
                                 SheetList(
@@ -5109,8 +4727,13 @@ Future<void> _initialize() async {
                             id: newId,
                             parentId: sheetList.id,
                             listDecoration:  newSuperDecoration(),
-                            sheetList: []
-                            ));
+                            sheetList: [],
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0)
+                          ));
+                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                          
                           }
                           });
                           
@@ -5136,7 +4759,10 @@ Future<void> _initialize() async {
                             id: newId,
                             parentId: sheetList.id,
                             listDecoration: newSuperDecoration(),
-                            sheetList: []
+                            sheetList: [],
+                            indexPath: IndexPath(
+                              parent:sheetList.indexPath,
+                              index: 0)
                             ));
                             } else {
                               sheetList.add(
@@ -5146,10 +4772,13 @@ Future<void> _initialize() async {
                             id: newId,
                             parentId: sheetList.id,
                             listDecoration: newSuperDecoration(),
-                            sheetList: []
+                            sheetList: [],
+                            indexPath: IndexPath(
+                              parent: sheetList.indexPath,
+                              index: sheetList.length)
                             ));
                             }
-                              
+                              _reassignSheetListIndexPath(sheetList);
                             });
                           },
                         ),
@@ -5169,7 +4798,10 @@ Future<void> _initialize() async {
                             id: newId,
                             parentId: sheetList.id,
                             listDecoration: newSuperDecoration(),
-                            sheetList: []
+                            sheetList: [],
+                            indexPath: IndexPath(
+                              parent: sheetList.indexPath,
+                              index: sheetList.length)
                             ));
                               
                             });
@@ -5211,13 +4843,17 @@ Future<void> _initialize() async {
                             listDecoration: newSuperDecoration(),
                             sheetList: [
                               (item as SheetList).copyWith(
-                                parentId: newId
+                                parentId: newId,
+                                indexPath: IndexPath(parent: item.indexPath,index:0)
                               )
-                            ]
+                            ],
+                            indexPath: item.indexPath
                             ));
 
                             panelIndex.id = item.id;
                             panelIndex.parentId = item.parentId;
+                            panelIndex.parentIndexPath = item.indexPath.parent;
+                            panelIndex.itemIndexPath = item.indexPath;
                             _findSheetListItem();
                             print('Updated index of text editor: $index');
                           
@@ -5250,13 +4886,17 @@ Future<void> _initialize() async {
                             listDecoration: newSuperDecoration(),
                             sheetList: [
                               (item as SheetList).copyWith(
-                                parentId: newId
+                                parentId: newId,
+                                indexPath: IndexPath(parent: item.indexPath,index:0)
                               )
-                            ]
+                            ],
+                            indexPath: item.indexPath
                             ));
 
                             panelIndex.id = item.id;
                             panelIndex.parentId = item.parentId;
+                            panelIndex.parentIndexPath = item.indexPath.parent;
+                            panelIndex.itemIndexPath = item.indexPath;
                             _findSheetListItem();
                             print('Updated index of text editor: $index');
                           
@@ -5360,11 +5000,6 @@ Future<void> _initialize() async {
                               // spreadRadius: 10
                             )
                           ],
-                          //         color: panelIndex.parentId == sheetList.id
-                          // ? sheetList.direction == Axis.vertical
-                          //     ? defaultPalette.tertiary.withOpacity(0.8)
-                          //     : defaultPalette.extras[1].withOpacity(0.8)
-                          // : ui.Color(0xFFFFFFFF),
                           color: defaultPalette.primary,
                           borderRadius: BorderRadius.circular(10)),
                       position:
@@ -5407,6 +5042,7 @@ Future<void> _initialize() async {
                 sheetText.id
             ? 2
             : 1.2,
+
         color: panelIndex.id ==
                 sheetText.id
             ? defaultPalette.tertiary
@@ -5417,6 +5053,7 @@ Future<void> _initialize() async {
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         if(sheetText.name != 'unlabeled')
         ...[Text(
@@ -5475,10 +5112,606 @@ Future<void> _initialize() async {
       ],
     ),
   );
-                                      
-}
+                                        
+  }
 
+  List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
+  var entries = <ContextMenuEntry>[];
+
+  bool hasSelection = textEditorController
+        .selection.start !=
+    textEditorController.selection.end;
+
+  // Cut
+  if (hasSelection) {
+  entries.add(MenuItem(
+    label: 'Cut',
+    icon: TablerIcons.cut,
+    onSelected: () {
+      var selectedText =
+          textEditorController.document
+              .getPlainText(
+        textEditorController
+            .selection.start,
+        textEditorController
+            .selection.end,
+      );
+      Clipboard.setData(ClipboardData(
+          text: selectedText));
+      textEditorController.replaceText(
+        textEditorController
+            .selection.start,
+        textEditorController
+                .selection.end -
+            textEditorController
+                .selection.start,
+        '',
+        null,
+      );
+    },
+  ));
+  }
+
+  // Copy
+  if (hasSelection) {
+  entries.add(MenuItem(
+    label: 'Copy',
+    icon: TablerIcons.copy,
+    onSelected: () {
+      var selectedText =
+          textEditorController.document
+              .getPlainText(
+        textEditorController
+            .selection.start,
+        textEditorController
+            .selection.end,
+      );
+      Clipboard.setData(ClipboardData(
+          text: selectedText));
+    },
+  ));
+  }
+
+  // Paste
+  entries.add(MenuItem(
+  label: 'Paste',
+  icon: TablerIcons.clipboard,
+  onSelected: () async {
+    var data = await Clipboard.getData(
+        'text/plain');
+    if (data != null) {
+      int baseOffset =
+          textEditorController
+              .selection.baseOffset;
+      if (textEditorController
+          .selection.isCollapsed) {
+        textEditorController
+            .replaceText(
+          baseOffset,
+          0, // No text to replace
+          data.text!,
+          null,
+        );
+      } else {
+        textEditorController
+            .replaceText(
+          baseOffset,
+          textEditorController.selection
+                  .extentOffset -
+              baseOffset,
+          data.text!,
+          null,
+        );
+      }
+    }
+  },
+  ));
+
+  // Select All
+  entries.add(MenuItem(
+  label: 'Select All',
+  icon: TablerIcons.select_all,
+  onSelected: () {
+    textEditorController
+        .updateSelection(
+            TextSelection(
+              baseOffset: 0,
+              extentOffset:
+                  textEditorController
+                      .document.length,
+            ),
+            ChangeSource.local);
+  },
+  ));
+
+  entries.add(const MenuDivider());
+
+  // Undo
+  if (textEditorController.hasUndo) {
+  entries.add(MenuItem(
+    label: 'Undo',
+    icon: TablerIcons.corner_up_left,
+    onSelected: () {
+      textEditorController.undo();
+    },
+  ));
+  } else {
+  entries.add(const MenuItem(
+    label: 'Undo',
+    icon: TablerIcons.corner_up_left,
+    onSelected: null,
+  ));
+  }
+
+  // Redo
+  if (textEditorController.hasRedo) {
+  entries.add(MenuItem(
+    label: 'Redo',
+    icon: TablerIcons.corner_down_right,
+    onSelected: () {
+      textEditorController.redo();
+    },
+  ));
+  } else {
+  entries.add(const MenuItem(
+    label: 'Redo',
+    icon: TablerIcons.corner_down_right,
+    onSelected: null,
+  ));
+  }
+  entries.addAll([
+  const MenuHeader(text: 'ops'),
+  //ADD ITEMS
+  MenuItem.submenu(
+      label: 'Add',
+      icon: TablerIcons.new_section,
+      items: [
+        MenuItem.submenu(
+            label: 'Text',
+            icon: TablerIcons
+                .text_recognition,
+            items: [
+              //add text before the selected one
+              MenuItem(
+                label: 'Before',
+                icon: TablerIcons
+                    .row_insert_top,
+                onSelected: () {
+                  setState(() {
+                  var newItem = _addTextField( 
+                    shouldReturn:  true,
+                    textDecoration: newSuperDecoration(),
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );
+                  sheetList.insert( index, newItem);
+                  _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+              //add text after the selected one
+              MenuItem(
+                label: 'After',
+                icon: TablerIcons
+                    .row_insert_bottom,
+                onSelected: () {
+                  setState(() {
+                  var newItem = _addTextField( 
+                    shouldReturn:  true,
+                    textDecoration: newSuperDecoration(),
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );
+                  
+                  if (index<sheetList.length) {
+                    
+                    sheetList.insert(
+                        index+1,
+                        newItem);
+                  } else {
+                    sheetList.add(
+                        newItem);
+                  }
+                  _reassignSheetListIndexPath(sheetList);  
+                  });
+                },
+              ),
+              //add a new row with a new textfield inside at the current index
+              MenuItem(
+                label: 'In a New List',
+                icon: TablerIcons
+                    .code_plus,
+                onSelected: () {
+                  setState(() {
+                    var newId ='LI-${ const Uuid().v4()}';
+                    var newList = SheetList(
+                    direction: Axis.vertical,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration(),
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );
+                    var newItem = _addTextField( 
+                      shouldReturn:  true,
+                      textDecoration: newSuperDecoration(),
+                      indexPath: IndexPath(
+                      parent: newList.indexPath,
+                      index: newList.length),
+                      );
+                    newList.sheetList.add(newItem);
+                    
+                    sheetList.insert(
+                    index,
+                    newList
+                    );
+                    print('plused');
+                    print(sheetList.id);
+                    _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+            ]),
+        MenuItem.submenu(
+            label: 'List',
+            icon: TablerIcons
+                .brackets_contain_start,
+            items: [
+              //add row before the selected one
+              MenuItem(
+                label: 'Row Before',
+                icon: TablerIcons
+                    .row_insert_top,
+                onSelected: () {
+                  setState(() {
+                  var newId ='LI-${ const Uuid()
+                            .v4()}';
+                  sheetList.insert(
+                  index,
+                  SheetList(
+                  direction:
+                    Axis.horizontal,
+                  id: newId,
+                  parentId: sheetList.id,
+                  listDecoration: newSuperDecoration(),
+                  sheetList: [
+                  ],
+                  indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                  ));
+                  _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+              //add row after the selected one
+              MenuItem(
+                label: 'Row After',
+                icon: TablerIcons
+                    .row_insert_bottom,
+                onSelected: () {
+                  setState(() {
+                  var newId ='LI-${ const Uuid()
+                            .v4()}';
+                  
+
+                  if (index<sheetList.length) {
+                    
+                    sheetList.insert(
+                    index+1,
+                    SheetList(
+                    direction:
+                      Axis.horizontal,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration(),
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                  )); 
+                  } else {
+                    sheetList.add(
+                      SheetList(
+                      direction:
+                        Axis.vertical,
+                      id: newId,
+                      parentId: sheetList.id,
+                      listDecoration: newSuperDecoration(),
+                      sheetList: [
+                      ],
+                      indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                      ));
+                      }
+                  _reassignSheetListIndexPath(sheetList);  
+                  });
+                },
+              ),
+              
+              //add column before the selected one
+              MenuItem(
+                label: 'Column Before',
+                icon: TablerIcons
+                    .row_insert_top,
+                onSelected: () {
+                  setState(() {
+                  var newId ='LI-${ const Uuid()
+                            .v4()}';
+                  sheetList.insert(
+                  index,
+                  SheetList(
+                  direction:
+                    Axis.vertical,
+                  id: newId,
+                  parentId: sheetList.id,
+                  listDecoration:  newSuperDecoration(),
+                  sheetList: [
+                  ],
+                  indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                  ));
+                  _reassignSheetListIndexPath(sheetList);
+
+                  });
+                },
+              ),
+              //add column after the selected one
+              MenuItem(
+                label: 'Column After',
+                icon: TablerIcons
+                    .row_insert_bottom,
+                onSelected: () {
+                  setState(() {
+                  var newId ='LI-${ const Uuid().v4()}';
+                  
+
+                  if (index<sheetList.length) {
+                    
+                    sheetList.insert(
+                    index+1,
+                    SheetList(
+                    direction:
+                      Axis.vertical,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration(),
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    ));    
+                  } else {
+                    sheetList.add(
+                      SheetList(
+                      direction:
+                        Axis.vertical,
+                      id: newId,
+                      parentId: sheetList.id,
+                      listDecoration: newSuperDecoration(),
+                      sheetList: [
+                      ],indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                      ));
+                      }
+                  _reassignSheetListIndexPath(sheetList);  
+                  });
+                },
+              ),
+              
+            ])    
+      ]),
+  //Wrap ITEMS
+  MenuItem.submenu(
+      label: 'Wrap',
+      icon: TablerIcons.brackets_contain,
+      items: [
+        MenuItem(
+          label: 'In a Row',
+          icon: TablerIcons.layout_rows ,
+          onSelected: () {
+            setState(() {
+              
+                var oldItem = sheetList.removeAt(index);
+                var newId = 'LI-${ const Uuid().v4()}';        
+                var newList = SheetList(
+                    direction: Axis.horizontal,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration(),
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );                  
+                oldItem.parentId = newId;     
+                oldItem.indexPath = IndexPath(
+                  parent: newList.indexPath,
+                  index: newList.length);
+                newList.sheetList.add(oldItem);
+                //inserting
+                sheetList.insert(
+                index,
+                newList,
+                );
+
+                panelIndex.id = item.id;
+                panelIndex.parentId = item.parentId;
+                panelIndex.parentIndexPath = item.indexPath.parent;
+                panelIndex.itemIndexPath = item.indexPath;
+                print('Updated index of text editor: $index');
+                _reassignSheetListIndexPath(sheetList);
+            });
+          },
+        ),
+        MenuItem(
+          label: 'In a Column',
+          icon: TablerIcons
+              .layout_columns,
+          onSelected: () {
+            setState(() {
+              
+                var oldItem = sheetList.removeAt(index);
+                var newId = 'LI-${ const Uuid().v4()}';        
+                var newList = SheetList(
+                    direction: Axis.vertical,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration(),
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );                  
+                oldItem.parentId = newId;     
+                oldItem.indexPath = IndexPath(
+                  parent: newList.indexPath,
+                  index: newList.length);
+                newList.sheetList.add(oldItem);
+                //inserting
+                sheetList.insert(
+                index,
+                newList,
+                );
+
+                panelIndex.id = item.id;
+                panelIndex.parentId = item.parentId;
+                panelIndex.parentIndexPath = item.indexPath.parent;
+                panelIndex.itemIndexPath = item.indexPath;
+                _findSheetListItem();
+                print(
+                    'Updated index of text editor: $index');
+                _reassignSheetListIndexPath(sheetList);     
+              
+            });
+          },
+        ),
+            
+      ]),
+  //Clear Field
+  MenuItem(
+    label: 'Clear',
+    icon: TablerIcons.square_rounded_x,
+    onSelected: () async {
+      await showAdaptiveDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title:
+                Text('Confirm Clear'),
+            content: Text(
+                'This will clear the text from current Text Field. Are you sure?'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      sheetText
+                              .textEditorController
+                              .document =
+                          Document();
+                    });
+                    Navigator.pop(
+                        context);
+                  },
+                  child: Text('Yes')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(
+                        context);
+                  },
+                  child: Text('No')),
+            ],
+          );
+        },
+      );
+    },
+  ),
+  //Delete
+  MenuItem(
+    label: 'Delete',
+    icon: TablerIcons.trash,
+    onSelected: () async {
+      await showAdaptiveDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text(
+                'Confirm Delete'),
+            content: const Text(
+                'This will DELETE the current Text Field with its contents. Are you sure?'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      sheetList
+                          .removeAt(
+                              index);
+                      panelIndex.id =
+                          '';
+                      _reassignSheetListIndexPath(sheetList);    
+                    });
+                    Navigator.pop(
+                        context);
+                  },
+                  child: const Text(
+                      'Yes')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(
+                        context);
+                  },
+                  child:
+                      const Text('No')),
+            ],
+          );
+        },
+      );
+    },
+  )
+  ]);
+
+  return entries;
+  }
+
+  void onRightClick(SheetText sheetText, LongPressDownDetails d, int index, SheetList sheetList) {
+    setState(() {
+  panelIndex.id = sheetText.id;
+  panelIndex.parentId = sheetText.parentId;
+  panelIndex.parentIndexPath = sheetText.indexPath.parent;
+  panelIndex.itemIndexPath = sheetText.indexPath;
+  });
+  print('secondaryyyTapppppp');
   
+  final entries = buildContextMenuEntries(
+  sheetText.textEditorController, index, sheetText, sheetList);
+  ContextMenu(
+      entries: entries,
+      boxDecoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: defaultPalette
+                  .black
+                  .withOpacity(0.3),
+              blurRadius: 2,
+            )
+          ],
+          color: defaultPalette.primary,
+          borderRadius:
+              BorderRadius.circular(
+                  10)),
+      position: Offset(
+          d.globalPosition.dx,
+          d.globalPosition.dy))
+  .show(context);
+  }
+
   Widget buildSheetTableWidget(SheetTable sheetTable){
     var tableHeight = 0.0;
     var tableWidth = 0.0;
@@ -5704,6 +5937,8 @@ Future<void> _initialize() async {
                                                           item = cell.sheetItem as SheetText;
                                                           panelIndex.id = cell.sheetItem.id;
                                                           panelIndex.parentId = cell.sheetItem.parentId;
+                                                          panelIndex.parentIndexPath = sheetTable.indexPath;
+                                                          panelIndex.itemIndexPath = cell.sheetItem.indexPath;
                                                           sheetTableItem = sheetTable;
                                                           _findSheetTableItem(sheetTable);
                                                           sheetTableVariables.rowLayerIndex = row;
@@ -5992,30 +6227,32 @@ Future<void> _initialize() async {
     }
   }
 
-  bool textFieldTapDown(TapDownDetails details, String newId) {
+  bool textFieldTapDown(TapDownDetails details, String newId, IndexPath indexPath) {
     
     setState(() {
-      var itemE = _sheetItemIterator(newId, spreadSheetList[currentPageIndex]) as SheetText;
-      panelIndex.id = itemE.id;
-      panelIndex.parentId = itemE.parentId;
+      var textItem = getItemAtPath(indexPath) as SheetText;
+      panelIndex.id = textItem.id;
+      panelIndex.parentId = textItem.parentId;
+      panelIndex.parentIndexPath = textItem.indexPath.parent;
+      panelIndex.itemIndexPath = textItem.indexPath;
       if (panelIndex.parentId.startsWith("LI")) {
         _findSheetListItem();
       }
       if (panelIndex.parentId.startsWith("TB")) {
         _findSheetTableItem(null);
       }
-      var tmpinx = int.tryParse(itemE.textDecoration.id.substring(itemE.textDecoration.id.indexOf('/') + 1))??-155;
-      print((sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList);
+      var tmpinx = int.tryParse(textItem.textDecoration.id.substring(textItem.textDecoration.id.indexOf('/') + 1))??-155;
+      // print((sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList);
       decorationIndex =-1;
       updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-      print(sheetDecorationVariables.length);
+      // print(sheetDecorationVariables.length);
       whichPropertyTabIsClicked = 2;
       // propertyTabController.jumpToPage(1);
     });
 
-    print('clicked');
-    print(panelIndex);
-    print(panelIndex.parentId);
+    // print('clicked');
+    // print(panelIndex);
+    // print(panelIndex.parentId);
     return false;
   }
 
@@ -8427,7 +8664,7 @@ Future<void> _initialize() async {
                     ],
 
                     if (index == 1)
-                    //FONTS //Desktop WEB
+                    //FUNCTIONS //Desktop WEB
                     Positioned.fill(
                       child: Stack(
                         children: [
@@ -8484,17 +8721,40 @@ Future<void> _initialize() async {
                           ],
                           //functions drivers and conditional formatting
                           Container(
-                            height: sHeight * 0.9,
                             decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5)
                             ),
+                            width: width,
                             margin: EdgeInsets.only(
                               top: 15,
-                              bottom: index == whichTextPropertyTabIsClicked? 15: 18,
                               left: 10,
                               right: 13),
-                            child: Text(
-                              item.textEditorConfigurations.controller.document.toDelta().toJson().toList().toString()
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: SyntaxView(
+                                code: item.textEditorConfigurations.controller.document.toDelta().toJson().toList()[0].entries.map((e) {
+                                  if (e.value is Map) {
+                                    var mapStr = (e.value as Map).entries.map((a) => '\t${a.key}: ${a.value}').join(',\n');
+                                    return '${e.key}: {\n$mapStr\n}';
+                                  } else {
+                                    return '${e.key}: ${e.value}';
+                                  }
+                                }).join(',\n'),
+                                syntax: Syntax.YAML, 
+                                syntaxTheme: SyntaxTheme.vscodeDark(), // Theme
+                                fontSize: 12.0, // Font size
+                                withZoom: false, // Enable/Disable zoom icon controls
+                                withLinesCount: true, // Enable/Disable line number
+                                expanded: false, // Enable/Disable container expansion
+                                selectable: true 
+                              ),
                             ),
+                          ),
+                          Positioned(
+                            top:150,
+                            left:15,
+                            width: width,
+                            child: Text(item.indexPath.toString()),
                           )
 
                           ],
@@ -8994,7 +9254,7 @@ Future<void> _initialize() async {
                                                 spacing: (width) - 100,
                                               ),
                                               
-                                              
+                                              Text(sheetListItem.indexPath.toString()),
                                             ],
                                           ));
                                     }))),
@@ -9318,12 +9578,18 @@ Future<void> _initialize() async {
                                           id: 'RW-'+Uuid().v4(), 
                                           parentId: sheetTableItem.id,
                                           rowDecoration: sheetTableItem.sheetTableDecoration.id,
+                                          indexPath: IndexPath(
+                                            parent: sheetTableItem.indexPath,
+                                            index: sheetTableItem.rowData.length)
                                           )
                                       );
                                       sheetTableItem.cellData.add(
                                         List.generate(sheetTableItem.columnData.length, (index)  
                                         { 
-                                          
+                                          var rowIndexPath = IndexPath(
+                                            parent: sheetTableItem.indexPath,
+                                            index:sheetTableItem.cellData.length
+                                          );
                                           return SheetTableCell(
                                           id: '${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(), 
                                           parentId: sheetTableItem.id, 
@@ -9333,8 +9599,13 @@ Future<void> _initialize() async {
                                             shouldReturn: true,
                                             isCell: true,
                                             hide:false,
+                                            indexPath: IndexPath(
+                                              parent: rowIndexPath,
+                                              index: index),
                                             name:'${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(),
-                                            ));
+                                            ),
+                                          indexPath: rowIndexPath  
+                                          );
                                         }
                                         )
                                       );
@@ -9344,10 +9615,16 @@ Future<void> _initialize() async {
                                           id: 'CL-'+Uuid().v4(), parentId: sheetTableItem.id,
                                           size: 50,
                                           columnDecoration: sheetTableItem.sheetTableDecoration.id,
+                                          indexPath: IndexPath(
+                                            parent: sheetTableItem.indexPath,
+                                            index: sheetTableItem.columnData.length)
                                           )
                                       );
                                       for (var i = 0; i < sheetTableItem.rowData.length; i++) {
-
+                                        var rowIndexPath = IndexPath(
+                                          parent: sheetTableItem.indexPath,
+                                          index: i
+                                        );
                                         sheetTableItem.cellData[i].add(
                                           SheetTableCell(
                                             id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(), 
@@ -9358,8 +9635,12 @@ Future<void> _initialize() async {
                                             shouldReturn: true,
                                             isCell: true,
                                             hide: false,
-                                            name: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString()
-                                            )
+                                            name: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(),
+                                            indexPath: IndexPath(
+                                              parent: rowIndexPath,
+                                              index: sheetTableItem.cellData[i].length)
+                                            ),
+                                            indexPath: rowIndexPath
                                             )
 
                                         );
@@ -19415,7 +19696,7 @@ Future<void> _initialize() async {
     );
   }
   
-  List<List<SheetTableCell>> defaultSheetTableCellData(String parentId, SuperDecoration sheetTableDecoration) {
+  List<List<SheetTableCell>> defaultSheetTableCellData(String parentId, SuperDecoration sheetTableDecoration, IndexPath indexPath) {
   const rows = 5;
   const cols = 8;
   
@@ -19423,7 +19704,9 @@ Future<void> _initialize() async {
     return List.generate(cols, (col) {
       final content = 'Cell ${String.fromCharCode(65 + col)}${row+1}';
       var newId = 'TX-${ const Uuid().v4()}'; 
-
+      var cellIndexPath = IndexPath(
+        parent: indexPath,
+        index: row);
       return SheetTableCell(
         id: '${numberToColumnLabel(col+1)}${row+1}',
         parentId: parentId,
@@ -19436,35 +19719,46 @@ Future<void> _initialize() async {
           textFieldTapDown: textFieldTapDown,
           textDecoration: sheetTableDecoration,
           hide: false,
-          name:'${numberToColumnLabel(col+1)}${row+1}'
+          name:'${numberToColumnLabel(col+1)}${row+1}',
+          indexPath: IndexPath(
+            parent: cellIndexPath,
+            index: col)
+
           ),
         rowSpan: 1,
         colSpan: 1,
+        indexPath: cellIndexPath,
       );
       
       });
     });
   }
 
-  List<SheetTableColumn> defaultSheetTableColumnData(String parentId, String columnDecoration) {
+  List<SheetTableColumn> defaultSheetTableColumnData(String parentId, String columnDecoration, IndexPath indexPath) {
   return List.generate(8, (index) {
     return SheetTableColumn(
       id: 'CL-${ const Uuid().v4()}',
       parentId: parentId,
       size: 80, 
-      columnDecoration: columnDecoration
+      columnDecoration: columnDecoration,
+      indexPath: IndexPath(
+        parent: indexPath,
+        index: index)
     );
   });
   }
 
-  List<SheetTableRow> defaultSheetTableRowData(String parentId, String rowDecoration) {
+  List<SheetTableRow> defaultSheetTableRowData(String parentId, String rowDecoration, IndexPath indexPath) {
 
   return List.generate(5, (index) {
     return SheetTableRow(
       id: 'RW-${ const Uuid().v4()}',
       parentId: parentId,
       size: 30,
-      rowDecoration: rowDecoration
+      rowDecoration: rowDecoration,
+      indexPath: IndexPath(
+        parent: indexPath,
+        index: index)
     );
   });
 }

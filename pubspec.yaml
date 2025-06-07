@@ -61,8 +61,8 @@ dependencies:
   mobkit_dashed_border: ^0.0.8 
   scrollbar_ultima: ^1.0.4
   cool_background_animation: ^0.0.6 
-  axis_layout: ^1.0.1
   two_dimensional_scrollables: ^0.3.4
+  flutter_syntax_view: ^4.1.7
 
 dev_dependencies:
   hive_generator: ^2.0.1

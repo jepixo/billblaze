@@ -167,13 +167,15 @@ class _MinimapScrollbarWidgetState extends State<MinimapScrollbarWidget> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        // final RenderBox? childBox =
+        // _childKey.currentContext?.findRenderObject() as RenderBox?;
         final screenSize = MediaQuery.of(context).size;
         final maxSize = _isVertical
-            ? screenSize.height - 20
+            ? screenSize.height -56
             : screenSize.width;
-
-        assignedViewPortSize = maxSize * widget.scaleFactor;
-
+            
+        assignedViewPortSize = maxSize *widget.scaleFactor;
+        // print('maxSize in minimapscrollbar: '+ assignedViewPortSize.toString());
         double? childSize;
         final childContext = _childKey.currentContext;
         if (childContext != null) {
@@ -184,7 +186,7 @@ class _MinimapScrollbarWidgetState extends State<MinimapScrollbarWidget> {
         }
 
         final miniContentSize = childSize != null
-            ? (childSize * widget.scaleFactor).clamp(0.0, maxSize)-28
+            ? (childSize * widget.scaleFactor).clamp(0.0, maxSize)-4
             : (double.maxFinite-40);
 
         final scrollView = Expanded(
@@ -209,7 +211,7 @@ class _MinimapScrollbarWidgetState extends State<MinimapScrollbarWidget> {
 
           return AnimatedPositioned(
             duration: const Duration(milliseconds: 100),
-            top: _isVertical ? highlightPosition+8 : 0,
+            top: _isVertical ? highlightPosition+4 : 0,
             left: !_isVertical ? highlightPosition : 0,
             width: _isVertical ? widget.miniSize : assignedViewPortSize,
             height: _isVertical ? assignedViewPortSize : widget.miniSize,
@@ -259,9 +261,12 @@ class _MinimapScrollbarWidgetState extends State<MinimapScrollbarWidget> {
                 : null,
             child: Stack(
               children: [
+                Container(
+                  color: defaultPalette.extras[0],
+                ),
                 if (_miniImage != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
+                    padding: const EdgeInsets.only(top: 4.0),
                     child: ConstrainedBox(
                       constraints: BoxConstraints.tight(Size(
                         _isVertical ? widget.miniSize : double.maxFinite,
@@ -283,9 +288,7 @@ class _MinimapScrollbarWidgetState extends State<MinimapScrollbarWidget> {
                       ),
                     ),
                   ),
-                Container(
-                  color: Colors.grey.withOpacity(0.0),
-                ),
+                
                 buildHighlight(),
               ],
             ),

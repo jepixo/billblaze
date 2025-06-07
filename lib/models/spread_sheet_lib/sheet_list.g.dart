@@ -17,37 +17,40 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return SheetListBox(
-      sheetList: (fields[2] as List).cast<SheetItem>(),
-      direction: fields[3] as bool,
+      sheetList: (fields[3] as List).cast<SheetItem>(),
+      direction: fields[4] as bool,
       id: fields[0] as String,
       parentId: fields[1] as String,
-      mainAxisAlignment: fields[4] as int,
-      crossAxisAlignment: fields[5] as int,
-      mainAxisSize: fields[7] as int,
-      decorationId: fields[6] as String,
+      mainAxisAlignment: fields[5] as int,
+      crossAxisAlignment: fields[6] as int,
+      mainAxisSize: fields[8] as int,
+      decorationId: fields[7] as String,
+      indexPath: fields[2] as IndexPath,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetListBox obj) {
     writer
-      ..writeByte(8)
-      ..writeByte(2)
-      ..write(obj.sheetList)
+      ..writeByte(9)
       ..writeByte(3)
-      ..write(obj.direction)
+      ..write(obj.sheetList)
       ..writeByte(4)
-      ..write(obj.mainAxisAlignment)
+      ..write(obj.direction)
       ..writeByte(5)
-      ..write(obj.crossAxisAlignment)
+      ..write(obj.mainAxisAlignment)
       ..writeByte(6)
-      ..write(obj.decorationId)
+      ..write(obj.crossAxisAlignment)
       ..writeByte(7)
+      ..write(obj.decorationId)
+      ..writeByte(8)
       ..write(obj.mainAxisSize)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.parentId);
+      ..write(obj.parentId)
+      ..writeByte(2)
+      ..write(obj.indexPath);
   }
 
   @override

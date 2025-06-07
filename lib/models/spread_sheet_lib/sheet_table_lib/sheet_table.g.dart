@@ -19,40 +19,43 @@ class SheetTableBoxAdapter extends TypeAdapter<SheetTableBox> {
     return SheetTableBox(
       id: fields[0] as String,
       parentId: fields[1] as String,
-      cellData: (fields[2] as List)
+      cellData: (fields[3] as List)
           .map((dynamic e) => (e as List).cast<SheetTableCellBox>())
           .toList(),
-      rowData: (fields[3] as List).cast<SheetTableRowBox>(),
-      columnData: (fields[4] as List).cast<SheetTableColumnBox>(),
-      pinnedRows: fields[5] as int,
-      pinnedColumns: fields[6] as int,
-      sheetTableDecoration: fields[7] as SuperDecorationBox,
-      sheetTablebgDecoration: fields[8] as SuperDecorationBox?,
+      rowData: (fields[4] as List).cast<SheetTableRowBox>(),
+      columnData: (fields[5] as List).cast<SheetTableColumnBox>(),
+      pinnedRows: fields[6] as int,
+      pinnedColumns: fields[7] as int,
+      sheetTableDecoration: fields[8] as SuperDecorationBox,
+      sheetTablebgDecoration: fields[9] as SuperDecorationBox?,
+      indexPath: fields[2] as IndexPath,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableBox obj) {
     writer
-      ..writeByte(9)
-      ..writeByte(2)
-      ..write(obj.cellData)
+      ..writeByte(10)
       ..writeByte(3)
-      ..write(obj.rowData)
+      ..write(obj.cellData)
       ..writeByte(4)
-      ..write(obj.columnData)
+      ..write(obj.rowData)
       ..writeByte(5)
-      ..write(obj.pinnedRows)
+      ..write(obj.columnData)
       ..writeByte(6)
-      ..write(obj.pinnedColumns)
+      ..write(obj.pinnedRows)
       ..writeByte(7)
-      ..write(obj.sheetTableDecoration)
+      ..write(obj.pinnedColumns)
       ..writeByte(8)
+      ..write(obj.sheetTableDecoration)
+      ..writeByte(9)
       ..write(obj.sheetTablebgDecoration)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.parentId);
+      ..write(obj.parentId)
+      ..writeByte(2)
+      ..write(obj.indexPath);
   }
 
   @override

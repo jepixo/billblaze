@@ -1,5 +1,6 @@
 
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
 
 part 'sheet_table_column.g.dart';
@@ -20,6 +21,7 @@ class SheetTableColumn extends SheetItem {
     this.maxSize = 120,
     this.hide = false,
     this.columnDecoration ='',
+    required super.indexPath,
     });
   SheetTableColumnBox toSheetTableColumnBox( ) {
     return SheetTableColumnBox(
@@ -30,21 +32,21 @@ class SheetTableColumn extends SheetItem {
       maxSize: maxSize,
       minSize: minSize,
       columnDecoration:columnDecoration,
-
+      indexPath: indexPath,
       );
   }
 }
 @HiveType(typeId: 12)
 class SheetTableColumnBox extends SheetItem {
-  @HiveField(2)
-  double size;
   @HiveField(3)
-  double minSize;
+  double size;
   @HiveField(4)
-  double maxSize;
+  double minSize;
   @HiveField(5)
-  bool hide;
+  double maxSize;
   @HiveField(6)
+  bool hide;
+  @HiveField(7)
   String columnDecoration;
 
   SheetTableColumnBox({
@@ -55,6 +57,7 @@ class SheetTableColumnBox extends SheetItem {
     this.maxSize = 120,
     this.hide = false,
     this.columnDecoration ='',
+    required super.indexPath,
     });
 
   SheetTableColumn toSheetTableColumn( ) {
@@ -65,7 +68,8 @@ class SheetTableColumnBox extends SheetItem {
       maxSize: maxSize,
       minSize: minSize,
       hide: hide,
-      columnDecoration: columnDecoration
+      columnDecoration: columnDecoration,
+      indexPath: indexPath,
       );
   }
 
