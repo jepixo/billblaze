@@ -1,10 +1,11 @@
 
 import 'package:billblaze/colors.dart';
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -37,7 +38,8 @@ class SheetTableCell extends SheetItem {
     this.rowSpan =1,
     this.errorMessage,
     this.validationRule,
-    this.ownerId
+    this.ownerId,
+    required super.indexPath,
     });
 
   SheetTableCellBox toSheetTableCellBox( ) {
@@ -53,6 +55,7 @@ class SheetTableCell extends SheetItem {
       errorMessage: errorMessage,
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRuleBox(),
+      indexPath: indexPath,
       );
   }
 
@@ -73,23 +76,23 @@ class SheetTableCell extends SheetItem {
 
 @HiveType(typeId: 10)
 class SheetTableCellBox extends SheetItem {
-  @HiveField(2)
-  String data;
   @HiveField(3)
-  SheetItem sheetItem;
+  String data;
   @HiveField(4)
-  bool isVisible= true;
+  SheetItem sheetItem;
   @HiveField(5)
-  bool hasError = false;
+  bool isVisible= true;
   @HiveField(6)
-  int rowSpan =1;
+  bool hasError = false;
   @HiveField(7)
-  int colSpan =1;
+  int rowSpan =1;
   @HiveField(8)
-  String? ownerId;
+  int colSpan =1;
   @HiveField(9)
-  String? errorMessage;
+  String? ownerId;
   @HiveField(10)
+  String? errorMessage;
+  @HiveField(11)
   ValidationRuleBox? validationRule;
 
   SheetTableCellBox({
@@ -103,7 +106,8 @@ class SheetTableCellBox extends SheetItem {
     this.rowSpan =1,
     this.errorMessage,
     this.validationRule,
-    this.ownerId
+    this.ownerId,
+    required super.indexPath,
     });
 
   SheetTableCell toSheetTableCell( Function findItem, Function textFieldTapDown ) {
@@ -119,6 +123,7 @@ class SheetTableCellBox extends SheetItem {
       errorMessage: errorMessage,
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRule(),
+      indexPath: indexPath,
       );
   }
   
@@ -133,6 +138,7 @@ class SheetTableCellBox extends SheetItem {
         textDecoration: sheetItem.textDecoration.toSuperDecoration(),
         hide: sheetItem.hide,
         name: sheetItem.name,
+        indexPath: sheetItem.indexPath,
         );
     }
     else if (sheetItem is SheetListBox){
@@ -155,6 +161,7 @@ class SheetTableCellBox extends SheetItem {
     required List<Map<String, dynamic>>
         docString, // Use List<Map<String, dynamic>> directly
     required SuperDecoration textDecoration,
+    required IndexPath indexPath,
   }) {
     Delta delta;
     // print('DocString: $docString');
@@ -246,7 +253,7 @@ class SheetTableCellBox extends SheetItem {
         return textEditorBuilder(rawEditor, newId);
       },
       onTapDown: (details, p1) {
-        return textFieldTapDown(details, newId);
+        return textFieldTapDown(details, newId, indexPath);
       },
     );
 
@@ -259,7 +266,8 @@ class SheetTableCellBox extends SheetItem {
       id: newId,
       parentId:
           parentId,
-      textDecoration: textDecoration, // Use parentId if not empty
+      textDecoration: textDecoration, 
+      indexPath: indexPath,
     );
   }
 

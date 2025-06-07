@@ -1,19 +1,20 @@
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
 
 part 'sheet_table_row.g.dart';
 
 @HiveType(typeId: 11)
 class SheetTableRowBox extends SheetItem {
-  @HiveField(2)
-  double size;
   @HiveField(3)
-  double minSize;
+  double size;
   @HiveField(4)
-  double maxSize;
+  double minSize;
   @HiveField(5)
-  bool hide;
+  double maxSize;
   @HiveField(6)
+  bool hide;
+  @HiveField(7)
   String rowDecoration;
   
   SheetTableRowBox({
@@ -23,7 +24,8 @@ class SheetTableRowBox extends SheetItem {
     this.minSize = 10,
     this.maxSize = 120,
     this.hide = false,
-    this.rowDecoration = ''
+    this.rowDecoration = '',
+    required super.indexPath,
     });
   
   SheetTableRow toSheetTableRow( ) {
@@ -34,7 +36,8 @@ class SheetTableRowBox extends SheetItem {
       maxSize: maxSize,
       minSize: minSize,
       hide: hide,
-      rowDecoration: rowDecoration
+      rowDecoration: rowDecoration,
+      indexPath: indexPath,
       );
   }
 }
@@ -54,6 +57,7 @@ class SheetTableRow extends SheetItem {
     this.size = 20,
     this.hide = false,
     this.rowDecoration ='',
+    required super.indexPath,
     });
 
   SheetTableRowBox toSheetTableRowBox( ) {
@@ -64,7 +68,8 @@ class SheetTableRow extends SheetItem {
       maxSize: maxSize,
       minSize: minSize,
       hide: hide,
-      rowDecoration: rowDecoration
+      rowDecoration: rowDecoration,
+      indexPath: indexPath,
       );
   }
 }

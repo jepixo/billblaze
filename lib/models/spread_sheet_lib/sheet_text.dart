@@ -1,13 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // import 'package:fleather/fleather.dart';
 // import 'dart:math';
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 
 part 'sheet_text.g.dart';
 
@@ -15,13 +16,13 @@ part 'sheet_text.g.dart';
 // import 'package:parchment_delta/parchment_delta.dart';
 @HiveType(typeId: 3)
 class SheetTextBox extends SheetItem {
-  @HiveField(2)
-  final List<Map<String, dynamic>> textEditorController;
   @HiveField(3)
-  final SuperDecorationBox textDecoration;
+  final List<Map<String, dynamic>> textEditorController;
   @HiveField(4)
-  String name;
+  final SuperDecorationBox textDecoration;
   @HiveField(5)
+  String name;
+  @HiveField(6)
   bool hide;
 
 
@@ -32,6 +33,7 @@ class SheetTextBox extends SheetItem {
     required super.parentId,
     required this.hide,
     required this.name,
+    required super.indexPath,
   });
 
   
@@ -55,12 +57,13 @@ class SheetText extends SheetItem {
     required this.textDecoration,
     required this.name,
     required this.hide,
+    required super.indexPath,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
           controller: textEditorController,
           multiRowsDisplay: false,
-        ) {}
+        );
 
   factory SheetText({
     QuillController? textEditorController,
@@ -74,6 +77,7 @@ class SheetText extends SheetItem {
     required SuperDecoration textDecoration,
     required String name,
     required bool hide,
+    required IndexPath indexPath,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -97,6 +101,7 @@ class SheetText extends SheetItem {
         textDecoration: textDecoration,
         hide: hide,
         name: name,
+        indexPath: indexPath,
         );
   }
 
@@ -123,6 +128,7 @@ class SheetText extends SheetItem {
     SuperDecoration? textDecoration,
     String? name,
     bool? hide,
+    IndexPath? indexPath,
   }) {
     return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -132,7 +138,8 @@ class SheetText extends SheetItem {
       parentId: parentId ?? this.parentId,
       textDecoration: textDecoration ?? this.textDecoration,
       hide: hide??this.hide,
-      name: name??this.name
+      name: name??this.name,
+      indexPath: indexPath?? this.indexPath
     );
   }
 
@@ -146,6 +153,7 @@ class SheetText extends SheetItem {
         parentId: item.parentId,
         hide: hide,
         name: name,
+        indexPath: indexPath,
         textDecoration: item.textDecoration.toSuperDecorationBox());
   }
 }

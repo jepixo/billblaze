@@ -1,27 +1,28 @@
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
-import 'package:billblaze/models/spread_sheet_lib/spread_sheet.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
 
 part 'sheet_table.g.dart';
 
 @HiveType(typeId: 9)
 class SheetTableBox extends SheetItem {
-  @HiveField(2)
-  List<List<SheetTableCellBox>> cellData;
   @HiveField(3)
-  List<SheetTableRowBox> rowData;
+  List<List<SheetTableCellBox>> cellData;
   @HiveField(4)
-  List<SheetTableColumnBox> columnData;
+  List<SheetTableRowBox> rowData;
   @HiveField(5)
-  int pinnedRows;
+  List<SheetTableColumnBox> columnData;
   @HiveField(6)
-  int pinnedColumns;
+  int pinnedRows;
   @HiveField(7)
-  SuperDecorationBox sheetTableDecoration;
+  int pinnedColumns;
   @HiveField(8)
+  SuperDecorationBox sheetTableDecoration;
+  @HiveField(9)
   SuperDecorationBox sheetTablebgDecoration;
 
   SheetTableBox({
@@ -34,6 +35,7 @@ class SheetTableBox extends SheetItem {
     this.pinnedColumns =1,
     required this.sheetTableDecoration,
     SuperDecorationBox? sheetTablebgDecoration,
+    required super.indexPath,
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTable toSheetTable(Function findItem, Function textFieldTapDown) {
@@ -47,6 +49,7 @@ class SheetTableBox extends SheetItem {
       cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown),).toList(),).toList(),
       sheetTableDecoration: sheetTableDecoration.toSuperDecoration(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecoration(),
+      indexPath: indexPath,
       );
   }
   
@@ -74,6 +77,7 @@ class SheetTable extends SheetItem {
     this.pinnedColumns = 1,
     required this.sheetTableDecoration,
     SuperDecoration? sheetTablebgDecoration,
+    required super.indexPath,
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTableBox toSheetTableBox() {
@@ -87,6 +91,7 @@ class SheetTable extends SheetItem {
       pinnedRows: pinnedRows,
       sheetTableDecoration: sheetTableDecoration.toSuperDecorationBox(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecorationBox(),
+      indexPath: indexPath
       );
   }
 
