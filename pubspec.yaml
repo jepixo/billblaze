@@ -62,7 +62,8 @@ dependencies:
   scrollbar_ultima: ^1.0.4
   cool_background_animation: ^0.0.6 
   two_dimensional_scrollables: ^0.3.4
-  flutter_syntax_view: ^4.1.7
+  mesh_gradient: ^1.3.8
+  
 
 dev_dependencies:
   hive_generator: ^2.0.1

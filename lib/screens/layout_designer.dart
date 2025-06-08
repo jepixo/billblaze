@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/widgets/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/home.dart';
@@ -24,7 +25,6 @@ import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_quill/extensions.dart';
-import 'package:flutter_syntax_view/flutter_syntax_view.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
@@ -37,6 +37,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:number_counting_animation/number_counting_animation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1973,6 +1974,55 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   //   pageViewIndicatorController.animateToPage(page,
   //       duration: duration, curve: curve);
   // }
+
+  List<SheetItem> _reassignSheetListTreeIndexPath(List<SheetItem> items, [IndexPath? parent]) {
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      final indexPath = IndexPath(parent: parent, index: i);
+      item.indexPath = indexPath;
+
+      if (item is SheetText) {
+        // Just assign the indexPath; nothing recursive here
+        item.indexPath = indexPath;
+
+      } else if (item is SheetList) {
+        _reassignSheetListTreeIndexPath(item.sheetList, indexPath);
+
+      } else if (item is SheetTable) {
+        item.indexPath = indexPath;
+
+        for (int row = 0; row < item.cellData.length; row++) {
+          for (int col = 0; col < item.cellData[row].length; col++) {
+            final cell = item.cellData[row][col];
+
+            // Assign to cell (row level)
+            cell.indexPath = IndexPath(parent: indexPath, index: row);
+
+            // Assign to actual content inside the cell (col level)
+            cell.sheetItem.indexPath = IndexPath(parent: cell.indexPath, index: col);
+
+            // Recursively apply if cell contains a SheetList or SheetTable
+            if (cell.sheetItem is SheetList) {
+              _reassignSheetListTreeIndexPath(
+                (cell.sheetItem as SheetList).sheetList,
+                cell.sheetItem.indexPath,
+              );
+            } else if (cell.sheetItem is SheetTable) {
+              _reassignSheetListTreeIndexPath(
+                [cell.sheetItem],
+                cell.sheetItem.indexPath,
+              );
+            } else if (cell.sheetItem is SheetText) {
+              // Also reassign indexPath to the nested SheetText if any
+              cell.sheetItem.indexPath = cell.sheetItem.indexPath;
+            }
+          }
+        }
+      }
+    }
+    return items;
+  }
+
 
   Future<void> _capturePng() async {
     setState(() {
@@ -4172,42 +4222,42 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               child: Stack(
                 children: [
                   GestureDetector(
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          
-                          setState(() {
-                            panelIndex.id = sheetText.id;
-                            panelIndex.itemIndexPath = sheetText.indexPath;
-                            panelIndex.parentId = sheetList.id;
-                            panelIndex.parentIndexPath = sheetList.indexPath;
-                            
-                            whichPropertyTabIsClicked = 2;
-                          
-                            item = sheetText;
-                            _findItem();
-                          });
-                          
-                          print('clicked');
-                          print(sheetListItem.id);
-                          
-                          print(panelIndex);
-                        },
-                        onSecondaryLongPressDown: (d) {
-                          onRightClick(sheetText, d, index,sheetList);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              // bottom: 2,
-                              left: 2,
-                              top: 4,
-                              right: 2),
-                          child: buildSheetTextWidget(sheetList[index] as SheetText)),
-                      ),
-                    ],
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                      
+                      setState(() {
+                        panelIndex.id = sheetText.id;
+                        panelIndex.itemIndexPath = sheetText.indexPath;
+                        panelIndex.parentId = sheetList.id;
+                        panelIndex.parentIndexPath = sheetList.indexPath;
+                        
+                        whichPropertyTabIsClicked = 2;
+                      
+                        item = sheetText;
+                        _findItem();
+                      });
+                      
+                      print('clicked');
+                      print(sheetListItem.id);
+                      
+                      print(panelIndex);
+                    },
+                    onSecondaryLongPressDown: (d) {
+                      onRightClick(sheetText, d, index,sheetList);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          // bottom: 2,
+                          left: 2,
+                          top: 4,
+                          right: 2),
+                      child: buildSheetTextWidget(sheetList[index] as SheetText)),
                   ),
-                ),
+                ],
               ),
-            );
+            ),
+          ),
+        );
         // buildlistw
       } else if (sheetList[index] is SheetList) {
         return ReorderableDragStartListener(
@@ -4749,9 +4799,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           icon: TablerIcons.row_insert_top,
                           onSelected: () {
                             setState(() {
-                            var newId ='LI-${ const Uuid().v4()}';
-                            var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                            if (index<sheetList.length) {
+                            var newId ='LI-${ const Uuid().v4()}';             
+                            if (sheetList.length!=0) {
                               
                               sheetList.insert( 0, SheetList(
                             direction:
@@ -4824,40 +4873,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       label: 'In a Row',
                       icon: TablerIcons.layout_rows ,
                       onSelected: () {
-                        setState(() {
-                          var parentId = sheetListItem.parentId;
-                          var index =_sheetListIterator(parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                             print(parentId);
-                            var item =_sheetListIterator(parentId, spreadSheetList[currentPageIndex]).removeAt(index);
-                             print(item.parentId);
-                            var newId = 'LI-${ const Uuid().v4()}';     
-                            item.parentId = newId;    
-                            print(parentId);
-                            _sheetListIterator(parentId, spreadSheetList[currentPageIndex]).insert(
-                            index,
-                            SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [
-                              (item as SheetList).copyWith(
-                                parentId: newId,
-                                indexPath: IndexPath(parent: item.indexPath,index:0)
-                              )
-                            ],
-                            indexPath: item.indexPath
-                            ));
-
-                            panelIndex.id = item.id;
-                            panelIndex.parentId = item.parentId;
-                            panelIndex.parentIndexPath = item.indexPath.parent;
-                            panelIndex.itemIndexPath = item.indexPath;
-                            _findSheetListItem();
-                            print('Updated index of text editor: $index');
-                          
-                        });
+                        wrapInAList(0);
                       },
                     ),
                       //In a column
@@ -4866,45 +4882,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       icon: TablerIcons
                           .layout_columns,
                       onSelected: () {
-                        setState(() {
-                          var parentId = sheetListItem.parentId;
-                          var index =_sheetListIterator(parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                             print(parentId);
-                            var item =_sheetListIterator(parentId, spreadSheetList[currentPageIndex]).removeAt(index);
-                             print(item.parentId);
-                            var newId = 'LI-${ const Uuid()
-                                .v4()}';              
-                            item.parentId = newId;  
-                            print(parentId);
-                            _sheetListIterator(parentId, spreadSheetList[currentPageIndex]).insert(
-                            index,
-                            SheetList(
-                            direction:
-                              Axis.vertical,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [
-                              (item as SheetList).copyWith(
-                                parentId: newId,
-                                indexPath: IndexPath(parent: item.indexPath,index:0)
-                              )
-                            ],
-                            indexPath: item.indexPath
-                            ));
-
-                            panelIndex.id = item.id;
-                            panelIndex.parentId = item.parentId;
-                            panelIndex.parentIndexPath = item.indexPath.parent;
-                            panelIndex.itemIndexPath = item.indexPath;
-                            _findSheetListItem();
-                            print('Updated index of text editor: $index');
-                          
-                        });
+                        wrapInAList(1);
                       },
-                    ),
-                        
-                  ]),
+                      ),
+                    ]),
     
                       //Clear Field
                       MenuItem(
@@ -4969,6 +4950,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           .removeWhere((element) => element.id == sheetListItem.id,);
                                         
                                         // });
+                                        _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
                                         saveLayout();
                                         Navigator.pop(context);
                                       },
@@ -5711,7 +5693,47 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           d.globalPosition.dy))
   .show(context);
   }
-
+  
+  void wrapInAList(int s) {
+    setState(() {
+      var listItem = (getItemAtPath(sheetListItem.indexPath.parent!) as SheetList).removeAt(sheetListItem.indexPath.index);
+      
+      var newId = 'LI-${ const Uuid().v4()}';              
+      listItem.parentId = newId;  
+      var newIndexPath = IndexPath(
+        parent: listItem.indexPath.parent,
+        index: listItem.indexPath.index);
+      var newListIndexPath = IndexPath(
+        parent: newIndexPath,
+        index: 0);  
+      var newlist = _reassignSheetListTreeIndexPath(sheetListItem.sheetList, newListIndexPath);
+      
+      (getItemAtPath(sheetListItem.indexPath.parent!) as SheetList).insert(
+      listItem.indexPath.index,
+      SheetList(
+      direction:s==0? Axis.horizontal: Axis.vertical,
+      id: newId,
+      parentId: listItem.parentId,
+      listDecoration: newSuperDecoration(),
+      sheetList: [
+        (listItem as SheetList).copyWith(
+          parentId: newId,
+          indexPath: newListIndexPath,
+          sheetList: newlist
+        )
+      ],
+      indexPath: newIndexPath
+      ));
+      
+      
+      // panelIndex.id = listItem.id;
+      panelIndex.parentId =  newId;
+      panelIndex.parentIndexPath = newIndexPath;
+      _findSheetListItem();
+      
+    });
+  }
+  
   Widget buildSheetTableWidget(SheetTable sheetTable){
     var tableHeight = 0.0;
     var tableWidth = 0.0;
@@ -6476,7 +6498,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           child: AppinioSwiper(
               backgroundCardCount: 1,
               backgroundCardOffset: Offset(4, 4),
-              duration: Duration(milliseconds: 150),
+              duration: Duration(milliseconds: 220),
               backgroundCardScale: 1,
               loop: true,
               cardCount: 3,
@@ -6635,15 +6657,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   );
                 }
 
-                Widget titleTile(String name, IconData icon, {double fontSize = 18,}) {
-                  return Row(children: [
-                    Icon(icon, size: 20),
+                Widget titleTile(String name, IconData icon, {double fontSize = 18, double iconSize = 20, mainAxisAlignment= MainAxisAlignment.start, color= Colors.black}) {
+                  return Row(
+                    mainAxisAlignment:mainAxisAlignment,
+                    children: [
+                    Icon(icon, size: iconSize, color: color),
                     Expanded(
                       child: Text(
                         name,
                         maxLines: 1,
                         style: GoogleFonts.lexend(
                             fontSize: fontSize,
+                            color:color,
                             letterSpacing: -1,
                             fontWeight: FontWeight.w500),
                       ),
@@ -6816,21 +6841,147 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 ];
                 }
 
+                String _formatValue(dynamic value) {
+                  if (value is String) {
+                    // Escape all newlines
+                    final escaped = value.replaceAll('\n', r'\n');
+                    return "'$escaped'";
+                  }
+                  return value.toString();
+                }
 
+                TextStyle _getStyleForValue(dynamic value) {
+                  if (value is bool) {
+                    return TextStyle(color: defaultPalette.tertiary, fontFamily: 'monospace',fontSize: 12);
+                  } else if (value is num) {
+                    return TextStyle(color: defaultPalette.extras[1], fontFamily: 'monospace',fontSize: 12);
+                  } else if (value is String) {
+                    return TextStyle(color: defaultPalette.extras[3],fontFamily: 'monospace',fontSize: 12); // brown
+                  } else {
+                    return TextStyle(color: defaultPalette.secondary, fontFamily: 'monospace',fontSize: 12);
+                  }
+                }
+                
+                Widget _buildJsonEntry(Map<String, dynamic> map, int indent) {
+                  List<InlineSpan> spans = [];
+
+                  map.forEach((key, value) {
+                    spans.add(
+                      TextSpan(
+                        text: '${'  ' * indent}$key: ',
+                        style: TextStyle(
+                          color: defaultPalette.extras[9], 
+                          fontFamily: 'monospace',
+                          fontSize: 12
+                          ),
+                      ),
+                    );
+
+                    if (value is Map<String, dynamic>) {
+                      spans.add(const TextSpan(text: '{\n'));
+                      value.forEach((k, v) {
+                        spans.add(TextSpan(
+                          text: '${'  ' * (indent + 1)}$k: ',
+                          style: TextStyle(color: defaultPalette.extras[9], fontFamily: 'monospace',fontSize: 12),
+                        ));
+                        spans.add(TextSpan(
+                          text: _formatValue(v),
+                          style: _getStyleForValue(v),
+                        ));
+                        spans.add(const TextSpan(text: '\n'));
+                      });
+                      spans.add(TextSpan(text: '${'  ' * indent}}'));
+                    } else {
+                      spans.add(TextSpan(
+                        text: _formatValue(value),
+                        style: _getStyleForValue(value),
+                      ));
+                      spans.add(const TextSpan(text: ',\n'));
+                    }
+                  });
+
+                  return RichText(text: TextSpan(children: spans));
+                }
+
+                Widget _buildStyledJsonBlock(List<dynamic> json) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: defaultPalette.extras[0],
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (int i = 0; i < json.length; i++)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${i + 1}. ',
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                  height: 1.8,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildJsonEntry(json[i], 0),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  );
+                }
+
+                List<Widget> inputBlocks(List<(IndexPath, List<int>)> inputBlock) {
+                  return inputBlock.asMap().entries.map((entry) {
+                    var i = entry.key;
+                    var (indexPath, blockIndex) = entry.value;
+
+                    var delta = (getItemAtPath(indexPath) as SheetText)
+                        .textEditorConfigurations
+                        .controller
+                        .document
+                        .toDelta();
+
+                    final json = delta.toJson();
+                    return Row(
+                      children: [
+                        Expanded(child: ElevatedLayerButton(
+                          borderRadius:BorderRadius.circular(5),
+                            animationDuration: const Duration(
+                                milliseconds: 100),
+                            animationCurve: Curves.ease,
+                            topDecoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(),
+                            ),
+                            topLayerChild: titleTile('inputDelta', TablerIcons.delta,),
+                          // topLayerChild: titleTile('inputDelta', TablerIcons.delta,),
+                          buttonHeight: 30, 
+                          buttonWidth: 10, onClick: () {  },))
+                      ],
+                    );
+                    // return _buildStyledJsonBlock(json,);
+                  }).toList();
+                }
+
+
+                
+                
                 var width = (sWidth * wH2DividerPosition - 30);
                 TextEditingController hexController = TextEditingController()..text =
                       '${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
                 
                 int crossAxisCount = 4;
                 var iconWidth = (width / crossAxisCount)-4.6;
-                var fCrossAxisCount = width < 200
-                    ? 1
-                    : width > 300
-                      ? width > 420
-                        ? 4
-                        : 3
-                      : 2;
+                var fCrossAxisCount = width < 200 ? 1 : width > 300 ? width > 420 ? 4 : 3 : 2;
+
                 Color fontHex =hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value ?? defaultPalette.extras[0].hex);
+                
+
                 return Stack(
                   children: [
                     //The main bgCOLOR OF THE CARD
@@ -6840,8 +6991,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color:index==2? defaultPalette.primary: defaultPalette.secondary,
-                          border: Border.all(width: 2),
+                          color:index==2? defaultPalette.primary:index==1?defaultPalette.extras[0]: defaultPalette.secondary,
+                          border: Border.all(width: 2, color:index==1?defaultPalette.secondary:defaultPalette.extras[0]),
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
@@ -6866,7 +7017,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 : index == (currentCardIndex + 2) % 10
                                     ? defaultPalette.extras[0]
                                     : defaultPalette.extras[0],
-                            border: Border.all(width: 2),
+                            border: Border.all(width: 2, color:defaultPalette.extras[0]),
                             borderRadius: BorderRadius.circular(25),
                           ),
                         ),
@@ -8681,20 +8832,16 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   height: sHeight,
                                   child: LineChart(LineChartData(
                                       lineBarsData: [LineChartBarData()],
-                                      titlesData:
-                                          const FlTitlesData(show: false),
+                                      titlesData: const FlTitlesData(show: false),
                                       gridData: FlGridData(
-                                          getDrawingVerticalLine: (value) =>
-                                              FlLine(
-                                                  color: defaultPalette.extras[0]
-                                                      .withOpacity(0.8),
+                                          getDrawingVerticalLine: (value) => FlLine(
+                                                  color: defaultPalette.secondary.withOpacity(0.4),
                                                   dashArray: [5, 5],
                                                   strokeWidth: 1),
                                           getDrawingHorizontalLine: (value) =>
                                               FlLine(
                                                   color: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.8),
+                                                      .secondary.withOpacity(0.4),
                                                   dashArray: [5, 5],
                                                   strokeWidth: 1),
                                           show: true,
@@ -8719,44 +8866,216 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             color: defaultPalette.transparent
                           ),
                           ],
-                          //functions drivers and conditional formatting
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5)
-                            ),
-                            width: width,
-                            margin: EdgeInsets.only(
+                          
+                          Positioned(
+                          child: Container(
+                          height: sHeight * 0.9,
+                          decoration: BoxDecoration(
+                          ),
+                          margin: EdgeInsets.only(
                               top: 15,
+                              bottom: index == whichTextPropertyTabIsClicked? 15: 18,
                               left: 10,
                               right: 13),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: SyntaxView(
-                                code: item.textEditorConfigurations.controller.document.toDelta().toJson().toList()[0].entries.map((e) {
-                                  if (e.value is Map) {
-                                    var mapStr = (e.value as Map).entries.map((a) => '\t${a.key}: ${a.value}').join(',\n');
-                                    return '${e.key}: {\n$mapStr\n}';
-                                  } else {
-                                    return '${e.key}: ${e.value}';
-                                  }
-                                }).join(',\n'),
-                                syntax: Syntax.YAML, 
-                                syntaxTheme: SyntaxTheme.vscodeDark(), // Theme
-                                fontSize: 12.0, // Font size
-                                withZoom: false, // Enable/Disable zoom icon controls
-                                withLinesCount: true, // Enable/Disable line number
-                                expanded: false, // Enable/Disable container expansion
-                                selectable: true 
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top:150,
-                            left:15,
-                            width: width,
-                            child: Text(item.indexPath.toString()),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: ScrollConfiguration(
+                              behavior: ScrollBehavior().copyWith(scrollbars: false),
+                              child: DynMouseScroll(
+                                durationMS: 500,
+                                scrollSpeed: 1,
+                                builder: (context, controller, physics) {
+                                  return SingleChildScrollView(
+                                  controller: controller,
+                                  physics: physics,
+                                  child: Column(
+                                  crossAxisAlignment:CrossAxisAlignment.end,
+                                  children: [
+                                  //Function Title
+                                  Padding(
+                                    padding: const EdgeInsets.only(top:2, left:2, right:2),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: AnimatedMeshGradient(
+                                        colors: [
+                                            defaultPalette.primary,
+                                            defaultPalette.primary,
+                                            defaultPalette.extras[0],
+                                            defaultPalette.primary,
+                                          ],
+                                        options: AnimatedMeshGradientOptions(
+                                            amplitude: 50,
+                                            grain: 0.1,
+                                            frequency: 2
+                                          ),
+                                        child: Container(
+                                          padding: EdgeInsets.all(3).copyWith(right:5,bottom:5),
+                                          decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: defaultPalette.primary, width:2
+                                          )
+                                        ),
+                                          child:BlendMask(
+                                          blendMode: BlendMode.difference,
+                                          child: Column(
+                                            children: [
+                                              titleTile(' functions', TablerIcons.math_integral_x,fontSize: 20,iconSize: 22, color: defaultPalette.primary),  
+                                              const SizedBox(
+                                                    height:3
+                                                  ),
+                                              
+                                              const SizedBox(
+                                                    height:4
+                                                  ),
+                                              //function 'label'
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      fontTextControllers[4].text,
+                                                      textAlign: TextAlign.end,
+                                                      style: GoogleFonts.lexend(
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w500,
+                                                      fontSize: 14,
+                                                      color: defaultPalette.primary),
+                                                      ),),
+                                                   const SizedBox(width:2)  
+                                                ],
+                                              ), 
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height:5
+                                  ),
+                                  //field entries
+                                  Padding(
+                                    padding: const EdgeInsets.only(top:2, left:2, right:2),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: defaultPalette.primary, width:1.5
+                                      )
+                                      ),
+                                        child:Column(
+                                          crossAxisAlignment:CrossAxisAlignment.start,
+                                          children: [
+                                            //Selected Text
+                                            Container(
+                                              width: width,
+                                              // padding: EdgeInsets.all(4).copyWith(left:8),
+                                              // margin: EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.secondary,
+                                                borderRadius: BorderRadius.circular(15),
+                                                border: Border.all(
+                                                  width: 2,
+                                                  color: defaultPalette.extras[0])
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text(item.textEditorController.getPlainText(),
+                                                    textAlign: TextAlign.start,
+                                                    style: TextStyle(
+                                                      fontFamily: GoogleFonts.leagueSpartan().fontFamily,
+                                                      letterSpacing:-0.5,
+                                                      fontWeight: FontWeight.w800,        
+                                                      color: defaultPalette.extras[0],
+                                                      fontSize: 15)),
+                                                    ],
+                                                  ),
+                                                ),
+                                                                          
+                                            const SizedBox(
+                                                  height:4
+                                                ),
+                                            
+                                            titleTile(' inputBlocks', TablerIcons.subtask,fontSize: 18,iconSize: 22, color: defaultPalette.primary),  
+                                            
+                                            ...inputBlocks(item.inputBlocks),
+                                            Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(15),
+                                              color:defaultPalette.primary,
+                                              border:Border.all()
+                                            ),
+                                            width: width+5,
+                                            height:120,
+                                            // margin: EdgeInsets.only(
+                                            //   bottom:2,
+                                            //   left: 2,
+                                            //   right: 2),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(15),
+                                              child: Text(
+                                                item.textEditorConfigurations.controller.document.toDelta().toJson().toList()[0].entries.map((e) {
+                                                  if (e.value is Map) {
+                                                    var mapStr = (e.value as Map).entries.map((a) => '\t${a.key}: ${a.value}').join(',\n');
+                                                    return '${e.key}: {\n$mapStr\n}';
+                                                  } else {
+                                                    return '${e.key}: ${e.value}';
+                                                  }
+                                                }).join(',\n'),
+                                              ),
+                                            ),
+                                          ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  ...[// 
+                                    
+                                                                      
+                                    
+                                  ],
+                                  const SizedBox(
+                                        height:5,),
+                                   Text(item.indexPath.toString()),
+                                  Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(5),
+                                              color:defaultPalette.primary,
+                                              border:Border.all()
+                                            ),
+                                            width: width+5,
+                                            height:120,
+                                            margin: EdgeInsets.only(
+                                              left: 11,
+                                              right: 10),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(10),
+                                              child: Text(
+                                                item.textEditorConfigurations.controller.document.toDelta().toJson().toList()[0].entries.map((e) {
+                                                  if (e.value is Map) {
+                                                    var mapStr = (e.value as Map).entries.map((a) => '\t${a.key}: ${a.value}').join(',\n');
+                                                    return '${e.key}: {\n$mapStr\n}';
+                                                  } else {
+                                                    return '${e.key}: ${e.value}';
+                                                  }
+                                                }).join(',\n'),
+                                              ),
+                                            ),
+                                          ),
+                                        
+                                  ]));}
+                                  )
+                                )
+                              )
+                            )
                           )
-
                           ],
                       ),
                     ),

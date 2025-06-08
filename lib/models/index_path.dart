@@ -7,7 +7,7 @@ part 'index_path.g.dart';
 @HiveType(typeId: 14)
 class IndexPath {
   @HiveField(0)
-  final IndexPath? parent;
+  IndexPath? parent;
   @HiveField(1)
   int index;
 
@@ -25,4 +25,12 @@ class IndexPath {
 
   @override
   String toString() => toList().join('/');
+
+  IndexPath copyWith({
+    int? index,
+  }) {
+    return IndexPath(
+      index: index ?? this.index,
+    );
+  }
 }
