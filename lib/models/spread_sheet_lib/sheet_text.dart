@@ -24,7 +24,8 @@ class SheetTextBox extends SheetItem {
   String name;
   @HiveField(6)
   bool hide;
-
+  @HiveField(7)
+  List<(IndexPath, List<int>)> inputBlocks;
 
   SheetTextBox({
     required this.textDecoration,
@@ -34,7 +35,8 @@ class SheetTextBox extends SheetItem {
     required this.hide,
     required this.name,
     required super.indexPath,
-  });
+    List<(IndexPath, List<int>)>? inputBlocks,
+  }): inputBlocks = inputBlocks ?? [(indexPath, [-2])];
 
   
 }
@@ -48,6 +50,8 @@ class SheetText extends SheetItem {
   String name;
   bool hide;
   SuperDecoration textDecoration;
+  List<(IndexPath, List<int>)> inputBlocks;
+
   //
   SheetText._({
     required super.id,
@@ -58,6 +62,7 @@ class SheetText extends SheetItem {
     required this.name,
     required this.hide,
     required super.indexPath,
+    required this.inputBlocks,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -78,6 +83,7 @@ class SheetText extends SheetItem {
     required String name,
     required bool hide,
     required IndexPath indexPath,
+    List<(IndexPath, List<int>)>? inputBlocks,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -102,6 +108,7 @@ class SheetText extends SheetItem {
         hide: hide,
         name: name,
         indexPath: indexPath,
+        inputBlocks: inputBlocks ?? [(indexPath, [-2])],
         );
   }
 
@@ -129,6 +136,7 @@ class SheetText extends SheetItem {
     String? name,
     bool? hide,
     IndexPath? indexPath,
+    List<(IndexPath, List<int>)>? inputBlocks,
   }) {
     return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -139,7 +147,8 @@ class SheetText extends SheetItem {
       textDecoration: textDecoration ?? this.textDecoration,
       hide: hide??this.hide,
       name: name??this.name,
-      indexPath: indexPath?? this.indexPath
+      indexPath: indexPath?? this.indexPath,
+      inputBlocks: inputBlocks ?? this.inputBlocks,
     );
   }
 
@@ -154,6 +163,8 @@ class SheetText extends SheetItem {
         hide: hide,
         name: name,
         indexPath: indexPath,
-        textDecoration: item.textDecoration.toSuperDecorationBox());
+        textDecoration: item.textDecoration.toSuperDecorationBox(),
+        inputBlocks: item.inputBlocks,
+        );
   }
 }
