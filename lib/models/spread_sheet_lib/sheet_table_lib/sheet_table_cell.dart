@@ -1,6 +1,7 @@
 
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
@@ -139,6 +140,7 @@ class SheetTableCellBox extends SheetItem {
         hide: sheetItem.hide,
         name: sheetItem.name,
         indexPath: sheetItem.indexPath,
+        inputBlocks: sheetItem.inputBlocks,
         );
     }
     else if (sheetItem is SheetListBox){
@@ -162,6 +164,8 @@ class SheetTableCellBox extends SheetItem {
         docString, // Use List<Map<String, dynamic>> directly
     required SuperDecoration textDecoration,
     required IndexPath indexPath,
+    required List<InputBlock> inputBlocks,
+    SheetTextType type = SheetTextType.string,
   }) {
     Delta delta;
     // print('DocString: $docString');
@@ -268,6 +272,8 @@ class SheetTableCellBox extends SheetItem {
           parentId,
       textDecoration: textDecoration, 
       indexPath: indexPath,
+      inputBlocks: inputBlocks,
+      type: type
     );
   }
 

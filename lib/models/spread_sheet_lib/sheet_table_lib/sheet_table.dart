@@ -24,6 +24,8 @@ class SheetTableBox extends SheetItem {
   SuperDecorationBox sheetTableDecoration;
   @HiveField(9)
   SuperDecorationBox sheetTablebgDecoration;
+  @HiveField(10)
+  String name;
 
   SheetTableBox({
     required super.id, 
@@ -36,6 +38,7 @@ class SheetTableBox extends SheetItem {
     required this.sheetTableDecoration,
     SuperDecorationBox? sheetTablebgDecoration,
     required super.indexPath,
+    this.name = 'unlabeled',
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTable toSheetTable(Function findItem, Function textFieldTapDown) {
@@ -50,6 +53,7 @@ class SheetTableBox extends SheetItem {
       sheetTableDecoration: sheetTableDecoration.toSuperDecoration(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecoration(),
       indexPath: indexPath,
+      name: name,
       );
   }
   
@@ -66,6 +70,7 @@ class SheetTable extends SheetItem {
   int pinnedColumns;
   SuperDecoration sheetTableDecoration;
   SuperDecoration sheetTablebgDecoration;
+  String name;
 
   SheetTable({
     required super.id,
@@ -78,6 +83,7 @@ class SheetTable extends SheetItem {
     required this.sheetTableDecoration,
     SuperDecoration? sheetTablebgDecoration,
     required super.indexPath,
+    this.name ='unlabeled',
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTableBox toSheetTableBox() {
@@ -91,7 +97,8 @@ class SheetTable extends SheetItem {
       pinnedRows: pinnedRows,
       sheetTableDecoration: sheetTableDecoration.toSuperDecorationBox(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecorationBox(),
-      indexPath: indexPath
+      indexPath: indexPath,
+      name: name,
       );
   }
 

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:billblaze/home.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
@@ -45,6 +46,7 @@ Future<void> main() async {
   Hive.registerAdapter(SheetTableRowBoxAdapter());
   Hive.registerAdapter(SheetTableColumnBoxAdapter());
   Hive.registerAdapter(IndexPathAdapter());
+  Hive.registerAdapter(InputBlockAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
