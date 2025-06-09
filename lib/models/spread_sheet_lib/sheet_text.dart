@@ -2,6 +2,7 @@
 // import 'package:fleather/fleather.dart';
 // import 'dart:math';
 import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
-
 part 'sheet_text.g.dart';
 
 //  ignore: depend_on_referenced_packages
@@ -25,7 +25,9 @@ class SheetTextBox extends SheetItem {
   @HiveField(6)
   bool hide;
   @HiveField(7)
-  List<(IndexPath, List<int>)> inputBlocks;
+  List<InputBlock> inputBlocks;
+  @HiveField(8)
+  int type;
 
   SheetTextBox({
     required this.textDecoration,
@@ -35,8 +37,9 @@ class SheetTextBox extends SheetItem {
     required this.hide,
     required this.name,
     required super.indexPath,
-    List<(IndexPath, List<int>)>? inputBlocks,
-  }): inputBlocks = inputBlocks ?? [(indexPath, [-2])];
+    List<InputBlock>? inputBlocks,
+    this.type = 0,
+  }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2])];
 
   
 }
@@ -50,7 +53,8 @@ class SheetText extends SheetItem {
   String name;
   bool hide;
   SuperDecoration textDecoration;
-  List<(IndexPath, List<int>)> inputBlocks;
+  List<InputBlock> inputBlocks;
+  SheetTextType type;
 
   //
   SheetText._({
@@ -63,6 +67,7 @@ class SheetText extends SheetItem {
     required this.hide,
     required super.indexPath,
     required this.inputBlocks,
+    required this.type,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -83,7 +88,8 @@ class SheetText extends SheetItem {
     required String name,
     required bool hide,
     required IndexPath indexPath,
-    List<(IndexPath, List<int>)>? inputBlocks,
+    List<InputBlock>? inputBlocks,
+    SheetTextType type = SheetTextType.string,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -108,7 +114,8 @@ class SheetText extends SheetItem {
         hide: hide,
         name: name,
         indexPath: indexPath,
-        inputBlocks: inputBlocks ?? [(indexPath, [-2])],
+        inputBlocks: inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2])],
+        type: type,
         );
   }
 
@@ -136,7 +143,8 @@ class SheetText extends SheetItem {
     String? name,
     bool? hide,
     IndexPath? indexPath,
-    List<(IndexPath, List<int>)>? inputBlocks,
+    List<InputBlock>? inputBlocks,
+    SheetTextType? type, 
   }) {
     return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -149,12 +157,15 @@ class SheetText extends SheetItem {
       name: name??this.name,
       indexPath: indexPath?? this.indexPath,
       inputBlocks: inputBlocks ?? this.inputBlocks,
+      type: type ?? this.type,
     );
   }
 
   SheetTextBox toTEItemBox(SheetText item) {
     // print(
     //     'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
+    print(
+        'inputBlocks text: ${item.inputBlocks}');   
     return SheetTextBox(
         textEditorController:
             textEditorController.document.toDelta().toJson(),
@@ -165,6 +176,24 @@ class SheetText extends SheetItem {
         indexPath: indexPath,
         textDecoration: item.textDecoration.toSuperDecorationBox(),
         inputBlocks: item.inputBlocks,
+        type: item.type.index,
         );
   }
+}
+
+
+enum SheetTextType {
+  string,
+  number,
+  integer,
+  bool,
+  date,
+  time,
+  dateTime,
+  email,
+  url,
+  phone,
+  choice,
+  currency,
+
 }

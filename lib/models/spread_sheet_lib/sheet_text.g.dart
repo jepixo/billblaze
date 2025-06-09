@@ -26,7 +26,7 @@ class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
       hide: fields[6] as bool,
       name: fields[5] as String,
       indexPath: fields[2] as IndexPath,
-      inputBlocks: (fields[7] as List?)?.cast<(IndexPath, List<int>)>(),
+      inputBlocks: (fields[7] as List?)?.cast<InputBlock>(),
     );
   }
 
