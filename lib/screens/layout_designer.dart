@@ -8,6 +8,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
+import 'package:billblaze/components/widgets/custom_toast.dart';
 import 'package:billblaze/components/widgets/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/home.dart';
@@ -25,6 +26,7 @@ import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_quill/extensions.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
@@ -316,8 +318,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool showDecorationLayers = true;
   bool showSheetTextLibrary = false;
   bool isTableDecorationModeDropped = false;
+  bool isMathFunctionLibraryToggled = false;
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
   List<bool> inputBlockExpansionList =[false];
+  
   SheetText item = SheetText(
     hide:true,
     name: 'yo',
@@ -626,7 +630,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   SheetText _addTextField({
-    String id = '',
+    required String id,
     String parentId = '',
     bool shouldReturn = false,
     bool hide = false,
@@ -641,8 +645,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }) {
     Delta delta;
     // print('DocString: $docString');
-    if (inputBlocks[0].indexPath.index ==-69) {
-      inputBlocks=[InputBlock(indexPath: indexPath, blockIndex: [-2])];
+    if (inputBlocks.isNotEmpty) {
+      if (inputBlocks[0].indexPath.index ==-69) {
+        inputBlocks=[InputBlock(indexPath: indexPath, blockIndex: [-2], id: id)];
+      }
     }
     if (!id.startsWith("TX") && id != '') {
       id='TX-$id';
@@ -925,7 +931,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     if (!shouldReturn) {
       throw Exception('SheetItem with id $id not found');
     } else {
-      return SheetItem(id: 'yo', parentId: '', indexPath: IndexPath(index:-1));
+      return SheetItem(id: 'yo', parentId: '', indexPath: IndexPath(index:-42));
     }
   }
 
@@ -1266,11 +1272,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return SuperDecoration(id: newDecoId);
   }
 
-  Widget _generateWidWin(
-    sWidth,
-    sHeight,
-  ) {
-    
+  Widget _generateWidWin( sWidth, sHeight,) {
     var doc = documentPropertiesList;
     var sheetList = spreadSheetList;
     return SingleChildScrollView(
@@ -2390,12 +2392,23 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     final mergedDelta = Delta();
 
     for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
+      
       final block = inputBlocks[blockIdx];
+      if(getItemAtPath(block.indexPath).id == 'yo' || getItemAtPath(block.indexPath).id != block.id){
+        
+          block.indexPath = _sheetItemIterator(block.id, spreadSheetList[currentPageIndex],shouldReturn: true).indexPath;
+          if(block.indexPath.index ==-42){
+            inputBlocks.removeAt(blockIdx);
+            if (blockIdx == inputBlocks.length) {
+              mergedDelta.insert('\n');
+              continue;
+            }
+          }
+      }
       final item = getItemAtPath(block.indexPath);
       if (item is SheetText) {
         final delta = item.textEditorConfigurations.controller.document.toDelta();
         final ops = delta.toList();
-
         // Determine if this is the last block
         final isLastBlock = blockIdx == inputBlocks.length - 1;
 
@@ -2408,7 +2421,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               final trimmed = data.endsWith('\n') ? data.substring(0, data.length - 1) : data;
 
               if (trimmed.isEmpty) {
-                ops.removeLast();
+                // ops.removeLast();
               } else {
                 ops[ops.length - 1] = Operation.insert(trimmed, last.attributes);
               }
@@ -2430,6 +2443,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         }
       }
     }
+
+    if (inputBlocks.isEmpty) mergedDelta.insert('\n');
+
 
     return QuillEditorConfigurations(
       controller: QuillController(
@@ -2593,12 +2609,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 '________addText pressed LD_________');
                                             // print(
                                             //     'panelId from addtextfield: ${panelIndex.id}');
+                                            var newId = 'TX-${Uuid().v4()}';
                                             _addTextField(
+                                              id: newId,
                                               textDecoration: newSuperDecoration(),
                                               indexPath: IndexPath(
                                                 parent: spreadSheetList[currentPageIndex].indexPath,
                                                 index: spreadSheetList[currentPageIndex].length),
-                                                inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                                                inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
                                               );
 
                                           },
@@ -3060,7 +3078,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ),
                                       ),
                                       //text field properties button button
-                                      if (panelIndex.id != '' && item.id != '')
+                                      if (panelIndex.id != '' && item.id != ''&& item.id != 'yo')
                                         Expanded(
                                           flex: 2,
                                           child: Stack(
@@ -4194,7 +4212,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   }
 
   Widget _buildListWidget(SheetList sheetList) {
-    print('rebuilding listWidget');
+    // print('rebuilding listWidget');
     
     child(controller, physics) => ReorderableListView.builder(
     shrinkWrap: true,
@@ -4203,6 +4221,20 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
     physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
     itemCount: sheetList.length,
+    onReorderStart: (index) {
+      if (sheetList[index] is SheetText) {
+        if (item.id == 'yo') {
+          setState(() {
+            whichPropertyTabIsClicked = 1;
+            print(item.id);
+            if (sheetList[index].id == panelIndex.id) {
+                item =sheetList[index] as SheetText;
+                panelIndex.itemIndexPath = sheetList[index].indexPath;
+            }
+          });
+        }
+      }
+    },
     onReorder: (oldIndex, newIndex) {
       setState(() {
         if (newIndex > oldIndex) {
@@ -4220,6 +4252,13 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       // print('hello hello sprdListBuilding: ${sheetList[index]}');
       if (sheetList[index] is SheetText) {
         var sheetText = sheetList[index] as SheetText;
+        // if (item.id == 'yo') {
+        //   print(item.id);
+        //   if (sheetText.id == panelIndex.id) {
+        //       item =sheetText;
+        //       panelIndex.itemIndexPath = sheetText.indexPath;
+        //   }
+        // }
         return ReorderableDragStartListener(
           index: index,
           key: ValueKey(sheetText.id),
@@ -4481,7 +4520,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       onSelected: () {
                         print(sheetListClipboard );
                         setState(() {
-                          sheetListClipboard[0]=(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
+                          sheetListClipboard[0]=(getItemAtPath(sheetListItem.indexPath) as SheetList);
                           sheetListClipboard[1] = null;
                         });
                         print(sheetListClipboard );
@@ -4529,7 +4568,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                 shouldReturn: true,
                                 textDecoration: (e.value as SheetText).textDecoration,
                                 indexPath: childIndexPath,
-                                inputBlocks: (e.value as SheetText).inputBlocks,
+                                inputBlocks: (e.value as SheetText).inputBlocks.map((e) => InputBlock(indexPath: e.indexPath, blockIndex: e.blockIndex, id: e.id),).toList(),
 
                                 );
                             } else if (e.value is SheetList) {
@@ -4616,13 +4655,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             .row_insert_top,
                         onSelected: () {
                           setState(() {
+                            var newId = 'TX-${Uuid().v4()}';
                           var newItem = _addTextField( 
+                            id: newId,
                             shouldReturn:  true,
                             textDecoration:  newSuperDecoration(),
                             indexPath: IndexPath(
                               parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
                               index: 0),
-                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
                             );
                     
                           _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
@@ -4639,13 +4680,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             .row_insert_bottom,
                         onSelected: () {
                           setState(() {
+                            var newId = 'TX-${Uuid().v4()}';
                           var newItem = _addTextField( 
+                            id: newId,
                             shouldReturn:  true,
                             textDecoration:  newSuperDecoration(),
                             indexPath: IndexPath(
                               parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
                               index: 0),
-                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],  
+                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],  
                             );
                     
                           var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
@@ -4673,12 +4716,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                           icon: TablerIcons.row_insert_top,
                           onSelected: () {
                             setState(() {
+                              var newId = 'TX-${Uuid().v4()}';
                             var newItem = _addTextField( 
+                              id: newId,
                               shouldReturn:  true,
                               textDecoration: newSuperDecoration(),
                               indexPath: IndexPath(
                               parent:sheetList.indexPath,
-                              index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                              index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
                               );
                      
                             var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
@@ -4694,22 +4739,23 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             });
                           },
                         ),
-                        //add a new row with a new textfield inside at the current index
+                        //add to the end a text inside the list
                         MenuItem(
                           label: 'At Last',
                           icon: TablerIcons
                               .row_insert_bottom,
                           onSelected: () {
                             setState(() {
+                              var newId = 'TX-${Uuid().v4()}';
                               var newItem = _addTextField( 
+                                id: newId,
                                 shouldReturn:  true,
                                 textDecoration:  newSuperDecoration(),
                                 indexPath: IndexPath(
                                 parent:sheetList.indexPath,
-                                index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
-                                  );
+                                index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
+                                );
                      
-                              
                                 sheetList.add(
                                     newItem);
                               
@@ -5271,13 +5317,15 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     .row_insert_top,
                 onSelected: () {
                   setState(() {
+                    var newId = 'TX-${Uuid().v4()}';
                   var newItem = _addTextField( 
+                    id: newId,
                     shouldReturn:  true,
                     textDecoration: newSuperDecoration(),
                     indexPath: IndexPath(
                       parent: sheetList.indexPath,
                       index: sheetList.length),
-                      inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                      inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
                     );
                   sheetList.insert( index, newItem);
                   _reassignSheetListIndexPath(sheetList);
@@ -5291,12 +5339,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     .row_insert_bottom,
                 onSelected: () {
                   setState(() {
+                    var newId = 'TX-${Uuid().v4()}';
                   var newItem = _addTextField( 
+                    id: newId,
                     shouldReturn:  true,
                     textDecoration: newSuperDecoration(),
                     indexPath: IndexPath(
                       parent: sheetList.indexPath,
-                      index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                      index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
                     );
                   
                   if (index<sheetList.length) {
@@ -5330,12 +5380,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                       parent: sheetList.indexPath,
                       index: sheetList.length),
                     );
+                    var newItemId = 'TX-${Uuid().v4()}';
                     var newItem = _addTextField( 
+                      id: newItemId,
                       shouldReturn:  true,
                       textDecoration: newSuperDecoration(),
                       indexPath: IndexPath(
                       parent: newList.indexPath,
-                      index: newList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                      index: newList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newItemId,)],
                       );
                     newList.sheetList.add(newItem);
                     
@@ -6862,6 +6914,273 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 ];
                 }
 
+                MenuItem typeChangeItem(String s, int index){
+
+                  Widget buildInvalidToast(String message) {
+                    return Container(
+                      padding: EdgeInsets.all(2),
+                      margin: const EdgeInsets.only(top: 2, left: 2, right: 2),
+                      width: width + 20,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: defaultPalette.primary,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: defaultPalette.extras[0], width: 2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Text(
+                          '  ${message.replaceAll(RegExp(r'\n'), '')}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lexend(
+                            color: defaultPalette.extras[0],
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return MenuItem(
+                    label: s,
+                    style:  GoogleFonts.lexend(
+                      color: defaultPalette.primary,
+                      fontWeight: FontWeight.w200,
+                      letterSpacing: -1,
+                      
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 100,
+                      minHeight: 30
+                    ),
+                    hoverColor: defaultPalette.extras[0],
+                    onSelected: () {
+                      setState(() {
+                        item.type = SheetTextType.values[index];
+                        switch (item.type) {
+                          case SheetTextType.number:
+                            item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
+                            final controller = item.textEditorConfigurations.controller;
+                            String oldText = controller.document.toPlainText();
+                            if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
+                            final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
+                            oldText = numericMatch?.group(0) ?? 'yo';
+                            // Enforce reset if old text is not a valid number
+                            if (double.tryParse(oldText) == null) {
+                              oldText = '0';
+                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                            } else {
+                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                            }
+
+                            item.textEditorConfigurations.controller.onReplaceText =
+                                (int index, int length, Object? data) {
+                              if (data is! String) return false;
+
+                              final controller = item.textEditorConfigurations.controller;
+                              final oldText = controller.document.toPlainText();
+
+                              // Simulate what the text would become after this replacement
+                              final newText = oldText.replaceRange(index, index + length, data);
+
+                              // Allow empty string (so user can delete everything)
+                              if (newText.trim().isEmpty) return true;
+
+                              // Try parsing as a number
+                              final parsed = double.tryParse(newText);
+                              final isValid = parsed != null;
+
+                              if (isValid) {
+                                return true; // Allow valid number
+                              } else {
+                                // Reject and restore selection
+                                controller.updateSelection(
+                                  TextSelection.collapsed(offset: index),
+                                  ChangeSource.local,
+                                );
+                               
+                                CustomToastBar(
+                                  autoDismiss:true,
+                                snackbarDuration: Duration(milliseconds: 3000),
+                                builder: (context) {
+                                  return Container(
+                                  padding: EdgeInsets.all(2),
+                                  margin: const EdgeInsets.only(top:2, left:2, right:2),
+                                  width: width+20,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: defaultPalette.extras[0], width: 2)),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child:Text('  ${newText.replaceAll(RegExp(r'\n'), '')} is not a valid number',
+                                      maxLines:1,
+                                      overflow:TextOverflow.ellipsis,
+                                      style:  GoogleFonts.lexend(
+                                      color: defaultPalette.extras[0],
+                                      fontWeight: FontWeight.w400,
+                                      letterSpacing: -1,
+                                    ),),
+                                    )
+                                  );
+                                }
+                                ).show(context);
+                                return false; // Block invalid input
+                              }
+                            };
+                            break;
+
+                          case SheetTextType.integer:
+                            item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
+                            final controller = item.textEditorConfigurations.controller;
+                            String oldText = controller.document.toPlainText();
+                            if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
+                            final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
+                            oldText = numericMatch?.group(0) ?? 'yo';
+                            // Enforce reset if old text is not a valid number
+                            if (int.tryParse(oldText) == null) {
+                              if (double.tryParse(oldText) == null) {
+                              oldText = '0';
+                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                              } else {
+                                var d= double.tryParse(oldText);
+                                controller.replaceText(0, controller.document.length - 1, d!.round().toString(), const TextSelection.collapsed(offset: 1));
+                            
+                              }
+                            } else {
+                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                            }
+                            item.textEditorConfigurations.controller.onReplaceText =
+                                (int index, int length, Object? data) {
+                              if (data is! String) return false;
+
+                              final controller = item.textEditorConfigurations.controller;
+                              final oldText = controller.document.toPlainText();
+                              final newText = oldText.replaceRange(index, index + length, data);
+
+                              if (newText.trim().isEmpty) return true;
+
+                              final parsed = int.tryParse(newText);
+                              if (parsed != null) return true;
+
+                              controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
+                              CustomToastBar(
+                                autoDismiss:true,
+                                snackbarDuration: Duration(milliseconds: 3000),
+                                builder: (context) {
+                                  return buildInvalidToast('$newText is not a valid integer');
+                                },
+                              ).show(context);
+                              return false;
+                            };
+                            break;
+
+                          case SheetTextType.bool:
+                            final controller = item.textEditorConfigurations.controller;
+                            String oldText = controller.document.toPlainText().trim().toLowerCase();
+
+                            const trueValues = ['true', '1', 'yes', 'positive', 'ha', 'yup','haa'];
+                            const falseValues = ['false', '0', 'no', 'negative', 'na', 'nope', 'nah'];
+
+                            String normalized = 'false'; // default fallback
+                            if (trueValues.contains(oldText)) {
+                              normalized = 'true';
+                            } else if (falseValues.contains(oldText)) {
+                              normalized = 'false';
+                            }
+                            if (oldText != normalized) {
+                              controller.onReplaceText = (int index, int length, Object? data) => true;
+                                controller.replaceText(
+                                  0,
+                                  controller.document.length - 1,
+                                  normalized,
+                                  const TextSelection.collapsed(offset: 1),
+                                );
+                            }
+
+                            item.textEditorConfigurations.controller.onReplaceText =
+                                (int index, int length, Object? data) {
+                              if (data is! String) return false;
+                              if(data =='true' || data == 'false') return true;
+
+                              final controller = item.textEditorConfigurations.controller;
+                              final oldText = controller.document.toPlainText().trim().toLowerCase();
+                              bool isCurrentlyTrue = trueValues.contains(oldText);
+                              bool isCurrentlyFalse = falseValues.contains(oldText);
+
+                              final toggled = isCurrentlyTrue ? 'false' : 'true';
+
+                              // Replace full text with toggled value
+                              SchedulerBinding.instance.addPostFrameCallback((_) {
+                                controller.replaceText(
+                                  0,
+                                  controller.document.length - 1,
+                                  toggled,
+                                  TextSelection.collapsed(offset: toggled.length),
+                                );
+                              });
+                              data = '';
+
+                              return true;
+                            };
+                            break;
+
+
+                          // case SheetTextType.email:
+                          //   item.textEditorConfigurations.controller.onReplaceText =
+                          //       (int index, int length, Object? data) {
+                          //     if (data is! String) return false;
+                          //     final controller = item.textEditorConfigurations.controller;
+                          //     final oldText = controller.document.toPlainText();
+                          //     final newText = oldText.replaceRange(index, index + length, data).trim();
+                          //     if (newText.isEmpty || RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(newText)) return true;
+                          //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
+                          //     CustomToastBar(
+                          //       autoDismiss:true,
+                          //       snackbarDuration: Duration(milliseconds: 3000),
+                          //       builder: (context) {
+                          //         return buildInvalidToast('$newText is not a valid email');
+                          //       },
+                          //     ).show(context);
+                          //     return false;
+                          //   };
+                          //   break;
+                          // case SheetTextType.url:
+                          //   item.textEditorConfigurations.controller.onReplaceText =
+                          //       (int index, int length, Object? data) {
+                          //     if (data is! String) return false;
+                          //     final controller = item.textEditorConfigurations.controller;
+                          //     final oldText = controller.document.toPlainText();
+                          //     final newText = oldText.replaceRange(index, index + length, data).trim();
+                          //     final isValidUrl = Uri.tryParse(newText)?.hasAbsolutePath ?? false;
+                          //     if (newText.isEmpty || isValidUrl) return true;
+                          //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
+                          //     CustomToastBar(
+                          //       autoDismiss:true,
+                          //       snackbarDuration: Duration(milliseconds: 3000),
+                          //       builder: (context) {
+                          //         return buildInvalidToast('$newText is not a valid URL');
+                          //       },
+                          //     ).show(context);
+                          //     return false;
+                          //   };
+                          //   break;
+
+                          case SheetTextType.string:
+                          default:
+                            item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
+                            break;
+                        }
+
+                      });
+                    },
+                    );
+                }
+
                 String formatValue(dynamic value) {
                   if (value is String) {
                     // Escape all newlines
@@ -6935,42 +7254,67 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         durationMS: 500,
                         scrollSpeed: 1,
                         builder: (context, controller, physics) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: defaultPalette.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(5).copyWith(topLeft:Radius.circular(0), topRight:Radius.circular(0))
-                            ),
-                            width: width,
-                            child: SingleChildScrollView(
+                          return ScrollbarUltima(
+                            alwaysShowThumb: true,
                             controller: controller,
-                            physics: physics,
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  for (int i = 0; i < json.length; i++)
-                                   ...[
-                                  Text(
-                                    '${i + 1}.   ',
-                                    textAlign: TextAlign.end,
-                                    style: GoogleFonts.lexend(
-                                      fontSize: 10,
-                                      color: Colors.white,
+                            scrollbarPosition:
+                                ScrollbarPosition.right,
+                            backgroundColor: defaultPalette.primary,
+                            isDraggable: true,
+                            maxDynamicThumbLength: 90,
+                            minDynamicThumbLength: 50,
+                            thumbBuilder:
+                                (context, animation, widgetStates) {
+                              return Container(
+                                margin: EdgeInsets.only(right:2, top:3, bottom:3),
+                                decoration: BoxDecoration(
+                                    // border: Border.all(
+                                    //    color: defaultPalette.primary.withOpacity(0.2),
+                                    // ),
+                                    color: defaultPalette.extras[0],
+                                    borderRadius:
+                                        BorderRadius.circular(2)),
+                                width: 5,
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: defaultPalette.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(5).copyWith(topLeft:Radius.circular(0), topRight:Radius.circular(0))
+                              ),
+                              width: width,
+                              child: SingleChildScrollView(
+                              controller: controller,
+                              physics: physics,
+                              padding: EdgeInsets.only(right: 4),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (int i = 0; i < json.length; i++)
+                                     ...[
+                                    Text(
+                                      '${i + 1}.   ',
+                                      textAlign: TextAlign.end,
+                                      style: GoogleFonts.lexend(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 2),     
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: defaultPalette.extras[0],
-                                      borderRadius: BorderRadius.circular(5)
+                                    SizedBox(height: 2),     
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: defaultPalette.extras[0],
+                                        borderRadius: BorderRadius.circular(5)
+                                      ),
+                                      padding: EdgeInsets.all(5),
+                                      margin: EdgeInsets.only(left:5, right:5),
+                                      width: width,child: buildJsonEntry(json[i], 0)
                                     ),
-                                    padding: EdgeInsets.all(5),
-                                    margin: EdgeInsets.only(left:5, right:5),
-                                    width: width,child: buildJsonEntry(json[i], 0)
-                                  ),
-                                  SizedBox(height: 5)
+                                    SizedBox(height: 5)
+                                    ],
+                                  
                                   ],
-                                
-                                ],
+                                ),
                               ),
                             ),
                           );
@@ -7013,8 +7357,11 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        itemAtPath.name,
+                                        itemAtPath.name
+                                        +' '+inputBlock[index].indexPath.toString(),
                                         textAlign: TextAlign.end,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.lexend(
                                           letterSpacing: -1,
                                           fontWeight: FontWeight.w500,
@@ -7023,7 +7370,28 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 5),
+                                    const SizedBox(width: 3),
+                                    ClipRRect(
+                                      borderRadius:BorderRadius.circular(99999),
+                                      child: Material(
+                                        color:defaultPalette.transparent,
+                                        child: InkWell(
+                                          hoverColor:defaultPalette.primary,
+                                          splashColor:defaultPalette.primary,
+                                          highlightColor:defaultPalette.primary,
+                                          onTap:(){
+                                            setState(() {
+                                              item.inputBlocks.removeAt(index);
+                                            });
+                                          },
+                                          child: Icon(
+                                            TablerIcons.x,
+                                            size: 18,
+                                          )
+                                        )
+                                      ),
+                                    ),
+                                    SizedBox(width:3),
                                   ],
                                 ),
                               ),
@@ -7075,6 +7443,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                             ],
                           ),
                         ),
+                        
                       ],
                     ),
                   );
@@ -7111,7 +7480,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                         setState(() {
                                           item.inputBlocks.add(InputBlock(
                                             indexPath: sheetItem.indexPath, 
-                                            blockIndex: [-2]));
+                                            blockIndex: [-2],
+                                            id: sheetItem.id
+                                            ));
                                           inputBlockExpansionList.add(false);  
                                         });
                                       },
@@ -7221,8 +7592,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                   //return for buildOraginzedSheetTextList
                   return ClipRRect(
                     borderRadius:BorderRadius.circular(10).copyWith(
-                      bottomLeft: Radius.circular(18),
-                      bottomRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
                     ),
                     child:  ScrollConfiguration(
                       behavior: ScrollBehavior().copyWith(scrollbars: false),
@@ -7230,42 +7601,67 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                         durationMS: 500,
                         scrollSpeed: 1,
                         builder: (context, controller, physics) {
-                          return SingleChildScrollView(
+                          return  ScrollbarUltima(
+                            alwaysShowThumb: true,
                             controller: controller,
-                            physics: physics,
-                            child: Column(children: organized.entries.map((entry) {
+                            scrollbarPosition:
+                                ScrollbarPosition.right,
+                            backgroundColor: defaultPalette.primary,
+                            isDraggable: true,
+                            maxDynamicThumbLength: 90,
+                            minDynamicThumbLength: 50,
+                            thumbBuilder:
+                                (context, animation, widgetStates) {
                               return Container(
-                                
-                                margin:EdgeInsets.only(bottom:8),
-                                decoration:BoxDecoration(
-                                  color: defaultPalette.primary,
-                                  borderRadius:BorderRadius.circular(10),
-                                  // border: Border.all(
-                                  //   color: defaultPalette.extras[0],
-                                  //   width: 2,
-                                  //   )
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '  Page ${entry.key}',
-                                      style:GoogleFonts.lexend(
-                                        color: defaultPalette.extras[0],
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 18,
-                                        letterSpacing:-1
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Column(children:entry.value),
-                                    const SizedBox(height: 4),
-                                  ],
-                                ),
+                                margin: EdgeInsets.only(right:2, top:3, bottom:10),
+                                decoration: BoxDecoration(
+                                    // border: Border.all(
+                                    //    color: defaultPalette.primary.withOpacity(0.2),
+                                    // ),
+                                    color: defaultPalette.primary,
+                                    borderRadius:
+                                        BorderRadius.circular(2)),
+                                width: 4,
                               );
-                            }).toList(),
-                         )
+                            },
+                            child: SingleChildScrollView(
+                              controller: controller,
+                              physics: physics,
+                              padding: EdgeInsets.only(right: 8),
+                              child: Column(children: organized.entries.map((entry) {
+                                return Container(
+                                  
+                                  margin:EdgeInsets.only(bottom:8),
+                                  decoration:BoxDecoration(
+                                    color: defaultPalette.primary.withOpacity(0.1),
+                                    borderRadius:BorderRadius.circular(10),
+                                    // border: Border.all(
+                                    //   color: defaultPalette.extras[0],
+                                    //   width: 2,
+                                    //   )
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '  Page ${entry.key}',
+                                        style:GoogleFonts.lexend(
+                                          color: defaultPalette.primary,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 18,
+                                          letterSpacing:-1
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Column(children:entry.value),
+                                      const SizedBox(height: 4),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                                                     )
+                            ),
                           );
                         }
                       ),
@@ -9253,56 +9649,153 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   const SizedBox(
                                     height:5
                                   ),
-                                  //field entries
-                                  Padding(
-                                    padding: const EdgeInsets.only(top:2, left:2, right:2),
+                                  //type for field
+                                  Container(
+                                    padding: EdgeInsets.all(2),
+                                    margin: const EdgeInsets.only(top:2, left:2, right:2),
+                                    width:width+13,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                    color: defaultPalette.primary,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: defaultPalette.primary, width: 1.5)),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(20),
-                                      child: Container(
-                                        padding: EdgeInsets.all(5),
-                                        decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: defaultPalette.primary, width: 1.5)),
+                                      child: Row(
+                                        children: [
+                                          Expanded(child: titleTile('type', TablerIcons.writing, fontSize: 15, space:10)),
+                                          Expanded(
+                                            child: ClipRRect(
+                                              borderRadius:BorderRadius.circular(20),
+                                              child: Material(
+                                                color: defaultPalette.transparent,
+                                                child: InkWell(
+                                                  hoverColor: defaultPalette.secondary,
+                                                  highlightColor: defaultPalette.secondary,
+                                                  splashColor: defaultPalette.secondary,
+                                                  onTapDown:(d){
+                                                    setState(() {
+                                                      isTableDecorationModeDropped= !isTableDecorationModeDropped;
+                                                      // final entries = buildContextMenuEntries(sheetText.textEditorController, index, sheetText, sheetList);
+                                                        ContextMenu(
+                                                            entries: [
+                                                              typeChangeItem('string',0),
+                                                              typeChangeItem('number',1),
+                                                              typeChangeItem('integer',2),
+                                                              typeChangeItem('bool',3),
+                                                              typeChangeItem('date',4),
+                                                              typeChangeItem('time',5),
+                                                              typeChangeItem('dateTime',6),
+                                                              typeChangeItem('email',7),
+                                                              typeChangeItem('url',8),
+                                                              typeChangeItem('phone',9),
+                                                              typeChangeItem('choice',10),
+                                                              typeChangeItem('currency',11),
+                                                            ],
+                                                            boxDecoration: BoxDecoration(
+                                                                boxShadow: [
+                                                                  BoxShadow(
+                                                                    color: defaultPalette
+                                                                        .black,
+                                                                    blurRadius: 2,
+                                                                  )
+                                                                ],
+                                                                color: defaultPalette.extras[0],
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                        10)),
+                                                            position: Offset(
+                                                                d.globalPosition.dx,
+                                                                d.globalPosition.dy+20))
+                                                        .show(context);
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    height:26,
+                                                    decoration:BoxDecoration(
+                                                      color: defaultPalette.transparent,
+                                                      borderRadius:BorderRadius.circular(20),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Expanded(child: Text(
+                                                          '${item.type.name}  ',
+                                                          maxLines: 1,
+                                                          overflow:TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.end,
+                                                          style: GoogleFonts.lexend(
+                                                            fontWeight: FontWeight.w600,
+                                                            letterSpacing: -1,
+                                                            fontSize:15
+                                                          ))),
+                                                        SizedBox(width:6)
+                                                      ],
+                                                    )
+                                              ),
+                                            ),
+                                          ),
+                                          ),
+                                          ),
+        
+                                        ],
+                                      )
+                                      )
+                                    ),
+                                  const SizedBox(
+                                    height:5
+                                  ),
+                                  //field entries
+                                  
+                                  Container(
+                                    padding: EdgeInsets.all(5).copyWith(top: 3),
+                                    margin: const EdgeInsets.only(top:2, left:2, right:2),
+                                    decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: defaultPalette.primary, width: 1.5)),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
                                         child:Column(
                                           crossAxisAlignment:CrossAxisAlignment.start,
-                                          children: [
-                                            //Selected Text
-                                            // Container(
-                                            //   width: width,
-                                            //   // padding: EdgeInsets.all(4).copyWith(left:8),
-                                            //   // margin: EdgeInsets.all(2),
-                                            //   decoration: BoxDecoration(
-                                            //     color: defaultPalette.secondary,
-                                            //     borderRadius: BorderRadius.circular(15),
-                                            //     border: Border.all(
-                                            //       width: 2,
-                                            //       color: defaultPalette.extras[0])
-                                            //   ),
-                                            //   child: Row(
-                                            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            //     children: [
-                                            //       Text(item.textEditorController.getPlainText(),
-                                            //         textAlign: TextAlign.start,
-                                            //         style: TextStyle(
-                                            //           fontFamily: GoogleFonts.leagueSpartan().fontFamily,
-                                            //           letterSpacing:-0.5,
-                                            //           fontWeight: FontWeight.w800,        
-                                            //           color: defaultPalette.extras[0],
-                                            //           fontSize: 15)),
-                                            //         ],
-                                            //       ),
-                                            //     ),
-                                                                          
+                                          children: [          
                                             const SizedBox(
                                                   height:4
                                                 ),
-                                            
+                                            //preview Text in function
+                                            Container(
+                                              width: width,
+                                              padding: EdgeInsets.all(4).copyWith(left:8),
+                                              margin: EdgeInsets.all(0),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.primary,
+                                                borderRadius: BorderRadius.circular(15),
+                                                border: Border.all(
+                                                  width: 2,
+                                                  color: defaultPalette.extras[0])
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text((buildCombinedQuillConfiguration(item.inputBlocks)).controller.document.toPlainText().replaceAll(RegExp(r'\n'), '\\n'),
+                                                    textAlign: TextAlign.start,
+                                                    style: TextStyle(
+                                                      fontFamily: GoogleFonts.leagueSpartan().fontFamily,
+                                                      letterSpacing:-0.5,
+                                                      fontWeight: FontWeight.w800,        
+                                                      color: defaultPalette.extras[0],
+                                                      fontSize: 15)),
+                                                    ],
+                                                  ),
+                                                ),
+                                            const SizedBox(
+                                                height:4
+                                              ),
                                             titleTile(' inputBlocks', TablerIcons.subtask,fontSize: 15,iconSize: 20, color: defaultPalette.primary),  
                                             const SizedBox(
                                                   height:10,
                                                 ),
-                                            
+                                            //InputBlocks for Functions 
                                             ScrollConfiguration(
                                             behavior: ScrollBehavior().copyWith(scrollbars: false),
                                             child: DynMouseScroll(
@@ -9334,27 +9827,166 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                                 }
                                               ),
                                             ),
-                                            
                                             const SizedBox(
-                                                  height:10
+                                              height:5
+                                            ), 
+                                            //functions library
+                                             Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Stack(
+                                                    children: [
+                                                      const SizedBox(height: 40),
+                                                      if(isMathFunctionLibraryToggled)
+                                                      Container(
+                                                        height:200,
+                                                        width: width+13,
+                                                        margin: EdgeInsets.only(top:15),
+                                                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8).copyWith(
+                                                                  bottomLeft: Radius.circular(15),
+                                                                  bottomRight: Radius.circular(15)
+                                                                ),
+                                                        color:defaultPalette.primary,),
+                                                      ),
+                                                      //mesh tile for math functions
+                                                      Container(
+                                                        decoration: BoxDecoration(
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              blurRadius: 20,
+                                                              offset: Offset(0, 2),
+                                                              color: defaultPalette.extras[0].withOpacity(0.6)
+                                                            )
+                                                          ],
+                                                        ),
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.only(top: 10),
+                                                          child: ClipRRect(
+                                                            borderRadius: BorderRadius.circular(8).copyWith(
+                                                                    bottomLeft: Radius.circular(15),
+                                                                    bottomRight: Radius.circular(15)
+                                                                  ),
+                                                            child: AnimatedMeshGradient(
+                                                              colors: [
+                                                                  defaultPalette.primary,
+                                                                  defaultPalette.primary,
+                                                                  defaultPalette.extras[0],
+                                                                  defaultPalette.primary,
+                                                                ],
+                                                              options: AnimatedMeshGradientOptions(
+                                                                  amplitude: 80,
+                                                                  grain: 0.1,
+                                                                  frequency: 10,
+                                                                  
+                                                                ),
+                                                              child: Container(
+                                                                height: 30,
+                                                                width: width,
+                                                                decoration: BoxDecoration(
+                                                                  borderRadius: BorderRadius.circular(8).copyWith(
+                                                                    bottomLeft: Radius.circular(15),
+                                                                    bottomRight: Radius.circular(15)
+                                                                  ),
+                                                                  border: Border.all(color: defaultPalette.primary),
+                                                                ),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child: BlendMask(
+                                                                        blendMode: BlendMode.exclusion,
+                                                                        child: Text(
+                                                                          'functions',
+                                                                          textAlign: TextAlign.end,
+                                                                          maxLines: 1,
+                                                                          overflow: TextOverflow.ellipsis,
+                                                                          style: GoogleFonts.lexend(
+                                                                            letterSpacing: -1,
+                                                                            fontWeight: FontWeight.w500,
+                                                                            fontSize: 19,
+                                                                            color: defaultPalette.primary,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(width: 15),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      ElevatedLayerButton(
+                                                        borderRadius: const BorderRadius.only(
+                                                          topRight: Radius.circular(5),
+                                                          topLeft: Radius.circular(5),
+                                                          bottomRight: Radius.circular(10),
+                                                          bottomLeft: Radius.circular(10),
+                                                        ),
+                                                        animationDuration: const Duration(milliseconds: 100),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: defaultPalette.primary,
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        topLayerChild: Row(
+                                                          children: [
+                                                            const SizedBox(width: 10),
+                                                            Icon(TablerIcons.variable_plus, size: 15, color: defaultPalette.extras[0]),
+                                                            Expanded(
+                                                              child: Text(
+                                                                ' math',
+                                                                maxLines: 1,
+                                                                style: GoogleFonts.bungee(
+                                                                  fontSize: 12,
+                                                                  color: defaultPalette.extras[0],
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        depth: 3,
+                                                        subfac: 3,
+                                                        buttonHeight: 24,
+                                                        buttonWidth: 80,
+                                                        onClick: () {
+                                                          setState(() {
+                                                            isMathFunctionLibraryToggled = !isMathFunctionLibraryToggled;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
+                                              ]
+                                             ),
+                                            const SizedBox(
+                                              height:3
+                                            ), 
                                           ],
                                         ),
                                       ),
                                     ),
-                                  ),
                                   
-                                  ...[// 
+                                  
+                                  ...[
+                                  // textFields library
                                   const SizedBox(
                                     height:5
                                   ), 
                                   Container(
                                   width:width+14,
-                                  height: 250,
+                                  height: 300,
                                   margin: EdgeInsets.all(2),
                                   padding: EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color:defaultPalette.extras[0],
+                                    // color:defaultPalette.extras[0],
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(color: defaultPalette.primary, width: 1.5)
                                   ),
@@ -9372,7 +10004,8 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   ))
                                   
                                   ],
-                                  Text(item.indexPath.toString()),
+                                  // Text(item.indexPath.toString()),
+                                  const SizedBox(height:2,),
                                   ]));}
                                   )
                                 )
@@ -10212,15 +10845,17 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             parent: sheetTableItem.indexPath,
                                             index:sheetTableItem.cellData.length
                                           );
+                                          var newId = 'TX-${Uuid().v4()}';
                                           return SheetTableCell(
                                           id: '${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(), 
                                           parentId: sheetTableItem.id, 
                                           sheetItem: _addTextField(
+                                            id: newId,
                                             parentId: sheetTableItem.id,
                                             textDecoration: sheetTableItem.sheetTableDecoration,
                                             shouldReturn: true,
                                             isCell: true,
-                                            hide:false,inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                                            hide:false,inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
                                             indexPath: IndexPath(
                                               parent: rowIndexPath,
                                               index: index),
@@ -10247,16 +10882,18 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                           parent: sheetTableItem.indexPath,
                                           index: i
                                         );
+                                        var newId = 'TX-${Uuid().v4()}';
                                         sheetTableItem.cellData[i].add(
                                           SheetTableCell(
                                             id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(), 
                                             parentId: parentId, 
                                             sheetItem: _addTextField(
+                                              id: newId,
                                             parentId: sheetTableItem.id,
                                             textDecoration: sheetTableItem.sheetTableDecoration,
                                             shouldReturn: true,
                                             isCell: true,
-                                            hide: false,inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+                                            hide: false,inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
                                             name: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(),
                                             indexPath: IndexPath(
                                               parent: rowIndexPath,
@@ -20392,7 +21029,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           name:'${numberToColumnLabel(col+1)}${row+1}',
           indexPath: IndexPath(
             parent: cellIndexPath,
-            index: col), inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2])],
+            index: col), inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
 
           ),
         rowSpan: 1,

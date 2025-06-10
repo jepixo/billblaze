@@ -39,7 +39,7 @@ class SheetTextBox extends SheetItem {
     required super.indexPath,
     List<InputBlock>? inputBlocks,
     this.type = 0,
-  }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2])];
+  }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
 
   
 }
@@ -114,7 +114,7 @@ class SheetText extends SheetItem {
         hide: hide,
         name: name,
         indexPath: indexPath,
-        inputBlocks: inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2])],
+        inputBlocks: inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2], id: id)],
         type: type,
         );
   }
