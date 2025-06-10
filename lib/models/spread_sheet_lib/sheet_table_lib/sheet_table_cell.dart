@@ -169,7 +169,9 @@ class SheetTableCellBox extends SheetItem {
   }) {
     Delta delta;
     // print('DocString: $docString');
-
+    if (inputBlocks[0].indexPath.index ==-69) {
+      inputBlocks=[InputBlock(indexPath: indexPath, blockIndex: [-2], id: id)];
+    }
     try {
       if (docString.isNotEmpty) {
         // Convert List<Map<String, dynamic>> to Delta

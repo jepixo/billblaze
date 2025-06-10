@@ -55,9 +55,11 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
     }
   }
 
-  void _handleTapUp(TapUpDetails details) {
+  void _handleTapUp(TapUpDetails details) async {
     if (!widget.toggleOnTap) {
+      await Future.delayed(Durations.short1);
       setState(() {
+        
         isDown = false; // Release the button
       });
     }
@@ -89,7 +91,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
       onTapDown: widget.toggleOnTap ? null : _handleTapDown,
       onTapUp: widget.toggleOnTap ? null : _handleTapUp,
       onTapCancel: widget.toggleOnTap ? null : _handleTapCancel,
-      onTap: widget.toggleOnTap ? _handleTap : null,
+      // onTap: widget.toggleOnTap ? _handleTapDown : null,
       child: SizedBox(
         height: widget.buttonHeight,
         width: widget.buttonWidth,

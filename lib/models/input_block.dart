@@ -10,8 +10,11 @@ class InputBlock {
   IndexPath indexPath;
   @HiveField(1)
   List<int> blockIndex;
+  @HiveField(2)
+  String id;
   InputBlock( {
     required this.indexPath,
     required this.blockIndex,
+    required this.id,
   });
 }

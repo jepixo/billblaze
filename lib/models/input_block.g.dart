@@ -19,17 +19,20 @@ class InputBlockAdapter extends TypeAdapter<InputBlock> {
     return InputBlock(
       indexPath: fields[0] as IndexPath,
       blockIndex: (fields[1] as List).cast<int>(),
+      id: fields[2] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, InputBlock obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.indexPath)
       ..writeByte(1)
-      ..write(obj.blockIndex);
+      ..write(obj.blockIndex)
+      ..writeByte(2)
+      ..write(obj.id);
   }
 
   @override
