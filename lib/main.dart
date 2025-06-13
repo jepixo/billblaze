@@ -6,6 +6,7 @@ import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
@@ -47,6 +48,8 @@ Future<void> main() async {
   Hive.registerAdapter(SheetTableColumnBoxAdapter());
   Hive.registerAdapter(IndexPathAdapter());
   Hive.registerAdapter(InputBlockAdapter());
+  Hive.registerAdapter(SheetFunctionAdapter());
+  Hive.registerAdapter(SumFunctionAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
