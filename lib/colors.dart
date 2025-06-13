@@ -134,13 +134,14 @@ ColorPalette againPalette = ColorPalette(
       Color(0xffF9DC5C),//1
       Color(0xffe94f37),//2
       Color(0xff9D75CB),//3
-      Color(0xff931F1D),//4
-      Color(0xffA594F9),//5
-      Color(0xffD62828),//6
+      Color(0xffD62828),//4
+      Color(0xff6279B8),//5
+      Color(0xff083d77),//6
+      Color(0xff931F1D),//7
+      Color(0xffA594F9),//8
       
-      Color(0xff4C1A57),//7
       
-      Color(0xff401F3E),//8
-      Color(0xff3C91E6),//9
-      Color(0xff083d77),//10
+      Color(0xff4C1A57),//9
+      
+      Color(0xff401F3E),//10
     ]);

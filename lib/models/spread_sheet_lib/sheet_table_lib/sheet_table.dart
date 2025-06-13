@@ -49,10 +49,10 @@ class SheetTableBox extends SheetItem {
       pinnedColumns: pinnedColumns,
       columnData: columnData.map((e) => e.toSheetTableColumn(),).toList(),
       rowData: rowData.map((e) => e.toSheetTableRow(),).toList(),
-      cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown),).toList(),).toList(),
+      cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown,super.indexPath),).toList(),).toList(),
       sheetTableDecoration: sheetTableDecoration.toSuperDecoration(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecoration(),
-      indexPath: indexPath,
+      indexPath: super.indexPath,
       name: name,
       );
   }
@@ -97,7 +97,7 @@ class SheetTable extends SheetItem {
       pinnedRows: pinnedRows,
       sheetTableDecoration: sheetTableDecoration.toSuperDecorationBox(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecorationBox(),
-      indexPath: indexPath,
+      indexPath: super.indexPath,
       name: name,
       );
   }

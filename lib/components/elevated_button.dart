@@ -47,6 +47,17 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
     isDown = widget.isTapped; // Initialize from `isTapped`
   }
 
+  @override
+  void didUpdateWidget(covariant ElevatedLayerButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isTapped != widget.isTapped) {
+      setState(() {
+        isDown = widget.isTapped;
+      });
+    }
+  }
+
+
   void _handleTapDown(TapDownDetails details) {
     if (!widget.toggleOnTap) {
       setState(() {

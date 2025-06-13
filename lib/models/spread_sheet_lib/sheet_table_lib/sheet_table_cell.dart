@@ -111,11 +111,12 @@ class SheetTableCellBox extends SheetItem {
     required super.indexPath,
     });
 
-  SheetTableCell toSheetTableCell( Function findItem, Function textFieldTapDown ) {
+  SheetTableCell toSheetTableCell( Function findItem, Function textFieldTapDown, IndexPath sheetTableIndexPath ) {
+    super.indexPath.parent = sheetTableIndexPath;
     return SheetTableCell(
       id: super.id, 
       parentId: super.parentId,
-      sheetItem: unboxSheetItem(sheetItem,findItem,textFieldTapDown),
+      sheetItem: unboxSheetItem(sheetItem,findItem,textFieldTapDown,super.indexPath),
       data: data,
       colSpan: colSpan,
       rowSpan: rowSpan,
@@ -124,11 +125,12 @@ class SheetTableCellBox extends SheetItem {
       errorMessage: errorMessage,
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRule(),
-      indexPath: indexPath,
+      indexPath: super.indexPath,
       );
   }
   
-  SheetItem unboxSheetItem(SheetItem sheetItem, Function findItem, Function textFieldTapDown) {
+  SheetItem unboxSheetItem(SheetItem sheetItem, Function findItem, Function textFieldTapDown, IndexPath sheetTableCellIndexPath) {
+    sheetItem.indexPath.parent = sheetTableCellIndexPath;
     if (sheetItem is SheetTextBox) {
       return addTextField(
         id: sheetItem.id, 
