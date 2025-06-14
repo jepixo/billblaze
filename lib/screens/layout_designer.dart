@@ -895,14 +895,14 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
   SheetItem _sheetItemIterator(String id, SheetList sheetList, {bool shouldReturn = false}) {
     // print('Length: ${sheetList.length}');
-    print('id for search: $id');
+    print('item id for search: $id');
 
     for (var i = 0; i < sheetList.length; i++) {
       // print('item id in iterator: ${sheetList[i].id}');
       // print('item in iterator: ${sheetList[i]}');
 
       if (sheetList[i] is SheetText && sheetList[i].id == id) {
-        // print('Found SheetText with matching id: ${sheetList[i].id}');
+        print('Found SheetText with matching id: ${sheetList[i].id}');
         return sheetList[i];
       }
 
@@ -1396,76 +1396,74 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           IntrinsicHeight(
             child: sheetList.direction == Axis.vertical
                 //For Columns in the pdf side of things
-                ? IntrinsicWidth(
-                    child: Flex(
-                      direction: Axis.vertical,
-                      mainAxisAlignment: sheetList.mainAxisAlignment,
-                      crossAxisAlignment: sheetList.crossAxisAlignment,
-                      mainAxisSize: sheetList.mainAxisSize, 
-                      children:
-                          List.generate(sheetList.sheetList.length, (index) {
-                        final sheetTextItem = sheetList.sheetList[index];
-      
-                        if (sheetTextItem is SheetText && !sheetTextItem.hide) {
-                          // print('in buildSheetListWidget item is: $item');
-                          var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
-        
-                          SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
-    
-                          Alignment containerAlignment = Alignment.topLeft;
-      
-                          // Get alignment based on current attributes
-                          final currentAttributes = sheetTextItem.textEditorController
-                              .getSelectionStyle()
-                              .attributes;
-                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
-                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
-                          // Determine alignment from `attributes`
-                          if (_getIsToggled(
-                              currentAttributes, Attribute.centerAlignment)) {
-                            containerAlignment = Alignment.center;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.rightAlignment)) {
-                            containerAlignment = Alignment.topRight;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.justifyAlignment)) {
-                            containerAlignment = Alignment
-                                .topLeft; // Adjust if you have other logic
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.leftAlignment)) {
-                            containerAlignment = Alignment.topLeft;
-                          }
-                          // print('in buildSheetListWidget item is: $item');
-                          return IgnorePointer(
-                            key: ValueKey(sheetTextItem),
-                            child: Container(
-                              // width: docWidth,
-                              alignment: containerAlignment,
-                              child: 
-                              buildDecoratedContainer(
-                                textDecor,
-                                QuillEditor(
-                                  key: ValueKey(sheetTextItem.id),
-                                  configurations: buildCombinedQuillConfiguration(sheetTextItem.inputBlocks),
-                                  focusNode: FocusNode(),
-                                  scrollController: ScrollController(),
-                                ),
-                                 false,
-                              
-                              ),
+                ? Flex(
+                  direction: Axis.vertical,
+                  mainAxisAlignment: sheetList.mainAxisAlignment,
+                  crossAxisAlignment: sheetList.crossAxisAlignment,
+                  mainAxisSize: sheetList.mainAxisSize, 
+                  children:
+                      List.generate(sheetList.sheetList.length, (index) {
+                    final sheetTextItem = sheetList.sheetList[index];
+                      
+                    if (sheetTextItem is SheetText && !sheetTextItem.hide) {
+                      // print('in buildSheetListWidget item is: $item');
+                      var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
+                        
+                      SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
+                    
+                      Alignment containerAlignment = Alignment.topLeft;
+                      
+                      // Get alignment based on current attributes
+                      final currentAttributes = sheetTextItem.textEditorController
+                          .getSelectionStyle()
+                          .attributes;
+                      // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
+                      // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
+                      // Determine alignment from `attributes`
+                      if (_getIsToggled(
+                          currentAttributes, Attribute.centerAlignment)) {
+                        containerAlignment = Alignment.center;
+                      } else if (_getIsToggled(
+                          currentAttributes, Attribute.rightAlignment)) {
+                        containerAlignment = Alignment.topRight;
+                      } else if (_getIsToggled(
+                          currentAttributes, Attribute.justifyAlignment)) {
+                        containerAlignment = Alignment
+                            .topLeft; // Adjust if you have other logic
+                      } else if (_getIsToggled(
+                          currentAttributes, Attribute.leftAlignment)) {
+                        containerAlignment = Alignment.topLeft;
+                      }
+                      // print('in buildSheetListWidget item is: $item');
+                      return IgnorePointer(
+                        key: ValueKey(sheetTextItem),
+                        child: Container(
+                          // width: docWidth,
+                          alignment: containerAlignment,
+                          child: 
+                          buildDecoratedContainer(
+                            textDecor,
+                            QuillEditor(
+                              key: ValueKey(sheetTextItem.id),
+                              configurations: buildCombinedQuillConfiguration(sheetTextItem.inputBlocks),
+                              focusNode: FocusNode(),
+                              scrollController: ScrollController(),
                             ),
-                          );
-                        } else if (sheetTextItem is SheetList) {
-                          // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
-                          return _buildSheetListWidget(sheetTextItem, width);
-                        } else if (sheetTextItem is SheetTable) {
-                          return _buildSheetTableWidget(sheetTextItem,);
-                        }
-
-                        return const SizedBox();
-                      }),
-                    ),
-                  )
+                             false,
+                          
+                          ),
+                        ),
+                      );
+                    } else if (sheetTextItem is SheetList) {
+                      // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
+                      return _buildSheetListWidget(sheetTextItem, width);
+                    } else if (sheetTextItem is SheetTable) {
+                      return _buildSheetTableWidget(sheetTextItem,);
+                    }
+                
+                    return const SizedBox();
+                  }),
+                )
                 //For Rows in the pdf side of things
                 : SizedBox(
                     width: docWidth,
@@ -2870,51 +2868,51 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     child: Stack(
                                       children: [
                                         // Graph //Desktop WEB
-                                        IgnorePointer(
-                                          ignoring: true,
-                                          child: AnimatedContainer(
-                                            duration: Durations.extralong1,
-                                            height: sHeight,
-                                            width: sWidth,
-                                            alignment: Alignment.centerRight,
-              
-                                            padding: const EdgeInsets.only(
-                                              top: 0,
+                                        Positioned.fill(child: IgnorePointer(
+                                            ignoring: true,
+                                            child: AnimatedContainer(
+                                              duration: Durations.extralong1,
+                                              height: sHeight,
+                                              width: sWidth,
+                                              alignment: Alignment.centerRight,
+                                                        
+                                              padding: const EdgeInsets.only(
+                                                top: 0,
+                                              ),
+                                              //layGraph
+                                              child: Opacity(
+                                                opacity: 0.35,
+                                                child: LineChart(LineChartData(
+                                                    lineBarsData: [
+                                                      LineChartBarData()
+                                                    ],
+                                                    titlesData: const FlTitlesData(
+                                                        show: false),
+                                                    gridData: FlGridData(
+                                                        getDrawingVerticalLine: (value) => FlLine(
+                                                            color: defaultPalette
+                                                                .primary
+                                                                .withOpacity(0.2),
+                                                            dashArray: [5, 5]),
+                                                        getDrawingHorizontalLine:
+                                                            (value) => FlLine(
+                                                                color: defaultPalette
+                                                                    .primary
+                                                                    .withOpacity(0.2),
+                                                                dashArray: [5, 5]),
+                                                        show: true,
+                                                        horizontalInterval: 10,
+                                                        verticalInterval: 30),
+                                                    borderData: FlBorderData(show: false),
+                                                    minY: 0,
+                                                    maxY: 50,
+                                                    maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500 + 250,
+                                                    minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
+                                              ),
                                             ),
-                                            //layGraph
-                                            child: Opacity(
-                                              opacity: 0.35,
-                                              child: LineChart(LineChartData(
-                                                  lineBarsData: [
-                                                    LineChartBarData()
-                                                  ],
-                                                  titlesData: const FlTitlesData(
-                                                      show: false),
-                                                  gridData: FlGridData(
-                                                      getDrawingVerticalLine: (value) => FlLine(
-                                                          color: defaultPalette
-                                                              .primary
-                                                              .withOpacity(0.2),
-                                                          dashArray: [5, 5]),
-                                                      getDrawingHorizontalLine:
-                                                          (value) => FlLine(
-                                                              color: defaultPalette
-                                                                  .primary
-                                                                  .withOpacity(0.2),
-                                                              dashArray: [5, 5]),
-                                                      show: true,
-                                                      horizontalInterval: 10,
-                                                      verticalInterval: 30),
-                                                  borderData: FlBorderData(show: false),
-                                                  minY: 0,
-                                                  maxY: 50,
-                                                  maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500 + 250,
-                                                  minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() / 500)),
-                                            ),
-                                          ),
-                                        ),
+                                          ),),
                                         //Main SpreadSheet //Desktop WEB
-                                        _buildListWidget(spreadSheetList[currentPageIndex])
+                                        Positioned.fill(child: _buildListWidget(spreadSheetList[currentPageIndex]))
                                         
                                       ],
                                     ),
@@ -4236,7 +4234,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     }
   }
 
-  Widget _buildListWidget(SheetList sheetList) {
+Widget _buildListWidget(SheetList sheetList) {
     // print('rebuilding listWidget');
     
     child(controller, physics) => ReorderableListView.builder(
@@ -4289,7 +4287,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           key: ValueKey(sheetText.id),
           child: IntrinsicWidth(
             child: IntrinsicHeight(
-              child: Stack(
+              child:Stack(
                 children: [
                   GestureDetector(
                     onTap: () {
@@ -4335,17 +4333,21 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           index: index,
           key: ValueKey(sheetList[index].id),
           child: Container(
-              margin: EdgeInsets.only(top: 4),
-              width:sheetList.id == spreadSheetList[currentPageIndex].id?
-              sWidth
-              : findSheetListBuildWidth(
-                          sheetList[index] as SheetList) <=
-                      50
-                  ? 50
-                  : findSheetListBuildWidth(
+              margin: EdgeInsets.only(top: 4,),
+              // width:sheetList.id == spreadSheetList[currentPageIndex].id?
+              // sWidth
+              // : findSheetListBuildWidth(
+              //             sheetList[index] as SheetList) <=
+              //         50
+              //     ? 50
+              //     : findSheetListBuildWidth(
+              //         sheetList[index] as SheetList),
+              child: Stack(
+                children: [
+                  _buildListWidget(
                       sheetList[index] as SheetList),
-              child: _buildListWidget(
-                  sheetList[index] as SheetList)),
+                ],
+              )),
         );
       }
         else if(sheetList[index] is SheetTable){
@@ -4397,7 +4399,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 ? EdgeInsets.all(0)
                 : const EdgeInsets.only(
               left: 4,
-              right: 3
+              right: 3,
             ),
               child: CustomBorder(
                 color: panelIndex.parentId == sheetList.id
@@ -4422,7 +4424,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               : findSheetListBuildHeight(sheetList) <= 50
                 ? 50
                 : findSheetListBuildHeight(sheetList),
-              padding: const EdgeInsets.only(top: 0, left: 1, right: 1),
+              padding: const EdgeInsets.only(top: 0, left: 1, right: 1, bottom: 4),
                                 
               // buildlistw
               decoration: BoxDecoration(
@@ -4452,11 +4454,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     backgroundColor: defaultPalette.primary,
                     isDraggable: true,
                     maxDynamicThumbLength: 80,
+                    minDynamicThumbLength: 30,
                     thumbBuilder:
                         (context, animation, widgetStates) {
                       return Container(
                         margin: EdgeInsets.symmetric(
-                          vertical:5,
+                          vertical:sheetList.direction == Axis.vertical?5:1,
                           horizontal: sheetList.direction == Axis.vertical? 0:5
                           ),
                         decoration: BoxDecoration(
@@ -4500,7 +4503,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             ),
           ),
         ),
-        if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
+         if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
         Positioned(
             top: 0,
             child: SlideInLeft(
@@ -4513,8 +4516,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     // panelIndex.runTimeType = sheetList.runtimeType;
                   });
                   
-                  List<ContextMenuEntry> buildSheetListContextMenuEntries(
-                      SheetList sheetList) {
+                  List<ContextMenuEntry> buildSheetListContextMenuEntries(SheetList sheetList) {
                     var entries = <ContextMenuEntry>[
                       MenuHeader(text: 'SheetList Menu')
                     ];
@@ -5087,10 +5089,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
               ),
             ),
           ), // Expandable menus and other widgets can stay the same
+       
       ],
     );
   }
 
+  
   Widget buildSheetTextWidget(SheetText sheetText) {
   return Container(
     padding: const EdgeInsets.only(
@@ -5120,17 +5124,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if(sheetText.name != 'unlabeled')
-        ...[Text(
-          sheetText.name,
-          style: GoogleFonts.lexend(
-            letterSpacing: -1,
-            height:0.9,
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
-            color: defaultPalette.black),
-        ),
-        SizedBox(height:2),],
+        
         Row(
           children: [
             Container(
@@ -5139,6 +5133,23 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                 size: 15,
               ),
             ),
+            if(sheetText.name != 'unlabeled')
+        ...[
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 120),
+            child: Text(
+                sheetText.name,
+                maxLines: 2,
+                overflow:TextOverflow.ellipsis,
+                style: GoogleFonts.lexend(
+                  letterSpacing: -1,
+                  height:0.9,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  color: defaultPalette.black),
+              ),
+          ),
+            SizedBox(width:4),],
             Expanded(
               child: QuillEditor(
                 configurations: sheetText
@@ -5174,10 +5185,38 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             ),]
           ],
         ),
+
+        if(sheetText.inputBlocks.length>1)
+        Row(
+          children: [
+            SizedBox(width:4),
+            const Icon(
+              TablerIcons.math_integral_x,
+              size: 15,
+            ),
+            SizedBox(width:4),
+            Expanded(
+              child: Container(
+                padding:EdgeInsets.symmetric(horizontal:4),
+                margin: EdgeInsets.only(top:4),
+                decoration:BoxDecoration(
+                  color:defaultPalette.secondary,
+                  borderRadius:BorderRadius.circular(5)
+                ),
+                child: QuillEditor(
+                  configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
+                  focusNode: FocusNode(),
+                  scrollController:
+                      ScrollController(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      
       ],
     ),
-  );
-                                        
+  );                   
   }
 
   List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
@@ -5591,34 +5630,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           onSelected: () {
             setState(() {
               
-                var oldItem = sheetList.removeAt(index);
-                var newId = 'LI-${ const Uuid().v4()}';        
-                var newList = SheetList(
-                    direction: Axis.horizontal,
-                    id: newId,
-                    parentId: sheetList.id,
-                    listDecoration: newSuperDecoration(),
-                    sheetList: [],
-                    indexPath: IndexPath(
-                      parent: sheetList.indexPath,
-                      index: sheetList.length),
-                    );                  
-                oldItem.parentId = newId;     
-                oldItem.indexPath = IndexPath(
-                  parent: newList.indexPath,
-                  index: newList.length);
-                newList.sheetList.add(oldItem);
-                //inserting
-                sheetList.insert(
-                index,
-                newList,
-                );
-
-                panelIndex.id = item.id;
-                panelIndex.parentId = item.parentId;
-                panelIndex.parentIndexPath = item.indexPath.parent;
-                panelIndex.itemIndexPath = item.indexPath;
-                print('Updated index of text editor: $index');
+                wrapTextInAList(0);
                 _reassignSheetListIndexPath(sheetList);
             });
           },
@@ -5630,36 +5642,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           onSelected: () {
             setState(() {
               
-                var oldItem = sheetList.removeAt(index);
-                var newId = 'LI-${ const Uuid().v4()}';        
-                var newList = SheetList(
-                    direction: Axis.vertical,
-                    id: newId,
-                    parentId: sheetList.id,
-                    listDecoration: newSuperDecoration(),
-                    sheetList: [],
-                    indexPath: IndexPath(
-                      parent: sheetList.indexPath,
-                      index: sheetList.length),
-                    );                  
-                oldItem.parentId = newId;     
-                oldItem.indexPath = IndexPath(
-                  parent: newList.indexPath,
-                  index: newList.length);
-                newList.sheetList.add(oldItem);
-                //inserting
-                sheetList.insert(
-                index,
-                newList,
-                );
-
-                panelIndex.id = item.id;
-                panelIndex.parentId = item.parentId;
-                panelIndex.parentIndexPath = item.indexPath.parent;
-                panelIndex.itemIndexPath = item.indexPath;
-                _findSheetListItem();
-                print(
-                    'Updated index of text editor: $index');
+                wrapTextInAList(1);
                 _reassignSheetListIndexPath(sheetList);     
               
             });
@@ -5754,11 +5737,12 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
 
   void onRightClick(SheetText sheetText, LongPressDownDetails d, int index, SheetList sheetList) {
     setState(() {
-  panelIndex.id = sheetText.id;
-  panelIndex.parentId = sheetText.parentId;
-  panelIndex.parentIndexPath = sheetText.indexPath.parent;
-  panelIndex.itemIndexPath = sheetText.indexPath;
-  });
+    panelIndex.id = sheetText.id;
+    panelIndex.parentId = sheetText.parentId;
+    panelIndex.parentIndexPath = sheetText.indexPath.parent;
+    panelIndex.itemIndexPath = sheetText.indexPath;
+    _findItem();
+    });
   print('secondaryyyTapppppp');
   
   final entries = buildContextMenuEntries(
@@ -5811,6 +5795,42 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           indexPath: newListIndexPath,
           sheetList: newlist
         )
+      ],
+      indexPath: newIndexPath
+      ));
+      
+      
+      // panelIndex.id = listItem.id;
+      panelIndex.parentId =  newId;
+      panelIndex.parentIndexPath = newIndexPath;
+      _findSheetListItem();
+      
+    });
+  }
+  
+  void wrapTextInAList(int s) {
+    setState(() {
+      var textItem = (getItemAtPath(item.indexPath.parent!) as SheetList).removeAt(item.indexPath.index);
+      print(textItem);
+      var newId = 'LI-${ const Uuid().v4()}';              
+      textItem.parentId = newId;  
+      var newIndexPath = IndexPath(
+        parent: textItem.indexPath.parent,
+        index: textItem.indexPath.index);
+      var newTextIndexPath = IndexPath(
+        parent: newIndexPath,
+        index: 0);  
+      print(newIndexPath.toString());
+      print(newTextIndexPath.toString());
+      (getItemAtPath(item.indexPath.parent!) as SheetList).insert(
+      newIndexPath.index,
+      SheetList(
+      direction:s==0? Axis.horizontal: Axis.vertical,
+      id: newId,
+      parentId: textItem.parentId,
+      listDecoration: newSuperDecoration(),
+      sheetList: [
+        textItem..indexPath = newTextIndexPath
       ],
       indexPath: newIndexPath
       ));
@@ -6022,7 +6042,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                     );
                                   },
                                   child: SingleChildScrollView(
-                                  padding: EdgeInsets.only(bottom: 4),
+                                  padding:const EdgeInsets.only(bottom: 4),
                                   controller: controller,
                                   physics: physics,
                                   scrollDirection:Axis.horizontal,
@@ -6112,7 +6132,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
             panelIndex.id ==
                     sheetText.id
                 ?
-            BorderSide(
+            BorderSide( 
             strokeAlign:
                 BorderSide.strokeAlignInside,
             width:  2,
@@ -6120,22 +6140,60 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       borderRadius:
           BorderRadius.circular(0),
     ),
-    child: Row(
+    child: Column(
+
       children: [
-        const Icon(
-          TablerIcons.cursor_text,
-          size: 14,
-        ),
         Expanded(
-          child: QuillEditor(
-            configurations: sheetText
-                .textEditorConfigurations,
-            focusNode:
-                sheetText.focusNode,
-            scrollController:
-                ScrollController(),
+          child: Row(
+            children: [
+              const Icon(
+                TablerIcons.cursor_text,
+                size: 14,
+              ),
+              Expanded(
+                child: QuillEditor(
+                  configurations: sheetText
+                      .textEditorConfigurations,
+                  focusNode:
+                      sheetText.focusNode,
+                  scrollController:
+                      ScrollController(),
+                ),
+              ),
+            ],
           ),
         ),
+        if( sheetText.inputBlocks.length>1)
+         Expanded(
+           child: Row(
+            children: [
+              const Icon(
+                TablerIcons.math_integral,
+                size: 14,
+              ),
+              Expanded(
+                child: Container(
+                  padding:EdgeInsets.symmetric(horizontal:4),
+                  margin: EdgeInsets.all(2),
+                  decoration:BoxDecoration(
+                    color:defaultPalette.secondary,
+                    borderRadius:BorderRadius.circular(5)
+                  ),
+                  child: Transform.scale(
+                    scale:0.8,
+                    child: QuillEditor(
+                      configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
+                      focusNode:
+                          sheetText.focusNode,
+                      scrollController:
+                          ScrollController(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+                   ),
+         ),
       ],
     ),
   );
@@ -6152,7 +6210,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         double maxFontSize = getMaxFontSize(item.textEditorController);
 
         if (content.trim().isEmpty) {
-          calculatedHeight = 58; // Default height for empty text content
+          calculatedHeight = 50; // Default height for empty text content
         } else {
           int newlineCount = '\n'.allMatches(content).length;
           calculatedHeight = (newlineCount.toDouble() * (maxFontSize * 1.2)) +
@@ -6245,7 +6303,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     double calculateLineWidth(String line, double fontSize) {
       return line.runes.fold(0.0, (sum, ch) {
         String char = String.fromCharCode(ch);
-        return sum + ((charWidthMap[char] ?? fallbackWidth) * (fontSize / 14));
+        return sum + ((fontSize));
       });
     }
 
@@ -6304,19 +6362,19 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
       }
     }
 
-    return width + 20;
+    return width ;
   }
 
   /// Function to extract the maximum font size from a text editor's document
   double getMaxFontSize(QuillController controller) {
-    double maxFontSize = 20.0; // Default font size
+    double maxFontSize = 15.0; // Default font size
 
     // Iterate through each operation in the document's delta
     for (var operation in controller.document.toDelta().operations) {
       if (operation.attributes != null &&
           operation.attributes!.containsKey('size')) {
         final String fontSizeString = operation.attributes?['size'];
-        final double fontSize = double.tryParse(fontSizeString) ?? 20.0;
+        final double fontSize = double.tryParse(fontSizeString) ?? 15.0;
         if (fontSize > maxFontSize) {
           maxFontSize = fontSize;
         }
@@ -6351,24 +6409,47 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
   bool textFieldTapDown(TapDownDetails details, String newId, IndexPath indexPath) {
     
     setState(() {
-      var textItem = getItemAtPath(indexPath) as SheetText;
-      panelIndex.id = textItem.id;
-      panelIndex.parentId = textItem.parentId;
-      panelIndex.parentIndexPath = textItem.indexPath.parent;
-      panelIndex.itemIndexPath = textItem.indexPath;
-      if (panelIndex.parentId.startsWith("LI")) {
-        _findSheetListItem();
+      print(indexPath);
+      print(getItemAtPath(indexPath));
+      SheetText? textItem; // Declare it outside
+
+      try {
+        textItem = getItemAtPath(indexPath) as SheetText;
+        if (textItem.id != newId) {
+          print(newId);
+          textItem = _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
+        }
+      } on Exception catch (e) {
+        // You can optionally handle the error here
+        print('yo: '+newId);
+        textItem = _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
+      } finally {
+        print('yo5: '+newId);
+        textItem ??= _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
+        panelIndex.id = textItem.id; 
+        panelIndex.parentId = textItem.parentId;
+        panelIndex.parentIndexPath = textItem.indexPath.parent;
+        panelIndex.itemIndexPath = textItem.indexPath;
+        _findItem();
+
+        print('yo99: '+panelIndex.toString());
+        if (panelIndex.parentId.startsWith("LI")) {
+          _findSheetListItem();
+        }
+        if (panelIndex.parentId.startsWith("TB")) {
+          _findSheetTableItem(null);
+        }
+        var tmpinx = int.tryParse(textItem.textDecoration.id.substring(textItem.textDecoration.id.indexOf('/') + 1))??-155;
+        // print((sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList);
+        decorationIndex =-1;
+        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+        // print(sheetDecorationVariables.length);
+        whichPropertyTabIsClicked = 2;
+        // propertyTabController.jumpToPage(1);
+      
       }
-      if (panelIndex.parentId.startsWith("TB")) {
-        _findSheetTableItem(null);
-      }
-      var tmpinx = int.tryParse(textItem.textDecoration.id.substring(textItem.textDecoration.id.indexOf('/') + 1))??-155;
-      // print((sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList);
-      decorationIndex =-1;
-      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-      // print(sheetDecorationVariables.length);
-      whichPropertyTabIsClicked = 2;
-      // propertyTabController.jumpToPage(1);
+
+      
     });
 
     // print('clicked');
@@ -7627,32 +7708,46 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                     final entry = OverlayEntry(
                       builder: (context) {
                         return StatefulBuilder(builder: (context, setState) {
-                          var filteredList = spreadSheetList.map((sheetList) {
-                            final matchingTexts = sheetList.sheetList.where((item) {
-                              if (item is SheetTable) return true; // keep all tables
-                              if (item is SheetText) {
-                                return item.name.toLowerCase().contains(textFieldSearchController.text.toLowerCase());
-                              }
-                              return false;
-                            }).toList();
+                          SheetList? filterSheetList(SheetList sheetList, String query) {
+                            final lowerQuery = query.toLowerCase();
 
-                            if (matchingTexts.isNotEmpty) {
+                            List<SheetItem> filteredItems = [];
+
+                            for (var item in sheetList.sheetList) {
+                              if (item is SheetTable) {
+                                filteredItems.add(item); // keep all tables
+                              } else if (item is SheetText) {
+                                if (item.name.toLowerCase().contains(lowerQuery)) {
+                                  filteredItems.add(item);
+                                }
+                              } else if (item is SheetList) {
+                                final nestedFiltered = filterSheetList(item, query);
+                                if (nestedFiltered != null && nestedFiltered.sheetList.isNotEmpty) {
+                                  filteredItems.add(nestedFiltered);
+                                }
+                              }
+                            }
+
+                            if (filteredItems.isNotEmpty) {
                               return SheetList(
                                 id: sheetList.id,
-                                parentId: '',
-                                listDecoration: SuperDecoration(id: ''),
-                                indexPath: IndexPath(index: -22),
-                                // title: sheetList.title,
-                                sheetList: matchingTexts,
-                                // add any other fields if needed
+                                parentId: sheetList.parentId,
+                                listDecoration: sheetList.listDecoration,
+                                indexPath: sheetList.indexPath,
+                                sheetList: filteredItems,
                               );
-                            } else {
-                              return null;
                             }
-                          }).whereType<SheetList>().toList();
+
+                            return null;
+                          }
+
+                          var filteredList = spreadSheetList
+                            .map((sheetList) => filterSheetList(sheetList, textFieldSearchController.text))
+                            .whereType<SheetList>()
+                            .toList();
 
 
-                          print(filteredList);
+
                           return Positioned(
                             left: position.dx,
                             top: position.dy,
@@ -10886,7 +10981,9 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                   //input blocks list and functions library
                                   GestureDetector(
                                     onTap: (){
-                                      selectedInputBlocks = item.inputBlocks;
+                                      setState(() {
+                                        selectedInputBlocks = item.inputBlocks;
+                                      });
                                     },
                                     child: Container(
                                       padding: EdgeInsets.all(5).copyWith(top: 3),
