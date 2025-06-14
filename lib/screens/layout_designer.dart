@@ -5096,6 +5096,56 @@ Widget _buildListWidget(SheetList sheetList) {
 
   
   Widget buildSheetTextWidget(SheetText sheetText) {
+    DateTime? extractDateFromDelta(Document doc) {
+      final plainText = doc.toPlainText();
+
+      // Match: 2 digits (day) + any non-digit + 2 digits (month) + any non-digit + 4 digits (year)
+      final regex = RegExp(r'(\d{1,2})\D+(\d{1,2})\D+(\d{4})');
+
+      final match = regex.firstMatch(plainText);
+
+      if (match != null) {
+        try {
+          int day = int.parse(match.group(1)!);
+          int month = int.parse(match.group(2)!);
+          int year = int.parse(match.group(3)!);
+
+          return DateTime(year, month, day);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      return null;
+    }
+    TimeOfDay? extractTimeFromDelta(Document doc) {
+      final plainText = doc.toPlainText();
+
+      // Match: 2 digits + non-digit + 2 digits
+      final regex = RegExp(r'(\d{1,2})\D+(\d{1,2})');
+
+      final match = regex.firstMatch(plainText);
+
+      if (match != null) {
+        try {
+          int hour = int.parse(match.group(1)!);
+          int minute = int.parse(match.group(2)!);
+
+          if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+            return TimeOfDay(hour: hour, minute: minute);
+          }
+        } catch (_) {
+          return null;
+        }
+      }
+
+      return null;
+    }
+
+    var extractedDate = null;
+    if (sheetText.type == SheetTextType.date) {
+      extractedDate = extractDateFromDelta(sheetText.textEditorController.document);
+    }
   return Container(
     padding: const EdgeInsets.only(
         top: 4,
@@ -5128,8 +5178,12 @@ Widget _buildListWidget(SheetList sheetList) {
         Row(
           children: [
             Container(
-              child: const Icon(
-                TablerIcons.cursor_text,
+              child: Icon(
+                sheetText.type == SheetTextType.string
+                ? TablerIcons.cursor_text
+                : sheetText.type == SheetTextType.integer
+                ? TablerIcons.numbers
+                : TablerIcons.decimal,
                 size: 15,
               ),
             ),
@@ -5151,15 +5205,120 @@ Widget _buildListWidget(SheetList sheetList) {
           ),
             SizedBox(width:4),],
             Expanded(
-              child: QuillEditor(
-                configurations: sheetText
-                    .textEditorConfigurations,
-                focusNode:
-                    sheetText.focusNode,
-                scrollController:
-                    ScrollController(),
-              ),
-            ),
+            child: sheetText.type == SheetTextType.date
+                ? Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: defaultPalette.black.withOpacity(0.4)),
+                      borderRadius: BorderRadius.circular(8),
+                      color: defaultPalette.secondary,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${extractedDate?.day.toString().padLeft(2, '0') ?? '--'}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        Text('/'),
+                        Expanded(
+                          child: Text(
+                            '${extractedDate?.month.toString().padLeft(2, '0') ?? '--'}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        Text('/'),
+                        Expanded(
+                          child: Text(
+                            '${extractedDate?.year ?? '----'}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(TablerIcons.calendar_plus, size: 16),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: extractedDate ?? DateTime.now(),
+                              firstDate: DateTime(1800),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              // You can now patch this back into the controller as plain text
+                              setState(() {
+                                sheetText.textEditorConfigurations.controller.replaceText(
+                                  0,
+                                  sheetText.textEditorConfigurations.controller.document.length - 1,
+                                  '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}',
+                                  TextSelection.collapsed(offset: 0),
+                                );
+                              });
+                            }
+                          },
+                        )
+                      ],
+                    ),
+                  )
+                : sheetText.type == SheetTextType.time
+      ? Container(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            border: Border.all(color: defaultPalette.black.withOpacity(0.4)),
+            borderRadius: BorderRadius.circular(8),
+            color: defaultPalette.secondary,
+          ),
+          child: Row(
+            children: [
+              Builder(builder: (context) {
+                final time = extractTimeFromDelta(sheetText.textEditorController.document);
+                final hourStr = time?.hour.toString().padLeft(2, '0') ?? '--';
+                final minuteStr = time?.minute.toString().padLeft(2, '0') ?? '--';
+
+                return Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text(hourStr, style: TextStyle(fontSize: 13)),
+                      Text(':', style: TextStyle(fontSize: 13)),
+                      Text(minuteStr, style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                );
+              }),
+              SizedBox(width: 8),
+              IconButton(
+                icon: Icon(TablerIcons.clock_plus, size: 16),
+                onPressed: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                    sheetText.textEditorController.replaceText(
+                      0,
+                      sheetText.textEditorController.document.length-1,
+                      formattedTime,
+                      TextSelection.collapsed(offset: 0),
+                    );
+                  }
+                },
+              )
+            ],
+          ),
+        )
+      : QuillEditor(
+                    configurations: sheetText.textEditorConfigurations,
+                    focusNode: sheetText.focusNode,
+                    scrollController: ScrollController(),
+                  ),
+          ),
+
             if(sheetText.hide)
             ...[
             SizedBox(width:2),
