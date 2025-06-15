@@ -36,7 +36,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
 
   @override
   void didUpdateWidget(covariant TreeView<T> oldWidget) {
-    // TODO: implement didUpdateWidget
+    
     super.didUpdateWidget(oldWidget);
     _roots = widget.nodes;
     _initializeNodes(_roots, null);
@@ -48,7 +48,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
 
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
+   
     super.didChangeDependencies();
     _roots = widget.nodes;
     _initializeNodes(_roots, null);
@@ -270,7 +270,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
     List<bool> selectedValues = [];
     for (var node in nodes) {
       if ( !node._hidden) {
-        selectedValues.add(node._isExpanded??false);
+        selectedValues.add(node._isExpanded);
       }
       selectedValues.addAll(_getExpandedValues(node.children));
     }
@@ -392,7 +392,7 @@ class TreeViewState<T> extends State<TreeView<T>> {
                                 ),
                               ),
                               
-                              SizedBox(width: 0), // optional spacing between columns
+                              const SizedBox(width: 0), // optional spacing between columns
 
                               // Second column: odd-indexed items
                               Expanded(

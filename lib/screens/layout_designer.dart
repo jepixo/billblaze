@@ -4235,862 +4235,6 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         return PdfPageFormat.a4;
     }
   }
-  //deprecated
-  Widget _buildListWidget(SheetList sheetList) {
-      // print('rebuilding listWidget');
-      
-      child(controller, physics) => ReorderableListView.builder(
-      shrinkWrap: true,
-      buildDefaultDragHandles: false,
-      scrollDirection: sheetList.direction,
-      scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
-      physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
-      itemCount: sheetList.length,
-      onReorderStart: (index) {
-        if (sheetList[index] is SheetText) {
-          if (item.id == 'yo') {
-            setState(() {
-              whichPropertyTabIsClicked = 1;
-              print(item.id);
-              if (sheetList[index].id == panelIndex.id) {
-                  item =sheetList[index] as SheetText;
-                  panelIndex.itemIndexPath = sheetList[index].indexPath;
-              }
-            });
-          }
-        }
-      },
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          if (newIndex > oldIndex) {
-            newIndex -= 1;
-          }
-          final item = sheetList.removeAt(oldIndex);
-          // buildlistw
-          sheetList.insert(newIndex, item);
-          _reassignSheetListIndexPath(sheetList);
-        });
-      },
-      proxyDecorator: (child, index, animation) {
-        return Container(child: child); },
-        itemBuilder: (context, index) {
-        // print('hello hello sprdListBuilding: ${sheetList[index]}');
-        if (sheetList[index] is SheetText) {
-          var sheetText = sheetList[index] as SheetText;
-          // if (item.id == 'yo') {
-          //   print(item.id);
-          //   if (sheetText.id == panelIndex.id) {
-          //       item =sheetText;
-          //       panelIndex.itemIndexPath = sheetText.indexPath;
-          //   }
-          // }
-          return ReorderableDragStartListener(
-            index: index,
-            key: ValueKey(sheetText.id),
-            child: IntrinsicWidth(
-              child: IntrinsicHeight(
-                child:Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        
-                        setState(() {
-                          panelIndex.id = sheetText.id;
-                          panelIndex.itemIndexPath = sheetText.indexPath;
-                          panelIndex.parentId = sheetList.id;
-                          panelIndex.parentIndexPath = sheetList.indexPath;
-                          
-                          whichPropertyTabIsClicked = 2;
-                        
-                          item = sheetText;
-                          _findItem();
-                          // inputBlockExpansionList = List.generate(item.inputBlocks.length, (index) => false,); 
-                        });
-                        
-                        print('clicked');
-                        print(sheetListItem.id);
-                        
-                        print(panelIndex);
-                      },
-                      onSecondaryLongPressDown: (d) {
-                        onRightClick(sheetText, d, index,sheetList);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            // bottom: 2,
-                            left: 2,
-                            top: 4,
-                            right: 2),
-                        child: buildSheetTextWidget(sheetList[index] as SheetText)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-          // buildlistw
-        } else if (sheetList[index] is SheetList) {
-          return ReorderableDragStartListener(
-            index: index,
-            key: ValueKey(sheetList[index].id),
-            child: Container(
-                margin: EdgeInsets.only(top: 4,),
-                // width:sheetList.id == spreadSheetList[currentPageIndex].id?
-                // sWidth
-                // : findSheetListBuildWidth(
-                //             sheetList[index] as SheetList) <=
-                //         50
-                //     ? 50
-                //     : findSheetListBuildWidth(
-                //         sheetList[index] as SheetList),
-                child: Stack(
-                  children: [
-                    buildListWidget(
-                        sheetList[index] as SheetList),
-                  ],
-                )),
-          );
-        }
-          else if(sheetList[index] is SheetTable){
-          return ReorderableDragStartListener(
-            key: ValueKey(sheetList[index].id),
-            index: index,
-            child: buildSheetTableWidget(sheetList[index] as SheetTable)
-            );
-        }
-        return Container(
-          key: ValueKey(const Uuid().v4()),
-          color: Colors.amberAccent,
-          height: 12,
-          // buildlistw
-        );
-        },
-        
-        );
-    
-      return Stack(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () {
-              setState(() {
-                panelIndex.parentIndexPath = sheetList.indexPath;
-                panelIndex.parentId = sheetList.id;
-                _unfocusAll();
-                _findSheetListItem();
-                whichPropertyTabIsClicked = 3;
-                Future.delayed(Durations.short1).then(
-                  (value) async {
-                    print("YUHUUUUUUUU");
-                    listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
-                    await listPropertyCardsController.animateTo(Offset(1, 1),
-                    duration: Durations.short1, curve: Curves.linear);
-                    // listPropertyTabContainerController.animateTo(whichListPropertyTabIsClicked);
-                    // listPropertyCardsController.swipeDefault();
-                    // listPropertyCardsController.swipeDefault();
-                  },
-                );
-              
-              });
-            },
-            child: ScrollConfiguration(
-              behavior: ScrollBehavior().copyWith(scrollbars: false),
-              child: Padding(
-                  padding: spreadSheetList[currentPageIndex].id == sheetList.id
-                  ? EdgeInsets.all(0)
-                  : const EdgeInsets.only(
-                left: 4,
-                right: 3,
-              ),
-                child: CustomBorder(
-                  color: panelIndex.parentId == sheetList.id
-                  ? spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? defaultPalette.transparent
-                    : defaultPalette.extras[1]
-                  : defaultPalette.transparent,
-                  radius: Radius.circular(15),
-                  strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
-                  dashPattern: [10, 5],
-                  strokeCap: StrokeCap.square,
-                  animateBorder: true,
-                  animateDuration: Duration(seconds: 5),
-                  child: Container(
-                width:sheetList.id == spreadSheetList[currentPageIndex].id
-                ?sWidth
-                : findSheetListBuildWidth(sheetList).clamp(50,double.infinity),
-                height:sheetList.id == spreadSheetList[currentPageIndex].id
-                ? sHeight
-                : findSheetListBuildHeight(sheetList).clamp(50,double.infinity),
-                padding: const EdgeInsets.only(top: 0, left: 1, right: 1, bottom: 4),
-                                  
-                // buildlistw
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
-                      color: panelIndex.parentId == sheetList.id
-                          ?  spreadSheetList[currentPageIndex].id == sheetList.id
-                            ? defaultPalette.transparent
-                            :defaultPalette.extras[1]
-                          : spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? defaultPalette.transparent
-                    :Color(0xFFFFFFFF)),
-                  color: defaultPalette.transparent,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: DynMouseScroll(
-                  durationMS: 500,
-                  scrollSpeed: 1,
-                  builder: (context, controller, physics) {
-                    return ScrollbarUltima(
-                      alwaysShowThumb: true,
-                      controller: controller,
-                      scrollbarPosition: sheetList.direction == Axis.vertical?
-                        ScrollbarPosition.right : ScrollbarPosition.bottom,
-                      backgroundColor: defaultPalette.primary,
-                      isDraggable: true,
-                      maxDynamicThumbLength: 80,
-                      minDynamicThumbLength: 30,
-                      thumbBuilder:
-                          (context, animation, widgetStates) {
-                        return Container(
-                          margin: EdgeInsets.symmetric(
-                            vertical:sheetList.direction == Axis.vertical?5:1,
-                            horizontal: sheetList.direction == Axis.vertical? 0:5
-                            ),
-                          decoration: BoxDecoration(
-                            border: Border.all(),
-                            color: defaultPalette.primary,
-                            borderRadius:
-                                BorderRadius.circular(99999)),
-                          width:sheetList.id == spreadSheetList[currentPageIndex].id
-                          ? 3
-                          : sheetList.direction == Axis.vertical? 4:60,
-                          height:sheetList.direction == Axis.vertical? 60:5,
-                        );
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
-                          sheetList.id == spreadSheetList[currentPageIndex].id
-                          ?3 : 3.5
-                          :0),
-                        child: spreadSheetList[currentPageIndex].id == sheetList.id
-                        ? MinimapScrollbarWidget(
-                          controller: controller,
-                          physics: physics,
-                          scaleFactor: 0.08,
-                          miniSize: 30,
-                          imageUpdateInterval: 5000000,
-                          child: SizedBox(
-                            width:sheetList.id == spreadSheetList[currentPageIndex].id
-                            ?sWidth
-                            : findSheetListBuildWidth(sheetList) <= 50
-                              ? 50
-                              : findSheetListBuildWidth(sheetList),
-                            child: sheetList.isEmpty? SizedBox(height:50, width:100): child(controller,physics))) : child(controller,physics)
-                        ),
-                        );
-                        }
-                      ),
-                    ),
-                  ),
-                ),
-              
-              ),
-            ),
-          ),
-          if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
-          Positioned(
-              top: 0,
-              child: SlideInLeft(
-                duration: Durations.short2,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.deferToChild,
-                  onTapDown: (d) {
-                    setState(() {
-                      panelIndex.parentId = sheetList.id;
-                      // panelIndex.runTimeType = sheetList.runtimeType;
-                    });
-                    
-                    List<ContextMenuEntry> buildSheetListContextMenuEntries(SheetList sheetList) {
-                      var entries = <ContextMenuEntry>[
-                        MenuHeader(text: 'SheetList Menu')
-                      ];
-
-                      // Cut SheetList
-
-                      entries.add(MenuItem(
-                        label: 'Cut',
-                        icon: TablerIcons.cut,
-                        onSelected: () {
-                          setState(() {
-                            print(sheetListClipboard );
-                            sheetListClipboard[0] = null;
-                            sheetListClipboard[1] = (_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList.removeWhere((element) => element==sheetListItem,);
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));
-                            print(sheetListClipboard );
-                            print(sheetListClipboard[1]?.id );
-                          });
-                          // });
-                          // saveLayout();
-                        },
-                      ));
-
-                      // Copy
-                      entries.add(MenuItem(
-                        label: 'Copy',
-                        icon: TablerIcons.copy,
-                        onSelected: () {
-                          print(sheetListClipboard );
-                          setState(() {
-                            sheetListClipboard[0]=(getItemAtPath(sheetListItem.indexPath) as SheetList);
-                            sheetListClipboard[1] = null;
-                          });
-                          print(sheetListClipboard );
-                        },
-                      ));
-
-                      // Paste
-                      entries.add(MenuItem(
-                        label: 'Paste',
-                        icon: TablerIcons.clipboard,
-                        onSelected: () {
-
-                          List<SheetItem> deepCopySheetList(
-                            List<SheetItem> sheetList, {
-                            required String parentIdOverride, // 👈 added param
-                            required IndexPath indexPath,
-                            Set<String>? visited,
-                            int depth = 0,
-                            int maxDepth = 50,
-                          }) {
-                            visited ??= <String>{};
-
-                            return sheetList.asMap().entries.map((e) {
-                              var childIndexPath = IndexPath(
-                                parent: indexPath,
-                                index: e.key,
-                                );
-                              if (depth > maxDepth) {
-                                throw Exception("Too deeply nested structure");
-                              }
-
-                              if (visited!.contains(e.value.id)) {
-                                throw Exception("Recursive structure detected: ${e.value.id}");
-                              }
-
-                              visited.add(e.value.id);
-
-                              if (e.value is SheetText) {
-                              
-
-                                return _addTextField(
-                                  docString: (e.value as SheetText).textEditorConfigurations.controller.document.toDelta().toJson(),
-                                  id: 'TX-${ const Uuid().v4()}',
-                                  parentId: parentIdOverride,
-                                  shouldReturn: true,
-                                  textDecoration: (e.value as SheetText).textDecoration,
-                                  indexPath: childIndexPath,
-                                  inputBlocks: (e.value as SheetText).inputBlocks.map((e) => InputBlock(indexPath: e.indexPath, blockIndex: e.blockIndex, id: e.id),).toList(),
-
-                                  );
-                              } else if (e.value is SheetList) {
-                                final newId = 'LI-${ const Uuid().v4()}';
-                                return SheetList(
-                                  id: newId,
-                                  parentId: parentIdOverride, // 👈 Apply to this nested list
-                                  direction: (e.value as SheetList).direction,
-                                  crossAxisAlignment: (e.value as SheetList).crossAxisAlignment,
-                                  mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
-                                  mainAxisSize: (e.value as SheetList).mainAxisSize,
-                                  size: (e.value as SheetList).size,
-                                  listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
-                                  sheetList: deepCopySheetList(
-                                    (e.value as SheetList).sheetList,
-                                    parentIdOverride: newId, // 👈 Recursive update to children
-                                    visited: {...visited},
-                                    depth: depth + 1,
-                                    indexPath: childIndexPath,
-                                  ),
-                                  indexPath: childIndexPath,
-                                );
-                              }
-
-                              throw Exception("Unknown or Unaccounted SheetItem type in paste: ${e.value.runtimeType}");
-                            }).toList();
-                          }
-
-
-                          final isNotCopied = sheetListClipboard[0] == null;
-                          final originalItem = isNotCopied
-                              ? sheetListClipboard[1]!
-                              : sheetListClipboard[0]!;
-                          final newId = isNotCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
-                          var newIndexPath = IndexPath(
-                            parent:_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).indexPath,
-                            index: 0);
-
-                          final newSheetList = deepCopySheetList(
-                            originalItem.sheetList,
-                            parentIdOverride: newId, // 👈 Pass new parentId to apply to all children
-                            indexPath: newIndexPath
-                          );
-
-                          
-
-                          final newItem = originalItem.copyWith(
-                            id: newId,
-                            parentId: sheetListItem.id,
-                            sheetList: newSheetList,
-                            indexPath: newIndexPath
-                          );
-
-
-                          setState(() {
-                            _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex])
-                                .insert(0, newItem);
-                          });
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
-                          saveLayout();
-                          sheetListClipboard[1] = null;
-
-
-                        },
-                      ));
-
-                      entries.add(const MenuDivider());
-
-                      entries.addAll([
-                        const MenuHeader(text: 'ops'),
-                      //ADD ITEMS
-                      MenuItem.submenu(
-                          label: 'Add',
-                          icon: TablerIcons.new_section,
-                          items: [
-                  MenuItem.submenu(
-                      label: 'Text',
-                      icon: TablerIcons.text_recognition,
-                      items: [
-                        //add text before the selected one
-                        MenuItem(
-                          label: 'Before',
-                          icon: TablerIcons
-                              .row_insert_top,
-                          onSelected: () {
-                            setState(() {
-                              var newId = 'TX-${Uuid().v4()}';
-                            var newItem = _addTextField( 
-                              id: newId,
-                              shouldReturn:  true,
-                              textDecoration:  newSuperDecoration(),
-                              indexPath: IndexPath(
-                                parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                                index: 0),
-                              inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
-                              );
-                      
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
-                              , newItem);
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            });
-                          },
-                        ),
-                        //add text after the selected one
-                        MenuItem(
-                          label: 'After',
-                          icon: TablerIcons
-                              .row_insert_bottom,
-                          onSelected: () {
-                            setState(() {
-                              var newId = 'TX-${Uuid().v4()}';
-                            var newItem = _addTextField( 
-                              id: newId,
-                              shouldReturn:  true,
-                              textDecoration:  newSuperDecoration(),
-                              indexPath: IndexPath(
-                                parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                                index: 0),
-                              inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],  
-                              );
-                      
-                            var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                            if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
-                              
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                                  index+1,
-                                  newItem);
-                            } else {
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
-                                  newItem);
-                            }
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            });
-                            
-                          },
-                        ),
-                        //add text inside the selected one
-                        MenuItem.submenu(
-                          label: 'Inside',
-                          icon: TablerIcons.code_plus,
-                          items:[
-                          MenuItem(
-                            label: 'At first',
-                            icon: TablerIcons.row_insert_top,
-                            onSelected: () {
-                              setState(() {
-                                var newId = 'TX-${Uuid().v4()}';
-                              var newItem = _addTextField( 
-                                id: newId,
-                                shouldReturn:  true,
-                                textDecoration: newSuperDecoration(),
-                                indexPath: IndexPath(
-                                parent:sheetList.indexPath,
-                                index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-                                );
-                      
-                              var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                              if (index<sheetList.length) {
-                                
-                                sheetList.insert( 0, newItem);
-                              } else {
-                                sheetList.add(
-                                    newItem);
-                              }
-                              _reassignSheetListIndexPath(sheetList);  
-                              
-                              });
-                            },
-                          ),
-                          //add to the end a text inside the list
-                          MenuItem(
-                            label: 'At Last',
-                            icon: TablerIcons
-                                .row_insert_bottom,
-                            onSelected: () {
-                              setState(() {
-                                var newId = 'TX-${Uuid().v4()}';
-                                var newItem = _addTextField( 
-                                  id: newId,
-                                  shouldReturn:  true,
-                                  textDecoration:  newSuperDecoration(),
-                                  indexPath: IndexPath(
-                                  parent:sheetList.indexPath,
-                                  index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-                                  );
-                      
-                                  sheetList.add(
-                                      newItem);
-                                
-                              });
-                            },
-                          ),
-                      
-                          ]
-                        ),
-                      
-                      ]),
-                  MenuItem.submenu(
-                      label: 'List',
-                      icon: TablerIcons
-                          .brackets_contain_start,
-                      items: [
-                        //add list before the selected one
-                        MenuItem(
-                          label: 'Before',
-                          icon: TablerIcons
-                              .row_insert_top,
-                          onSelected: () {
-                            setState(() {
-                              var newId ='LI-${ const Uuid().v4()}';
-
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
-                              , SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [
-                            ],
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0)
-                            ));
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            
-                            });
-                          },
-                        ),
-                        //add list after the selected one
-                        MenuItem(
-                          label: 'After',
-                          icon: TablerIcons
-                              .row_insert_bottom,
-                          onSelected: () {
-                            setState(() {
-                            var newId ='LI-${ const Uuid().v4()}';
-                            var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                            if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
-                              
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                                  index+1,
-                                  SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration:  newSuperDecoration(),
-                              sheetList: [],
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0)
-                            ));
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            
-                            } else {
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
-                                  SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration:  newSuperDecoration(),
-                              sheetList: [],
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0)
-                            ));
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            
-                            }
-                            });
-                            
-                          },
-                        ),
-                        //add list inside the selected one
-                        MenuItem.submenu(
-                          label: 'Inside',
-                          icon: TablerIcons.code_plus,
-                          items:[
-                          MenuItem(
-                            label: 'At first',
-                            icon: TablerIcons.row_insert_top,
-                            onSelected: () {
-                              setState(() {
-                              var newId ='LI-${ const Uuid().v4()}';             
-                              if (sheetList.length!=0) {
-                                
-                                sheetList.insert( 0, SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration: newSuperDecoration(),
-                              sheetList: [],
-                              indexPath: IndexPath(
-                                parent:sheetList.indexPath,
-                                index: 0)
-                              ));
-                              } else {
-                                sheetList.add(
-                                    SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration: newSuperDecoration(),
-                              sheetList: [],
-                              indexPath: IndexPath(
-                                parent: sheetList.indexPath,
-                                index: sheetList.length)
-                              ));
-                              }
-                                _reassignSheetListIndexPath(sheetList);
-                              });
-                            },
-                          ),
-                          //add a new row with a new textfield inside at the current index
-                          MenuItem(
-                            label: 'At Last',
-                            icon: TablerIcons
-                                .row_insert_bottom,
-                            onSelected: () {
-                              setState(() {
-                                var newId ='LI-${ const Uuid().v4()}';
-                                
-                                  sheetList.add(
-                                      SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration: newSuperDecoration(),
-                              sheetList: [],
-                              indexPath: IndexPath(
-                                parent: sheetList.indexPath,
-                                index: sheetList.length)
-                              ));
-                                
-                              });
-                            },
-                          ),
-                      
-                          ]
-                        ),
-                      
-                            
-                        ])    
-                      ]),
-                      //Wrap ITEMS
-                      MenuItem.submenu(
-                      label: 'Wrap',
-                      icon: TablerIcons.brackets_contain,
-                      items: [
-                        //In a row
-                      MenuItem(
-                        label: 'In a Row',
-                        icon: TablerIcons.layout_rows ,
-                        onSelected: () {
-                          wrapInAList(0);
-                        },
-                      ),
-                        //In a column
-                      MenuItem(
-                        label: 'In a Column',
-                        icon: TablerIcons
-                            .layout_columns,
-                        onSelected: () {
-                          wrapInAList(1);
-                        },
-                        ),
-                      ]),
-      
-                        //Clear Field
-                        MenuItem(
-                          label: 'Empty The List',
-                          icon: TablerIcons.square_rounded_x,
-                          onSelected: () async {
-                            await showAdaptiveDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text(
-                                      'Do you really really want to Empty the List?'),
-                                  content: Text(
-                                      'This will clear all the text fields from current SheetList. Are you sure?'),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            var temp = _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]);
-                                            
-                                            (temp as SheetList).sheetList.clear();
-
-                                            _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).sheetList = temp.sheetList;
-                                            saveLayout(); // Save changes after clearing
-                                          });
-                                          Navigator.pop(
-                                              context); // Close the current context
-                                        },
-                                        child: Text('Yes')),
-                                    TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: Text('No')),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        //Delete
-                        MenuItem(
-                          label: 'Delete',
-                          icon: TablerIcons.trash,
-                          onSelected: () async {
-                            await showAdaptiveDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text('Confirm Delete'),
-                                  content: const Text(
-                                      'This will DELETE the current List with its contents. Are you sure?'),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            // sheetList.removeAt(index);
-                                            panelIndex.id = '';
-                                            // panelIndex.runTimeType = null;
-                                          });
-                                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList
-                                            .removeWhere((element) => element.id == sheetListItem.id,);
-                                          
-                                          // });
-                                          _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
-                                          saveLayout();
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('Yes')),
-                                    TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('No')),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        )
-                      ]);
-
-                      return entries;
-                    }
-
-                    final entries = buildSheetListContextMenuEntries(sheetList);
-                    var menu = ContextMenu(
-                        entries: entries,
-                        boxDecoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: defaultPalette.black.withOpacity(0.3),
-                                blurRadius: 2,
-                                // spreadRadius: 10
-                              )
-                            ],
-                            color: defaultPalette.primary,
-                            borderRadius: BorderRadius.circular(10)),
-                        position:
-                            Offset(d.globalPosition.dx, d.globalPosition.dy));
-                    menu.show(context);
-                  },
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                            width: 2,
-                            color: panelIndex.parentId == sheetList.id
-                                ? defaultPalette.extras[1]
-                                : ui.Color(0xFFFFFFFF)),
-                        color: defaultPalette.quaternary,
-                        shape: BoxShape.circle),
-                    width: 15,
-                    height: 15,
-                  ),
-                ),
-              ),
-            ), // Expandable menus and other widgets can stay the same
-        
-      ],
-    );
-  }
   //in use
   Widget buildListWidget(SheetList sheetList) {
     // print('rebuilding listWidget');
@@ -5223,743 +4367,738 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
       
       );
   
-    return MeasureSize(
-        onChange: (size) {
-          print('list size: $size,');
+    return Stack(
+    children: [
+      GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          setState(() {
+            panelIndex.parentIndexPath = sheetList.indexPath;
+            panelIndex.parentId = sheetList.id;
+            _findSheetListItem();
+            whichPropertyTabIsClicked = 3;
+            Future.delayed(Durations.short1).then(
+              (value) async {
+                print("YUHUUUUUUUU");
+                listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
+                await listPropertyCardsController.animateTo(Offset(1, 1),
+                duration: Durations.short1, curve: Curves.linear);
+                // listPropertyTabContainerController.animateTo(whichListPropertyTabIsClicked);
+                // listPropertyCardsController.swipeDefault();
+                // listPropertyCardsController.swipeDefault();
+              },
+            );
+           
+          });
         },
-        child: Stack(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () {
-              setState(() {
-                panelIndex.parentIndexPath = sheetList.indexPath;
-                panelIndex.parentId = sheetList.id;
-                _findSheetListItem();
-                whichPropertyTabIsClicked = 3;
-                Future.delayed(Durations.short1).then(
-                  (value) async {
-                    print("YUHUUUUUUUU");
-                    listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
-                    await listPropertyCardsController.animateTo(Offset(1, 1),
-                    duration: Durations.short1, curve: Curves.linear);
-                    // listPropertyTabContainerController.animateTo(whichListPropertyTabIsClicked);
-                    // listPropertyCardsController.swipeDefault();
-                    // listPropertyCardsController.swipeDefault();
-                  },
-                );
-               
-              });
-            },
-            child: ScrollConfiguration(
-              behavior: ScrollBehavior().copyWith(scrollbars: false),
-              child: Padding(
-                  padding: spreadSheetList[currentPageIndex].id == sheetList.id
-                  ? EdgeInsets.all(0)
-                  : const EdgeInsets.only(
-                left: 4,
-                right: 3
-              ),
-                child: CustomBorder(
-                  color: panelIndex.parentId == sheetList.id
-                  ? spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? defaultPalette.transparent
-                    : defaultPalette.extras[1]
-                  : defaultPalette.transparent,
-                  radius: Radius.circular(15),
-                  strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
-                  dashPattern: [10, 5],
-                  strokeCap: StrokeCap.square,
-                  animateBorder: true,
-                  animateDuration: Duration(seconds: 5),
-                  //we took out width and put it in the contraints, now we commented out all height width
-                  child: Container(
-                    height:spreadSheetList[currentPageIndex].id == sheetList.id
-                    ?sHeight-40: findSheetListBuildHeight(sheetList).clamp(50, double.infinity),
-                    width: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
-                    ? sWidth: (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
-                    ? sWidth: null,
-                    constraints: BoxConstraints(
-                      minWidth: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
-                        ? sWidth
-                        : (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
-                        ? sWidth
-                        : 150,
-                      maxWidth: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
-                        ? sWidth
-                        : (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
-                        ? sWidth
-                        : sheetList.direction == Axis.horizontal
-                        ? sheetList.size.width.clamp(151, double.infinity)
-                        : findSheetListBuildWidth(sheetList),
-                    ),
-                padding: const EdgeInsets.only(top: 0, left: 1, right: 1),
-                                  
-                // buildlistw
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
-                      color: panelIndex.parentId == sheetList.id
-                          ?  spreadSheetList[currentPageIndex].id == sheetList.id
-                            ? defaultPalette.transparent
-                            :defaultPalette.extras[1]
-                          : spreadSheetList[currentPageIndex].id == sheetList.id
-                    ? defaultPalette.transparent
-                    :Color(0xFFFFFFFF)),
-                  color: defaultPalette.transparent,
-                  borderRadius: BorderRadius.circular(15),
+        child: ScrollConfiguration(
+          behavior: ScrollBehavior().copyWith(scrollbars: false),
+          child: Padding(
+              padding: spreadSheetList[currentPageIndex].id == sheetList.id
+              ? EdgeInsets.all(0)
+              : const EdgeInsets.only(
+            left: 4,
+            right: 3
+          ),
+            child: CustomBorder(
+              color: panelIndex.parentId == sheetList.id
+              ? spreadSheetList[currentPageIndex].id == sheetList.id
+                ? defaultPalette.transparent
+                : defaultPalette.extras[1]
+              : defaultPalette.transparent,
+              radius: Radius.circular(15),
+              strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
+              dashPattern: [10, 5],
+              strokeCap: StrokeCap.square,
+              animateBorder: true,
+              animateDuration: Duration(seconds: 5),
+              //we took out width and put it in the contraints, now we commented out all height width
+              child: Container(
+                height:spreadSheetList[currentPageIndex].id == sheetList.id
+                ?sHeight-40: findSheetListBuildHeight(sheetList).clamp(50, double.infinity),
+                width: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
+                ? sWidth: (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
+                ? sWidth: null,
+                constraints: BoxConstraints(
+                  minWidth: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
+                    ? sWidth
+                    : (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
+                    ? sWidth
+                    : 150,
+                  maxWidth: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
+                    ? sWidth
+                    : (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
+                    ? sWidth
+                    : sheetList.direction == Axis.horizontal
+                    ? sheetList.size.width.clamp(151, double.infinity)
+                    : findSheetListBuildWidth(sheetList),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: DynMouseScroll(
-                  durationMS: 500,
-                  scrollSpeed: 1,
-                  builder: (context, controller, physics) {
-                    return ScrollbarUltima(
-                      alwaysShowThumb: true,
-                      controller: controller,
-                      scrollbarPosition: sheetList.direction == Axis.vertical?
-                        ScrollbarPosition.right : ScrollbarPosition.bottom,
-                      backgroundColor: defaultPalette.primary,
-                      isDraggable: true,
-                      maxDynamicThumbLength: 80,
-                      thumbBuilder:
-                          (context, animation, widgetStates) {
-                        return Container(
-                          margin: EdgeInsets.symmetric(
-                            vertical:5,
-                            horizontal: sheetList.direction == Axis.vertical? 0:5
-                            ),
-                          decoration: BoxDecoration(
-                            border: Border.all(),
-                            color: defaultPalette.primary,
-                            borderRadius:
-                                BorderRadius.circular(99999)),
-                          width:sheetList.id == spreadSheetList[currentPageIndex].id
-                          ? 3
-                          : sheetList.direction == Axis.vertical? 4:60,
-                          height:sheetList.direction == Axis.vertical? 60:5,
-                        );
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
-                          sheetList.id == spreadSheetList[currentPageIndex].id
-                          ?3 : 3.5
-                          :0),
-                        child: spreadSheetList[currentPageIndex].id == sheetList.id
-                        ? MinimapScrollbarWidget(
-                          controller: controller,
-                          physics: physics,
-                          scaleFactor: 0.08,
-                          miniSize: 30,
-                          imageUpdateInterval: 5000000,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minWidth: 0, // allow it to shrink
-                              maxWidth: double.infinity, // no hard upper limit unless needed
-                            ),
-                            child: sheetList.isEmpty? SizedBox(height:50, width:100): child(controller,physics))) : child(controller,physics)
+            padding: const EdgeInsets.only(top: 0, left: 1, right: 1),
+                              
+            // buildlistw
+            decoration: BoxDecoration(
+              border: Border.all(
+                  width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
+                  color: panelIndex.parentId == sheetList.id
+                      ?  spreadSheetList[currentPageIndex].id == sheetList.id
+                        ? defaultPalette.transparent
+                        :defaultPalette.extras[1]
+                      : spreadSheetList[currentPageIndex].id == sheetList.id
+                ? defaultPalette.transparent
+                :Color(0xFFFFFFFF)),
+              color: defaultPalette.transparent,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: DynMouseScroll(
+              durationMS: 500,
+              scrollSpeed: 1,
+              builder: (context, controller, physics) {
+                return ScrollbarUltima(
+                  alwaysShowThumb: true,
+                  controller: controller,
+                  scrollbarPosition: sheetList.direction == Axis.vertical?
+                    ScrollbarPosition.right : ScrollbarPosition.bottom,
+                  backgroundColor: defaultPalette.primary,
+                  isDraggable: true,
+                  maxDynamicThumbLength: 80,
+                  thumbBuilder:
+                      (context, animation, widgetStates) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(
+                        vertical:5,
+                        horizontal: sheetList.direction == Axis.vertical? 0:5
                         ),
-                        );
-                        }
-                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                        color: defaultPalette.primary,
+                        borderRadius:
+                            BorderRadius.circular(99999)),
+                      width:sheetList.id == spreadSheetList[currentPageIndex].id
+                      ? 3
+                      : sheetList.direction == Axis.vertical? 4:60,
+                      height:sheetList.direction == Axis.vertical? 60:5,
+                    );
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
+                      sheetList.id == spreadSheetList[currentPageIndex].id
+                      ?3 : 3.5
+                      :0),
+                    child: spreadSheetList[currentPageIndex].id == sheetList.id
+                    ? MinimapScrollbarWidget(
+                      controller: controller,
+                      physics: physics,
+                      scaleFactor: 0.08,
+                      miniSize: 30,
+                      imageUpdateInterval: 5000000,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 0, // allow it to shrink
+                          maxWidth: double.infinity, // no hard upper limit unless needed
+                        ),
+                        child: sheetList.isEmpty? SizedBox(height:50, width:100): child(controller,physics))) : child(controller,physics)
                     ),
+                    );
+                    }
                   ),
                 ),
-              
+              ),
+            ),
+          
+          ),
+        ),
+      ),
+      if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
+      Positioned(
+          top: 0,
+          child: SlideInLeft(
+            duration: Durations.short2,
+            child: GestureDetector(
+              behavior: HitTestBehavior.deferToChild,
+              onTapDown: (d) {
+                setState(() {
+                  panelIndex.parentId = sheetList.id;
+                  // panelIndex.runTimeType = sheetList.runtimeType;
+                });
+                
+                List<ContextMenuEntry> buildSheetListContextMenuEntries( SheetList sheetList) {
+                  var entries = <ContextMenuEntry>[
+                    MenuHeader(text: 'SheetList Menu')
+                  ];
+          
+                  // Cut SheetList
+          
+                  entries.add(MenuItem(
+                    label: 'Cut',
+                    icon: TablerIcons.cut,
+                    onSelected: () {
+                      setState(() {
+                        print(sheetListClipboard );
+                        sheetListClipboard[0] = null;
+                        sheetListClipboard[1] = (_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
+                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList.removeWhere((element) => element==sheetListItem,);
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));
+                        print(sheetListClipboard );
+                        print(sheetListClipboard[1]?.id );
+                      });
+                      // });
+                      // saveLayout();
+                    },
+                  ));
+          
+                  // Copy
+                  entries.add(MenuItem(
+                    label: 'Copy',
+                    icon: TablerIcons.copy,
+                    onSelected: () {
+                      print(sheetListClipboard );
+                      setState(() {
+                        sheetListClipboard[0]=(getItemAtPath(sheetListItem.indexPath) as SheetList);
+                        sheetListClipboard[1] = null;
+                      });
+                      print(sheetListClipboard );
+                    },
+                  ));
+          
+                  // Paste
+                  entries.add(MenuItem(
+                    label: 'Paste',
+                    icon: TablerIcons.clipboard,
+                    onSelected: () {
+          
+                      List<SheetItem> deepCopySheetList(
+                        List<SheetItem> sheetList, {
+                        required String parentIdOverride, // 👈 added param
+                        required IndexPath indexPath,
+                        Set<String>? visited,
+                        int depth = 0,
+                        int maxDepth = 50,
+                      }) {
+                        visited ??= <String>{};
+          
+                        return sheetList.asMap().entries.map((e) {
+                          var childIndexPath = IndexPath(
+                            parent: indexPath,
+                            index: e.key,
+                            );
+                          if (depth > maxDepth) {
+                            throw Exception("Too deeply nested structure");
+                          }
+          
+                          if (visited!.contains(e.value.id)) {
+                            throw Exception("Recursive structure detected: ${e.value.id}");
+                          }
+          
+                          visited.add(e.value.id);
+          
+                          if (e.value is SheetText) {
+                           
+          
+                            return _addTextField(
+                              docString: (e.value as SheetText).textEditorConfigurations.controller.document.toDelta().toJson(),
+                              id: 'TX-${ const Uuid().v4()}',
+                              parentId: parentIdOverride,
+                              shouldReturn: true,
+                              textDecoration: (e.value as SheetText).textDecoration,
+                              indexPath: childIndexPath,
+                              inputBlocks: (e.value as SheetText).inputBlocks.map((e) => InputBlock(indexPath: e.indexPath, blockIndex: e.blockIndex, id: e.id),).toList(),
+          
+                              );
+                          } else if (e.value is SheetList) {
+                            final newId = 'LI-${ const Uuid().v4()}';
+                            return SheetList(
+                              id: newId,
+                              parentId: parentIdOverride, // 👈 Apply to this nested list
+                              direction: (e.value as SheetList).direction,
+                              crossAxisAlignment: (e.value as SheetList).crossAxisAlignment,
+                              mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
+                              mainAxisSize: (e.value as SheetList).mainAxisSize,
+                              size: (e.value as SheetList).size,
+                              listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
+                              sheetList: deepCopySheetList(
+                                (e.value as SheetList).sheetList,
+                                parentIdOverride: newId, // 👈 Recursive update to children
+                                visited: {...visited},
+                                depth: depth + 1,
+                                indexPath: childIndexPath,
+                              ),
+                              indexPath: childIndexPath,
+                            );
+                          }
+          
+                          throw Exception("Unknown or Unaccounted SheetItem type in paste: ${e.value.runtimeType}");
+                        }).toList();
+                      }
+          
+          
+                      final isNotCopied = sheetListClipboard[0] == null;
+                      final originalItem = isNotCopied
+                          ? sheetListClipboard[1]!
+                          : sheetListClipboard[0]!;
+                      final newId = isNotCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
+                      var newIndexPath = IndexPath(
+                        parent:_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).indexPath,
+                        index: 0);
+          
+                      final newSheetList = deepCopySheetList(
+                        originalItem.sheetList,
+                        parentIdOverride: newId, // 👈 Pass new parentId to apply to all children
+                        indexPath: newIndexPath
+                      );
+          
+                      
+          
+                      final newItem = originalItem.copyWith(
+                        id: newId,
+                        parentId: sheetListItem.id,
+                        sheetList: newSheetList,
+                        indexPath: newIndexPath
+                      );
+          
+          
+                      setState(() {
+                        _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex])
+                            .insert(0, newItem);
+                      });
+                      _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
+                      saveLayout();
+                      sheetListClipboard[1] = null;
+          
+          
+                    },
+                  ));
+          
+                  entries.add(const MenuDivider());
+          
+                  entries.addAll([
+                    const MenuHeader(text: 'ops'),
+                  //ADD ITEMS
+                  MenuItem.submenu(
+                      label: 'Add',
+                      icon: TablerIcons.new_section,
+                      items: [
+              MenuItem.submenu(
+                  label: 'Text',
+                  icon: TablerIcons.text_recognition,
+                  items: [
+                    //add text before the selected one
+                    MenuItem(
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'TX-${Uuid().v4()}';
+                        var newItem = _addTextField( 
+                          id: newId,
+                          shouldReturn:  true,
+                          textDecoration:  newSuperDecoration(),
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0),
+                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
+                          );
+                  
+                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
+                          , newItem);
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        });
+                      },
+                    ),
+                    //add text after the selected one
+                    MenuItem(
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'TX-${Uuid().v4()}';
+                        var newItem = _addTextField( 
+                          id: newId,
+                          shouldReturn:  true,
+                          textDecoration:  newSuperDecoration(),
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0),
+                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],  
+                          );
+                  
+                        var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
+                        if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
+                          
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                              index+1,
+                              newItem);
+                        } else {
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
+                              newItem);
+                        }
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        });
+                        
+                      },
+                    ),
+                    //add text inside the selected one
+                    MenuItem.submenu(
+                      label: 'Inside',
+                      icon: TablerIcons.code_plus,
+                      items:[
+                      MenuItem(
+                        label: 'At first',
+                        icon: TablerIcons.row_insert_top,
+                        onSelected: () {
+                          setState(() {
+                            var newId = 'TX-${Uuid().v4()}';
+                          var newItem = _addTextField( 
+                            id: newId,
+                            shouldReturn:  true,
+                            textDecoration: newSuperDecoration(),
+                            indexPath: IndexPath(
+                            parent:sheetList.indexPath,
+                            index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
+                            );
+                   
+                          var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
+                          if (index<sheetList.length) {
+                            
+                            sheetList.insert( 0, newItem);
+                          } else {
+                            sheetList.add(
+                                newItem);
+                          }
+                          _reassignSheetListIndexPath(sheetList);  
+                          
+                          });
+                        },
+                      ),
+                      //add to the end a text inside the list
+                      MenuItem(
+                        label: 'At Last',
+                        icon: TablerIcons
+                            .row_insert_bottom,
+                        onSelected: () {
+                          setState(() {
+                            var newId = 'TX-${Uuid().v4()}';
+                            var newItem = _addTextField( 
+                              id: newId,
+                              shouldReturn:  true,
+                              textDecoration:  newSuperDecoration(),
+                              indexPath: IndexPath(
+                              parent:sheetList.indexPath,
+                              index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
+                              );
+                   
+                              sheetList.add(
+                                  newItem);
+                            
+                          });
+                        },
+                      ),
+                  
+                      ]
+                    ),
+                  
+                  ]),
+              MenuItem.submenu(
+                  label: 'List',
+                  icon: TablerIcons
+                      .brackets_contain_start,
+                  items: [
+                    //add list before the selected one
+                    MenuItem(
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      onSelected: () {
+                        setState(() {
+                          var newId ='LI-${ const Uuid().v4()}';
+          
+                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
+                          , SheetList(
+                        direction:
+                          Axis.horizontal,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration: newSuperDecoration(),
+                        sheetList: [
+                        ],
+                        indexPath: IndexPath(
+                          parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0)
+                        ));
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        
+                        });
+                      },
+                    ),
+                    //add list after the selected one
+                    MenuItem(
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      onSelected: () {
+                        setState(() {
+                         var newId ='LI-${ const Uuid().v4()}';
+                        var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
+                        if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
+                          
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                              index+1,
+                              SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration:  newSuperDecoration(),
+                          sheetList: [],
+                        indexPath: IndexPath(
+                          parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0)
+                        ));
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        
+                        } else {
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
+                              SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration:  newSuperDecoration(),
+                          sheetList: [],
+                        indexPath: IndexPath(
+                          parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0)
+                        ));
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        
+                        }
+                        });
+                        
+                      },
+                    ),
+                    //add list inside the selected one
+                    MenuItem.submenu(
+                      label: 'Inside',
+                      icon: TablerIcons.code_plus,
+                      items:[
+                      MenuItem(
+                        label: 'At first',
+                        icon: TablerIcons.row_insert_top,
+                        onSelected: () {
+                          setState(() {
+                          var newId ='LI-${ const Uuid().v4()}';             
+                          if (sheetList.length!=0) {
+                            
+                            sheetList.insert( 0, SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration(),
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent:sheetList.indexPath,
+                            index: 0)
+                          ));
+                          } else {
+                            sheetList.add(
+                                SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration(),
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length)
+                          ));
+                          }
+                            _reassignSheetListIndexPath(sheetList);
+                          });
+                        },
+                      ),
+                      //add a new row with a new textfield inside at the current index
+                      MenuItem(
+                        label: 'At Last',
+                        icon: TablerIcons
+                            .row_insert_bottom,
+                        onSelected: () {
+                          setState(() {
+                            var newId ='LI-${ const Uuid().v4()}';
+                            
+                              sheetList.add(
+                                  SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration(),
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length)
+                          ));
+                            
+                          });
+                        },
+                      ),
+                  
+                      ]
+                    ),
+                  
+                         
+                    ])    
+                  ]),
+                  //Wrap ITEMS
+                  MenuItem.submenu(
+                  label: 'Wrap',
+                  icon: TablerIcons.brackets_contain,
+                  items: [
+                    //In a row
+                  MenuItem(
+                    label: 'In a Row',
+                    icon: TablerIcons.layout_rows ,
+                    onSelected: () {
+                      wrapInAList(0);
+                    },
+                  ),
+                    //In a column
+                  MenuItem(
+                    label: 'In a Column',
+                    icon: TablerIcons
+                        .layout_columns,
+                    onSelected: () {
+                      wrapInAList(1);
+                    },
+                    ),
+                  ]),
+          
+                    //Clear Field
+                    MenuItem(
+                      label: 'Empty The List',
+                      icon: TablerIcons.square_rounded_x,
+                      onSelected: () async {
+                        await showAdaptiveDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text(
+                                  'Do you really really want to Empty the List?'),
+                              content: Text(
+                                  'This will clear all the text fields from current SheetList. Are you sure?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        var temp = _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]);
+                                        
+                                        (temp as SheetList).sheetList.clear();
+          
+                                        _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).sheetList = temp.sheetList;
+                                        saveLayout(); // Save changes after clearing
+                                      });
+                                      Navigator.pop(
+                                          context); // Close the current context
+                                    },
+                                    child: Text('Yes')),
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text('No')),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    //Delete
+                    MenuItem(
+                      label: 'Delete',
+                      icon: TablerIcons.trash,
+                      onSelected: () async {
+                        await showAdaptiveDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Confirm Delete'),
+                              content: const Text(
+                                  'This will DELETE the current List with its contents. Are you sure?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        // sheetList.removeAt(index);
+                                        panelIndex.id = '';
+                                        // panelIndex.runTimeType = null;
+                                      });
+                                      _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList
+                                        .removeWhere((element) => element.id == sheetListItem.id,);
+                                      
+                                      // });
+                                      _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
+                                      saveLayout();
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Yes')),
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('No')),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    )
+                  ]);
+          
+                  return entries;
+                }
+          
+                final entries = buildSheetListContextMenuEntries(sheetList);
+                var menu = ContextMenu(
+                    entries: entries,
+                    boxDecoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: defaultPalette.black.withOpacity(0.3),
+                            blurRadius: 2,
+                            // spreadRadius: 10
+                          )
+                        ],
+                        color: defaultPalette.primary,
+                        borderRadius: BorderRadius.circular(10)),
+                    position:
+                        Offset(d.globalPosition.dx, d.globalPosition.dy));
+                menu.show(context);
+              },
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                    border: Border.all(
+                        width: 2,
+                        color: panelIndex.parentId == sheetList.id
+                            ? defaultPalette.extras[1]
+                            : ui.Color(0xFFFFFFFF)),
+                    color: defaultPalette.quaternary,
+                    shape: BoxShape.circle),
+                width: 15,
+                height: 15,
               ),
             ),
           ),
-          if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
-          Positioned(
-              top: 0,
-              child: SlideInLeft(
-                duration: Durations.short2,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.deferToChild,
-                  onTapDown: (d) {
-                    setState(() {
-                      panelIndex.parentId = sheetList.id;
-                      // panelIndex.runTimeType = sheetList.runtimeType;
-                    });
-                    
-                    List<ContextMenuEntry> buildSheetListContextMenuEntries( SheetList sheetList) {
-                      var entries = <ContextMenuEntry>[
-                        MenuHeader(text: 'SheetList Menu')
-                      ];
+        ), // Expandable menus and other widgets can stay the same
       
-                      // Cut SheetList
-      
-                      entries.add(MenuItem(
-                        label: 'Cut',
-                        icon: TablerIcons.cut,
-                        onSelected: () {
-                          setState(() {
-                            print(sheetListClipboard );
-                            sheetListClipboard[0] = null;
-                            sheetListClipboard[1] = (_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList.removeWhere((element) => element==sheetListItem,);
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));
-                            print(sheetListClipboard );
-                            print(sheetListClipboard[1]?.id );
-                          });
-                          // });
-                          // saveLayout();
-                        },
-                      ));
-      
-                      // Copy
-                      entries.add(MenuItem(
-                        label: 'Copy',
-                        icon: TablerIcons.copy,
-                        onSelected: () {
-                          print(sheetListClipboard );
-                          setState(() {
-                            sheetListClipboard[0]=(getItemAtPath(sheetListItem.indexPath) as SheetList);
-                            sheetListClipboard[1] = null;
-                          });
-                          print(sheetListClipboard );
-                        },
-                      ));
-      
-                      // Paste
-                      entries.add(MenuItem(
-                        label: 'Paste',
-                        icon: TablerIcons.clipboard,
-                        onSelected: () {
-      
-                          List<SheetItem> deepCopySheetList(
-                            List<SheetItem> sheetList, {
-                            required String parentIdOverride, // 👈 added param
-                            required IndexPath indexPath,
-                            Set<String>? visited,
-                            int depth = 0,
-                            int maxDepth = 50,
-                          }) {
-                            visited ??= <String>{};
-      
-                            return sheetList.asMap().entries.map((e) {
-                              var childIndexPath = IndexPath(
-                                parent: indexPath,
-                                index: e.key,
-                                );
-                              if (depth > maxDepth) {
-                                throw Exception("Too deeply nested structure");
-                              }
-      
-                              if (visited!.contains(e.value.id)) {
-                                throw Exception("Recursive structure detected: ${e.value.id}");
-                              }
-      
-                              visited.add(e.value.id);
-      
-                              if (e.value is SheetText) {
-                               
-      
-                                return _addTextField(
-                                  docString: (e.value as SheetText).textEditorConfigurations.controller.document.toDelta().toJson(),
-                                  id: 'TX-${ const Uuid().v4()}',
-                                  parentId: parentIdOverride,
-                                  shouldReturn: true,
-                                  textDecoration: (e.value as SheetText).textDecoration,
-                                  indexPath: childIndexPath,
-                                  inputBlocks: (e.value as SheetText).inputBlocks.map((e) => InputBlock(indexPath: e.indexPath, blockIndex: e.blockIndex, id: e.id),).toList(),
-      
-                                  );
-                              } else if (e.value is SheetList) {
-                                final newId = 'LI-${ const Uuid().v4()}';
-                                return SheetList(
-                                  id: newId,
-                                  parentId: parentIdOverride, // 👈 Apply to this nested list
-                                  direction: (e.value as SheetList).direction,
-                                  crossAxisAlignment: (e.value as SheetList).crossAxisAlignment,
-                                  mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
-                                  mainAxisSize: (e.value as SheetList).mainAxisSize,
-                                  size: (e.value as SheetList).size,
-                                  listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
-                                  sheetList: deepCopySheetList(
-                                    (e.value as SheetList).sheetList,
-                                    parentIdOverride: newId, // 👈 Recursive update to children
-                                    visited: {...visited},
-                                    depth: depth + 1,
-                                    indexPath: childIndexPath,
-                                  ),
-                                  indexPath: childIndexPath,
-                                );
-                              }
-      
-                              throw Exception("Unknown or Unaccounted SheetItem type in paste: ${e.value.runtimeType}");
-                            }).toList();
-                          }
-      
-      
-                          final isNotCopied = sheetListClipboard[0] == null;
-                          final originalItem = isNotCopied
-                              ? sheetListClipboard[1]!
-                              : sheetListClipboard[0]!;
-                          final newId = isNotCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
-                          var newIndexPath = IndexPath(
-                            parent:_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).indexPath,
-                            index: 0);
-      
-                          final newSheetList = deepCopySheetList(
-                            originalItem.sheetList,
-                            parentIdOverride: newId, // 👈 Pass new parentId to apply to all children
-                            indexPath: newIndexPath
-                          );
-      
-                          
-      
-                          final newItem = originalItem.copyWith(
-                            id: newId,
-                            parentId: sheetListItem.id,
-                            sheetList: newSheetList,
-                            indexPath: newIndexPath
-                          );
-      
-      
-                          setState(() {
-                            _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex])
-                                .insert(0, newItem);
-                          });
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
-                          saveLayout();
-                          sheetListClipboard[1] = null;
-      
-      
-                        },
-                      ));
-      
-                      entries.add(const MenuDivider());
-      
-                      entries.addAll([
-                        const MenuHeader(text: 'ops'),
-                      //ADD ITEMS
-                      MenuItem.submenu(
-                          label: 'Add',
-                          icon: TablerIcons.new_section,
-                          items: [
-                  MenuItem.submenu(
-                      label: 'Text',
-                      icon: TablerIcons.text_recognition,
-                      items: [
-                        //add text before the selected one
-                        MenuItem(
-                          label: 'Before',
-                          icon: TablerIcons
-                              .row_insert_top,
-                          onSelected: () {
-                            setState(() {
-                              var newId = 'TX-${Uuid().v4()}';
-                            var newItem = _addTextField( 
-                              id: newId,
-                              shouldReturn:  true,
-                              textDecoration:  newSuperDecoration(),
-                              indexPath: IndexPath(
-                                parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                                index: 0),
-                              inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
-                              );
-                      
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
-                              , newItem);
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            });
-                          },
-                        ),
-                        //add text after the selected one
-                        MenuItem(
-                          label: 'After',
-                          icon: TablerIcons
-                              .row_insert_bottom,
-                          onSelected: () {
-                            setState(() {
-                              var newId = 'TX-${Uuid().v4()}';
-                            var newItem = _addTextField( 
-                              id: newId,
-                              shouldReturn:  true,
-                              textDecoration:  newSuperDecoration(),
-                              indexPath: IndexPath(
-                                parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                                index: 0),
-                              inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],  
-                              );
-                      
-                            var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                            if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
-                              
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                                  index+1,
-                                  newItem);
-                            } else {
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
-                                  newItem);
-                            }
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            });
-                            
-                          },
-                        ),
-                        //add text inside the selected one
-                        MenuItem.submenu(
-                          label: 'Inside',
-                          icon: TablerIcons.code_plus,
-                          items:[
-                          MenuItem(
-                            label: 'At first',
-                            icon: TablerIcons.row_insert_top,
-                            onSelected: () {
-                              setState(() {
-                                var newId = 'TX-${Uuid().v4()}';
-                              var newItem = _addTextField( 
-                                id: newId,
-                                shouldReturn:  true,
-                                textDecoration: newSuperDecoration(),
-                                indexPath: IndexPath(
-                                parent:sheetList.indexPath,
-                                index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-                                );
-                       
-                              var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                              if (index<sheetList.length) {
-                                
-                                sheetList.insert( 0, newItem);
-                              } else {
-                                sheetList.add(
-                                    newItem);
-                              }
-                              _reassignSheetListIndexPath(sheetList);  
-                              
-                              });
-                            },
-                          ),
-                          //add to the end a text inside the list
-                          MenuItem(
-                            label: 'At Last',
-                            icon: TablerIcons
-                                .row_insert_bottom,
-                            onSelected: () {
-                              setState(() {
-                                var newId = 'TX-${Uuid().v4()}';
-                                var newItem = _addTextField( 
-                                  id: newId,
-                                  shouldReturn:  true,
-                                  textDecoration:  newSuperDecoration(),
-                                  indexPath: IndexPath(
-                                  parent:sheetList.indexPath,
-                                  index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-                                  );
-                       
-                                  sheetList.add(
-                                      newItem);
-                                
-                              });
-                            },
-                          ),
-                      
-                          ]
-                        ),
-                      
-                      ]),
-                  MenuItem.submenu(
-                      label: 'List',
-                      icon: TablerIcons
-                          .brackets_contain_start,
-                      items: [
-                        //add list before the selected one
-                        MenuItem(
-                          label: 'Before',
-                          icon: TablerIcons
-                              .row_insert_top,
-                          onSelected: () {
-                            setState(() {
-                              var newId ='LI-${ const Uuid().v4()}';
-      
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
-                              , SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [
-                            ],
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0)
-                            ));
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            
-                            });
-                          },
-                        ),
-                        //add list after the selected one
-                        MenuItem(
-                          label: 'After',
-                          icon: TablerIcons
-                              .row_insert_bottom,
-                          onSelected: () {
-                            setState(() {
-                             var newId ='LI-${ const Uuid().v4()}';
-                            var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                            if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
-                              
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                                  index+1,
-                                  SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration:  newSuperDecoration(),
-                              sheetList: [],
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0)
-                            ));
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            
-                            } else {
-                              _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
-                                  SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration:  newSuperDecoration(),
-                              sheetList: [],
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0)
-                            ));
-                            _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                            
-                            }
-                            });
-                            
-                          },
-                        ),
-                        //add list inside the selected one
-                        MenuItem.submenu(
-                          label: 'Inside',
-                          icon: TablerIcons.code_plus,
-                          items:[
-                          MenuItem(
-                            label: 'At first',
-                            icon: TablerIcons.row_insert_top,
-                            onSelected: () {
-                              setState(() {
-                              var newId ='LI-${ const Uuid().v4()}';             
-                              if (sheetList.length!=0) {
-                                
-                                sheetList.insert( 0, SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration: newSuperDecoration(),
-                              sheetList: [],
-                              indexPath: IndexPath(
-                                parent:sheetList.indexPath,
-                                index: 0)
-                              ));
-                              } else {
-                                sheetList.add(
-                                    SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration: newSuperDecoration(),
-                              sheetList: [],
-                              indexPath: IndexPath(
-                                parent: sheetList.indexPath,
-                                index: sheetList.length)
-                              ));
-                              }
-                                _reassignSheetListIndexPath(sheetList);
-                              });
-                            },
-                          ),
-                          //add a new row with a new textfield inside at the current index
-                          MenuItem(
-                            label: 'At Last',
-                            icon: TablerIcons
-                                .row_insert_bottom,
-                            onSelected: () {
-                              setState(() {
-                                var newId ='LI-${ const Uuid().v4()}';
-                                
-                                  sheetList.add(
-                                      SheetList(
-                              direction:
-                                Axis.horizontal,
-                              id: newId,
-                              parentId: sheetList.id,
-                              listDecoration: newSuperDecoration(),
-                              sheetList: [],
-                              indexPath: IndexPath(
-                                parent: sheetList.indexPath,
-                                index: sheetList.length)
-                              ));
-                                
-                              });
-                            },
-                          ),
-                      
-                          ]
-                        ),
-                      
-                             
-                        ])    
-                      ]),
-                      //Wrap ITEMS
-                      MenuItem.submenu(
-                      label: 'Wrap',
-                      icon: TablerIcons.brackets_contain,
-                      items: [
-                        //In a row
-                      MenuItem(
-                        label: 'In a Row',
-                        icon: TablerIcons.layout_rows ,
-                        onSelected: () {
-                          wrapInAList(0);
-                        },
-                      ),
-                        //In a column
-                      MenuItem(
-                        label: 'In a Column',
-                        icon: TablerIcons
-                            .layout_columns,
-                        onSelected: () {
-                          wrapInAList(1);
-                        },
-                        ),
-                      ]),
-      
-                        //Clear Field
-                        MenuItem(
-                          label: 'Empty The List',
-                          icon: TablerIcons.square_rounded_x,
-                          onSelected: () async {
-                            await showAdaptiveDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text(
-                                      'Do you really really want to Empty the List?'),
-                                  content: Text(
-                                      'This will clear all the text fields from current SheetList. Are you sure?'),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            var temp = _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]);
-                                            
-                                            (temp as SheetList).sheetList.clear();
-      
-                                            _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).sheetList = temp.sheetList;
-                                            saveLayout(); // Save changes after clearing
-                                          });
-                                          Navigator.pop(
-                                              context); // Close the current context
-                                        },
-                                        child: Text('Yes')),
-                                    TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: Text('No')),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        //Delete
-                        MenuItem(
-                          label: 'Delete',
-                          icon: TablerIcons.trash,
-                          onSelected: () async {
-                            await showAdaptiveDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text('Confirm Delete'),
-                                  content: const Text(
-                                      'This will DELETE the current List with its contents. Are you sure?'),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            // sheetList.removeAt(index);
-                                            panelIndex.id = '';
-                                            // panelIndex.runTimeType = null;
-                                          });
-                                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList
-                                            .removeWhere((element) => element.id == sheetListItem.id,);
-                                          
-                                          // });
-                                          _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
-                                          saveLayout();
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('Yes')),
-                                    TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('No')),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        )
-                      ]);
-      
-                      return entries;
-                    }
-      
-                    final entries = buildSheetListContextMenuEntries(sheetList);
-                    var menu = ContextMenu(
-                        entries: entries,
-                        boxDecoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: defaultPalette.black.withOpacity(0.3),
-                                blurRadius: 2,
-                                // spreadRadius: 10
-                              )
-                            ],
-                            color: defaultPalette.primary,
-                            borderRadius: BorderRadius.circular(10)),
-                        position:
-                            Offset(d.globalPosition.dx, d.globalPosition.dy));
-                    menu.show(context);
-                  },
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                            width: 2,
-                            color: panelIndex.parentId == sheetList.id
-                                ? defaultPalette.extras[1]
-                                : ui.Color(0xFFFFFFFF)),
-                        color: defaultPalette.quaternary,
-                        shape: BoxShape.circle),
-                    width: 15,
-                    height: 15,
-                  ),
-                ),
-              ),
-            ), // Expandable menus and other widgets can stay the same
-          
-        ],
-      ),
-    );
+    ],
+          );
   }
   
   Widget buildSheetTextWidget(SheetText sheetText) {
@@ -6013,18 +5152,13 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     if (sheetText.type == SheetTextType.date) {
       extractedDate = extractDateFromDelta(sheetText.textEditorController.document);
     }
-  return MeasureSize(
-    onChange: (size) {
-      // final calculatedWidth = findSheetListBuildWidth(sheetList);
-      // store to state, call setState or notify parent
-      print('Actual sizetext: $size,');
-    },
-    child: Container(
+  return 
+    Container(
       margin: const EdgeInsets.only(
-                          // bottom: 2,
-                          left: 2,
-                          top: 4,
-                          right: 2),
+        // bottom: 2,
+        left: 2,
+        top: 4,
+        right: 2),
       padding: const EdgeInsets.only(
           top: 4,
           bottom: 4,
@@ -6055,16 +5189,23 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
           
           Row(
             children: [
-              Container(
-                child: Icon(
-                  sheetText.type == SheetTextType.string
-                  ? TablerIcons.cursor_text
-                  : sheetText.type == SheetTextType.integer
-                  ? TablerIcons.numbers
-                  : TablerIcons.decimal,
-                  size: 15,
-                ),
+              if(sheetText.type == SheetTextType.date|| sheetText.type == SheetTextType.time)
+              const SizedBox(width:4),
+              Icon(
+                sheetText.type == SheetTextType.string
+                ? TablerIcons.cursor_text
+                : sheetText.type == SheetTextType.integer
+                ? TablerIcons.numbers
+                : sheetText.type == SheetTextType.date
+                ? TablerIcons.calendar_week
+                : sheetText.type == SheetTextType.time
+                ? TablerIcons.clock_hour_8
+                : TablerIcons.decimal,
+                size:sheetText.type == SheetTextType.date || sheetText.type == SheetTextType.time
+                ?18: 15,
               ),
+              if(sheetText.type == SheetTextType.date|| sheetText.type == SheetTextType.time)
+              const SizedBox(width:2),
               if(sheetText.name != 'unlabeled')
           ...[
             ConstrainedBox(
@@ -6081,126 +5222,112 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                     color: defaultPalette.black),
                 ),
             ),
-              SizedBox(width:4),],
-              MeasureSize(
-                  onChange: (size) {
-                    print('Inside sizetext: $size,');
-                  },
-                child: Expanded(
-                child: sheetText.type == SheetTextType.date
-                    ? Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: defaultPalette.black.withOpacity(0.4)),
-                          borderRadius: BorderRadius.circular(8),
-                          color: defaultPalette.secondary,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
+              const SizedBox(width:4),],
+              Expanded(
+              child: sheetText.type == SheetTextType.date
+                  ? Container(
+                      padding: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              margin:const  EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: defaultPalette.secondary,
+                              ),
                               child: Text(
                                 '${extractedDate?.day.toString().padLeft(2, '0') ?? '--'}',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 13),
                               ),
                             ),
-                            Text('/'),
-                            Expanded(
+                          ),
+                          Text('-'),
+                          Expanded(
+                            child: Container(
+                              margin:const  EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: defaultPalette.secondary,
+                              ),
                               child: Text(
                                 '${extractedDate?.month.toString().padLeft(2, '0') ?? '--'}',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 13),
                               ),
                             ),
-                            Text('/'),
-                            Expanded(
+                          ),
+                          Text('-'),
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: defaultPalette.secondary,
+                              ),
                               child: Text(
                                 '${extractedDate?.year ?? '----'}',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 13),
                               ),
                             ),
-                            SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(TablerIcons.calendar_plus, size: 16),
-                              onPressed: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: extractedDate ?? DateTime.now(),
-                                  firstDate: DateTime(1800),
-                                  lastDate: DateTime(2100),
-                                );
-                                if (picked != null) {
-                                  // You can now patch this back into the controller as plain text
-                                  setState(() {
-                                    sheetText.textEditorConfigurations.controller.replaceText(
-                                      0,
-                                      sheetText.textEditorConfigurations.controller.document.length - 1,
-                                      '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}',
-                                      TextSelection.collapsed(offset: 0),
-                                    );
-                                  });
-                                }
-                              },
-                            )
-                          ],
-                        ),
-                      )
-                    : sheetText.type == SheetTextType.time
-                    ? Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: defaultPalette.black.withOpacity(0.4)),
-                          borderRadius: BorderRadius.circular(8),
-                          color: defaultPalette.secondary,
-                        ),
-                        child: Row(
-                          children: [
-                            Builder(builder: (context) {
-                              final time = extractTimeFromDelta(sheetText.textEditorController.document);
-                              final hourStr = time?.hour.toString().padLeft(2, '0') ?? '--';
-                              final minuteStr = time?.minute.toString().padLeft(2, '0') ?? '--';
-                  
-                              return Expanded(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Text(hourStr, style: TextStyle(fontSize: 13)),
-                                    Text(':', style: TextStyle(fontSize: 13)),
-                                    Text(minuteStr, style: TextStyle(fontSize: 13)),
-                                  ],
-                                ),
-                              );
-                            }),
-                            SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(TablerIcons.clock_plus, size: 16),
-                              onPressed: () async {
-                                final picked = await showTimePicker(
-                                  context: context,
-                                  initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
-                                );
-                                if (picked != null) {
-                                  final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                                  sheetText.textEditorController.replaceText(
-                                    0,
-                                    sheetText.textEditorController.document.length-1,
-                                    formattedTime,
-                                    TextSelection.collapsed(offset: 0),
-                                  );
-                                }
-                              },
-                            )
-                          ],
-                        ),
-                      )
-                    : QuillEditor(
-                                  configurations: sheetText.textEditorConfigurations,
-                                  focusNode: sheetText.focusNode,
-                                  scrollController: ScrollController(),
-                                ),
-                        
-                ),
+                          ),
+                          
+                        ],
+                      ),
+                    )
+                  : sheetText.type == SheetTextType.time
+                  ? Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: defaultPalette.transparent,
+                      ),
+                      child: Row(
+                        children: [
+                          Builder(builder: (context) {
+                            final time = extractTimeFromDelta(sheetText.textEditorController.document);
+                            final hourStr = time?.hour.toString().padLeft(2, '0') ?? '--';
+                            final minuteStr = time?.minute.toString().padLeft(2, '0') ?? '--';
+                
+                            return Expanded(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(0, 0),
+                                      padding: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: defaultPalette.secondary,
+                                      ),child: Text(hourStr, style: TextStyle(fontSize: 13))),
+                                  ),
+                                  Text('  : ', style: TextStyle(fontSize: 13)),
+                                  Expanded(child: Container(
+                                    alignment: Alignment(0, 0),
+                                    margin: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: defaultPalette.secondary,
+                                    ),child: Text(minuteStr, style: TextStyle(fontSize: 13)))),
+                                ],
+                              ),
+                            );
+                          }),
+                          
+                        ],
+                      ),
+                    )
+                  : QuillEditor(
+                      configurations: sheetText.textEditorConfigurations,
+                      focusNode: sheetText.focusNode,
+                      scrollController: ScrollController(),
+                    ),
+                      
               ),
       
               if(sheetText.hide)
@@ -6225,7 +5352,337 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                     ),
                   ),
                 ),
-              ),]
+              ),
+              ],
+              if(sheetText.type == SheetTextType.date)
+              ...[
+                const SizedBox(width: 2),
+                Material(
+                  child: InkWell(
+                    child: Icon(TablerIcons.pencil, size: 18),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: extractedDate ?? DateTime.now(),
+                        firstDate: DateTime(1800),
+                        lastDate: DateTime(2100),
+                        barrierColor: defaultPalette.transparent,
+                        builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            inputDecorationTheme: InputDecorationTheme(
+                              labelStyle: GoogleFonts.lexend(
+                                fontSize: 12,
+                                // fontWeight: FontWeight.w600,
+                                color: defaultPalette.extras[0],
+                              ),
+                              hintStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              errorStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                borderRadius: BorderRadius.circular(8)
+                              )
+                            ),
+                            
+                            textTheme: Theme.of(context).textTheme.copyWith(
+                              titleLarge: GoogleFonts.lexend(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineSmall: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineMedium: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              
+                              style: ButtonStyle(
+                  
+                                textStyle: WidgetStateProperty.all(
+                                  GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                              ),
+                            ),
+                            datePickerTheme: DatePickerThemeData(
+                              backgroundColor: defaultPalette.primary,
+                              rangePickerBackgroundColor: defaultPalette.tertiary,
+                              elevation: 20,
+                              // Selected date/year/month
+                              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.tertiary;
+                                }
+                                return null;
+                              }),
+                              locale: const Locale('en', 'IN'),
+                              todayBorder: BorderSide.none,
+                              todayBackgroundColor:  WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.tertiary;
+                                } else {
+                                  return defaultPalette.primary;
+                                }
+                                return null;
+                              }),
+                              todayForegroundColor:  WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.primary;
+                                } else {
+                                  return defaultPalette.extras[0];
+                                }
+                                return null;
+                              }),
+                              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.primary;
+                                }
+                                return null;
+                              }),
+                              yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.tertiary;
+                                } else {
+                                  return defaultPalette.transparent;
+                                }
+                                return null;
+                              }),
+                              dividerColor: defaultPalette.extras[0].withOpacity(0.4),
+                              confirmButtonStyle:  ButtonStyle(
+                              textStyle: WidgetStateProperty.all(
+                                GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.tertiary,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              overlayColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.hovered)) {
+                                    return defaultPalette.extras[0].withOpacity(0.08); // hover color
+                                  }
+                                  if (states.contains(WidgetState.pressed)) {
+                                    return defaultPalette.tertiary.withOpacity(0.2); // splash/press
+                                  }
+                                  return null;
+                                }),
+                                splashFactory: InkRipple.splashFactory,
+                              ),
+                              cancelButtonStyle:  ButtonStyle(
+                              textStyle: WidgetStateProperty.all(
+                                GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.tertiary,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              overlayColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.hovered)) {
+                                    return defaultPalette.extras[0].withOpacity(0.08); // hover color
+                                  }
+                                  if (states.contains(WidgetState.pressed)) {
+                                    return defaultPalette.tertiary.withOpacity(0.2); // splash/press
+                                  }
+                                  return null;
+                                }),
+                                splashFactory: InkRipple.splashFactory,
+                              ),
+                              yearStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.tertiary,
+                                letterSpacing: -1,
+                              ),
+                              dayStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.tertiary,
+                                letterSpacing: -1,
+                              ),
+                              weekdayStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              headerHeadlineStyle: GoogleFonts.lexend(
+                                fontSize: 30,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                // fontWeight: FontWeight.w600,
+                              ),
+                              rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              headerHelpStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                // fontWeight: FontWeight.w600,
+                              ),
+                              // Optional border radius:
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16), // <- This is the border
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                      );
+                      if (picked != null) {
+                        // You can now patch this back into the controller as plain text
+                        setState(() {
+                          sheetText.textEditorConfigurations.controller.replaceText(
+                            0,
+                            sheetText.textEditorConfigurations.controller.document.length - 1,
+                            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}',
+                            TextSelection.collapsed(offset: 0),
+                          );
+                        });
+                      }
+                    },
+                  ),
+                )
+              
+              ],
+              if(sheetText.type == SheetTextType.time)
+              ...[
+                const SizedBox(width: 4),
+                Material(
+                  child: InkWell(
+                    child: const Icon(TablerIcons.pencil, size: 18),
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              inputDecorationTheme: InputDecorationTheme(
+                              labelStyle: GoogleFonts.lexend(
+                                fontSize: 12,
+                                // fontWeight: FontWeight.w600,
+                                color: defaultPalette.extras[0],
+                              ),
+                              hintStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              errorStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                borderRadius: BorderRadius.circular(8)
+                              )
+                            ),
+                            
+                            textTheme: Theme.of(context).textTheme.copyWith(
+                              titleLarge: GoogleFonts.lexend(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineSmall: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineMedium: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              
+                              style: ButtonStyle(
+                  
+                                textStyle: WidgetStateProperty.all(
+                                  GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                              ),
+                            ),
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: defaultPalette.primary,
+                                hourMinuteTextStyle: GoogleFonts.lexend(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                dayPeriodTextStyle: GoogleFonts.lexend(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                helpTextStyle: GoogleFonts.lexend(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                entryModeIconColor: defaultPalette.extras[0],
+                                dialHandColor: defaultPalette.tertiary,
+                                dialBackgroundColor: defaultPalette.primary,
+                                hourMinuteColor: defaultPalette.primary,
+                                
+                              ),
+                              
+                            ),
+                            child: Localizations.override(
+                              context: context,
+                              locale: const Locale('en', 'GB'), // DD/MM/YYYY and 24-hour format
+                              child: child!,
+                            ),
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                        sheetText.textEditorController.replaceText(
+                          0,
+                          sheetText.textEditorController.document.length-1,
+                          formattedTime,
+                          TextSelection.collapsed(offset: 0),
+                        );
+                      }
+                    },
+                  ),
+                )
+                        
+              ],
             ],
           ),
       
@@ -6259,8 +5716,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         
         ],
       ),
-    ),
-  );                   
+    );                 
   }
 
   List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
@@ -7335,15 +6791,15 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
           }
           // print('$totalHeight, $maxFontSize, {delta.toList()}, text, attributes');
           calculatedHeight = totalHeight +14.4 ; // top/bottom padding
-          print('$totalHeight, $maxFontSize, $calculatedHeight, {delta.toList()} , attributes');
+          // print('$totalHeight, $maxFontSize, $calculatedHeight, {delta.toList()} , attributes');
         }
       }
 
       // Handling nested SheetLists
       else if (item is SheetList) {
-        print(item.id);
+        // print(item.id);
         calculatedHeight = (findSheetListBuildHeight(item)+1.6+4).clamp(60, double.infinity);
-        print(item.id+': $calculatedHeight');
+        // print(item.id+': $calculatedHeight');
       }
 
       else if (item is SheetTable) {
@@ -7354,7 +6810,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
       +20;
       }
 
-      print(item.id+': $calculatedHeight');
+      // print(item.id+': $calculatedHeight');
       return calculatedHeight;
     }
 
@@ -7493,7 +6949,7 @@ double findSheetListBuildWidth(SheetList sheetList) {
       }
     }
   }
-  print('findWidth: '+width.toString());
+  // print('findWidth: '+width.toString());
   return width.clamp(151, double.infinity);
 }
 

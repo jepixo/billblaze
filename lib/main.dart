@@ -89,6 +89,7 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('en', 'GB'),
       theme: ThemeData(
         textSelectionTheme: TextSelectionThemeData(
           cursorColor: defaultPalette.extras[0], // Cursor color
