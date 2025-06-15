@@ -26,13 +26,14 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       mainAxisSize: fields[8] as int,
       decorationId: fields[7] as String,
       indexPath: fields[2] as IndexPath,
+      size: (fields[9] as List?)?.cast<double>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetListBox obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(3)
       ..write(obj.sheetList)
       ..writeByte(4)
@@ -45,6 +46,8 @@ class SheetListBoxAdapter extends TypeAdapter<SheetListBox> {
       ..write(obj.decorationId)
       ..writeByte(8)
       ..write(obj.mainAxisSize)
+      ..writeByte(9)
+      ..write(obj.size)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

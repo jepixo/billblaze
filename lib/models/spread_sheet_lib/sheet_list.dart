@@ -25,6 +25,8 @@ class SheetListBox extends SheetItem {
   String decorationId;
   @HiveField(8)
   int mainAxisSize;
+  @HiveField(9)
+  List<double>? size;
 
   SheetListBox(
       {
@@ -37,10 +39,11 @@ class SheetListBox extends SheetItem {
       this.mainAxisSize =0,
       required this.decorationId, 
       required super.indexPath,
+      this.size = const [0,0]
       });
 
   SheetList toSheetList(Function findItem, Function textFieldTapDown) {
-    // print('A PARENT: '+ super.parentId );
+    print('A PARENT: '+ size.toString());
     return SheetList(
         sheetList: unboxSheetList(sheetList,findItem,textFieldTapDown),
         direction: direction == true ? Axis.vertical : Axis.horizontal,
@@ -51,6 +54,7 @@ class SheetListBox extends SheetItem {
         mainAxisSize: MainAxisSize.values[mainAxisSize],
         listDecoration: Boxes.getSuperDecoration(decorationId).toSuperDecoration(),
         indexPath: indexPath,
+        size: Size(size?[0]??0, size?[1]??0),
         );
   }
 
@@ -92,6 +96,7 @@ class SheetList extends SheetItem {
       });
 
   SheetListBox toSheetListBox() {
+    print(size.toString());
     return SheetListBox(
         sheetList: boxSheetList(sheetList),
         direction: direction == Axis.vertical ? true : false,
@@ -102,6 +107,7 @@ class SheetList extends SheetItem {
         mainAxisAlignment: mainAxisAlignment.index,
         mainAxisSize: mainAxisSize.index,
         indexPath: indexPath,
+        size: [size.width,size.height],
          );
          
   }
