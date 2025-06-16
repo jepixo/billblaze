@@ -164,8 +164,8 @@ class SheetText extends SheetItem {
   SheetTextBox toTEItemBox(SheetText item) {
     // print(
     //     'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
-    print(
-        'inputBlocks text: ${item.inputBlocks}');   
+    // print(
+    //     'inputBlocks text: ${item.inputBlocks}');   
     return SheetTextBox(
         textEditorController:
             textEditorController.document.toDelta().toJson(),

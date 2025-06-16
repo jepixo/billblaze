@@ -1381,7 +1381,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
     return attrs.containsKey(attribute.key);
   }
 
-  Widget _buildSheetListWidget(SheetList sheetList, double width,
+Widget _buildSheetListWidget(SheetList sheetList, double width,
       {double? docWidth = null,}) {
         // print(sheetList.mainAxisSize.name);
     // SuperDecoration decor = sheetDecorationList.firstWhere((element) => element.id == sheetList.listDecoration.id,) as SuperDecoration;
@@ -1396,74 +1396,76 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
           IntrinsicHeight(
             child: sheetList.direction == Axis.vertical
                 //For Columns in the pdf side of things
-                ? Flex(
-                  direction: Axis.vertical,
-                  mainAxisAlignment: sheetList.mainAxisAlignment,
-                  crossAxisAlignment: sheetList.crossAxisAlignment,
-                  mainAxisSize: sheetList.mainAxisSize, 
-                  children:
-                      List.generate(sheetList.sheetList.length, (index) {
-                    final sheetTextItem = sheetList.sheetList[index];
-                      
-                    if (sheetTextItem is SheetText && !sheetTextItem.hide) {
-                      // print('in buildSheetListWidget item is: $item');
-                      var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
-                        
-                      SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
-                    
-                      Alignment containerAlignment = Alignment.topLeft;
-                      
-                      // Get alignment based on current attributes
-                      final currentAttributes = sheetTextItem.textEditorController
-                          .getSelectionStyle()
-                          .attributes;
-                      // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
-                      // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
-                      // Determine alignment from `attributes`
-                      if (_getIsToggled(
-                          currentAttributes, Attribute.centerAlignment)) {
-                        containerAlignment = Alignment.center;
-                      } else if (_getIsToggled(
-                          currentAttributes, Attribute.rightAlignment)) {
-                        containerAlignment = Alignment.topRight;
-                      } else if (_getIsToggled(
-                          currentAttributes, Attribute.justifyAlignment)) {
-                        containerAlignment = Alignment
-                            .topLeft; // Adjust if you have other logic
-                      } else if (_getIsToggled(
-                          currentAttributes, Attribute.leftAlignment)) {
-                        containerAlignment = Alignment.topLeft;
-                      }
-                      // print('in buildSheetListWidget item is: $item');
-                      return IgnorePointer(
-                        key: ValueKey(sheetTextItem),
-                        child: Container(
-                          // width: docWidth,
-                          alignment: containerAlignment,
-                          child: 
-                          buildDecoratedContainer(
-                            textDecor,
-                            QuillEditor(
-                              key: ValueKey(sheetTextItem.id),
-                              configurations: buildCombinedQuillConfiguration(sheetTextItem.inputBlocks),
-                              focusNode: FocusNode(),
-                              scrollController: ScrollController(),
+                ? IntrinsicWidth(
+                    child: Flex(
+                      direction: Axis.vertical,
+                      mainAxisAlignment: sheetList.mainAxisAlignment,
+                      crossAxisAlignment: sheetList.crossAxisAlignment,
+                      mainAxisSize: sheetList.mainAxisSize, 
+                      children:
+                          List.generate(sheetList.sheetList.length, (index) {
+                        final sheetTextItem = sheetList.sheetList[index];
+      
+                        if (sheetTextItem is SheetText && !sheetTextItem.hide) {
+                          // print('in buildSheetListWidget item is: $item');
+                          var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
+        
+                          SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
+    
+                          Alignment containerAlignment = Alignment.topLeft;
+      
+                          // Get alignment based on current attributes
+                          final currentAttributes = sheetTextItem.textEditorController
+                              .getSelectionStyle()
+                              .attributes;
+                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
+                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
+                          // Determine alignment from `attributes`
+                          if (_getIsToggled(
+                              currentAttributes, Attribute.centerAlignment)) {
+                            containerAlignment = Alignment.center;
+                          } else if (_getIsToggled(
+                              currentAttributes, Attribute.rightAlignment)) {
+                            containerAlignment = Alignment.topRight;
+                          } else if (_getIsToggled(
+                              currentAttributes, Attribute.justifyAlignment)) {
+                            containerAlignment = Alignment
+                                .topLeft; // Adjust if you have other logic
+                          } else if (_getIsToggled(
+                              currentAttributes, Attribute.leftAlignment)) {
+                            containerAlignment = Alignment.topLeft;
+                          }
+                          // print('in buildSheetListWidget item is: $item');
+                          return IgnorePointer(
+                            key: ValueKey(sheetTextItem),
+                            child: Align(
+                              // width: docWidth,
+                              alignment: containerAlignment,
+                              child: 
+                              buildDecoratedContainer(
+                                textDecor,
+                                QuillEditor(
+                                  key: ValueKey(sheetTextItem.id),
+                                  configurations: buildCombinedQuillConfiguration(sheetTextItem.inputBlocks),
+                                  focusNode: FocusNode(),
+                                  scrollController: ScrollController(),
+                                ),
+                                 false,
+                              
+                              ),
                             ),
-                             false,
-                          
-                          ),
-                        ),
-                      );
-                    } else if (sheetTextItem is SheetList) {
-                      // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
-                      return _buildSheetListWidget(sheetTextItem, width);
-                    } else if (sheetTextItem is SheetTable) {
-                      return _buildSheetTableWidget(sheetTextItem,);
-                    }
-                
-                    return const SizedBox();
-                  }),
-                )
+                          );
+                        } else if (sheetTextItem is SheetList) {
+                          // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
+                          return _buildSheetListWidget(sheetTextItem, width);
+                        } else if (sheetTextItem is SheetTable) {
+                          return _buildSheetTableWidget(sheetTextItem,);
+                        }
+
+                        return const SizedBox();
+                      }),
+                    ),
+                  )
                 //For Rows in the pdf side of things
                 : SizedBox(
                     width: docWidth,
@@ -2912,7 +2914,7 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
                                             ),
                                           ),),
                                         //Main SpreadSheet //Desktop WEB
-                                        Positioned.fill(child: _buildListWidget(spreadSheetList[currentPageIndex]))
+                                        Positioned.fill(child: buildListWidget(spreadSheetList[currentPageIndex]))
                                         
                                       ],
                                     ),
@@ -4233,9 +4235,10 @@ class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
         return PdfPageFormat.a4;
     }
   }
-
-Widget _buildListWidget(SheetList sheetList) {
+  //in use
+  Widget buildListWidget(SheetList sheetList) {
     // print('rebuilding listWidget');
+
     
     child(controller, physics) => ReorderableListView.builder(
     shrinkWrap: true,
@@ -4271,7 +4274,7 @@ Widget _buildListWidget(SheetList sheetList) {
     },
     proxyDecorator: (child, index, animation) {
       return Container(child: child); },
-      itemBuilder: (context, index) {
+    itemBuilder: (context, index) {
       // print('hello hello sprdListBuilding: ${sheetList[index]}');
       if (sheetList[index] is SheetText) {
         var sheetText = sheetList[index] as SheetText;
@@ -4287,7 +4290,7 @@ Widget _buildListWidget(SheetList sheetList) {
           key: ValueKey(sheetText.id),
           child: IntrinsicWidth(
             child: IntrinsicHeight(
-              child:Stack(
+              child: Stack(
                 children: [
                   GestureDetector(
                     onTap: () {
@@ -4303,7 +4306,7 @@ Widget _buildListWidget(SheetList sheetList) {
                       
                         item = sheetText;
                         _findItem();
-                        // inputBlockExpansionList = List.generate(item.inputBlocks.length, (index) => false,); 
+                        
                       });
                       
                       print('clicked');
@@ -4314,13 +4317,7 @@ Widget _buildListWidget(SheetList sheetList) {
                     onSecondaryLongPressDown: (d) {
                       onRightClick(sheetText, d, index,sheetList);
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          // bottom: 2,
-                          left: 2,
-                          top: 4,
-                          right: 2),
-                      child: buildSheetTextWidget(sheetList[index] as SheetText)),
+                    child: buildSheetTextWidget(sheetList[index] as SheetText),
                   ),
                 ],
               ),
@@ -4333,7 +4330,8 @@ Widget _buildListWidget(SheetList sheetList) {
           index: index,
           key: ValueKey(sheetList[index].id),
           child: Container(
-              margin: EdgeInsets.only(top: 4,),
+              margin: EdgeInsets.only(top: 4),
+              //we commented out the width here and added the contrained box
               // width:sheetList.id == spreadSheetList[currentPageIndex].id?
               // sWidth
               // : findSheetListBuildWidth(
@@ -4342,11 +4340,13 @@ Widget _buildListWidget(SheetList sheetList) {
               //     ? 50
               //     : findSheetListBuildWidth(
               //         sheetList[index] as SheetList),
-              child: Stack(
-                children: [
-                  _buildListWidget(
-                      sheetList[index] as SheetList),
-                ],
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: 0, // allow it to shrink
+                  maxWidth: double.infinity, // no hard upper limit unless needed
+                ),
+                child: buildListWidget(
+                                  sheetList[index] as SheetList),
               )),
         );
       }
@@ -4368,855 +4368,1355 @@ Widget _buildListWidget(SheetList sheetList) {
       );
   
     return Stack(
-      children: [
-        GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () {
-            setState(() {
-              panelIndex.parentIndexPath = sheetList.indexPath;
-              panelIndex.parentId = sheetList.id;
-              _unfocusAll();
-              _findSheetListItem();
-              whichPropertyTabIsClicked = 3;
-              Future.delayed(Durations.short1).then(
-                (value) async {
-                  print("YUHUUUUUUUU");
-                  listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
-                  await listPropertyCardsController.animateTo(Offset(1, 1),
-                  duration: Durations.short1, curve: Curves.linear);
-                  // listPropertyTabContainerController.animateTo(whichListPropertyTabIsClicked);
-                  // listPropertyCardsController.swipeDefault();
-                  // listPropertyCardsController.swipeDefault();
-                },
-              );
-             
-            });
-          },
-          child: ScrollConfiguration(
-            behavior: ScrollBehavior().copyWith(scrollbars: false),
-            child: Padding(
-                padding: spreadSheetList[currentPageIndex].id == sheetList.id
-                ? EdgeInsets.all(0)
-                : const EdgeInsets.only(
-              left: 4,
-              right: 3,
+    children: [
+      GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          setState(() {
+            panelIndex.parentIndexPath = sheetList.indexPath;
+            panelIndex.parentId = sheetList.id;
+            _findSheetListItem();
+            whichPropertyTabIsClicked = 3;
+            Future.delayed(Durations.short1).then(
+              (value) async {
+                print("YUHUUUUUUUU");
+                listPropertyCardsController.setCardIndex(whichListPropertyTabIsClicked);
+                await listPropertyCardsController.animateTo(Offset(1, 1),
+                duration: Durations.short1, curve: Curves.linear);
+                // listPropertyTabContainerController.animateTo(whichListPropertyTabIsClicked);
+                // listPropertyCardsController.swipeDefault();
+                // listPropertyCardsController.swipeDefault();
+              },
+            );
+           
+          });
+        },
+        child: ScrollConfiguration(
+          behavior: ScrollBehavior().copyWith(scrollbars: false),
+          child: Padding(
+              padding: spreadSheetList[currentPageIndex].id == sheetList.id
+              ? EdgeInsets.all(0)
+              : const EdgeInsets.only(
+            left: 4,
+            right: 3
+          ),
+            child: CustomBorder(
+              color: panelIndex.parentId == sheetList.id
+              ? spreadSheetList[currentPageIndex].id == sheetList.id
+                ? defaultPalette.transparent
+                : defaultPalette.extras[1]
+              : defaultPalette.transparent,
+              radius: Radius.circular(15),
+              strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
+              dashPattern: [10, 5],
+              strokeCap: StrokeCap.square,
+              animateBorder: true,
+              animateDuration: Duration(seconds: 5),
+              //we took out width and put it in the contraints, now we commented out all height width
+              child: Container(
+                height:spreadSheetList[currentPageIndex].id == sheetList.id
+                ?sHeight-40: findSheetListBuildHeight(sheetList).clamp(50, double.infinity),
+                width: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
+                ? sWidth: (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
+                ? sWidth: null,
+                constraints: BoxConstraints(
+                  minWidth: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
+                    ? sWidth
+                    : (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
+                    ? sWidth
+                    : 150,
+                  maxWidth: (spreadSheetList[currentPageIndex].id == sheetList.parentId ||spreadSheetList[currentPageIndex].id == sheetList.id)
+                    ? sWidth
+                    : (sheetList.id != spreadSheetList[currentPageIndex].id?(getItemAtPath(sheetList.indexPath.parent!)as SheetList).direction == Axis.vertical:false)
+                    ? sWidth
+                    : sheetList.direction == Axis.horizontal
+                    ? sheetList.size.width.clamp(151, double.infinity)
+                    : findSheetListBuildWidth(sheetList),
+                ),
+            padding: const EdgeInsets.only(top: 0, left: 1, right: 1),
+                              
+            // buildlistw
+            decoration: BoxDecoration(
+              border: Border.all(
+                  width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
+                  color: panelIndex.parentId == sheetList.id
+                      ?  spreadSheetList[currentPageIndex].id == sheetList.id
+                        ? defaultPalette.transparent
+                        :defaultPalette.extras[1]
+                      : spreadSheetList[currentPageIndex].id == sheetList.id
+                ? defaultPalette.transparent
+                :Color(0xFFFFFFFF)),
+              color: defaultPalette.transparent,
+              borderRadius: BorderRadius.circular(15),
             ),
-              child: CustomBorder(
-                color: panelIndex.parentId == sheetList.id
-                ? spreadSheetList[currentPageIndex].id == sheetList.id
-                  ? defaultPalette.transparent
-                  : defaultPalette.extras[1]
-                : defaultPalette.transparent,
-                radius: Radius.circular(15),
-                strokeWidth: panelIndex.parentId == sheetList.id ? 1.5 : 0,
-                dashPattern: [10, 5],
-                strokeCap: StrokeCap.square,
-                animateBorder: true,
-                animateDuration: Duration(seconds: 5),
-                child: Container(
-              width:sheetList.id == spreadSheetList[currentPageIndex].id
-              ?sWidth
-              : findSheetListBuildWidth(sheetList) <= 50
-                ? 50
-                : findSheetListBuildWidth(sheetList),
-              height:sheetList.id == spreadSheetList[currentPageIndex].id
-              ? sHeight
-              : findSheetListBuildHeight(sheetList) <= 50
-                ? 50
-                : findSheetListBuildHeight(sheetList),
-              padding: const EdgeInsets.only(top: 0, left: 1, right: 1, bottom: 4),
-                                
-              // buildlistw
-              decoration: BoxDecoration(
-                border: Border.all(
-                    width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
-                    color: panelIndex.parentId == sheetList.id
-                        ?  spreadSheetList[currentPageIndex].id == sheetList.id
-                          ? defaultPalette.transparent
-                          :defaultPalette.extras[1]
-                        : spreadSheetList[currentPageIndex].id == sheetList.id
-                  ? defaultPalette.transparent
-                  :Color(0xFFFFFFFF)),
-                color: defaultPalette.transparent,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: DynMouseScroll(
-                durationMS: 500,
-                scrollSpeed: 1,
-                builder: (context, controller, physics) {
-                  return ScrollbarUltima(
-                    alwaysShowThumb: true,
-                    controller: controller,
-                    scrollbarPosition: sheetList.direction == Axis.vertical?
-                      ScrollbarPosition.right : ScrollbarPosition.bottom,
-                    backgroundColor: defaultPalette.primary,
-                    isDraggable: true,
-                    maxDynamicThumbLength: 80,
-                    minDynamicThumbLength: 30,
-                    thumbBuilder:
-                        (context, animation, widgetStates) {
-                      return Container(
-                        margin: EdgeInsets.symmetric(
-                          vertical:sheetList.direction == Axis.vertical?5:1,
-                          horizontal: sheetList.direction == Axis.vertical? 0:5
-                          ),
-                        decoration: BoxDecoration(
-                          border: Border.all(),
-                          color: defaultPalette.primary,
-                          borderRadius:
-                              BorderRadius.circular(99999)),
-                        width:sheetList.id == spreadSheetList[currentPageIndex].id
-                        ? 3
-                        : sheetList.direction == Axis.vertical? 4:60,
-                        height:sheetList.direction == Axis.vertical? 60:5,
-                      );
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
-                        sheetList.id == spreadSheetList[currentPageIndex].id
-                        ?3 : 3.5
-                        :0),
-                      child: spreadSheetList[currentPageIndex].id == sheetList.id
-                      ? MinimapScrollbarWidget(
-                        controller: controller,
-                        physics: physics,
-                        scaleFactor: 0.08,
-                        miniSize: 30,
-                        imageUpdateInterval: 5000000,
-                        child: SizedBox(
-                          width:sheetList.id == spreadSheetList[currentPageIndex].id
-                          ?sWidth
-                          : findSheetListBuildWidth(sheetList) <= 50
-                            ? 50
-                            : findSheetListBuildWidth(sheetList),
-                          child: sheetList.isEmpty? SizedBox(height:50, width:100): child(controller,physics))) : child(controller,physics)
-                      ),
-                      );
-                      }
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: DynMouseScroll(
+              durationMS: 500,
+              scrollSpeed: 1,
+              builder: (context, controller, physics) {
+                return ScrollbarUltima(
+                  alwaysShowThumb: true,
+                  controller: controller,
+                  scrollbarPosition: sheetList.direction == Axis.vertical?
+                    ScrollbarPosition.right : ScrollbarPosition.bottom,
+                  backgroundColor: defaultPalette.primary,
+                  isDraggable: true,
+                  maxDynamicThumbLength: 80,
+                  thumbBuilder:
+                      (context, animation, widgetStates) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(
+                        vertical:5,
+                        horizontal: sheetList.direction == Axis.vertical? 0:5
+                        ),
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                        color: defaultPalette.primary,
+                        borderRadius:
+                            BorderRadius.circular(99999)),
+                      width:sheetList.id == spreadSheetList[currentPageIndex].id
+                      ? 3
+                      : sheetList.direction == Axis.vertical? 4:60,
+                      height:sheetList.direction == Axis.vertical? 60:5,
+                    );
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.only(right:sheetList.direction == Axis.vertical?
+                      sheetList.id == spreadSheetList[currentPageIndex].id
+                      ?3 : 3.5
+                      :0),
+                    child: spreadSheetList[currentPageIndex].id == sheetList.id
+                    ? MinimapScrollbarWidget(
+                      controller: controller,
+                      physics: physics,
+                      scaleFactor: 0.08,
+                      miniSize: 30,
+                      imageUpdateInterval: 5000000,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 0, // allow it to shrink
+                          maxWidth: double.infinity, // no hard upper limit unless needed
+                        ),
+                        child: sheetList.isEmpty? SizedBox(height:50, width:100): child(controller,physics))) : child(controller,physics)
                     ),
+                    );
+                    }
                   ),
                 ),
               ),
-            
             ),
+          
           ),
         ),
-         if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
-        Positioned(
-            top: 0,
-            child: SlideInLeft(
-              duration: Durations.short2,
-              child: GestureDetector(
-                behavior: HitTestBehavior.deferToChild,
-                onTapDown: (d) {
-                  setState(() {
-                    panelIndex.parentId = sheetList.id;
-                    // panelIndex.runTimeType = sheetList.runtimeType;
-                  });
-                  
-                  List<ContextMenuEntry> buildSheetListContextMenuEntries(SheetList sheetList) {
-                    var entries = <ContextMenuEntry>[
-                      MenuHeader(text: 'SheetList Menu')
-                    ];
-
-                    // Cut SheetList
-
-                    entries.add(MenuItem(
-                      label: 'Cut',
-                      icon: TablerIcons.cut,
-                      onSelected: () {
-                        setState(() {
-                          print(sheetListClipboard );
-                          sheetListClipboard[0] = null;
-                          sheetListClipboard[1] = (_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
-                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList.removeWhere((element) => element==sheetListItem,);
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));
-                          print(sheetListClipboard );
-                          print(sheetListClipboard[1]?.id );
-                        });
-                        // });
-                        // saveLayout();
-                      },
-                    ));
-
-                    // Copy
-                    entries.add(MenuItem(
-                      label: 'Copy',
-                      icon: TablerIcons.copy,
-                      onSelected: () {
+      ),
+      if (panelIndex.parentId == sheetList.id &&  spreadSheetList[currentPageIndex].id != sheetList.id)
+      Positioned(
+          top: 0,
+          child: SlideInLeft(
+            duration: Durations.short2,
+            child: GestureDetector(
+              behavior: HitTestBehavior.deferToChild,
+              onTapDown: (d) {
+                setState(() {
+                  panelIndex.parentId = sheetList.id;
+                  // panelIndex.runTimeType = sheetList.runtimeType;
+                });
+                
+                List<ContextMenuEntry> buildSheetListContextMenuEntries( SheetList sheetList) {
+                  var entries = <ContextMenuEntry>[
+                    MenuHeader(text: 'SheetList Menu')
+                  ];
+          
+                  // Cut SheetList
+          
+                  entries.add(MenuItem(
+                    label: 'Cut',
+                    icon: TablerIcons.cut,
+                    onSelected: () {
+                      setState(() {
                         print(sheetListClipboard );
-                        setState(() {
-                          sheetListClipboard[0]=(getItemAtPath(sheetListItem.indexPath) as SheetList);
-                          sheetListClipboard[1] = null;
-                        });
+                        sheetListClipboard[0] = null;
+                        sheetListClipboard[1] = (_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
+                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList.removeWhere((element) => element==sheetListItem,);
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));
                         print(sheetListClipboard );
-                      },
-                    ));
-
-                    // Paste
-                    entries.add(MenuItem(
-                      label: 'Paste',
-                      icon: TablerIcons.clipboard,
-                      onSelected: () {
-
-                        List<SheetItem> deepCopySheetList(
-                          List<SheetItem> sheetList, {
-                          required String parentIdOverride, // 👈 added param
-                          required IndexPath indexPath,
-                          Set<String>? visited,
-                          int depth = 0,
-                          int maxDepth = 50,
-                        }) {
-                          visited ??= <String>{};
-
-                          return sheetList.asMap().entries.map((e) {
-                            var childIndexPath = IndexPath(
-                              parent: indexPath,
-                              index: e.key,
-                              );
-                            if (depth > maxDepth) {
-                              throw Exception("Too deeply nested structure");
-                            }
-
-                            if (visited!.contains(e.value.id)) {
-                              throw Exception("Recursive structure detected: ${e.value.id}");
-                            }
-
-                            visited.add(e.value.id);
-
-                            if (e.value is SheetText) {
-                             
-
-                              return _addTextField(
-                                docString: (e.value as SheetText).textEditorConfigurations.controller.document.toDelta().toJson(),
-                                id: 'TX-${ const Uuid().v4()}',
-                                parentId: parentIdOverride,
-                                shouldReturn: true,
-                                textDecoration: (e.value as SheetText).textDecoration,
-                                indexPath: childIndexPath,
-                                inputBlocks: (e.value as SheetText).inputBlocks.map((e) => InputBlock(indexPath: e.indexPath, blockIndex: e.blockIndex, id: e.id),).toList(),
-
-                                );
-                            } else if (e.value is SheetList) {
-                              final newId = 'LI-${ const Uuid().v4()}';
-                              return SheetList(
-                                id: newId,
-                                parentId: parentIdOverride, // 👈 Apply to this nested list
-                                direction: (e.value as SheetList).direction,
-                                crossAxisAlignment: (e.value as SheetList).crossAxisAlignment,
-                                mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
-                                mainAxisSize: (e.value as SheetList).mainAxisSize,
-                                size: (e.value as SheetList).size,
-                                listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
-                                sheetList: deepCopySheetList(
-                                  (e.value as SheetList).sheetList,
-                                  parentIdOverride: newId, // 👈 Recursive update to children
-                                  visited: {...visited},
-                                  depth: depth + 1,
-                                  indexPath: childIndexPath,
-                                ),
-                                indexPath: childIndexPath,
-                              );
-                            }
-
-                            throw Exception("Unknown or Unaccounted SheetItem type in paste: ${e.value.runtimeType}");
-                          }).toList();
-                        }
-
-
-                        final isNotCopied = sheetListClipboard[0] == null;
-                        final originalItem = isNotCopied
-                            ? sheetListClipboard[1]!
-                            : sheetListClipboard[0]!;
-                        final newId = isNotCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
-                        var newIndexPath = IndexPath(
-                          parent:_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).indexPath,
-                          index: 0);
-
-                        final newSheetList = deepCopySheetList(
-                          originalItem.sheetList,
-                          parentIdOverride: newId, // 👈 Pass new parentId to apply to all children
-                          indexPath: newIndexPath
-                        );
-
-                        
-
-                        final newItem = originalItem.copyWith(
-                          id: newId,
-                          parentId: sheetListItem.id,
-                          sheetList: newSheetList,
-                          indexPath: newIndexPath
-                        );
-
-
-                        setState(() {
-                          _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex])
-                              .insert(0, newItem);
-                        });
-                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
-                        saveLayout();
+                        print(sheetListClipboard[1]?.id );
+                      });
+                      // });
+                      // saveLayout();
+                    },
+                  ));
+          
+                  // Copy
+                  entries.add(MenuItem(
+                    label: 'Copy',
+                    icon: TablerIcons.copy,
+                    onSelected: () {
+                      print(sheetListClipboard );
+                      setState(() {
+                        sheetListClipboard[0]=(getItemAtPath(sheetListItem.indexPath) as SheetList);
                         sheetListClipboard[1] = null;
-
-
+                      });
+                      print(sheetListClipboard );
+                    },
+                  ));
+          
+                  // Paste
+                  entries.add(MenuItem(
+                    label: 'Paste',
+                    icon: TablerIcons.clipboard,
+                    onSelected: () {
+          
+                      List<SheetItem> deepCopySheetList(
+                        List<SheetItem> sheetList, {
+                        required String parentIdOverride, // 👈 added param
+                        required IndexPath indexPath,
+                        Set<String>? visited,
+                        int depth = 0,
+                        int maxDepth = 50,
+                      }) {
+                        visited ??= <String>{};
+          
+                        return sheetList.asMap().entries.map((e) {
+                          var childIndexPath = IndexPath(
+                            parent: indexPath,
+                            index: e.key,
+                            );
+                          if (depth > maxDepth) {
+                            throw Exception("Too deeply nested structure");
+                          }
+          
+                          if (visited!.contains(e.value.id)) {
+                            throw Exception("Recursive structure detected: ${e.value.id}");
+                          }
+          
+                          visited.add(e.value.id);
+          
+                          if (e.value is SheetText) {
+                           
+          
+                            return _addTextField(
+                              docString: (e.value as SheetText).textEditorConfigurations.controller.document.toDelta().toJson(),
+                              id: 'TX-${ const Uuid().v4()}',
+                              parentId: parentIdOverride,
+                              shouldReturn: true,
+                              textDecoration: (e.value as SheetText).textDecoration,
+                              indexPath: childIndexPath,
+                              inputBlocks: (e.value as SheetText).inputBlocks.map((e) => InputBlock(indexPath: e.indexPath, blockIndex: e.blockIndex, id: e.id),).toList(),
+          
+                              );
+                          } else if (e.value is SheetList) {
+                            final newId = 'LI-${ const Uuid().v4()}';
+                            return SheetList(
+                              id: newId,
+                              parentId: parentIdOverride, // 👈 Apply to this nested list
+                              direction: (e.value as SheetList).direction,
+                              crossAxisAlignment: (e.value as SheetList).crossAxisAlignment,
+                              mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
+                              mainAxisSize: (e.value as SheetList).mainAxisSize,
+                              size: (e.value as SheetList).size,
+                              listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
+                              sheetList: deepCopySheetList(
+                                (e.value as SheetList).sheetList,
+                                parentIdOverride: newId, // 👈 Recursive update to children
+                                visited: {...visited},
+                                depth: depth + 1,
+                                indexPath: childIndexPath,
+                              ),
+                              indexPath: childIndexPath,
+                            );
+                          }
+          
+                          throw Exception("Unknown or Unaccounted SheetItem type in paste: ${e.value.runtimeType}");
+                        }).toList();
+                      }
+          
+          
+                      final isNotCopied = sheetListClipboard[0] == null;
+                      final originalItem = isNotCopied
+                          ? sheetListClipboard[1]!
+                          : sheetListClipboard[0]!;
+                      final newId = isNotCopied ? originalItem.id : 'LI-${ Uuid().v4()}';
+                      var newIndexPath = IndexPath(
+                        parent:_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).indexPath,
+                        index: 0);
+          
+                      final newSheetList = deepCopySheetList(
+                        originalItem.sheetList,
+                        parentIdOverride: newId, // 👈 Pass new parentId to apply to all children
+                        indexPath: newIndexPath
+                      );
+          
+                      
+          
+                      final newItem = originalItem.copyWith(
+                        id: newId,
+                        parentId: sheetListItem.id,
+                        sheetList: newSheetList,
+                        indexPath: newIndexPath
+                      );
+          
+          
+                      setState(() {
+                        _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex])
+                            .insert(0, newItem);
+                      });
+                      _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]));
+                      saveLayout();
+                      sheetListClipboard[1] = null;
+          
+          
+                    },
+                  ));
+          
+                  entries.add(const MenuDivider());
+          
+                  entries.addAll([
+                    const MenuHeader(text: 'ops'),
+                  //ADD ITEMS
+                  MenuItem.submenu(
+                      label: 'Add',
+                      icon: TablerIcons.new_section,
+                      items: [
+              MenuItem.submenu(
+                  label: 'Text',
+                  icon: TablerIcons.text_recognition,
+                  items: [
+                    //add text before the selected one
+                    MenuItem(
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'TX-${Uuid().v4()}';
+                        var newItem = _addTextField( 
+                          id: newId,
+                          shouldReturn:  true,
+                          textDecoration:  newSuperDecoration(),
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0),
+                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
+                          );
+                  
+                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
+                          , newItem);
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        });
                       },
-                    ));
-
-                    entries.add(const MenuDivider());
-
-                    entries.addAll([
-                      const MenuHeader(text: 'ops'),
-                    //ADD ITEMS
+                    ),
+                    //add text after the selected one
+                    MenuItem(
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'TX-${Uuid().v4()}';
+                        var newItem = _addTextField( 
+                          id: newId,
+                          shouldReturn:  true,
+                          textDecoration:  newSuperDecoration(),
+                          indexPath: IndexPath(
+                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            index: 0),
+                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],  
+                          );
+                  
+                        var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
+                        if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
+                          
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                              index+1,
+                              newItem);
+                        } else {
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
+                              newItem);
+                        }
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        });
+                        
+                      },
+                    ),
+                    //add text inside the selected one
                     MenuItem.submenu(
-                        label: 'Add',
-                        icon: TablerIcons.new_section,
-                        items: [
-                MenuItem.submenu(
-                    label: 'Text',
-                    icon: TablerIcons.text_recognition,
-                    items: [
-                      //add text before the selected one
+                      label: 'Inside',
+                      icon: TablerIcons.code_plus,
+                      items:[
                       MenuItem(
-                        label: 'Before',
-                        icon: TablerIcons
-                            .row_insert_top,
+                        label: 'At first',
+                        icon: TablerIcons.row_insert_top,
                         onSelected: () {
                           setState(() {
                             var newId = 'TX-${Uuid().v4()}';
                           var newItem = _addTextField( 
                             id: newId,
                             shouldReturn:  true,
-                            textDecoration:  newSuperDecoration(),
+                            textDecoration: newSuperDecoration(),
                             indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0),
-                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
+                            parent:sheetList.indexPath,
+                            index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
                             );
-                    
-                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
-                            , newItem);
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                   
+                          var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
+                          if (index<sheetList.length) {
+                            
+                            sheetList.insert( 0, newItem);
+                          } else {
+                            sheetList.add(
+                                newItem);
+                          }
+                          _reassignSheetListIndexPath(sheetList);  
+                          
                           });
                         },
                       ),
-                      //add text after the selected one
+                      //add to the end a text inside the list
                       MenuItem(
-                        label: 'After',
+                        label: 'At Last',
                         icon: TablerIcons
                             .row_insert_bottom,
                         onSelected: () {
                           setState(() {
                             var newId = 'TX-${Uuid().v4()}';
-                          var newItem = _addTextField( 
-                            id: newId,
-                            shouldReturn:  true,
-                            textDecoration:  newSuperDecoration(),
-                            indexPath: IndexPath(
-                              parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                              index: 0),
-                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],  
-                            );
-                    
-                          var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                          if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
-                            
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                                index+1,
-                                newItem);
-                          } else {
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
-                                newItem);
-                          }
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                          });
-                          
-                        },
-                      ),
-                      //add text inside the selected one
-                      MenuItem.submenu(
-                        label: 'Inside',
-                        icon: TablerIcons.code_plus,
-                        items:[
-                        MenuItem(
-                          label: 'At first',
-                          icon: TablerIcons.row_insert_top,
-                          onSelected: () {
-                            setState(() {
-                              var newId = 'TX-${Uuid().v4()}';
                             var newItem = _addTextField( 
                               id: newId,
                               shouldReturn:  true,
-                              textDecoration: newSuperDecoration(),
+                              textDecoration:  newSuperDecoration(),
                               indexPath: IndexPath(
                               parent:sheetList.indexPath,
-                              index: 0),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
+                              index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
                               );
-                     
-                            var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                            if (index<sheetList.length) {
-                              
-                              sheetList.insert( 0, newItem);
-                            } else {
+                   
                               sheetList.add(
                                   newItem);
-                            }
-                            _reassignSheetListIndexPath(sheetList);  
                             
-                            });
-                          },
-                        ),
-                        //add to the end a text inside the list
-                        MenuItem(
-                          label: 'At Last',
-                          icon: TablerIcons
-                              .row_insert_bottom,
-                          onSelected: () {
-                            setState(() {
-                              var newId = 'TX-${Uuid().v4()}';
-                              var newItem = _addTextField( 
-                                id: newId,
-                                shouldReturn:  true,
-                                textDecoration:  newSuperDecoration(),
-                                indexPath: IndexPath(
-                                parent:sheetList.indexPath,
-                                index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-                                );
-                     
-                                sheetList.add(
-                                    newItem);
-                              
-                            });
-                          },
-                        ),
-                    
-                        ]
+                          });
+                        },
                       ),
-                    
-                    ]),
-                MenuItem.submenu(
-                    label: 'List',
-                    icon: TablerIcons
-                        .brackets_contain_start,
-                    items: [
-                      //add list before the selected one
+                  
+                      ]
+                    ),
+                  
+                  ]),
+              MenuItem.submenu(
+                  label: 'List',
+                  icon: TablerIcons
+                      .brackets_contain_start,
+                  items: [
+                    //add list before the selected one
+                    MenuItem(
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      onSelected: () {
+                        setState(() {
+                          var newId ='LI-${ const Uuid().v4()}';
+          
+                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
+                          , SheetList(
+                        direction:
+                          Axis.horizontal,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration: newSuperDecoration(),
+                        sheetList: [
+                        ],
+                        indexPath: IndexPath(
+                          parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0)
+                        ));
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        
+                        });
+                      },
+                    ),
+                    //add list after the selected one
+                    MenuItem(
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      onSelected: () {
+                        setState(() {
+                         var newId ='LI-${ const Uuid().v4()}';
+                        var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
+                        if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
+                          
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
+                              index+1,
+                              SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration:  newSuperDecoration(),
+                          sheetList: [],
+                        indexPath: IndexPath(
+                          parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0)
+                        ));
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        
+                        } else {
+                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
+                              SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration:  newSuperDecoration(),
+                          sheetList: [],
+                        indexPath: IndexPath(
+                          parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                          index: 0)
+                        ));
+                        _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
+                        
+                        }
+                        });
+                        
+                      },
+                    ),
+                    //add list inside the selected one
+                    MenuItem.submenu(
+                      label: 'Inside',
+                      icon: TablerIcons.code_plus,
+                      items:[
                       MenuItem(
-                        label: 'Before',
-                        icon: TablerIcons
-                            .row_insert_top,
+                        label: 'At first',
+                        icon: TablerIcons.row_insert_top,
                         onSelected: () {
                           setState(() {
-                            var newId ='LI-${ const Uuid().v4()}';
-
-                          _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList)
-                            , SheetList(
+                          var newId ='LI-${ const Uuid().v4()}';             
+                          if (sheetList.length!=0) {
+                            
+                            sheetList.insert( 0, SheetList(
                           direction:
                             Axis.horizontal,
                           id: newId,
                           parentId: sheetList.id,
                           listDecoration: newSuperDecoration(),
-                          sheetList: [
-                          ],
+                          sheetList: [],
                           indexPath: IndexPath(
-                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
+                            parent:sheetList.indexPath,
                             index: 0)
                           ));
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                          
+                          } else {
+                            sheetList.add(
+                                SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration(),
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length)
+                          ));
+                          }
+                            _reassignSheetListIndexPath(sheetList);
                           });
                         },
                       ),
-                      //add list after the selected one
+                      //add a new row with a new textfield inside at the current index
                       MenuItem(
-                        label: 'After',
+                        label: 'At Last',
                         icon: TablerIcons
                             .row_insert_bottom,
                         onSelected: () {
                           setState(() {
-                           var newId ='LI-${ const Uuid().v4()}';
-                          var index =_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexOf(sheetList);              
-                          if (index<_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).length) {
+                            var newId ='LI-${ const Uuid().v4()}';
                             
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).insert(
-                                index+1,
-                                SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration:  newSuperDecoration(),
-                            sheetList: [],
-                          indexPath: IndexPath(
-                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                            index: 0)
-                          ));
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                          
-                          } else {
-                            _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).add(
-                                SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration:  newSuperDecoration(),
-                            sheetList: [],
-                          indexPath: IndexPath(
-                            parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
-                            index: 0)
-                          ));
-                          _reassignSheetListIndexPath(_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]));  
-                          
-                          }
-                          });
-                          
-                        },
-                      ),
-                      //add list inside the selected one
-                      MenuItem.submenu(
-                        label: 'Inside',
-                        icon: TablerIcons.code_plus,
-                        items:[
-                        MenuItem(
-                          label: 'At first',
-                          icon: TablerIcons.row_insert_top,
-                          onSelected: () {
-                            setState(() {
-                            var newId ='LI-${ const Uuid().v4()}';             
-                            if (sheetList.length!=0) {
-                              
-                              sheetList.insert( 0, SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [],
-                            indexPath: IndexPath(
-                              parent:sheetList.indexPath,
-                              index: 0)
-                            ));
-                            } else {
                               sheetList.add(
                                   SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [],
-                            indexPath: IndexPath(
-                              parent: sheetList.indexPath,
-                              index: sheetList.length)
-                            ));
-                            }
-                              _reassignSheetListIndexPath(sheetList);
-                            });
-                          },
-                        ),
-                        //add a new row with a new textfield inside at the current index
-                        MenuItem(
-                          label: 'At Last',
-                          icon: TablerIcons
-                              .row_insert_bottom,
-                          onSelected: () {
-                            setState(() {
-                              var newId ='LI-${ const Uuid().v4()}';
-                              
-                                sheetList.add(
-                                    SheetList(
-                            direction:
-                              Axis.horizontal,
-                            id: newId,
-                            parentId: sheetList.id,
-                            listDecoration: newSuperDecoration(),
-                            sheetList: [],
-                            indexPath: IndexPath(
-                              parent: sheetList.indexPath,
-                              index: sheetList.length)
-                            ));
-                              
-                            });
-                          },
-                        ),
-                    
-                        ]
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration(),
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length)
+                          ));
+                            
+                          });
+                        },
                       ),
-                    
-                           
-                      ])    
-                    ]),
-                    //Wrap ITEMS
-                    MenuItem.submenu(
-                    label: 'Wrap',
-                    icon: TablerIcons.brackets_contain,
-                    items: [
-                      //In a row
+                  
+                      ]
+                    ),
+                  
+                         
+                    ])    
+                  ]),
+                  //Wrap ITEMS
+                  MenuItem.submenu(
+                  label: 'Wrap',
+                  icon: TablerIcons.brackets_contain,
+                  items: [
+                    //In a row
+                  MenuItem(
+                    label: 'In a Row',
+                    icon: TablerIcons.layout_rows ,
+                    onSelected: () {
+                      wrapInAList(0);
+                    },
+                  ),
+                    //In a column
+                  MenuItem(
+                    label: 'In a Column',
+                    icon: TablerIcons
+                        .layout_columns,
+                    onSelected: () {
+                      wrapInAList(1);
+                    },
+                    ),
+                  ]),
+          
+                    //Clear Field
                     MenuItem(
-                      label: 'In a Row',
-                      icon: TablerIcons.layout_rows ,
-                      onSelected: () {
-                        wrapInAList(0);
+                      label: 'Empty The List',
+                      icon: TablerIcons.square_rounded_x,
+                      onSelected: () async {
+                        await showAdaptiveDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text(
+                                  'Do you really really want to Empty the List?'),
+                              content: Text(
+                                  'This will clear all the text fields from current SheetList. Are you sure?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        var temp = _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]);
+                                        
+                                        (temp as SheetList).sheetList.clear();
+          
+                                        _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).sheetList = temp.sheetList;
+                                        saveLayout(); // Save changes after clearing
+                                      });
+                                      Navigator.pop(
+                                          context); // Close the current context
+                                    },
+                                    child: Text('Yes')),
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text('No')),
+                              ],
+                            );
+                          },
+                        );
                       },
                     ),
-                      //In a column
+                    //Delete
                     MenuItem(
-                      label: 'In a Column',
-                      icon: TablerIcons
-                          .layout_columns,
-                      onSelected: () {
-                        wrapInAList(1);
+                      label: 'Delete',
+                      icon: TablerIcons.trash,
+                      onSelected: () async {
+                        await showAdaptiveDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Confirm Delete'),
+                              content: const Text(
+                                  'This will DELETE the current List with its contents. Are you sure?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        // sheetList.removeAt(index);
+                                        panelIndex.id = '';
+                                        // panelIndex.runTimeType = null;
+                                      });
+                                      _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList
+                                        .removeWhere((element) => element.id == sheetListItem.id,);
+                                      
+                                      // });
+                                      _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
+                                      saveLayout();
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Yes')),
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('No')),
+                              ],
+                            );
+                          },
+                        );
                       },
-                      ),
-                    ]),
-    
-                      //Clear Field
-                      MenuItem(
-                        label: 'Empty The List',
-                        icon: TablerIcons.square_rounded_x,
-                        onSelected: () async {
-                          await showAdaptiveDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text(
-                                    'Do you really really want to Empty the List?'),
-                                content: Text(
-                                    'This will clear all the text fields from current SheetList. Are you sure?'),
-                                actions: [
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          var temp = _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]);
-                                          
-                                          (temp as SheetList).sheetList.clear();
-
-                                          _sheetListIterator(sheetListItem.id, spreadSheetList[currentPageIndex]).sheetList = temp.sheetList;
-                                          saveLayout(); // Save changes after clearing
-                                        });
-                                        Navigator.pop(
-                                            context); // Close the current context
-                                      },
-                                      child: Text('Yes')),
-                                  TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text('No')),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      //Delete
-                      MenuItem(
-                        label: 'Delete',
-                        icon: TablerIcons.trash,
-                        onSelected: () async {
-                          await showAdaptiveDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Confirm Delete'),
-                                content: const Text(
-                                    'This will DELETE the current List with its contents. Are you sure?'),
-                                actions: [
-                                  TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          // sheetList.removeAt(index);
-                                          panelIndex.id = '';
-                                          // panelIndex.runTimeType = null;
-                                        });
-                                        _sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).sheetList
-                                          .removeWhere((element) => element.id == sheetListItem.id,);
-                                        
-                                        // });
-                                        _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
-                                        saveLayout();
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Yes')),
-                                  TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('No')),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      )
-                    ]);
-
-                    return entries;
-                  }
-
-                  final entries = buildSheetListContextMenuEntries(sheetList);
-                  var menu = ContextMenu(
-                      entries: entries,
-                      boxDecoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: defaultPalette.black.withOpacity(0.3),
-                              blurRadius: 2,
-                              // spreadRadius: 10
-                            )
-                          ],
-                          color: defaultPalette.primary,
-                          borderRadius: BorderRadius.circular(10)),
-                      position:
-                          Offset(d.globalPosition.dx, d.globalPosition.dy));
-                  menu.show(context);
-                },
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      border: Border.all(
-                          width: 2,
-                          color: panelIndex.parentId == sheetList.id
-                              ? defaultPalette.extras[1]
-                              : ui.Color(0xFFFFFFFF)),
-                      color: defaultPalette.quaternary,
-                      shape: BoxShape.circle),
-                  width: 15,
-                  height: 15,
-                ),
+                    )
+                  ]);
+          
+                  return entries;
+                }
+          
+                final entries = buildSheetListContextMenuEntries(sheetList);
+                var menu = ContextMenu(
+                    entries: entries,
+                    boxDecoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: defaultPalette.black.withOpacity(0.3),
+                            blurRadius: 2,
+                            // spreadRadius: 10
+                          )
+                        ],
+                        color: defaultPalette.primary,
+                        borderRadius: BorderRadius.circular(10)),
+                    position:
+                        Offset(d.globalPosition.dx, d.globalPosition.dy));
+                menu.show(context);
+              },
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                    border: Border.all(
+                        width: 2,
+                        color: panelIndex.parentId == sheetList.id
+                            ? defaultPalette.extras[1]
+                            : ui.Color(0xFFFFFFFF)),
+                    color: defaultPalette.quaternary,
+                    shape: BoxShape.circle),
+                width: 15,
+                height: 15,
               ),
             ),
-          ), // Expandable menus and other widgets can stay the same
-       
-      ],
-    );
+          ),
+        ), // Expandable menus and other widgets can stay the same
+      
+    ],
+          );
   }
-
   
   Widget buildSheetTextWidget(SheetText sheetText) {
-  return Container(
-    padding: const EdgeInsets.only(
-        top: 4,
-        bottom: 4,
-        left: 0,
-        right: 4),
-    decoration: BoxDecoration(
-      color: defaultPalette.primary,
-      border: Border.all(
-        strokeAlign:
-            BorderSide.strokeAlignInside,
-        width: panelIndex.id ==
-                sheetText.id
-            ? 2
-            : 1.2,
+    DateTime? extractDateFromDelta(Document doc) {
+      final plainText = doc.toPlainText();
 
-        color: panelIndex.id ==
-                sheetText.id
-            ? defaultPalette.tertiary
-            : defaultPalette.black,
+      // Match: 2 digits (day) + any non-digit + 2 digits (month) + any non-digit + 4 digits (year)
+      final regex = RegExp(r'(\d{1,2})\D+(\d{1,2})\D+(\d{4})');
+
+      final match = regex.firstMatch(plainText);
+
+      if (match != null) {
+        try {
+          int day = int.parse(match.group(1)!);
+          int month = int.parse(match.group(2)!);
+          int year = int.parse(match.group(3)!);
+
+          return DateTime(year, month, day);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      return null;
+    }
+    TimeOfDay? extractTimeFromDelta(Document doc) {
+      final plainText = doc.toPlainText();
+
+      // Match: 2 digits + non-digit + 2 digits
+      final regex = RegExp(r'(\d{1,2})\D+(\d{1,2})');
+
+      final match = regex.firstMatch(plainText);
+
+      if (match != null) {
+        try {
+          int hour = int.parse(match.group(1)!);
+          int minute = int.parse(match.group(2)!);
+
+          if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+            return TimeOfDay(hour: hour, minute: minute);
+          }
+        } catch (_) {
+          return null;
+        }
+      }
+
+      return null;
+    }
+
+    var extractedDate = null;
+    if (sheetText.type == SheetTextType.date) {
+      extractedDate = extractDateFromDelta(sheetText.textEditorController.document);
+    }
+  return 
+    Container(
+      margin: const EdgeInsets.only(
+        // bottom: 2,
+        left: 2,
+        top: 4,
+        right: 2),
+      padding: const EdgeInsets.only(
+          top: 4,
+          bottom: 4,
+          left: 0,
+          right: 4),
+      decoration: BoxDecoration(
+        color: defaultPalette.primary,
+        border: Border.all(
+          strokeAlign:
+              BorderSide.strokeAlignInside,
+          width: panelIndex.id ==
+                  sheetText.id
+              ? 2
+              : 1.2,
+    
+          color: panelIndex.id ==
+                  sheetText.id
+              ? defaultPalette.tertiary
+              : defaultPalette.black,
+        ),
+        borderRadius:
+            BorderRadius.circular(10),
       ),
-      borderRadius:
-          BorderRadius.circular(10),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        
-        Row(
-          children: [
-            Container(
-              child: const Icon(
-                TablerIcons.cursor_text,
-                size: 15,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          
+          Row(
+            children: [
+              if(sheetText.type == SheetTextType.date|| sheetText.type == SheetTextType.time)
+              const SizedBox(width:4),
+              Icon(
+                sheetText.type == SheetTextType.string
+                ? TablerIcons.cursor_text
+                : sheetText.type == SheetTextType.integer
+                ? TablerIcons.numbers
+                : sheetText.type == SheetTextType.date
+                ? TablerIcons.calendar_week
+                : sheetText.type == SheetTextType.time
+                ? TablerIcons.clock_hour_8
+                : TablerIcons.decimal,
+                size:sheetText.type == SheetTextType.date || sheetText.type == SheetTextType.time
+                ?18: 15,
               ),
+              if(sheetText.type == SheetTextType.date|| sheetText.type == SheetTextType.time)
+              const SizedBox(width:2),
+              if(sheetText.name != 'unlabeled')
+          ...[
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 120),
+              child: Text(
+                  sheetText.name,
+                  maxLines: 2,
+                  overflow:TextOverflow.ellipsis,
+                  style: GoogleFonts.lexend(
+                    letterSpacing: -1,
+                    height:0.9,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    color: defaultPalette.black),
+                ),
             ),
-            if(sheetText.name != 'unlabeled')
-        ...[
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 120),
-            child: Text(
-                sheetText.name,
-                maxLines: 2,
-                overflow:TextOverflow.ellipsis,
-                style: GoogleFonts.lexend(
-                  letterSpacing: -1,
-                  height:0.9,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
-                  color: defaultPalette.black),
+              const SizedBox(width:4),],
+              Expanded(
+              child: sheetText.type == SheetTextType.date
+                  ? Container(
+                      padding: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              margin:const  EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: defaultPalette.secondary,
+                              ),
+                              child: Text(
+                                '${extractedDate?.day.toString().padLeft(2, '0') ?? '--'}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          Text('-'),
+                          Expanded(
+                            child: Container(
+                              margin:const  EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: defaultPalette.secondary,
+                              ),
+                              child: Text(
+                                '${extractedDate?.month.toString().padLeft(2, '0') ?? '--'}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          Text('-'),
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                color: defaultPalette.secondary,
+                              ),
+                              child: Text(
+                                '${extractedDate?.year ?? '----'}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          
+                        ],
+                      ),
+                    )
+                  : sheetText.type == SheetTextType.time
+                  ? Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: defaultPalette.transparent,
+                      ),
+                      child: Row(
+                        children: [
+                          Builder(builder: (context) {
+                            final time = extractTimeFromDelta(sheetText.textEditorController.document);
+                            final hourStr = time?.hour.toString().padLeft(2, '0') ?? '--';
+                            final minuteStr = time?.minute.toString().padLeft(2, '0') ?? '--';
+                
+                            return Expanded(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(0, 0),
+                                      padding: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: defaultPalette.secondary,
+                                      ),child: Text(hourStr, style: TextStyle(fontSize: 13))),
+                                  ),
+                                  Text('  : ', style: TextStyle(fontSize: 13)),
+                                  Expanded(child: Container(
+                                    alignment: Alignment(0, 0),
+                                    margin: EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: defaultPalette.secondary,
+                                    ),child: Text(minuteStr, style: TextStyle(fontSize: 13)))),
+                                ],
+                              ),
+                            );
+                          }),
+                          
+                        ],
+                      ),
+                    )
+                  : QuillEditor(
+                      configurations: sheetText.textEditorConfigurations,
+                      focusNode: sheetText.focusNode,
+                      scrollController: ScrollController(),
+                    ),
+                      
               ),
-          ),
-            SizedBox(width:4),],
-            Expanded(
-              child: QuillEditor(
-                configurations: sheetText
-                    .textEditorConfigurations,
-                focusNode:
-                    sheetText.focusNode,
-                scrollController:
-                    ScrollController(),
-              ),
-            ),
-            if(sheetText.hide)
-            ...[
-            SizedBox(width:2),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(9999),
-              child: Material(
-                color: defaultPalette.transparent,
-                child: InkWell(
-                  focusColor: defaultPalette.primary,
-                  hoverColor: defaultPalette.primary,
-                  highlightColor: defaultPalette.primary,
-                  onTap: () {
-                    setState(() {
-                      sheetText.hide = !sheetText.hide;
-                    });
-                  },
-                  child: const Icon(
-                    TablerIcons.eye_closed,
-                    size: 15,
+      
+              if(sheetText.hide)
+              ...[
+              SizedBox(width:2),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(9999),
+                child: Material(
+                  color: defaultPalette.transparent,
+                  child: InkWell(
+                    focusColor: defaultPalette.primary,
+                    hoverColor: defaultPalette.primary,
+                    highlightColor: defaultPalette.primary,
+                    onTap: () {
+                      setState(() {
+                        sheetText.hide = !sheetText.hide;
+                      });
+                    },
+                    child: const Icon(
+                      TablerIcons.eye_closed,
+                      size: 15,
+                    ),
                   ),
                 ),
               ),
-            ),]
-          ],
-        ),
-
-        if(sheetText.inputBlocks.length>1)
-        Row(
-          children: [
-            SizedBox(width:4),
-            const Icon(
-              TablerIcons.math_integral_x,
-              size: 15,
-            ),
-            SizedBox(width:4),
-            Expanded(
-              child: Container(
-                padding:EdgeInsets.symmetric(horizontal:4),
-                margin: EdgeInsets.only(top:4),
-                decoration:BoxDecoration(
-                  color:defaultPalette.secondary,
-                  borderRadius:BorderRadius.circular(5)
-                ),
-                child: QuillEditor(
-                  configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
-                  focusNode: FocusNode(),
-                  scrollController:
-                      ScrollController(),
+              ],
+              if(sheetText.type == SheetTextType.date)
+              ...[
+                const SizedBox(width: 2),
+                Material(
+                  child: InkWell(
+                    child: Icon(TablerIcons.pencil, size: 18),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: extractedDate ?? DateTime.now(),
+                        firstDate: DateTime(1800),
+                        lastDate: DateTime(2100),
+                        barrierColor: defaultPalette.transparent,
+                        builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            inputDecorationTheme: InputDecorationTheme(
+                              labelStyle: GoogleFonts.lexend(
+                                fontSize: 12,
+                                // fontWeight: FontWeight.w600,
+                                color: defaultPalette.extras[0],
+                              ),
+                              hintStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              errorStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                borderRadius: BorderRadius.circular(8)
+                              )
+                            ),
+                            
+                            textTheme: Theme.of(context).textTheme.copyWith(
+                              titleLarge: GoogleFonts.lexend(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineSmall: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineMedium: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              
+                              style: ButtonStyle(
+                  
+                                textStyle: WidgetStateProperty.all(
+                                  GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                              ),
+                            ),
+                            datePickerTheme: DatePickerThemeData(
+                              backgroundColor: defaultPalette.primary,
+                              rangePickerBackgroundColor: defaultPalette.tertiary,
+                              elevation: 20,
+                              // Selected date/year/month
+                              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.tertiary;
+                                }
+                                return null;
+                              }),
+                              locale: const Locale('en', 'IN'),
+                              todayBorder: BorderSide.none,
+                              todayBackgroundColor:  WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.tertiary;
+                                } else {
+                                  return defaultPalette.primary;
+                                }
+                                return null;
+                              }),
+                              todayForegroundColor:  WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.primary;
+                                } else {
+                                  return defaultPalette.extras[0];
+                                }
+                                return null;
+                              }),
+                              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.primary;
+                                }
+                                return null;
+                              }),
+                              yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return defaultPalette.tertiary;
+                                } else {
+                                  return defaultPalette.transparent;
+                                }
+                                return null;
+                              }),
+                              dividerColor: defaultPalette.extras[0].withOpacity(0.4),
+                              confirmButtonStyle:  ButtonStyle(
+                              textStyle: WidgetStateProperty.all(
+                                GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.tertiary,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              overlayColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.hovered)) {
+                                    return defaultPalette.extras[0].withOpacity(0.08); // hover color
+                                  }
+                                  if (states.contains(WidgetState.pressed)) {
+                                    return defaultPalette.tertiary.withOpacity(0.2); // splash/press
+                                  }
+                                  return null;
+                                }),
+                                splashFactory: InkRipple.splashFactory,
+                              ),
+                              cancelButtonStyle:  ButtonStyle(
+                              textStyle: WidgetStateProperty.all(
+                                GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.tertiary,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              overlayColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.hovered)) {
+                                    return defaultPalette.extras[0].withOpacity(0.08); // hover color
+                                  }
+                                  if (states.contains(WidgetState.pressed)) {
+                                    return defaultPalette.tertiary.withOpacity(0.2); // splash/press
+                                  }
+                                  return null;
+                                }),
+                                splashFactory: InkRipple.splashFactory,
+                              ),
+                              yearStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.tertiary,
+                                letterSpacing: -1,
+                              ),
+                              dayStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.tertiary,
+                                letterSpacing: -1,
+                              ),
+                              weekdayStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              headerHeadlineStyle: GoogleFonts.lexend(
+                                fontSize: 30,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                // fontWeight: FontWeight.w600,
+                              ),
+                              rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              headerHelpStyle: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.tertiary,
+                                // fontWeight: FontWeight.w600,
+                              ),
+                              // Optional border radius:
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16), // <- This is the border
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                      );
+                      if (picked != null) {
+                        // You can now patch this back into the controller as plain text
+                        setState(() {
+                          sheetText.textEditorConfigurations.controller.replaceText(
+                            0,
+                            sheetText.textEditorConfigurations.controller.document.length - 1,
+                            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}',
+                            TextSelection.collapsed(offset: 0),
+                          );
+                        });
+                      }
+                    },
+                  ),
+                )
+              
+              ],
+              if(sheetText.type == SheetTextType.time)
+              ...[
+                const SizedBox(width: 4),
+                Material(
+                  child: InkWell(
+                    child: const Icon(TablerIcons.pencil, size: 18),
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              inputDecorationTheme: InputDecorationTheme(
+                              labelStyle: GoogleFonts.lexend(
+                                fontSize: 12,
+                                // fontWeight: FontWeight.w600,
+                                color: defaultPalette.extras[0],
+                              ),
+                              hintStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              errorStyle: GoogleFonts.lexend(
+                                fontSize: 15,
+                                color: defaultPalette.extras[0].withOpacity(0.6),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                borderRadius: BorderRadius.circular(8)
+                              )
+                            ),
+                            
+                            textTheme: Theme.of(context).textTheme.copyWith(
+                              titleLarge: GoogleFonts.lexend(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineSmall: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                              headlineMedium: GoogleFonts.lexend(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.black,
+                              ),
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              
+                              style: ButtonStyle(
+                  
+                                textStyle: WidgetStateProperty.all(
+                                  GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                              ),
+                            ),
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: defaultPalette.primary,
+                                hourMinuteTextStyle: GoogleFonts.lexend(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                dayPeriodTextStyle: GoogleFonts.lexend(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                helpTextStyle: GoogleFonts.lexend(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                entryModeIconColor: defaultPalette.extras[0],
+                                dialHandColor: defaultPalette.tertiary,
+                                dialBackgroundColor: defaultPalette.primary,
+                                hourMinuteColor: defaultPalette.primary,
+                                
+                              ),
+                              
+                            ),
+                            child: Localizations.override(
+                              context: context,
+                              locale: const Locale('en', 'GB'), // DD/MM/YYYY and 24-hour format
+                              child: child!,
+                            ),
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                        sheetText.textEditorController.replaceText(
+                          0,
+                          sheetText.textEditorController.document.length-1,
+                          formattedTime,
+                          TextSelection.collapsed(offset: 0),
+                        );
+                      }
+                    },
+                  ),
+                )
+                        
+              ],
+            ],
+          ),
+      
+          if(sheetText.inputBlocks.length>1)
+          Row(
+            children: [
+              SizedBox(width:4),
+              const Icon(
+                TablerIcons.math_integral_x,
+                size: 15,
+              ),
+              SizedBox(width:4),
+              Expanded(
+                child: Container(
+                  padding:EdgeInsets.symmetric(horizontal:4),
+                  margin: EdgeInsets.only(top:4),
+                  decoration:BoxDecoration(
+                    color:defaultPalette.secondary,
+                    borderRadius:BorderRadius.circular(5)
+                  ),
+                  child: QuillEditor(
+                    configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
+                    focusNode: FocusNode(),
+                    scrollController:
+                        ScrollController(),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      
-      ],
-    ),
-  );                   
+            ],
+          ),
+        
+        ],
+      ),
+    );                 
   }
 
   List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
@@ -6201,25 +6701,105 @@ Widget _buildListWidget(SheetList sheetList) {
   }
 
   double findSheetListBuildHeight(SheetList sheetList) {
+    
+    double getMaxFontSizeFromOps(List<Map<String, dynamic>> lineOps) {
+      double maxFontSize = 16.0; // fallback default
+
+      for (final op in lineOps) {
+        final attributes = op['attributes'] as Map<String, dynamic>? ?? {};
+        if (attributes.containsKey('size')) {
+          final sizeAttr = attributes['size'];
+          //  print('$sizeAttr, $maxFontSize, &&&&&&&&&, text, attributes');
+          if ((double.tryParse(sizeAttr)??0) > maxFontSize) {
+            maxFontSize = double.tryParse(sizeAttr)??0;
+          }
+        }
+      }
+      // print(' $maxFontSize, &&&&&&&&&, text, attributes');
+      return maxFontSize;
+    }
+
+    double calculateLineHeightForLine(List<Map<String, dynamic>> lineOps, double fontSize) {
+      double maxLineHeight = 1; // default
+
+      for (var op in lineOps) {
+        final attributes = op['attributes'] as Map<String, dynamic>;
+        if (attributes.containsKey('lineHeight')) {
+          final lhRaw = attributes['lineHeight'];
+          double? lh = double.tryParse('$lhRaw');
+          if (lh != null && lh > maxLineHeight) {
+            maxLineHeight = lh;
+          }
+        }
+      }
+      
+      return fontSize * maxLineHeight;
+    }
+
     double calculateItemHeight(dynamic item) {
       double calculatedHeight = 0;
 
+
       // Handling SheetText
       if (item is SheetText) {
-        String content = item.textEditorController.document.toPlainText();
+        final doc = item.textEditorController.document;
+        final delta = doc.toDelta();
         double maxFontSize = getMaxFontSize(item.textEditorController);
 
-        if (content.trim().isEmpty) {
-          calculatedHeight = 50; // Default height for empty text content
+        if (delta.isEmpty || doc.toPlainText().isEmpty) {
+          calculatedHeight = 20+14.4; // fallback for empty
         } else {
-          int newlineCount = '\n'.allMatches(content).length;
-          calculatedHeight = (newlineCount.toDouble() * (maxFontSize * 1.2)) +
-              (maxFontSize * 1.5); // Adjusted height based on font size
+          double totalHeight = 0;
+          // print('$totalHeight, $maxFontSize, fontSize, text, attributes');
+          // Temporarily accumulate line text until we hit \n
+          String currentLine = '';
+          List<Map<String, dynamic>> lineOps = [];
+
+          for (var op in delta.toList()) {
+            final String? insert = op.data is String ? op.data as String : null;
+            final Map<String, dynamic>? attributes = op.attributes;
+
+            if (insert != null) {
+              for (int i = 0; i < insert.length; i++) {
+                String char = insert[i];
+                currentLine += char;
+                lineOps.add({'char': char, 'attributes': Map<String, dynamic>.from(attributes ?? {})});
+
+
+                if (char == '\n') {
+                  // print('lineOps: $lineOps, fontSize, text, attributes');
+                  maxFontSize = getMaxFontSizeFromOps(lineOps);
+                  double lineHeight = calculateLineHeightForLine(lineOps, maxFontSize);
+                  // totalHeight += lineHeight;
+                  if (lineHeight<16) {
+                    totalHeight +=21;
+                  } else {
+                    totalHeight +=lineHeight.ceil()+7;
+                  }
+
+                  // Reset for next line
+                  currentLine = '';
+                  lineOps = [];
+                }
+              }
+            }
+          }
+          
+          // Handle any remaining text not ending with \n
+          if (lineOps.isNotEmpty) {
+            totalHeight += calculateLineHeightForLine(lineOps, maxFontSize);
+          }
+          // print('$totalHeight, $maxFontSize, {delta.toList()}, text, attributes');
+          calculatedHeight = totalHeight +14.4 ; // top/bottom padding
+          // print('$totalHeight, $maxFontSize, $calculatedHeight, {delta.toList()} , attributes');
         }
       }
+
       // Handling nested SheetLists
       else if (item is SheetList) {
-        calculatedHeight = findSheetListBuildHeight(item);
+        // print(item.id);
+        calculatedHeight = (findSheetListBuildHeight(item)+1.6+4).clamp(60, double.infinity);
+        // print(item.id+': $calculatedHeight');
       }
 
       else if (item is SheetTable) {
@@ -6230,7 +6810,7 @@ Widget _buildListWidget(SheetList sheetList) {
       +20;
       }
 
-
+      // print(item.id+': $calculatedHeight');
       return calculatedHeight;
     }
 
@@ -6247,127 +6827,135 @@ Widget _buildListWidget(SheetList sheetList) {
       for (int i = 0; i < sheetList.length; i++) {
         double itemHeight = calculateItemHeight(sheetList[i]);
         if (itemHeight > height) {
-          height = itemHeight;
+          height = itemHeight+12;
         }
       }
     }
 
-    return height + 25;
+    return height;
   }
 
-  double findSheetListBuildWidth(SheetList sheetList) {
-    double width = 0;
+double findSheetListBuildWidth(SheetList sheetList) {
+  double width = 0;
+  const double defaultFontSize = 8.0;
 
-    Map<String, double> charWidthMap = {
-      '.': 5.0,
-      ',': 5.0,
-      ';': 5.0,
-      ':': 5.0,
-      '!': 5.0,
-      '?': 7.0,
-      'a': 11,
-      'b': 8.5,
-      'c': 7.5,
-      'd': 8.5,
-      'e': 8.0,
-      'f': 11,
-      'g': 9,
-      'h': 8.5,
-      'i': 7.0,
-      'j': 11,
-      'k': 9,
-      'l': 7.5,
-      'm': 11.0,
-      'n': 11,
-      'o': 11,
-      'p': 8.5,
-      'q': 8.5,
-      'r': 8.5,
-      's': 8.0,
-      't': 11,
-      'u': 8.5,
-      'v': 8.5,
-      'w': 15.0,
-      'x': 9.0,
-      'y': 9.0,
-      'z': 8.0,
-      ' ': 9.0,
-      '@': 12.0,
-      '#': 10.0,
-      '\$': 10.0,
+  double calculateLineWidthFromDelta(Delta delta) {
+    double lineWidth = 0.0;
 
-    };
+    for (final op in delta.toList()) {
+      final text = op.data is String ? op.data as String : '';
+      final attributes = op.attributes ?? {};
 
-    const double fallbackWidth = 11.0;
+      final fontSize = double.tryParse(attributes['size']??defaultFontSize.toString()) ?? defaultFontSize;
 
-    double calculateLineWidth(String line, double fontSize) {
-      return line.runes.fold(0.0, (sum, ch) {
-        String char = String.fromCharCode(ch);
-        return sum + ((fontSize));
-      });
-    }
+      final letterSpacing = double.tryParse(attributes['letterSpacing']??'0') ?? 0.0;
 
-    if (sheetList.direction == Axis.horizontal) {
-      for (int i = 0; i < sheetList.length; i++) {
-        if (sheetList[i] is SheetText) {
-          SheetText textEditor = sheetList[i] as SheetText;
-          double maxFontSize = getMaxFontSize(textEditor.textEditorController);
+      final wordSpacing = double.tryParse(attributes['wordSpacing']??'0') ?? 0.0;
 
-          String content =
-              textEditor.textEditorController.document.toPlainText();
-          if (content.trim().isEmpty) {
-            width += 180;
-          } else {
-            double maxLineWidth = content
-                .split('\n')
-                .map((line) => calculateLineWidth(line, maxFontSize))
-                .reduce((a, b) => a > b ? a : b);
-            width += maxLineWidth + 20;
-          }
-        } else if (sheetList[i] is SheetList) {
-          SheetList nestedSheetList = sheetList[i] as SheetList;
-          double nestedWidth = findSheetListBuildWidth(nestedSheetList);
-          width += nestedWidth + 20;
-        } else if (sheetList[i] is SheetTable) {
-          var tableHeight = 0.0;
-          var tableWidth = 0.0;
-          (sheetList[i] as SheetTable).rowData.forEach((element) => tableHeight += element.size,);
-          (sheetList[i] as SheetTable).columnData.forEach((element) => tableWidth += element.size,);
-          width += tableWidth;
+      for (int i = 0; i < text.length; i++) {
+        final char = text[i];
+
+        lineWidth += fontSize;
+
+        if (char == ' ') {
+          lineWidth += wordSpacing/2;
         }
-      }
-    } else {
-      for (int i = 0; i < sheetList.length; i++) {
-        if (sheetList[i] is SheetText) {
-          SheetText textEditor = sheetList[i] as SheetText;
-          double maxFontSize = getMaxFontSize(textEditor.textEditorController);
-
-          String content =
-              textEditor.textEditorController.document.toPlainText();
-          if (content.trim().isEmpty) {
-            width = width > 180 ? width : 180;
-          } else {
-            double maxLineWidth = content
-                    .split('\n')
-                    .map((line) => calculateLineWidth(line, maxFontSize))
-                    .reduce((a, b) => a > b ? a : b) +
-                30;
-            width = width > maxLineWidth + 60 ? width : maxLineWidth + 60;
-          }
-        } else if (sheetList[i] is SheetList) {
-          SheetList nestedSheetList = sheetList[i] as SheetList;
-          double nestedWidth = findSheetListBuildWidth(nestedSheetList);
-          width = width > nestedWidth + 20 ? width : nestedWidth + 20;
+        print('$letterSpacing, $wordSpacing, $fontSize, $text, $attributes');
+        // Add letterSpacing unless it's the last character in this op
+        if (i != text.length - 1) {
+          lineWidth += letterSpacing/2;
         }
       }
     }
 
-    return width ;
+    return lineWidth;
   }
+
+  if (sheetList.direction == Axis.horizontal) {
+    for (var item in sheetList.sheetList) {
+      if (item is SheetText) {
+        final doc = item.textEditorController.document;
+        final delta = doc.toDelta();
+        final lines = delta.toList().fold<List<Delta>>(
+          [Delta()],
+          (list, op) {
+            if (op.data is String && (op.data as String).contains('\n')) {
+              final parts = (op.data as String).split('\n');
+              for (var i = 0; i < parts.length; i++) {
+                final part = parts[i];
+                if (part.isNotEmpty) {
+                  list.last.insert(part, op.attributes);
+                }
+                if (i < parts.length - 1) list.add(Delta());
+              }
+            } else {
+              list.last.insert(op.data, op.attributes);
+            }
+            return list;
+          },
+        );
+
+        if (lines.isEmpty || doc.toPlainText().trim().isEmpty) {
+          width += 180;
+        } else {
+          final maxLineWidth = lines
+              .map((lineDelta) => calculateLineWidthFromDelta(lineDelta))
+              .reduce((a, b) => a > b ? a : b);
+          width += maxLineWidth;
+        }
+      } else if (item is SheetList) {
+        width += findSheetListBuildWidth(item) + 20;
+      } else if (item is SheetTable) {
+        width += item.columnData.fold(0.0, (sum, col) => sum + col.size);
+      }
+    }
+  } else {
+    for (var item in sheetList.sheetList) {
+      if (item is SheetText) {
+        final doc = item.textEditorController.document;
+        final delta = doc.toDelta();
+        final lines = delta.toList().fold<List<Delta>>(
+          [Delta()],
+          (list, op) {
+            if (op.data is String && (op.data as String).contains('\n')) {
+              final parts = (op.data as String).split('\n');
+              for (var i = 0; i < parts.length; i++) {
+                final part = parts[i];
+                if (part.isNotEmpty) {
+                  list.last.insert(part, op.attributes);
+                }
+                if (i < parts.length - 1) list.add(Delta());
+              }
+            } else {
+              list.last.insert(op.data, op.attributes);
+            }
+            return list;
+          },
+        );
+
+        if (lines.isEmpty || doc.toPlainText().trim().isEmpty) {
+          width = width > 180 ? width : 180;
+        } else {
+          final maxLineWidth = lines
+              .map((lineDelta) => calculateLineWidthFromDelta(lineDelta))
+              .reduce((a, b) => a > b ? a : b);
+          width = width > (maxLineWidth + 60)
+              ? width
+              : (maxLineWidth + 60);
+        }
+      } else if (item is SheetList) {
+        final nestedWidth = findSheetListBuildWidth(item);
+        width =  width.clamp((nestedWidth +0), double.infinity) ;
+      }
+    }
+  }
+  // print('findWidth: '+width.toString());
+  return width.clamp(151, double.infinity);
+}
 
   /// Function to extract the maximum font size from a text editor's document
   double getMaxFontSize(QuillController controller) {
-    double maxFontSize = 15.0; // Default font size
+    double maxFontSize = 16.0; // Default font size
 
     // Iterate through each operation in the document's delta
     for (var operation in controller.document.toDelta().operations) {
@@ -22632,4 +23220,44 @@ class SheetTableVariables {
     this.rowLayerIndex =0,
     this.columnLayerIndex =0,
   });
+}
+
+class MeasureSize extends StatefulWidget {
+  final Widget child;
+  final void Function(Size size) onChange;
+
+  const MeasureSize({required this.onChange, required this.child, super.key});
+
+  @override
+  State<MeasureSize> createState() => _MeasureSizeState();
+}
+
+class _MeasureSizeState extends State<MeasureSize> {
+  final _key = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(_reportSize);
+  }
+
+  @override
+  void didUpdateWidget(covariant MeasureSize oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback(_reportSize);
+  }
+
+  void _reportSize(Duration _) {
+    final context = _key.currentContext;
+    if (context == null) return;
+    final box = context.findRenderObject();
+    if (box is RenderBox && box.hasSize) {
+      widget.onChange(box.size);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(key: _key, child: widget.child);
+  }
 }
