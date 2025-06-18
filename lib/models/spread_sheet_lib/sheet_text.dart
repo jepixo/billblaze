@@ -189,7 +189,6 @@ enum SheetTextType {
   bool,
   date,
   time,
-  dateTime,
   email,
   url,
   phone,
