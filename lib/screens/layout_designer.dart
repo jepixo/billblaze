@@ -43,6 +43,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:number_counting_animation/number_counting_animation.dart';
@@ -167,20 +168,20 @@ final propertyCardIndexProvider = StateProvider<int>((ref) {
 //
 //
 //
-class LayoutDesigner3 extends ConsumerStatefulWidget {
+class LayoutDesigner extends ConsumerStatefulWidget {
   final int? id;
   final int? index;
-  const LayoutDesigner3({
+  const LayoutDesigner({
     Key? key,
     this.id = null,
     this.index = -1,
   }) : super(key: key);
 
   @override
-  ConsumerState<LayoutDesigner3> createState() => _LayoutDesigner3State();
+  ConsumerState<LayoutDesigner> createState() => _LayoutDesignerState();
 }
 
-class _LayoutDesigner3State extends ConsumerState<LayoutDesigner3>
+class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     with TickerProviderStateMixin {
   final _googleFontsApiKey = 'AIzaSyBSG_5VsGG03fTeSihFNxYSCVN3m6Ltb0c';
   bool isLoading = true;
@@ -2070,7 +2071,15 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     final Uint8List pdfBytes = await pdf.save();
 
     // 🔽 Show native "Save As" dialog
-    final FileSaveLocation? path = await getSaveLocation(suggestedName: 'example.pdf');
+    final FileSaveLocation? path = await getSaveLocation(
+      suggestedName: '${layoutName.text}.pdf',
+      acceptedTypeGroups: [
+        const XTypeGroup(
+          label: 'PDF files',
+          extensions: <String>['pdf'],
+        )
+      ]
+      );
 
     if (path != null) {
       final file = XFile.fromData(
@@ -2213,7 +2222,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         listDecorationPath = [sheetListItem.listDecoration.id];
       });    
       } else {
-        
+       
       }
     } on Exception catch (e) {
       sheetListItem = spreadSheetList[currentPageIndex];
@@ -2573,15 +2582,15 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
             padding: const EdgeInsets.all(4.0).copyWith(bottom:2, top:2),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  size:  iconSize,
-                  color: iconColor
-                ),
+                // Icon(
+                //   icon,
+                //   size:  iconSize,
+                //   color: iconColor
+                // ),
                 Expanded(
                   child: Text(
-                    text,
-                    textAlign: TextAlign.end,
+                    ' ${text}',
+                    textAlign: TextAlign.start,
                     style: GoogleFonts.lexend(
                       color: fontColor, 
                       fontSize: fontSize,
@@ -2612,9 +2621,14 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     double titleFontSize = sHeight / 11;
     // print('Height of SpreadSheet in build: '+ (sHeight-40).toString());
     if (isLoading) {
-      return Container(
-        alignment:Alignment(0,0),
-        child: Text('Loading', style: GoogleFonts.lexend(letterSpacing:-1, fontSize:40),));
+      return Scaffold(
+        backgroundColor: defaultPalette.tertiary,
+    body: Center(
+      child: LoadingAnimationWidget.newtonCradle(
+        color: Colors.white,
+        size: 150,
+      ),
+    ),);
     }
     if (true) {
       //Desktop WEB
@@ -2718,15 +2732,6 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        // child: Text(
-                                        //   ' txt + ',
-                                        //   style: GoogleFonts.lexend(
-                                        //     color: defaultPalette.primary, 
-                                        //     fontSize: 12,
-                                        //     letterSpacing: -0.5,
-                                        //     fontWeight: FontWeight.w600,
-                                        //   ),
-                                        // )
                                         ),
                                       SizedBox(height:2),
                                       toolBarButton(TablerIcons.cursor_text, 'text',
@@ -2838,7 +2843,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                       },
                                       ),
                                       //phone
-                                      toolBarButton(TablerIcons.phone, 'tele',
+                                      toolBarButton(TablerIcons.phone, 'phone',
                                       fontSize: 12,
                                       iconSize: 13,
                                       tooltip: 'add a telephone field. \nThis allows non-alphabet input. \nThis comes with a country code browser.',
@@ -2956,7 +2961,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                         ),
                                       SizedBox(height:2),
                                       //table
-                                      toolBarButton(TablerIcons.table, 'tble',
+                                      toolBarButton(TablerIcons.table, 'table',
                                       fontSize: 12,
                                       iconSize: 13,
                                       tooltip: 'add a table.',
@@ -2985,133 +2990,128 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                         },
                                       ),
                                       Expanded(child: SizedBox()),
-                                      Container(
-                                        margin: EdgeInsets.only(bottom:4, left:4,right:3),
-                                        height:25,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(8),
-                                        color:defaultPalette.extras[0]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
-                                        child: Text(
-                                          ' save ',
-                                          style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        )
+                                      Tooltip(
+                                        message:'save the current layout.',
+                                        mouseCursor: SystemMouseCursors.click,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          color:defaultPalette.primary,
+                                          border: Border.all(),
                                         ),
-                                      Container(
-                                        margin: EdgeInsets.only(bottom:4, left:4,right:3),
-                                        height:25,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(8),
-                                        color:defaultPalette.extras[0]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
-                                        child: Text(
-                                          ' exprt ',
-                                          style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        )
+                                        textStyle: GoogleFonts.lexend(
+                                          color: defaultPalette.extras[0], 
+                                          fontSize: 14,
+                                          letterSpacing: -0.5,
+                                          fontWeight: FontWeight.w600,
                                         ),
-                                      Container(
-                                        margin: EdgeInsets.only(bottom:4, left:4,right:3),
-                                        height:25,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(8),
-                                        color:defaultPalette.extras[0]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
-                                        child: Text(
-                                          ' print ',
-                                          style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        )
+                                        child: GestureDetector(
+                                          onTap: () {
+                                                  saveLayout();
+                                                },
+                                          child: Container(
+                                            margin: EdgeInsets.only(bottom:4, left:4,right:3),
+                                            height:25,
+                                            decoration:BoxDecoration(
+                                              borderRadius:BorderRadius.circular(8),
+                                            color:defaultPalette.extras[0]),
+                                            width: 50,
+                                            alignment: Alignment(0, 0),
+                                            child: Text(
+                                              ' save ',
+                                              style: GoogleFonts.lexend(
+                                                color: defaultPalette.primary, 
+                                                fontSize: 12,
+                                                letterSpacing: -0.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            )
+                                            ),
                                         ),
+                                      ),
+                                      Tooltip(
+                                        message:'export as pdf. \nChoose the path to save it.',
+                                        mouseCursor: SystemMouseCursors.click,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          color:defaultPalette.primary,
+                                          border: Border.all(),
+                                        ),
+                                        textStyle: GoogleFonts.lexend(
+                                          color: defaultPalette.extras[0], 
+                                          fontSize: 14,
+                                          letterSpacing: -0.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () async {
+                                                  await _capturePng().then((onValue) {
+                                                  _genPdf();
+                                                });
+                                                },
+                                          child: Container(
+                                            margin: EdgeInsets.only(bottom:4, left:4,right:3),
+                                            height:25,
+                                            decoration:BoxDecoration(
+                                              borderRadius:BorderRadius.circular(8),
+                                            color:defaultPalette.extras[0]),
+                                            width: 50,
+                                            alignment: Alignment(0, 0),
+                                            child: Text(
+                                              ' exprt ',
+                                              style: GoogleFonts.lexend(
+                                                color: defaultPalette.primary, 
+                                                fontSize: 12,
+                                                letterSpacing: -0.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            )
+                                            ),
+                                        ),
+                                      ),
+                                      Tooltip(
+                                        message:'print as pdf.',
+                                        mouseCursor: SystemMouseCursors.click,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          color:defaultPalette.primary,
+                                          border: Border.all(),
+                                        ),
+                                        textStyle: GoogleFonts.lexend(
+                                          color: defaultPalette.extras[0], 
+                                          fontSize: 14,
+                                          letterSpacing: -0.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () async {
+                                                  await _capturePng().then((onValue) {
+                                                  _printPdf();
+                                                });
+                                                },
+                                          child: Container(
+                                            margin: EdgeInsets.only(bottom:4, left:4,right:3),
+                                            height:25,
+                                            decoration:BoxDecoration(
+                                              borderRadius:BorderRadius.circular(8),
+                                            color:defaultPalette.extras[0]),
+                                            width: 50,
+                                            alignment: Alignment(0, 0),
+                                            child: Text(
+                                              ' print ',
+                                              style: GoogleFonts.lexend(
+                                                color: defaultPalette.primary, 
+                                                fontSize: 12,
+                                                letterSpacing: -0.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            )
+                                            ),
+                                        ),
+                                      ),
                                     ]
                                   )
-                                  // child: Column(
-                                  //   mainAxisAlignment: MainAxisAlignment.start,
-                                  //   children: [
-                                  //     SizedBox( height:60, ),
-                                  //       
-                                  //     child: Icon(
-                                  //       TablerIcons.brackets_contain,
-                                  //       size: 20,
-                                  //       color: defaultPalette.extras[0].withOpacity(1),
-                                  //       )),
-                                  //     //Add Image
-                                  //     GestureDetector(
-                                  //       onTap: () async {
-                                  //       },
-                                  //       child: Icon(
-                                  //         TablerIcons.photo_plus,
-                                  //         size: 20,
-                                  //         color: defaultPalette.extras[0].withOpacity(1),
-                                  //       )
-                                  //     ),
-                                  //     //Add table
-                                  //     GestureDetector(
-                                  //         
-                                  //         child: Icon(
-                                  //           TablerIcons.table_plus,
-                                  //           size:  20,
-                                  //           color: defaultPalette.extras[0].withOpacity(1)
-                                  //         )),
-                                      
-                                  //     Expanded(
-                                  //       child: Column(
-                                  //         mainAxisAlignment: MainAxisAlignment.end,
-                                  //         children: [
-                                  //           GestureDetector(
-                                  //             onTap: () {
-                                  //               saveLayout();
-                                  //             },
-                                  //             child: Icon(
-                                  //               TablerIcons.device_floppy,
-                                  //               size:  20,
-                                  //               color: defaultPalette.extras[0].withOpacity(1)
-                                  //             )),
-                                  //           GestureDetector(
-                                  //             onTap: () async {
-                                  //               await _capturePng().then((onValue) {
-                                  //               _genPdf();
-                                  //             });
-                                  //             },
-                                  //             child: Icon(
-                                  //               TablerIcons.upload,
-                                  //               size:  20,
-                                  //               color: defaultPalette.extras[0].withOpacity(1)
-                                  //             )),
-                                  //           GestureDetector(
-                                  //             onTap: () async {
-                                  //               await _capturePng().then((onValue) {
-                                  //               _printPdf();
-                                  //             });
-                                  //             },
-                                  //             child: Icon(
-                                  //               TablerIcons.printer,
-                                  //               size:  20,
-                                  //               color: defaultPalette.extras[0].withOpacity(1)
-                                  //             )),
-                                          
-                                  //         ],
-                                  //       ),
-                                      
-                                  //       )
-                                  //   ],
-                                  // ),
+                                  
+                                 
                                 
                                 ),
                                 //emulating the pdf preview //Desktop WEB
@@ -7196,14 +7196,16 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     return GestureDetector(
         onTap: () {
           setState(() {
-            if (panelIndex.id == '' || panelIndex.id =='yo') {
+            if (panelIndex.id == '' || panelIndex.id =='yo' || item.id == 'yo') {
               panelIndex.id = sheetTable.cellData[0][0].sheetItem.id;
               panelIndex.itemIndexPath = sheetTable.cellData[0][0].sheetItem.indexPath;
+              item = sheetTable.cellData[0][0].sheetItem as SheetText;
             }
             panelIndex.parentId = sheetTable.id;
             panelIndex.parentIndexPath = sheetTable.indexPath;
           });
         _findSheetTableItem(sheetTable);
+        
         },
         child: Container(
           margin: const EdgeInsets.all(4).copyWith(right:4),
