@@ -115,7 +115,7 @@ class _MainAppState extends State<MainApp> {
                 //             )
                 //         //  MultiBoardListExample()
                 //         ));
-                // return LayoutDesigner3();
+                // return LayoutDesigner();
               } else if (stream.hasError) {
                 return const Center(child: Text('Gone Wrong'));
               } else if (stream.connectionState == ConnectionState.waiting) {
@@ -135,9 +135,6 @@ class _MainAppState extends State<MainApp> {
   }
 }
 
-final currentTabIndexProvider = StateProvider<int>((ref) {
-  return 0;
-});
 
 final itemListProvider = StateProvider<List<String>>((ref) {
   return ['A1', 'B2'];

@@ -66,6 +66,7 @@ dependencies:
   flutter_animate: ^4.5.2
   country_code_picker_plus: ^0.1.0+1
   file_selector: ^1.0.3
+  loading_animation_widget: ^1.3.0
 
 dev_dependencies:
   hive_generator: ^2.0.1
