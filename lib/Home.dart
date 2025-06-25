@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'dart:math' as math;
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/animated_stack.dart';
 import 'package:billblaze/components/elevated_button.dart';
@@ -17,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:mesh_gradient/mesh_gradient.dart';
 
 final cCardIndexProvider = StateProvider<int>((ref) {
   return 0;
@@ -1125,6 +1127,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     double dotSize = sHeight/35;
+    // print(sWidth);
     return AnimatedPositioned(
       duration: Durations.short2,
       // top: (topPadPosDistance * 1.08),
@@ -1137,7 +1140,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             IgnorePointer(
               ignoring: !isLayoutTab,
               child: Container(
-                // duration: Durations.extralong1,
+                // duration: Durations.extra,
                 height: sHeight,
                 width: sWidth,
                 alignment: Alignment.centerRight,
@@ -1206,7 +1209,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               width: sWidth,
               height: (sHeight / 2.5),
               top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
-              right: isLayoutTab ? sWidth - (sHeight / 8) - 350: (sWidth / 1.8),
+              right: isLayoutTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
               child: Text('&',
                 textAlign: TextAlign.right,
                 style: GoogleFonts.greatVibes(
@@ -1227,100 +1230,414 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   textAlign: TextAlign.left,
                   style: GoogleFonts.outfit(
                       color: defaultPalette.extras[0],
-                      fontSize: (sHeight / 8).clamp(0, 85),
+                      fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
                       letterSpacing: -2,
                       fontWeight: FontWeight.w600,
                       height: 0.9)),
             ),
-            //add buttons
+            
+            //  gradient
             AnimatedPositioned(
               duration: Durations.extralong1,
-              // height: (sHeight - (sHeight / 2.95)) * 0.2,
-              width: sWidth,
-              top: isLayoutTab ? sHeight / 1.7 : sHeight / 1.5,
-              // right: isLayoutTab ? null : 2,
-              left: sWidth / 18,
+              height: (sHeight/2.5),
+              width: (sWidth/2.05)-70,
+              bottom: sHeight / 18 ,
+              left:(sWidth / 20).clamp( 90, double.infinity),
               child: IgnorePointer(
                 ignoring: !isLayoutTab,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black,
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 1.0], // Control where the fade starts/ends
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.dstIn, // Important for masking
+                    child: Container(
+                      decoration: BoxDecoration(color: 
+                      Color(0xffc0c0c0),
+                      borderRadius: BorderRadius.circular(20)
+                      )
+                    ),
+                  ),
+                )
+              ),
+            ),
+            // addLayoutbutton
+            AnimatedPositioned(
+              duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18),
+              left: (sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2,
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Stack(  
                   children: [
-                    ElevatedLayerButton(
-                      onClick: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                          builder: (c) => const Material(
-                                  child: PopScope(
-                                child: LayoutDesigner(),
-                                canPop: false,
-                              )
-                            )
-                          )
-                        );
-                      },
-                      buttonHeight: sHeight / 6.5,
-                      buttonWidth: sWidth / 2.2,
-                      borderRadius: BorderRadius.circular(10),
-                      animationDuration: const Duration(milliseconds: 200),
-                      animationCurve: Curves.ease,
-                      topDecoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(),
+                    SizedBox(
+                      height:isLayoutTab? (sHeight/2.5)-50:0,
+                      width: (sWidth/10),
+                    ),
+                    Positioned(
+                      left: 5,
+                       child: AnimatedContainer(
+                        duration: Durations.medium3,
+                        curve: Curves.easeIn,
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10)-5,
+                        alignment: Alignment.topLeft,
+                        padding: EdgeInsets.only(
+                          top: 5,
+                          left:8
+                        ),
+                        transform: Matrix4.identity()
+                        ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                        decoration: BoxDecoration(
+                          color: defaultPalette
+                                      .tertiary,
+                          borderRadius:
+                              BorderRadius.circular(
+                                isLayoutTab
+                                    ? 10
+                                    : 900)),
+                        
+                        child: Text(
+                          'Layout',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                          style: GoogleFonts.lexend(
+                            fontSize: 18,
+                            color: defaultPalette.primary.withOpacity(0.6),
+                            letterSpacing: -1,
+
+                          ),
+                        ),
                       ),
-                      topLayerChild: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Icon(
-                              IconsaxPlusLinear.grid_3,
-                              size: 40,
+                     ),
+                    Positioned(
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: Durations.medium3,
+                         transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                            ? 0.0
+                            : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                        child: ElevatedLayerButton(
+                            onClick: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                builder: (c) => const Material(
+                                        child: PopScope(
+                                      child: LayoutDesigner(),
+                                      canPop: false,
+                                    )
+                                  )
+                                )
+                              );
+                            },
+                            buttonHeight: ((sHeight/2.5)-40)/2,
+                            buttonWidth: (sWidth/10),
+                            borderRadius: BorderRadius.circular(10),
+                            animationDuration: const Duration(milliseconds: 200),
+                            animationCurve: Curves.ease,
+                            subfac: 5,
+                            depth: 5,
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
                             ),
-                            Text(
-                              'Create New \nLayout.',
-                              style: GoogleFonts.outfit(
-                                  // fontSize: 20,
+                            topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Icon(
+                                  //   IconsaxPlusLinear.grid_3,
+                                  //   size: 40,
+                                  // ),
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(-1, -1),
+                                      padding: EdgeInsets.only(
+                                        top: 5,
+                                        left:8
+                                      ),
+                                      child: Text(
+                                        'Create \nNew',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.start,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: 18,
+                                          color: defaultPalette.primary,
+                                          letterSpacing: -1,
+                                      
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                            )
-                          ]),
-                      baseDecoration: BoxDecoration(
-                        color: Colors.green,
-                        border: Border.all(),
-                      ),
-                    ),
-                    ElevatedLayerButton(
-                      onClick: () {},
-                      buttonHeight: sHeight / 6.5,
-                      buttonWidth: sWidth / 2.2,
-                      borderRadius: BorderRadius.circular(20),
-                      animationDuration: const Duration(milliseconds: 200),
-                      animationCurve: Curves.ease,
-                      topDecoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(),
-                      ),
-                      topLayerChild: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            const Icon(
-                              IconsaxPlusLinear.pen_add,
-                              size: 40,
+                                ]),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              // border: Border.all(),
                             ),
-                            Text(
-                              'Create New \nBill.',
-                              style: GoogleFonts.outfit(),
-                            )
-                          ]),
-                      baseDecoration: BoxDecoration(
-                        color: Colors.green,
-                        border: Border.all(),
+                          ),
                       ),
                     ),
+                      
                   ],
+                )
+              ),
+            ),
+            // addBillbutton
+            Positioned(
+              // duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18),
+              left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Stack(  
+                  children: [
+                    SizedBox(
+                      height:isLayoutTab? (sHeight/2.5)-50:0,
+                      width: (sWidth/10),
+                    ),
+                    Positioned(
+                      left: 5,
+                       child: AnimatedContainer(
+                        duration: Durations.medium3,
+                        curve: Curves.easeIn,
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10)-5,
+                        alignment: Alignment.topLeft,
+                        padding: EdgeInsets.only(
+                          top: 5,
+                          left:8
+                        ),
+                        transform: Matrix4.identity()
+                        ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                        decoration: BoxDecoration(
+                          color: defaultPalette.primary,
+                          borderRadius:
+                              BorderRadius.circular(
+                                isLayoutTab
+                                    ? 10
+                                    : 900)),
+                        
+                        child: Text(
+                          'Bill',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                          style: GoogleFonts.lexend(
+                            fontSize: 18,
+                            color: defaultPalette.extras[0].withOpacity(0.6),
+                            letterSpacing: -1,
+
+                          ),
+                        ),
+                      ),
+                     ),
+                    Positioned(
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: Durations.medium3,
+                         transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                            ? 0.0
+                            : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                        child: ElevatedLayerButton(
+                            onClick: () {
+                              
+                            },
+                            buttonHeight: ((sHeight/2.5)-40)/2,
+                            buttonWidth: (sWidth/10),
+                            borderRadius: BorderRadius.circular(10),
+                            animationDuration: const Duration(milliseconds: 200),
+                            animationCurve: Curves.ease,
+                            subfac: 5,
+                            depth: 5,
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Icon(
+                                  //   IconsaxPlusLinear.grid_3,
+                                  //   size: 40,
+                                  // ),
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(-1, -1),
+                                      padding: EdgeInsets.only(
+                                        top: 5,
+                                        left:8
+                                      ),
+                                      child: Text(
+                                        'Create \nNew',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.start,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: 18,
+                                          color: defaultPalette.primary,
+                                          letterSpacing: -1,
+                                      
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ]),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              // border: Border.all(),
+                            ),
+                          ),
+                      ),
+                    ),
+                      
+                  ],
+                )
+              ),
+            ),
+            // BG templastelbutton
+            Positioned(
+            left:5+ ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
+    
+            bottom: 1.6*(sHeight / 18),
+              child: AnimatedContainer(
+              duration: Durations.medium3,
+              curve: Curves.easeIn,
+              height:((sHeight/2.5)-40)/2-5,
+              width: (sWidth/5)+ mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 0, outMax: 45),
+              alignment: Alignment.topRight,
+              padding: EdgeInsets.only(
+                top: 40,
+                right:mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 15, outMax: 10)
+              ),
+              // transform: Matrix4.identity()
+              // ..translate(isLayoutTab
+              //       ? 0.0
+              //       : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+              //   ..rotateY( isLayoutTab? 0: -math.pi / 2),
+              decoration: BoxDecoration(
+                color: defaultPalette.tertiary,
+                borderRadius:
+                    BorderRadius.circular( 10)),
+              
+              child: Transform.rotate(
+                angle: pi/2,
+                child: Text(
+                  'Browser',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.lexend(
+                    fontSize: 17,
+                    color: defaultPalette.primary.withOpacity(0.6),
+                    letterSpacing: -0.2,
+                    height: -2
+                  ),
                 ),
               ),
             ),
-            //LayoutList
+            ),
+                   
+            // templastelbutton
+            AnimatedPositioned(
+              duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18),
+              left: ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
+             
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Stack(  
+                  children: [
+                    SizedBox(
+                      height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
+                      width: (sWidth/5),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: Durations.medium3,
+                         transform: Matrix4.identity()
+                          // ..translate(isLayoutTab
+                          //   ? 0.0
+                          //   : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                        child: ElevatedLayerButton(
+                            onClick: () {
+                              
+                            },
+                            buttonHeight: ((sHeight/2.5)-40)/2,
+                            buttonWidth: (sWidth/10),
+                            borderRadius: BorderRadius.circular(10),
+                            animationDuration: const Duration(milliseconds: 200),
+                            animationCurve: Curves.ease,
+                            subfac: 5,
+                            depth: 5,
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Icon(
+                                  //   IconsaxPlusLinear.grid_3,
+                                  //   size: 40,
+                                  // ),
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(-1, -1),
+                                      padding: EdgeInsets.only(
+                                        top: 5,
+                                        left:8
+                                      ),
+                                      child: Text(
+                                        'Choose \nNew',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.start,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: 18,
+                                          color: defaultPalette.primary,
+                                          letterSpacing: -1,
+                                      
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ]),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              // border: Border.all(),
+                            ),
+                          ),
+                      ),
+                    ),
+                      
+                  ],
+                )
+              ),
+            ),
+            // //LayoutList
             AnimatedPositioned(
               duration: Durations.extralong2,
               top: isLayoutTab
@@ -1464,13 +1781,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            // AnimatedPositioned(
-            //     duration: Durations.extralong1,
-            //     top: 5,
-            //     right: 0,
-            //     height: sHeight,
-            //     width: sWidth,
-            //     child: const MultiBoardListExample())
+            
           ],
         ),
       ),
