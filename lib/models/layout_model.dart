@@ -1,4 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:typed_data';
+
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/document_properties_model.dart';
@@ -20,6 +22,8 @@ class LayoutModel extends HiveObject {
   DateTime createdAt;
   @HiveField(5)
   DateTime modifiedAt;
+  @HiveField(6)
+  List<Uint8List>? pdf;
 
   LayoutModel({
     required this.docPropsList,
@@ -28,5 +32,6 @@ class LayoutModel extends HiveObject {
     required this.name,
     required this.createdAt,
     required this.modifiedAt,
+    this.pdf = null,
   });
 }

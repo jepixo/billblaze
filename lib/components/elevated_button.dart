@@ -98,57 +98,60 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
   Widget build(BuildContext context) {
     double subfac = widget.subfac;
 
-    return GestureDetector(
-      onTapDown: widget.toggleOnTap ? null : _handleTapDown,
-      onTapUp: widget.toggleOnTap ? null : _handleTapUp,
-      onTapCancel: widget.toggleOnTap ? null : _handleTapCancel,
-      // onTap: widget.toggleOnTap ? _handleTapDown : null,
-      child: SizedBox(
-        height: widget.buttonHeight,
-        width: widget.buttonWidth,
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            // Base decoration layer
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: widget.buttonWidth! - subfac,
-                height: widget.buttonHeight! - subfac,
-                decoration: widget.baseDecoration?.copyWith(
-                  borderRadius: widget.borderRadius,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: widget.toggleOnTap ? null : _handleTapDown,
+        onTapUp: widget.toggleOnTap ? null : _handleTapUp,
+        onTapCancel: widget.toggleOnTap ? null : _handleTapCancel,
+        // onTap: widget.toggleOnTap ? _handleTapDown : null,
+        child: SizedBox(
+          height: widget.buttonHeight,
+          width: widget.buttonWidth,
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              // Base decoration layer
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: widget.buttonWidth! - subfac,
+                  height: widget.buttonHeight! - subfac,
+                  decoration: widget.baseDecoration?.copyWith(
+                    borderRadius: widget.borderRadius,
+                  ),
                 ),
               ),
-            ),
-            // Top decoration layer with animation
-            AnimatedPositioned(
-              duration: widget.animationDuration!,
-              curve: widget.animationCurve!,
-              bottom: widget.extrudeLeft? isDown
-                  ? 0
-                  : widget
-                      .depth: null, // Adjust based on the pressed or toggled state
-              right:widget.extrudeLeft? isDown ? 0 : widget.depth: null,
-              left: !widget.extrudeLeft? isDown
-                  ? 0
-                  : widget
-                      .depth:null,
-              top:!widget.extrudeLeft?  isDown
-                  ? 0
-                  : widget
-                      .depth:null,
-              child: Container(
-                width: widget.buttonWidth! - subfac,
-                height: widget.buttonHeight! - subfac,
-                alignment: Alignment.center,
-                decoration: widget.topDecoration?.copyWith(
-                  borderRadius: widget.borderRadius,
+              // Top decoration layer with animation
+              AnimatedPositioned(
+                duration: widget.animationDuration!,
+                curve: widget.animationCurve!,
+                bottom: widget.extrudeLeft? isDown
+                    ? 0
+                    : widget
+                        .depth: null, // Adjust based on the pressed or toggled state
+                right:widget.extrudeLeft? isDown ? 0 : widget.depth: null,
+                left: !widget.extrudeLeft? isDown
+                    ? 0
+                    : widget
+                        .depth:null,
+                top:!widget.extrudeLeft?  isDown
+                    ? 0
+                    : widget
+                        .depth:null,
+                child: Container(
+                  width: widget.buttonWidth! - subfac,
+                  height: widget.buttonHeight! - subfac,
+                  alignment: Alignment.center,
+                  decoration: widget.topDecoration?.copyWith(
+                    borderRadius: widget.borderRadius,
+                  ),
+                  child: widget.topLayerChild,
                 ),
-                child: widget.topLayerChild,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

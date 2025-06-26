@@ -1,10 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'dart:math' as math;
+import 'package:animated_toggle_switch/animated_toggle_switch.dart';
+import 'package:billblaze/components/balloon_slider/widget.dart';
+import 'package:billblaze/components/widgets/search_bar.dart';
+import 'package:billblaze/models/layout_model.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/animated_stack.dart';
 import 'package:billblaze/components/elevated_button.dart';
-import 'package:billblaze/components/flutter_balloon_slider.dart';
 import 'package:billblaze/components/navbar/curved_navigation_bar.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/screens/layout_designer.dart';
@@ -17,17 +23,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:mesh_gradient/mesh_gradient.dart';
+import 'package:scrollbar_ultima/scrollbar_ultima.dart';
+import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 
 final cCardIndexProvider = StateProvider<int>((ref) {
   return 0;
-});
-
-final isHomeTabProvider = StateProvider<bool>((ref) {
-  return true;
-});
-
-final isLayoutTabProvider = StateProvider<bool>((ref) {
-  return false;
 });
 
 final homeScreenTabIndexProvider = StateProvider<int>((ref) {
@@ -60,9 +61,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   double appinioMaxTabChanged = 10;
   bool even = true;
   DateTime dateTimeNow = DateTime.now();
-  // bool isLayoutTab = false;
-  // int _currentCardIndex = 0;
-
+  bool isLayoutTileView = false;
+  TextEditingController layoutSearchController = TextEditingController();
+  FocusNode layoutSearchFocusNode = FocusNode();
+  late List<LayoutModel> filteredLayoutBox;
   double _cardPosition = 0;
   late AppinioSwiperController recentsCardController;
   late AnimationController squiggleFadeAnimationController;
@@ -97,11 +99,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
     titleFontFadeController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 100));
-    if (ref.read(isLayoutTabProvider)) {
+    if (ref.read(homeScreenTabIndexProvider) ==1) {
       _homeTabSwitched(1, ref);
       squiggleFadeAnimationController.forward();
       sliderFadeAnimationController.forward();
     }
+    filteredLayoutBox = Boxes.getLayouts().values.toList();
     // titleFontFadeController.forward();
   }
 
@@ -115,14 +118,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // @override
-  // void didUpdateWidget(covariant Home oldWidget) {
-  //   // TODO: implement didUpdateWidget
-  //   super.didUpdateWidget(oldWidget);
-  //   if (ref.read(isLayoutTabProvider)) {
-  //     _homeTabSwitched(1, ref);
-  //   }
-  // }
 
   @override
   void didChangeDependencies() {
@@ -132,14 +127,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     if (_lastOrientation != currentOrientation) {
       _lastOrientation = currentOrientation;
       // Your specific code to run when orientation
-      if (ref.read(isLayoutTabProvider)) {
+      if (ref.read(homeScreenTabIndexProvider) ==1) {
         _homeTabSwitched(1, ref);
         Future.delayed(Durations.short3).then((u) {
            _homeTabSwitched(1, ref);
         });
       }
     }
-    if (ref.read(isLayoutTabProvider)) {
+    if (ref.read(homeScreenTabIndexProvider) ==1) {
       _homeTabSwitched(1, ref);
     }
   }
@@ -243,7 +238,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   //
   void _homeTabSwitched(int index, WidgetRef ref) {
     bool left = index != 0;
-    ref.read(isLayoutTabProvider.notifier).state = index == 1;
+    // ref.read(isLayoutTabProvider.notifier).state = index == 1;
     if (left && recentsCardController.cardIndex! <= 9) {
       //Handling Card Exit Animation
       setState(() {
@@ -256,9 +251,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           _updateGraphLineSpeed(10);
           // _updateGraphLineSpeed(10);
         });
-        ref.read(isHomeTabProvider.notifier).update(
-              (state) => state = false,
-            );
+        // ref.read(isHomeTabProvider.notifier).update(
+        //       (state) => state = false,
+        //     );
         appinioMinTabChanged = _dataPoints[0].first.x;
         appinioMaxTabChanged = _dataPoints[0].last.x;
       });
@@ -296,11 +291,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         });
       });
     } else if (!left) {
-      if (ref.read(isHomeTabProvider) == false) {
+      if (ref.read(homeScreenTabIndexProvider) !=0) {
         setState(() {
-          ref.read(isHomeTabProvider.notifier).update(
-                (state) => state = true,
-              );
           squiggleFadeAnimationController.reverse();
           squiggleFadeAnimationController.reset();
           squiggleFadeAnimationController.reverse();
@@ -330,15 +322,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           _cardPosition = 0;
         });
       }
-    }
-    if (ref.read(isLayoutTabProvider)) {
-      setState(() {
-        ref.read(isLayoutTabProvider.notifier).state = true;
-      });
-    } else if (!ref.read(isLayoutTabProvider)) {
-      setState(() {
-        ref.read(isLayoutTabProvider.notifier).state = false;
-      });
     }
     // print('e ${recentsCardController.cardIndex}');
   }
@@ -1125,6 +1108,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     double dotSize = sHeight/35;
+    // print(sWidth);
     return AnimatedPositioned(
       duration: Durations.short2,
       // top: (topPadPosDistance * 1.08),
@@ -1137,7 +1121,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             IgnorePointer(
               ignoring: !isLayoutTab,
               child: Container(
-                // duration: Durations.extralong1,
+                // duration: Durations.extra,
                 height: sHeight,
                 width: sWidth,
                 alignment: Alignment.centerRight,
@@ -1206,7 +1190,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               width: sWidth,
               height: (sHeight / 2.5),
               top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
-              right: isLayoutTab ? sWidth - (sHeight / 8) - 350: (sWidth / 1.8),
+              right: isLayoutTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
               child: Text('&',
                 textAlign: TextAlign.right,
                 style: GoogleFonts.greatVibes(
@@ -1227,100 +1211,458 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   textAlign: TextAlign.left,
                   style: GoogleFonts.outfit(
                       color: defaultPalette.extras[0],
-                      fontSize: (sHeight / 8).clamp(0, 85),
+                      fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
                       letterSpacing: -2,
                       fontWeight: FontWeight.w600,
                       height: 0.9)),
             ),
-            //add buttons
+            
+            //  gradient
             AnimatedPositioned(
               duration: Durations.extralong1,
-              // height: (sHeight - (sHeight / 2.95)) * 0.2,
-              width: sWidth,
-              top: isLayoutTab ? sHeight / 1.7 : sHeight / 1.5,
-              // right: isLayoutTab ? null : 2,
-              left: sWidth / 18,
+              height: (sHeight/2.5),
+              width: (sWidth/2.05)-70,
+              bottom: sHeight / 18 ,
+              left:(sWidth / 20).clamp( 90, double.infinity),
               child: IgnorePointer(
                 ignoring: !isLayoutTab,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ElevatedLayerButton(
-                      onClick: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                          builder: (c) => const Material(
-                                  child: PopScope(
-                                child: LayoutDesigner(),
-                                canPop: false,
-                              )
-                            )
-                          )
-                        );
-                      },
-                      buttonHeight: sHeight / 6.5,
-                      buttonWidth: sWidth / 2.2,
-                      borderRadius: BorderRadius.circular(10),
-                      animationDuration: const Duration(milliseconds: 200),
-                      animationCurve: Curves.ease,
-                      topDecoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(),
-                      ),
-                      topLayerChild: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Icon(
-                              IconsaxPlusLinear.grid_3,
-                              size: 40,
-                            ),
-                            Text(
-                              'Create New \nLayout.',
-                              style: GoogleFonts.outfit(
-                                  // fontSize: 20,
-                                  ),
-                            )
-                          ]),
-                      baseDecoration: BoxDecoration(
-                        color: Colors.green,
-                        border: Border.all(),
-                      ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black,
+                          Colors.transparent,
+                        ],
+                        stops: [0.1, 1.0], // Control where the fade starts/ends
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.dstIn, // Important for masking
+                    child: Container(
+                      decoration: BoxDecoration(color: 
+                      Color(0xffc0c0c0),
+                      borderRadius: BorderRadius.circular(20)
+                      )
                     ),
-                    ElevatedLayerButton(
-                      onClick: () {},
-                      buttonHeight: sHeight / 6.5,
-                      buttonWidth: sWidth / 2.2,
-                      borderRadius: BorderRadius.circular(20),
-                      animationDuration: const Duration(milliseconds: 200),
-                      animationCurve: Curves.ease,
-                      topDecoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(),
-                      ),
-                      topLayerChild: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            const Icon(
-                              IconsaxPlusLinear.pen_add,
-                              size: 40,
-                            ),
-                            Text(
-                              'Create New \nBill.',
-                              style: GoogleFonts.outfit(),
-                            )
-                          ]),
-                      baseDecoration: BoxDecoration(
-                        color: Colors.green,
-                        border: Border.all(),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                )
               ),
             ),
-            //LayoutList
+            // addLayoutbutton
+            AnimatedPositioned(
+              duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18),
+              left: (sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2,
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Stack(  
+                  children: [
+                    SizedBox(
+                      height:isLayoutTab? (sHeight/2.5)-50:0,
+                      width: (sWidth/10),
+                    ),
+                    Positioned(
+                      left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                       child: AnimatedContainer(
+                        duration: Durations.medium3,
+                        curve: Curves.easeIn,
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                        alignment: Alignment.topLeft,
+                        padding: EdgeInsets.only(
+                          top: 5,
+                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight),
+                        ),
+                        transform: Matrix4.identity()
+                        ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                        decoration: BoxDecoration(
+                          color: defaultPalette
+                                      .tertiary,
+                          borderRadius:
+                              BorderRadius.circular(
+                                isLayoutTab
+                                    ? 10
+                                    : 900)),
+                        
+                        child: Text(
+                          'Layout',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                          style: GoogleFonts.lexend(
+                            fontSize: mapValueDimensionBased( 16, 30, sWidth,sHeight),
+                            color: defaultPalette.primary.withOpacity(0.6),
+                            letterSpacing: -1,
+
+                          ),
+                        ),
+                      ),
+                     ),
+                    Positioned(
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: Durations.medium3,
+                         transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                            ? 0.0
+                            : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                        child: ElevatedLayerButton(
+                            onClick: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                builder: (c) =>  Material(
+                                        child: PopScope(
+                                      child: LayoutDesigner(
+                                        onPop: (pdf) {
+                                        },
+                                      ),
+                                      canPop: false,
+                                    )
+                                  )
+                                )
+                              );
+                            },
+                            buttonHeight: ((sHeight/2.5)-40)/2,
+                            buttonWidth: (sWidth/10),
+                            borderRadius: BorderRadius.circular(10),
+                            animationDuration: const Duration(milliseconds: 200),
+                            animationCurve: Curves.ease,
+                            subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                            depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Icon(
+                                  //   IconsaxPlusLinear.grid_3,
+                                  //   size: 40,
+                                  // ),
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(-1, -1),
+                                      padding: EdgeInsets.only(
+                                        top: 5,
+                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                                      ),
+                                      child: Text(
+                                        'Create \nNew',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.start,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
+                                          color: defaultPalette.primary,
+                                          letterSpacing: -1,
+                                      
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ]),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              // border: Border.all(),
+                            ),
+                          ),
+                      ),
+                    ),
+                      
+                  ],
+                )
+              ),
+            ),
+            // addBillbutton
+            Positioned(
+              // duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18),
+              left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Stack(  
+                  children: [
+                    SizedBox(
+                      height:isLayoutTab? (sHeight/2.5)-50:0,
+                      width: (sWidth/10),
+                    ),
+                    Positioned(
+                      left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                       child: AnimatedContainer(
+                        duration: Durations.medium3,
+                        curve: Curves.easeIn,
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                        alignment: Alignment.topLeft,
+                        padding: EdgeInsets.only(
+                          top: 5,
+                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                        ),
+                        transform: Matrix4.identity()
+                        ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                        decoration: BoxDecoration(
+                          color: defaultPalette.primary,
+                          borderRadius:
+                              BorderRadius.circular(
+                                isLayoutTab
+                                    ? 10
+                                    : 900)),
+                        
+                        child: Text(
+                          'Bill',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                          style: GoogleFonts.lexend(
+                            fontSize: mapValueDimensionBased( 16, 30, sWidth,sHeight),
+                            color: defaultPalette.extras[0].withOpacity(0.6),
+                            letterSpacing: -1,
+
+                          ),
+                        ),
+                      ),
+                     ),
+                    Positioned(
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: Durations.medium3,
+                         transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                            ? 0.0
+                            : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                        child: ElevatedLayerButton(
+                            onClick: () {
+                              
+                            },
+                            buttonHeight: ((sHeight/2.5)-40)/2,
+                            buttonWidth: (sWidth/10),
+                            borderRadius: BorderRadius.circular(10),
+                            animationDuration: const Duration(milliseconds: 200),
+                            animationCurve: Curves.ease,
+                            subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                            depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Icon(
+                                  //   IconsaxPlusLinear.grid_3,
+                                  //   size: 40,
+                                  // ),
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(-1, -1),
+                                      padding: EdgeInsets.only(
+                                        top: 5,
+                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                                      ),
+                                      child: Text(
+                                        'Create \nNew',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.start,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
+                                          color: defaultPalette.primary,
+                                          letterSpacing: -1,
+                                      
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ]),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              // border: Border.all(),
+                            ),
+                          ),
+                      ),
+                    ),
+                      
+                  ],
+                )
+              ),
+            ),
+            // BG templastelbutton
+            Positioned(
+            left:mapValueDimensionBased( 5, 10, sWidth,sHeight)+ ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
+    
+            bottom: 1.6*(sHeight / 18),
+              child: AnimatedContainer(
+              duration: Durations.medium3,
+              curve: Curves.easeIn,
+              height:((sHeight/2.5)-40)/2-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+              width: (sWidth/5)+ mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 0, outMax: 45),
+              alignment: Alignment.topRight,
+              padding: EdgeInsets.only(
+                top: mapValueDimensionBased( 35, 70, sWidth,sHeight),
+                right:mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 15, outMax: 10)
+              ),
+              // transform: Matrix4.identity()
+              // ..translate(isLayoutTab
+              //       ? 0.0
+              //       : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+              //   ..rotateY( isLayoutTab? 0: -math.pi / 2),
+              decoration: BoxDecoration(
+                color: defaultPalette.tertiary,
+                borderRadius:
+                    BorderRadius.circular( 10)),
+              
+              // child: Transform.rotate(
+              //   angle: pi/2,
+              //   child: Text(
+              //     'Browser',
+              //     maxLines: 2,
+              //     overflow: TextOverflow.ellipsis,
+              //     textAlign: TextAlign.end,
+              //     style: GoogleFonts.lexend(
+              //       fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+              //       color: defaultPalette.primary.withOpacity(0.6),
+              //       letterSpacing: -0.2,
+              //       height: -2
+              //     ),
+              //   ),
+              // ),
+            ),
+            ),
+            //blackLine
+            AnimatedPositioned(
+              duration: Durations.long1,
+              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30): sWidth,
+              top: (sHeight / 3)+100,
+              child: Container(
+                height:4,
+                width: (sWidth/8),
+                decoration:BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),color: defaultPalette.extras[0]),
+              )),
+            //greenLine
+            AnimatedPositioned(
+              duration: Durations.long4,
+              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30):sWidth,
+              top:  (sHeight / 3)+100 +15,
+              child: Container(
+                height:4,
+                width: (sWidth/2),
+                decoration:BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: defaultPalette.tertiary),
+              )),        
+            // templatebutton
+            AnimatedPositioned(
+              duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18),
+              left: ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
+             
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Stack(  
+                  children: [
+                    SizedBox(
+                      height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
+                      width: (sWidth/5),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      child: AnimatedContainer(
+                        duration: Durations.medium3,
+                         transform: Matrix4.identity()
+                          // ..translate(isLayoutTab
+                          //   ? 0.0
+                          //   : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                        child: ElevatedLayerButton(
+                            onClick: () {
+                              
+                            },
+                            buttonHeight: ((sHeight/2.5)-40)/2,
+                            buttonWidth: (sWidth/10),
+                            borderRadius: BorderRadius.circular(10),
+                            animationDuration: const Duration(milliseconds: 200),
+                            animationCurve: Curves.ease,
+                            subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                            depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
+                            ),
+                            topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  // Icon(
+                                  //   IconsaxPlusLinear.grid_3,
+                                  //   size: 40,
+                                  // ),
+                                  Expanded(
+                                    child: Container(
+                                      alignment: Alignment(-1, -1),
+                                      padding: EdgeInsets.only(
+                                        top: 5,
+                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                                      ),
+                                      child: Text(
+                                        'Templates \nView',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.start,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
+                                          color: defaultPalette.primary,
+                                          letterSpacing: -1,
+                                      
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ]),
+                            baseDecoration: BoxDecoration(
+                              color: Colors.transparent,
+                              // border: Border.all(),
+                            ),
+                          ),
+                      ),
+                    ),
+                      
+                  ],
+                )
+              ),
+            ),
+            //quote
+            AnimatedPositioned(
+              duration: Durations.medium2,
+              left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + 2*mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
+              bottom: isLayoutTab ?   1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
+              child: Text(
+                  'Pay up, \nbuttercup!',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  // textAlign: TextAlign.end,
+                  style: GoogleFonts.lexend(
+                    fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                    color: defaultPalette.extras[0].withOpacity(0.4),
+                    letterSpacing: -0.2,
+                    height: 1
+                  ),
+                ),
+              ),        
+            
+            // //LayoutList
             AnimatedPositioned(
               duration: Durations.extralong2,
               top: isLayoutTab
@@ -1334,143 +1676,647 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               child: IgnorePointer(
                 ignoring: !isLayoutTab,
                 child: AnimatedOpacity(
-                  duration: Durations.extralong4 * 2,
+                  duration: Durations.extralong3 * 2,
                   opacity: isLayoutTab ? 1 : 0,
                   curve: Curves.bounceInOut,
                   child: Container(
                     margin: EdgeInsets.all(15),
-                    padding: EdgeInsets.all(5),
+                    padding: EdgeInsets.all(mapValueDimensionBased( 5, 10, sWidth,sHeight)).copyWith(top: 15),
                     decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(20),
                         color: defaultPalette.primary),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: ListView.builder(
-                        itemCount: Boxes.getLayouts().length,
-                        itemBuilder: (BuildContext context, int i) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(
-                                builder: (context) {
-                                  return PopScope(
-                                    canPop: false,
-                                    child: LayoutDesigner(
-                                      id: Boxes.getLayouts().keyAt(i),
-                                      index: i,
-                                    ),
-                                  );
-                                },
-                              ));
-                            },
-                            child: Container(
-                              height: 50,
-                              color: defaultPalette.secondary,
-                              width: 30,
-                              alignment: Alignment.centerLeft,
-                              padding: EdgeInsets.only(right: 10, left: 10),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: Text(Boxes.getLayouts()
-                                        .values
-                                        .toList()[i]
-                                        .name),
-                                  ),
-                                  //Delete a Layout button
-                                  ElevatedLayerButton(
-                                    onClick: () async {
-                                      final layoutsBox = Boxes.getLayouts();
-                                  
-                                      // Get the current key of the item to be deleted
-                                      // final int currentIndex = i;
-                                  
-                                      // Delete the item
-                                      await layoutsBox
-                                          .get(layoutsBox.keyAt(i))
-                                          ?.delete();
-                                      // Adjust keys for the remaining items
-                                      // for (int index = currentIndex;
-                                      //     index < layoutsBox.length;
-                                      //     index++) {
-                                      //   // Get the layout item
-                                      //   final layout = layoutsBox.get(index);
-                                  
-                                      //   if (layout != null) {
-                                      //     // Remove from the current key
-                                      //     await layout.delete();
-                                      //     // Add to the new key
-                                      //     await layoutsBox.put(
-                                      //         index - 1, layout);
-                                      //   }
-                                      // }
-                                  
-                                      // If you have a setState function or similar to refresh the UI, call it here
-                                      setState(() {});
-                                    },
-                                    buttonHeight: 30,
-                                    buttonWidth: 60,
-                                    borderRadius: BorderRadius.circular(100),
-                                    animationDuration:
-                                        const Duration(milliseconds: 200),
-                                    animationCurve: Curves.ease,
-                                    topDecoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(),
-                                    ),
-                                    topLayerChild: Icon(
-                                      TablerIcons.trash,
-                                      size: 20,
-                                    ),
-                                    subfac: 3,depth: 3,
-                                    baseDecoration: BoxDecoration(
-                                      color: Colors.green,
-                                      border: Border.all(),
-                                    ),
-                                  ),
-                                  SizedBox(width:5),
-                                  //Options a Layout button
-                                  ElevatedLayerButton(
-                                    onClick: () {},
-                                    buttonHeight: 30,
-                                    buttonWidth: 30,
-                                    borderRadius: BorderRadius.circular(100),
-                                    animationDuration:
-                                        const Duration(milliseconds: 200),
-                                    animationCurve: Curves.ease,
-                                    topDecoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(),
-                                    ),
-                                    subfac: 3,depth: 3,
-                                    topLayerChild: Icon(
-                                      TablerIcons.dots_vertical,
-                                      size: 15,
-                                    ),
-                                    baseDecoration: BoxDecoration(
-                                      color: Colors.green,
-                                      border: Border.all(),
-                                    ),
-                                  ),
-                                ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        //my layouts title search bar list page toggle
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '   Layouts',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.start,
+                                style: GoogleFonts.lexend(
+                                  fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                  color: defaultPalette.extras[0],
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -0.2,
+                                ),
                               ),
                             ),
-                          );
-                        },
+                            
+                              ExpandableSearchBar(
+                                onTap: () {
+                                  
+                                },
+                                onChange: (value) {
+                                  setState(() {
+                                    if (value.isNotEmpty) {
+                                      filteredLayoutBox = Boxes.getLayouts()
+                                          .values
+                                          .where((i) => i.name.toLowerCase().contains(value.toLowerCase()))
+                                          .toList();
+                                    } else {
+                                      filteredLayoutBox = Boxes.getLayouts()
+                                          .values.toList();
+                                    }
+                                  });
+                                },
+                                hintText: "search layout...",
+                                editTextController: layoutSearchController,
+                                focusNode: layoutSearchFocusNode,
+                                boxShadow: [],
+                                iconBackgroundColor: defaultPalette.primary,
+                                iconColor: defaultPalette.extras[0],
+                                iconSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                backgroundColor: defaultPalette.secondary,
+
+                              ),
+                              SizedBox(width: 3,), 
+                              AnimatedToggleSwitch<bool>.dual(
+                              current: isLayoutTileView,
+                              first: true,
+                              second: false,
+                              onChanged: (value) {
+                                setState(() {
+                                  isLayoutTileView = value;
+                                });
+                              },
+                              animationCurve:
+                                  Curves.easeInOutExpo,
+                              animationDuration:
+                                  Durations.medium4,
+                              borderWidth:
+                                  2, // backgroundColor is set independently of the current selection
+                              styleBuilder: (value) =>
+                                  ToggleStyle(
+                                      borderRadius:
+                                          BorderRadius
+                                              .circular(
+                                                  50),
+                                      indicatorBorderRadius:
+                                          BorderRadius
+                                              .circular(
+                                                  5),
+                                      borderColor:
+                                          defaultPalette
+                                              .secondary,
+                                      backgroundColor:
+                                          defaultPalette
+                                              .secondary,
+                                      indicatorColor:
+                                          defaultPalette
+                                                  .extras[0]), // indicatorColor changes and animates its value with the selection
+                              iconBuilder: (value) {
+                                return Icon(
+                                    value? TablerIcons
+                                            .grip_horizontal
+                                        : TablerIcons
+                                            .grip_vertical,
+                                    size: 12,
+                                    color: defaultPalette
+                                        .primary);
+                              },
+                              textBuilder: (value) {
+                                return Text(
+                                  value ? 'list'
+                                      : 'page',
+                                  style:
+                                      GoogleFonts.bungee(
+                                          fontSize: 12),
+                                );
+                              },
+                              height:mapValueDimensionBased( 22, 32, sWidth,sHeight),
+                              spacing:mapValueDimensionBased( 10, 30, sWidth,sHeight),
+                            ),
+                            SizedBox(width: 5,),                    
+                          ],
+                        ),
+                        SizedBox(height: 10,),
+                        //the layout cards
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:  Color(0xffc0c0c0).withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: EdgeInsets.all(5),
+                            child:  ScrollConfiguration(
+                              behavior: ScrollBehavior().copyWith(scrollbars: false),
+                              child: DynMouseScroll(
+                                durationMS: 500,
+                                scrollSpeed: 1,
+                                builder: (context, controller, physics) {
+                                  return ScrollbarUltima(
+                                    alwaysShowThumb: true,
+                                    controller: controller,
+                                    scrollbarPosition:
+                                        ScrollbarPosition.right,
+                                    backgroundColor: defaultPalette.primary,
+                                    isDraggable: true,
+                                    maxDynamicThumbLength: 90,
+                                    minDynamicThumbLength: 50,
+                                    thumbBuilder:
+                                        (context, animation, widgetStates) {
+                                      return Container(
+                                        margin: EdgeInsets.only(right: 3, top: 8,bottom: 8),
+                                        decoration: BoxDecoration(
+                                            color: defaultPalette.primary,
+                                            border: Border.all(),
+                                            borderRadius:
+                                                BorderRadius.circular(15)),
+                                        width: 6,
+                                      );
+                                    },
+                                  child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: ListView.builder(
+                                    padding: EdgeInsets.only(right:0),
+                                  controller: controller,
+                                  physics: physics,
+                                  itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
+                                  itemBuilder: (BuildContext context, int i) {
+                                    
+                                    if (i ==(layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length:filteredLayoutBox.length)) {
+                                      return SizedBox(height: 5,);
+                                    }
+                                    final layoutModel = layoutSearchController.text ==''?Boxes.getLayouts().values.toList()[i]: filteredLayoutBox[i];
+                                    if(!isLayoutTileView) {
+                                      return Material(
+                                        color: defaultPalette.transparent,
+                                        child: InkWell(
+                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                          splashColor: defaultPalette.extras[0].withOpacity(0.4),
+                                          onTap: () {
+                                            Navigator.push(context, MaterialPageRoute(
+                                              builder: (context) {
+                                                return PopScope(
+                                                  canPop: false,
+                                                  child: LayoutDesigner(
+                                                    id: Boxes.getLayouts().keyAt(i),
+                                                    index: i,
+                                                    onPop: (pdf) {
+                                                      setState(() {
+                                                      filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                    });
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ));
+                                            filteredLayoutBox = Boxes.getLayouts()
+                                          .values.toList();
+                                          },
+                                        child: Container(
+                                          height: 200,
+                                          width: 30,
+                                          margin: EdgeInsets.only(bottom: 10,right: 8),
+                                          color: defaultPalette.transparent,
+                                          child: Row(
+                                            children: [
+                                              //mini layout pdf pages swiper
+                                              SizedBox(
+                                                height: 200,
+                                                width: 150,
+                                                child: AppinioSwiper(
+                                                  cardCount: (layoutModel.spreadSheetList.length.isNaN ||layoutModel.docPropsList.length ==0 )?1:layoutModel.docPropsList.length,
+                                                  backgroundCardCount: 5,
+                                                  backgroundCardOffset: Offset(0.8, 0.8),
+                                                  duration: Duration(milliseconds: 220),
+                                                  backgroundCardScale: 1,
+                                                  loop: true,
+                                                  allowUnSwipe: true,
+                                                  allowUnlimitedUnSwipe: true,
+                                                  initialIndex: 0,  
+                                                  cardBuilder: (context, indx) {
+                                                    // print(layoutModel.pdf?.length);
+                                                    return Stack(
+                                                          children: [
+                                                            //The main bgCOLOR OF THE CARD
+                                                            Positioned.fill(
+                                                              child: AnimatedContainer(
+                                                                duration: Durations.short3,
+                                                                alignment: Alignment.center,
+                                                                margin: EdgeInsets.only(left:8,top:8,bottom: 2),
+                                                                decoration: BoxDecoration(
+                                                                  color:defaultPalette.primary,
+                                                                  border: Border.all(width: 1.2, color:defaultPalette.extras[0]),
+                                                                  borderRadius: BorderRadius.circular(10),
+                                                                  image:layoutModel.pdf==null?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
+                                                                ),
+                                                              ),
+                                                            ),    
+                                                          ],
+                                                    );
+                                                  },),
+                                              ),
+                                              SizedBox(width: 10,),
+                                              //layoutname and created modified
+                                              Expanded(
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    //layoutname
+                                                    Expanded(
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.only(left:8.0,top: 15),
+                                                        child: Text(
+                                                          layoutModel.name,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.end,
+                                                          style: GoogleFonts.lexend(
+                                                            fontSize: mapValueDimensionBased( 30, 40, sWidth,sHeight),
+                                                            color: defaultPalette.extras[0],
+                                                            fontWeight: FontWeight.w600,
+                                                            letterSpacing: -0.2,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                //created modified and pages
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          // color:  defaultPalette.primary,
+                                                          borderRadius: BorderRadius.circular(12),
+                                                          // border: Border.all()
+                                                        ),
+                                                        padding: EdgeInsets.all(10),
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          children: [
+                                                            SingleChildScrollView(
+                                                              scrollDirection: Axis.horizontal, 
+                                                              child: RichText(
+                                                                textAlign: TextAlign.start,
+                                                                maxLines: 1,
+                                                                // overflow: TextOverflow.ellipsis,
+                                                                text: TextSpan(
+                                                                  style: GoogleFonts.lexend(
+                                                                    fontSize: 12,
+                                                                    fontWeight: FontWeight.w300,
+                                                                    letterSpacing: -0.2,
+                                                                  ),
+                                                                  children: [
+                                                                    TextSpan(
+                                                                      text: 'Created: ',
+                                                                      style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: DateFormat("EEE MMM d, y 'at' h:mm a").format(layoutModel.createdAt),
+                                                                      style: TextStyle(color: defaultPalette.extras[0]),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SingleChildScrollView(
+                                                              scrollDirection: Axis.horizontal,
+                                                              child: RichText(
+                                                                textAlign: TextAlign.start,
+                                                                maxLines: 1,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                text: TextSpan(
+                                                                  style: GoogleFonts.lexend(
+                                                                    fontSize: 12,
+                                                                    fontWeight: FontWeight.w300,
+                                                                    letterSpacing: -0.2,
+                                                                  ),
+                                                                  children: [
+                                                                    TextSpan(
+                                                                      text: 'Modified: ',
+                                                                      style: GoogleFonts.lexend(color: defaultPalette.extras[0],fontWeight: FontWeight.w400,),
+                                                                    ),
+                                                                    TextSpan(
+                                                                      text: DateFormat("EEE MMM d, y 'at' h:mm a").format(layoutModel.modifiedAt),
+                                                                      style: TextStyle(color: defaultPalette.extras[0]),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                                                    
+                                                            Text(
+                                                              'Pages: ${layoutModel.spreadSheetList.isEmpty?'1':layoutModel.spreadSheetList.length.toString()}',
+                                                              maxLines: 1,
+                                                              overflow: TextOverflow.ellipsis,
+                                                              textAlign: TextAlign.end,
+                                                              style: GoogleFonts.lexend(
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                                fontWeight: FontWeight.w400,
+                                                                letterSpacing: -0.2,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                                                        
+                                                  ],
+                                                ),
+                                              ),
+                                              SizedBox(width:5),
+                                              Column(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                children: [
+                                                  //Options a Layout button
+                                                  ElevatedLayerButton(
+                                                    onClick: () {},
+                                                    buttonHeight: 30,
+                                                    buttonWidth: 30,
+                                                    borderRadius: BorderRadius.circular(100),
+                                                    animationDuration:
+                                                        const Duration(milliseconds: 200),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      border: Border.all(),
+                                                    ),
+                                                    subfac: 3,depth: 3,
+                                                    topLayerChild: Icon(
+                                                      TablerIcons.dots_vertical,
+                                                      size: 15,
+                                                    ),
+                                                    baseDecoration: BoxDecoration(
+                                                      color: defaultPalette.extras[0],
+                                                      border: Border.all(),
+                                                    ),
+                                                  ),
+                                                
+                                                  //Delete a Layout button
+                                                  SizedBox(height:5),
+                                                  ElevatedLayerButton(
+                                                    onClick: () async {
+                                                      print(filteredLayoutBox);
+                                                      final layoutsBox = Boxes.getLayouts();
+                                                      // Delete the item
+                                                       print(layoutsBox);
+                                                      await layoutsBox
+                                                          .get(layoutsBox.keyAt(i))
+                                                          ?.delete();
+                                                      print('delete');
+                                                      setState(() {
+                                                        filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                      });
+                                                    },
+                                                    buttonHeight: 45,
+                                                    buttonWidth: 45,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    animationDuration:
+                                                        const Duration(milliseconds: 200),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      border: Border.all(),
+                                                    ),
+                                                    topLayerChild: Icon(
+                                                      TablerIcons.trash,
+                                                      size: 20,
+                                                    ),
+                                                    subfac: 3,depth: 3,
+                                                    baseDecoration: BoxDecoration(
+                                                      color: defaultPalette.extras[0],
+                                                      border: Border.all(),
+                                                    ),
+                                                  ),
+                                                  
+                                                ],
+                                              ),
+                                              SizedBox(width:5),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                    } else {
+                                      return Material(
+                                        color: defaultPalette.transparent,
+                                        child: InkWell(
+                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                          splashColor: defaultPalette.extras[0].withOpacity(0.4),
+                                          onTap: () {
+                                            Navigator.push(context, MaterialPageRoute(
+                                              builder: (context) {
+                                                return PopScope(
+                                                  canPop: false,
+                                                  child: LayoutDesigner(
+                                                    id: Boxes.getLayouts().keyAt(i),
+                                                    index: i,
+                                                    onPop: (pdf) {
+                                                      
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ));
+                                          },
+                                        child: Container(
+                                          height: 70,
+                                          width: 30,
+                                          margin: EdgeInsets.only(bottom: 10,right: 8),
+                                          color: defaultPalette.transparent,
+                                          child: Row(
+                                            children: [
+                                              //layoutname
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.only(left:12,top: 0),
+                                                  child: Text(
+                                                    layoutModel.name,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.start,
+                                                    style: GoogleFonts.lexend(
+                                                      fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                                      color: defaultPalette.extras[0],
+                                                      fontWeight: FontWeight.w600,
+                                                      letterSpacing: -0.2,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 10,),
+                                              //layoutname and created modified
+                                              Expanded(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    // color:  defaultPalette.primary,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    // border: Border.all()
+                                                  ),
+                                                  padding: EdgeInsets.all(10),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      SingleChildScrollView(
+                                                        scrollDirection: Axis.horizontal, 
+                                                        child: RichText(
+                                                          textAlign: TextAlign.start,
+                                                          maxLines: 1,
+                                                          // overflow: TextOverflow.ellipsis,
+                                                          text: TextSpan(
+                                                            style: GoogleFonts.lexend(
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w300,
+                                                              letterSpacing: -0.2,
+                                                            ),
+                                                            children: [
+                                                              TextSpan(
+                                                                text: 'Created: ',
+                                                                style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                              ),
+                                                              TextSpan(
+                                                                text: DateFormat("EEE MMM d, y 'at' h:mm a").format(layoutModel.createdAt),
+                                                                style: TextStyle(color: defaultPalette.extras[0]),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SingleChildScrollView(
+                                                        scrollDirection: Axis.horizontal,
+                                                        child: RichText(
+                                                          textAlign: TextAlign.start,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          text: TextSpan(
+                                                            style: GoogleFonts.lexend(
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w300,
+                                                              letterSpacing: -0.2,
+                                                            ),
+                                                            children: [
+                                                              TextSpan(
+                                                                text: 'Modified: ',
+                                                                style: GoogleFonts.lexend(color: defaultPalette.extras[0],fontWeight: FontWeight.w400,),
+                                                              ),
+                                                              TextSpan(
+                                                                text: DateFormat("EEE MMM d, y 'at' h:mm a").format(layoutModel.modifiedAt),
+                                                                style: TextStyle(color: defaultPalette.extras[0]),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                                              
+                                                      Text(
+                                                        'Pages: ${layoutModel.spreadSheetList.isEmpty?'1':layoutModel.spreadSheetList.length.toString()}',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.end,
+                                                        style: GoogleFonts.lexend(
+                                                          fontSize: 12,
+                                                          color: defaultPalette.extras[0],
+                                                          fontWeight: FontWeight.w400,
+                                                          letterSpacing: -0.2,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width:5),
+                                              Column(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                children: [
+                                                  SizedBox(height:5),
+                                                  //Options a Layout button
+                                                  ElevatedLayerButton(
+                                                    onClick: () {},
+                                                    buttonHeight: 30,
+                                                    buttonWidth: 30,
+                                                    borderRadius: BorderRadius.circular(100),
+                                                    animationDuration:
+                                                        const Duration(milliseconds: 200),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      border: Border.all(),
+                                                    ),
+                                                    subfac: 3,depth: 3,
+                                                    topLayerChild: Icon(
+                                                      TablerIcons.dots_vertical,
+                                                      size: 15,
+                                                    ),
+                                                    baseDecoration: BoxDecoration(
+                                                      color: defaultPalette.extras[0],
+                                                      border: Border.all(),
+                                                    ),
+                                                  ),
+                                                
+                                                  //Delete a Layout button
+                                                  SizedBox(height:5),
+                                                  ElevatedLayerButton(
+                                                    onClick: () async {
+                                                      final layoutsBox = Boxes.getLayouts();
+                                                      // Delete the item
+                                                      await layoutsBox
+                                                          .get(layoutsBox.keyAt(i))
+                                                          ?.delete();
+                                                      
+                                                      setState(() {});
+                                                    },
+                                                    buttonHeight: 30,
+                                                    buttonWidth: 30,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    animationDuration:
+                                                        const Duration(milliseconds: 200),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      border: Border.all(),
+                                                    ),
+                                                    topLayerChild: Icon(
+                                                      TablerIcons.trash,
+                                                      size: 20,
+                                                    ),
+                                                    subfac: 3,depth: 3,
+                                                    baseDecoration: BoxDecoration(
+                                                      color: defaultPalette.extras[0],
+                                                      border: Border.all(),
+                                                    ),
+                                                  ),
+                                                  
+                                                ],
+                                              ),
+                                              SizedBox(width:5),
+                                            ],
+                                          ),
+                                        ),
+                                                                            ),
+                                      );
+                                    
+                                    }
+                                },
+                                ),
+                              ),
+                            );
+                          }
+                        ),
+                      ),
+                        
                       ),
                     ),
-                  ),
+                  ],
+                ),
+                ),
                    
                 ),
               ),
             ),
-            // AnimatedPositioned(
-            //     duration: Durations.extralong1,
-            //     top: 5,
-            //     right: 0,
-            //     height: sHeight,
-            //     width: sWidth,
-            //     child: const MultiBoardListExample())
+            
           ],
         ),
       ),
@@ -1485,4 +2331,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     required double outMax,
   }) {
     return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
+  }
+  double mapValueDimensionBased(double outMin, double outMax, double w, double h){
+    return mapValue(value: h*w, inMin: 500*800, inMax: 1187*2194, outMin: outMin, outMax: outMax);
   }

@@ -10,12 +10,12 @@ import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/printing_lib/printing.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
-import 'package:billblaze/components/widgets/eye_dropper.dart';
+import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/home.dart';
-import 'package:billblaze/components/pickers/hsv_picker.dart';
-import 'package:billblaze/components/pickers/wheel_picker.dart';
-import 'package:billblaze/components/widgets/alpha_picker.dart';
+import 'package:billblaze/components/widgets/pickers/hsv_picker.dart';
+import 'package:billblaze/components/widgets/pickers/wheel_picker.dart';
+import 'package:billblaze/components/widgets/pickers/alpha_picker.dart';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
@@ -49,11 +49,9 @@ import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:number_counting_animation/number_counting_animation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
-import 'package:billblaze/components/flutter_balloon_slider.dart';
 import 'package:billblaze/components/zoomable.dart' as zz;
 import 'package:billblaze/components/tab_container/tab_controller.dart';
-import 'package:billblaze/components/text_toolbar/list_item_model.dart';
-import 'package:billblaze/components/text_toolbar/playable_toolbar_flutter.dart';
+// import 'package:billblaze/components/text_toolbar/list_item_model.dart';
 import 'package:billblaze/util/HexColorInputFormatter.dart';
 import 'package:flutter/rendering.dart';
 import "package:billblaze/components/color_picker.dart"
@@ -102,7 +100,7 @@ class PanelIndex {
   String parentId = '';
   IndexPath itemIndexPath;
   IndexPath? parentIndexPath;
-  PanelIndex({required this.id, this.parentId = '', required this.itemIndexPath, required this.parentIndexPath});
+  PanelIndex({required this.id, this.parentId = '', required this.itemIndexPath, required this.parentIndexPath, });
 
   PanelIndex copyWith({
     String? id,
@@ -115,6 +113,7 @@ class PanelIndex {
         parentId: parentId ?? this.parentId,
         itemIndexPath: itemIndexPath ?? this.itemIndexPath,
         parentIndexPath: parentIndexPath ?? this.parentIndexPath,
+
         );
   }
 
@@ -171,10 +170,12 @@ final propertyCardIndexProvider = StateProvider<int>((ref) {
 class LayoutDesigner extends ConsumerStatefulWidget {
   final int? id;
   final int? index;
+  final void Function(Uint8List pdf) onPop;
   const LayoutDesigner({
     Key? key,
     this.id = null,
     this.index = -1,
+    required this.onPop
   }) : super(key: key);
 
   @override
@@ -1090,13 +1091,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     );
   }
 
-  void _removeTextField() {
-    setState(() {
-      // spreadSheetList[currentPageIndex].removeAt(panelIndex.panelIndex);
-      panelIndex = PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
-    });
-  }
-
   pw.Widget convertDeltaToPdfWidget(Delta delta) {
     // print('________convertDELTA STARTED LD_________');
     PdfColor pdfColorFromHex(String hexColor) {
@@ -1972,7 +1966,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     return items;
   }
 
-  Future<void> _capturePng() async {
+  Future<void> _capturePng({double pixelRatio =7.0}) async {
     setState(() {
       _images = [];
     });
@@ -1986,7 +1980,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
           print("Boundary is null");
           return;
         }
-        ui.Image image = await boundary.toImage(pixelRatio: 7.0);
+        ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
         ByteData? byteData =
             await image.toByteData(format: ui.ImageByteFormat.png);
         if (byteData == null) {
@@ -2000,6 +1994,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         });
         print('image added');
       }
+      print(_images.length);
       // WidgetsBinding.instance.addPostFrameCallback((_) async {
 
       // });
@@ -2616,9 +2611,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     // print('________BUILD LAYOUT STARTED LD_________');
     double sHeight = MediaQuery.of(context).size.height;
     double sWidth = MediaQuery.of(context).size.width;
-    Duration sideBarPosDuration = const Duration(milliseconds: 300);
     Duration defaultDuration = const Duration(milliseconds: 300);
-    double titleFontSize = sHeight / 11;
     // print('Height of SpreadSheet in build: '+ (sHeight-40).toString());
     if (isLoading) {
       return Scaffold(
@@ -4493,10 +4486,27 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                       child: ElevatedLayerButton(
                         // isTapped: false,
                         // toggleOnTap: true,
-                        onClick: () {
-                          saveLayout();
+                        onClick: () async {
+                          final overlay =  OverlayEntry(builder: (context) => Scaffold(
+                              backgroundColor: defaultPalette.tertiary,
+                          body: Center(
+                            child: LoadingAnimationWidget.newtonCradle(
+                              color: Colors.white,
+                              size: 150,
+                            ),
+                          ),),);
+                          Overlay.of(context).insert(
+                            overlay
+                         );
+                          await saveLayout();
+                          
                           ref.read(propertyCardIndexProvider.notifier).update((s) => s = 0);
+                          final pdf = pw.Document();
+                          
+                          widget.onPop(await pdf.save());
+                          
                           Navigator.pop(context);
+                          overlay.remove();
                         },
                         buttonHeight: 30 ,
                         buttonWidth: 40 ,
@@ -7736,11 +7746,15 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     return maxFontSize;
   }
 
-  void saveLayout() {
+  Future<void> saveLayout() async {
+    await _capturePng(pixelRatio: 1);
     var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
     lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
     lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm[keyIndex].modifiedAt = DateTime.now();
+    lm[keyIndex].pdf = _images;
     lm[keyIndex].save();
+    print(lm[keyIndex].pdf?.length);
     saveDecorations(sheetDecorationList);
   }
 
@@ -8261,16 +8275,16 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                 List<TextEditingController> fontTextControllers = [
                   TextEditingController()
                   ..text =
-                      '${(item.textEditorController.getSelectionStyle().attributes['size']?.value.toString().replaceAll(RegExp(r'.0$'), '') ?? '0')}',
+                      '${(item.textEditorController.getSelectionStyle().attributes['size']?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                       ..text =
-                          '${(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'.0$'), '') ?? '0')}',
+                          '${(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                   ..text =
-                      '${(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'.0$'), '') ?? '0')}',
+                      '${(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                   ..text =
-                      '${(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'.0$'), '') ?? '0')}',
+                      '${(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                   ..text =
                       '${item.name}',
@@ -8521,7 +8535,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                             letterSpacing: -1),
                         onFieldSubmitted: (value) {
                           setState(() {
-                            
+                            print(value);
                           switch (s) {
                             case 0:
                                item.textEditorController
@@ -10686,14 +10700,16 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(item.textEditorController.getPlainText(),
-                                          textAlign: TextAlign.start,
-                                          style: TextStyle(
-                                            fontFamily: GoogleFonts.leagueSpartan().fontFamily,
-                                            letterSpacing:-0.5,
-                                            fontWeight: FontWeight.w800,        
-                                            color: defaultPalette.extras[0],
-                                            fontSize: 15)),
+                                        Expanded(
+                                          child: Text(item.textEditorController.getPlainText(),
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                              fontFamily: GoogleFonts.leagueSpartan().fontFamily,
+                                              letterSpacing:-0.5,
+                                              fontWeight: FontWeight.w800,        
+                                              color: defaultPalette.extras[0],
+                                              fontSize: 15)),
+                                        ),
                                           ],
                                         ),
                                       ),
