@@ -1,8 +1,8 @@
 import 'package:billblaze/colors.dart';
 import 'package:flutter/material.dart';
 
-import '../widgets/slider_picker.dart';
-import '../widgets/slider_title.dart';
+import 'slider_picker.dart';
+import 'slider_title.dart';
 
 /// Three sliders for selections a color via:
 /// Hue

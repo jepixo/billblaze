@@ -23,13 +23,14 @@ class LayoutModelAdapter extends TypeAdapter<LayoutModel> {
       name: fields[3] as String,
       createdAt: fields[4] as DateTime,
       modifiedAt: fields[5] as DateTime,
+      pdf: (fields[6] as List?)?.cast<Uint8List>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, LayoutModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.docPropsList)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class LayoutModelAdapter extends TypeAdapter<LayoutModel> {
       ..writeByte(4)
       ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.modifiedAt);
+      ..write(obj.modifiedAt)
+      ..writeByte(6)
+      ..write(obj.pdf);
   }
 
   @override

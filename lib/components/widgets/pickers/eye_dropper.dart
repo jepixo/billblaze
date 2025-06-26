@@ -8,7 +8,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quiver/iterables.dart';
-import 'utils.dart';
+import '../utils.dart';
 
 const _cellSize = 10;
 
