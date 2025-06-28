@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:typed_data';
 
+import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/document_properties_model.dart';
@@ -24,6 +25,10 @@ class LayoutModel extends HiveObject {
   DateTime modifiedAt;
   @HiveField(6)
   List<Uint8List>? pdf;
+  @HiveField(7)
+  int type;
+  @HiveField(8)
+  List<String> labelList;
 
   LayoutModel({
     required this.docPropsList,
@@ -32,6 +37,14 @@ class LayoutModel extends HiveObject {
     required this.name,
     required this.createdAt,
     required this.modifiedAt,
+    this.type = 0,
     this.pdf = null,
+    this.labelList = const [],
   });
+  @override
+  String toString() {
+    // TODO: implement toString
+    return '${docPropsList.length}, ${spreadSheetList.length}, ${ id}, ${name},';
+  }
 }
+

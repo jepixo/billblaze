@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
+import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +27,7 @@ import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:uuid/uuid.dart';
 
 final cCardIndexProvider = StateProvider<int>((ref) {
   return 0;
@@ -1445,7 +1447,44 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ..rotateZ( isLayoutTab? 0: math.pi / 2),
                         child: ElevatedLayerButton(
                             onClick: () {
+                             final box = Boxes.getLayouts();
+
+                              for (var key in box.keys) {
+                                final value = box.get(key);
+                                print('Key: $key, Value: $value');
+                              }
+                              final name = Boxes.getBillName();
+                              var key = 'BI-${const Uuid().v4()}';
+                              // keyIndex = box.length;
+                              var lm = LayoutModel(
+                                createdAt: DateTime.now(),
+                                modifiedAt: DateTime.now(),
+                                name: name,
+                                docPropsList: [],
+                                spreadSheetList: [],
+                                id: key,
+                                type: SheetType.taxInvoice.index,
+
+                              );
                               
+                              box.put(key, lm);
+                              lm.save();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                builder: (c) =>  Material(
+                                        child: PopScope(
+                                      child: LayoutDesigner(
+                                        id: key,
+                                        onPop: (pdf) {
+                                        },
+                                        
+                                      ),
+                                      canPop: false,
+                                    )
+                                  )
+                                )
+                              );
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
                             buttonWidth: (sWidth/10),
@@ -1494,7 +1533,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                       ),
                     ),
-                      
                   ],
                 )
               ),
@@ -1544,21 +1582,22 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             //blackLine
             AnimatedPositioned(
               duration: Durations.long1,
-              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30): sWidth,
-              top: (sHeight / 3)+100,
+              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30): sWidth,
+              top: (sHeight / 3) + 100 + mapValueDimensionBased(10, -10, sWidth, sHeight),
               child: Container(
-                height:4,
+                height:2,
                 width: (sWidth/8),
                 decoration:BoxDecoration(
                   borderRadius: BorderRadius.circular(999),color: defaultPalette.extras[0]),
-              )),
+              )
+            ),
             //greenLine
             AnimatedPositioned(
               duration: Durations.long4,
-              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30):sWidth,
-              top:  (sHeight / 3)+100 +15,
+              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30):sWidth,
+              top:  (sHeight / 3)+100 +17,
               child: Container(
-                height:4,
+                height:2,
                 width: (sWidth/2),
                 decoration:BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
@@ -1592,7 +1631,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
-                            buttonWidth: (sWidth/10),
+                            buttonWidth: (sWidth/10).clamp(100, double.infinity),
                             borderRadius: BorderRadius.circular(10),
                             animationDuration: const Duration(milliseconds: 200),
                             animationCurve: Curves.ease,
@@ -1694,7 +1733,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             Expanded(
                               child: Text(
                                 '   Layouts',
-                                maxLines: 2,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.start,
                                 style: GoogleFonts.lexend(
@@ -1856,7 +1895,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   canPop: false,
                                                   child: LayoutDesigner(
                                                     id: Boxes.getLayouts().keyAt(i),
-                                                    index: i,
                                                     onPop: (pdf) {
                                                       setState(() {
                                                       filteredLayoutBox = Boxes.getLayouts().values.toList();
@@ -2112,7 +2150,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   canPop: false,
                                                   child: LayoutDesigner(
                                                     id: Boxes.getLayouts().keyAt(i),
-                                                    index: i,
                                                     onPop: (pdf) {
                                                       
                                                     },

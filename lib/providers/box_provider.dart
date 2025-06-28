@@ -29,6 +29,26 @@ class Boxes {
     return 'Untitled-${highestNumber + 1}';
   }
 
+  static String getBillName() {
+    int highestNumber =
+        -1; // Initialize to -1 to handle cases where no numbers are found.
+    final regex = RegExp(r'^Bill-(\d+)$');
+    final layouts = Boxes.getLayouts();
+
+    for (var layout in layouts.values.toList()) {
+      final name = layout.name;
+      final match = regex.firstMatch(name);
+
+      if (match != null) {
+        final number = int.parse(match.group(1)!);
+        highestNumber = max(highestNumber, number);
+      }
+    }
+
+    // Ensure that the next name is incremented correctly.
+    return 'Bill-${highestNumber + 1}';
+  }
+
   static Future<void> saveSuperDecoration(SuperDecorationBox newDecoration) async {
   Box<SheetDecoration> box = Boxes.getDecorations();
 
