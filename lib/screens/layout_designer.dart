@@ -16,6 +16,8 @@ import 'package:billblaze/home.dart';
 import 'package:billblaze/components/widgets/pickers/hsv_picker.dart';
 import 'package:billblaze/components/widgets/pickers/wheel_picker.dart';
 import 'package:billblaze/components/widgets/pickers/alpha_picker.dart';
+import 'package:billblaze/models/bill/bill_type.dart';
+import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
@@ -24,6 +26,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.da
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
+import 'package:billblaze/util/label_input_formatter.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
@@ -52,7 +55,7 @@ import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:billblaze/components/zoomable.dart' as zz;
 import 'package:billblaze/components/tab_container/tab_controller.dart';
 // import 'package:billblaze/components/text_toolbar/list_item_model.dart';
-import 'package:billblaze/util/HexColorInputFormatter.dart';
+import 'package:billblaze/util/hex_input_formatter.dart';
 import 'package:flutter/rendering.dart';
 import "package:billblaze/components/color_picker.dart"
     show ColorPicker, ColorTools, FlexPickerNoNullColorExtensions, Picker, PickerOrientation;
@@ -65,7 +68,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
-import 'package:billblaze/util/numeric_input_filter.dart';
+import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -168,13 +171,11 @@ final propertyCardIndexProvider = StateProvider<int>((ref) {
 //
 //
 class LayoutDesigner extends ConsumerStatefulWidget {
-  final int? id;
-  final int? index;
+  final String? id;
   final void Function(Uint8List pdf) onPop;
   const LayoutDesigner({
     Key? key,
-    this.id = null,
-    this.index = -1,
+    this.id,
     required this.onPop
   }) : super(key: key);
 
@@ -187,6 +188,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   final _googleFontsApiKey = 'AIzaSyBSG_5VsGG03fTeSihFNxYSCVN3m6Ltb0c';
   bool isLoading = true;
   String selectedFontCategory = 'san-serif';
+  late List<RequiredText> labelList;
   late String initialLayoutName;
   List<String> fonts2 = [
     'Billabong',
@@ -256,7 +258,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<FocusNode> fontFocusNodes = List.generate(7, (e)=>FocusNode());
   zz.TransformationController transformationcontroller = zz.TransformationController();
   late TabController tabcunt;
-  
   List<Color> paletteColors = [
     Colors.black,
     Colors.white,
@@ -297,8 +298,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   TextEditingController columnDecorationNameController = TextEditingController();
   TextEditingController decorationSearchController = TextEditingController();
   TextEditingController textFieldSearchController = TextEditingController();
-  int key = 0;
-  int keyIndex = 0;
+  String key = '';
+  // int keyIndex = 0;
   int pageCount = 0;
   int currentPageIndex = 0;
   int decorationIndex = -1;
@@ -329,7 +330,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   bool isMathFunctionLibraryToggled = false;
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
   // List<bool> // inputBlockExpansionList =[false];
-  
   SheetText item = SheetText(
     hide:true,
     name: 'yo',
@@ -394,31 +394,36 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
     // ─── 5) Your original Hive & layout logic ──────────────────────────────
     final box = Boxes.getLayouts();
-    key = widget.id ?? -1;
-    keyIndex = widget.index ?? -1;
+    key = widget.id ?? '-1';
+    // keyIndex = widget.index ?? -1;
 
-    if (key == -1) {
+    if (key == '-1') {
       final name = Boxes.getLayoutName();
       layoutName.text = name;
       initialLayoutName = name;
+      key = 'LY-${const Uuid().v4()}';
+      // keyIndex = box.length;
       lm = LayoutModel(
         createdAt: DateTime.now(),
         modifiedAt: DateTime.now(),
         name: name,
         docPropsList: [],
         spreadSheetList: [],
-        id: const Uuid().v4(),
+        id: key,
+        type: 0,
       );
-      key = Random().nextInt(100000);
-      keyIndex = box.length;
+      
       box.put(key, lm!);
       lm!.save();
+      labelList = getLabelList(SheetType.values[0],null);
     } else {
-      lm = box.get(key);
+      print('inelse');
+      lm = box.get(widget.id);
       spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
       layoutName.text = lm!.name;
       initialLayoutName = lm!.name;
+      labelList = lm!.labelList;
       // sheetListItem = spreadSheetList[currentPageIndex];
     }
 
@@ -787,8 +792,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             type: type
             ));
 
-        var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
-        lm[keyIndex].spreadSheetList[currentPageIndex].sheetList.add(
+        var lmBox = Boxes.getLayouts();
+        var lm = lmBox.get(key);
+        lm?.spreadSheetList[currentPageIndex].sheetList.add(
             SheetTextBox(
                 name:name,
                 hide:hide,
@@ -801,7 +807,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 textDecoration: textDecoration.toSuperDecorationBox(),
                 type: type.index,
                 ));
-        lm[keyIndex].save();
+        lm?.save();
         saveDecorations(sheetDecorationList);
       });
     }
@@ -1395,138 +1401,138 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     return attrs.containsKey(attribute.key);
   }
 
-Widget _buildSheetListWidget(SheetList sheetList, double width,
-      {double? docWidth = null,}) {
-        // print(sheetList.mainAxisSize.name);
-    // SuperDecoration decor = sheetDecorationList.firstWhere((element) => element.id == sheetList.listDecoration.id,) as SuperDecoration;
-    return GestureDetector(
-      onDoubleTap:(){
-        panelIndex.parentId = sheetList.id;
-        panelIndex.parentIndexPath = sheetList.indexPath;
-        _findSheetListItem();
-      },
-      child: buildDecoratedContainer(
-          sheetDecorationList[ int.tryParse(sheetList.listDecoration.id.substring(sheetList.listDecoration.id.indexOf('/') + 1))??0] as SuperDecoration,
-          IntrinsicHeight(
-            child: sheetList.direction == Axis.vertical
-                //For Columns in the pdf side of things
-                ? IntrinsicWidth(
-                    child: Flex(
-                      direction: Axis.vertical,
-                      mainAxisAlignment: sheetList.mainAxisAlignment,
-                      crossAxisAlignment: sheetList.crossAxisAlignment,
-                      mainAxisSize: sheetList.mainAxisSize, 
-                      children:
-                          List.generate(sheetList.sheetList.length, (index) {
-                        final sheetTextItem = sheetList.sheetList[index];
-      
-                        if (sheetTextItem is SheetText && !sheetTextItem.hide) {
-                          // print('in buildSheetListWidget item is: $item');
-                          var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
+  Widget _buildSheetListWidget(SheetList sheetList, double width,
+        {double? docWidth = null,}) {
+          // print(sheetList.mainAxisSize.name);
+      // SuperDecoration decor = sheetDecorationList.firstWhere((element) => element.id == sheetList.listDecoration.id,) as SuperDecoration;
+      return GestureDetector(
+        onDoubleTap:(){
+          panelIndex.parentId = sheetList.id;
+          panelIndex.parentIndexPath = sheetList.indexPath;
+          _findSheetListItem();
+        },
+        child: buildDecoratedContainer(
+            sheetDecorationList[ int.tryParse(sheetList.listDecoration.id.substring(sheetList.listDecoration.id.indexOf('/') + 1))??0] as SuperDecoration,
+            IntrinsicHeight(
+              child: sheetList.direction == Axis.vertical
+                  //For Columns in the pdf side of things
+                  ? IntrinsicWidth(
+                      child: Flex(
+                        direction: Axis.vertical,
+                        mainAxisAlignment: sheetList.mainAxisAlignment,
+                        crossAxisAlignment: sheetList.crossAxisAlignment,
+                        mainAxisSize: sheetList.mainAxisSize, 
+                        children:
+                            List.generate(sheetList.sheetList.length, (index) {
+                          final sheetTextItem = sheetList.sheetList[index];
         
-                          SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
-    
-                          Alignment containerAlignment = Alignment.topLeft;
+                          if (sheetTextItem is SheetText && !sheetTextItem.hide) {
+                            // print('in buildSheetListWidget item is: $item');
+                            var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
+          
+                            SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
       
-                          // Get alignment based on current attributes
-                          final currentAttributes = sheetTextItem.textEditorController
-                              .getSelectionStyle()
-                              .attributes;
-                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
-                          // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
-                          // Determine alignment from `attributes`
-                          if (_getIsToggled(
-                              currentAttributes, Attribute.centerAlignment)) {
-                            containerAlignment = Alignment.center;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.rightAlignment)) {
-                            containerAlignment = Alignment.topRight;
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.justifyAlignment)) {
-                            containerAlignment = Alignment
-                                .topLeft; // Adjust if you have other logic
-                          } else if (_getIsToggled(
-                              currentAttributes, Attribute.leftAlignment)) {
-                            containerAlignment = Alignment.topLeft;
-                          }
-                          // print('in buildSheetListWidget item is: $item');
-                          return IgnorePointer(
-                            key: ValueKey(sheetTextItem),
-                            child: Align(
-                              // width: docWidth,
-                              alignment: containerAlignment,
-                              child: 
-                              buildDecoratedContainer(
-                                textDecor,
-                                QuillEditor(
-                                  key: ValueKey(sheetTextItem.id),
-                                  configurations: buildCombinedQuillConfiguration(sheetTextItem.inputBlocks),
-                                  focusNode: FocusNode(),
-                                  scrollController: ScrollController(),
-                                ),
-                                 false,
-                              
-                              ),
-                            ),
-                          );
-                        } else if (sheetTextItem is SheetList) {
-                          // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
-                          return _buildSheetListWidget(sheetTextItem, width);
-                        } else if (sheetTextItem is SheetTable) {
-                          return _buildSheetTableWidget(sheetTextItem,);
-                        }
-
-                        return const SizedBox();
-                      }),
-                    ),
-                  )
-                //For Rows in the pdf side of things
-                : SizedBox(
-                    width: docWidth,
-                    child: Row(
-                      // direction: Axis.horizontal,
-                      mainAxisAlignment: sheetList.mainAxisAlignment,
-                      crossAxisAlignment: sheetList.crossAxisAlignment,
-                      mainAxisSize: sheetList.mainAxisSize,
-                      children:
-                          List.generate(sheetList.sheetList.length, (index) {
-                        final item = sheetList.sheetList[index];
-      
-                        if (item is SheetText && !item.hide) {
-                          // print('in buildSheetListWidget item is: $item');
-                          var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-171;
+                            Alignment containerAlignment = Alignment.topLeft;
         
-                          SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
-    
-                          return IgnorePointer(
-                            key: ValueKey(item),
-                            child: buildDecoratedContainer(
-                              textDecor,
-                              SizedBox(
-                                width: docWidth,
-                                child: IntrinsicWidth(
-                                  child: QuillEditor(
-                                    key: ValueKey(item.id),
-                                    configurations:buildCombinedQuillConfiguration(item.inputBlocks),
+                            // Get alignment based on current attributes
+                            final currentAttributes = sheetTextItem.textEditorController
+                                .getSelectionStyle()
+                                .attributes;
+                            // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.id);
+                            // print(sheetTextItem.id+' and '+sheetTextItem.textDecoration.itemDecorationList.toString());
+                            // Determine alignment from `attributes`
+                            if (_getIsToggled(
+                                currentAttributes, Attribute.centerAlignment)) {
+                              containerAlignment = Alignment.center;
+                            } else if (_getIsToggled(
+                                currentAttributes, Attribute.rightAlignment)) {
+                              containerAlignment = Alignment.topRight;
+                            } else if (_getIsToggled(
+                                currentAttributes, Attribute.justifyAlignment)) {
+                              containerAlignment = Alignment
+                                  .topLeft; // Adjust if you have other logic
+                            } else if (_getIsToggled(
+                                currentAttributes, Attribute.leftAlignment)) {
+                              containerAlignment = Alignment.topLeft;
+                            }
+                            // print('in buildSheetListWidget item is: $item');
+                            return IgnorePointer(
+                              key: ValueKey(sheetTextItem),
+                              child: Align(
+                                // width: docWidth,
+                                alignment: containerAlignment,
+                                child: 
+                                buildDecoratedContainer(
+                                  textDecor,
+                                  QuillEditor(
+                                    key: ValueKey(sheetTextItem.id),
+                                    configurations: buildCombinedQuillConfiguration(sheetTextItem.inputBlocks),
                                     focusNode: FocusNode(),
                                     scrollController: ScrollController(),
                                   ),
+                                  false,
+                                
                                 ),
-                              ), false
-                            ),
-                          );
-                        } else if (item is SheetList) {
-                          // print('in buildSheetListWidget item is: $item');
-                          return _buildSheetListWidget(item, width);
-                        }
-                        return const SizedBox();
-                      }),
+                              ),
+                            );
+                          } else if (sheetTextItem is SheetList) {
+                            // print('in buildSheetListWidget sheetTextItem is: $sheetTextItem');
+                            return _buildSheetListWidget(sheetTextItem, width);
+                          } else if (sheetTextItem is SheetTable) {
+                            return _buildSheetTableWidget(sheetTextItem,);
+                          }
+
+                          return const SizedBox();
+                        }),
+                      ),
+                    )
+                  //For Rows in the pdf side of things
+                  : SizedBox(
+                      width: docWidth,
+                      child: Row(
+                        // direction: Axis.horizontal,
+                        mainAxisAlignment: sheetList.mainAxisAlignment,
+                        crossAxisAlignment: sheetList.crossAxisAlignment,
+                        mainAxisSize: sheetList.mainAxisSize,
+                        children:
+                            List.generate(sheetList.sheetList.length, (index) {
+                          final item = sheetList.sheetList[index];
+        
+                          if (item is SheetText && !item.hide) {
+                            // print('in buildSheetListWidget item is: $item');
+                            var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-171;
+          
+                            SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
+      
+                            return IgnorePointer(
+                              key: ValueKey(item),
+                              child: buildDecoratedContainer(
+                                textDecor,
+                                SizedBox(
+                                  width: docWidth,
+                                  child: IntrinsicWidth(
+                                    child: QuillEditor(
+                                      key: ValueKey(item.id),
+                                      configurations:buildCombinedQuillConfiguration(item.inputBlocks),
+                                      focusNode: FocusNode(),
+                                      scrollController: ScrollController(),
+                                    ),
+                                  ),
+                                ), false
+                              ),
+                            );
+                          } else if (item is SheetList) {
+                            // print('in buildSheetListWidget item is: $item');
+                            return _buildSheetListWidget(item, width);
+                          }
+                          return const SizedBox();
+                        }),
+                      ),
                     ),
-                  ),
-          ),
-          false),
-    );
-  }
+            ),
+            false),
+      );
+    }
 
   Widget _buildSheetTableWidget(SheetTable sheetTable){
   var tblbginx = int.tryParse(sheetTable.sheetTablebgDecoration.id.substring(sheetTable.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
@@ -1543,6 +1549,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         rowCount:(sheetTable).rowData.length,
         columnCount: (sheetTable).columnData.length,
         // pinnedRowCount: (sheetTable).pinnedRows,
+        horizontalDetails: ScrollableDetails.horizontal(physics: NeverScrollableScrollPhysics()),
+        verticalDetails: ScrollableDetails.vertical(physics: NeverScrollableScrollPhysics()),
         columnBuilder: (int i) {
           
           return TableSpan(
@@ -1574,7 +1582,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                   disable:true
                   );
               }
-              return SizedBox();
+              return const SizedBox();
             }(),
           );
         }),
@@ -1686,9 +1694,9 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
   }
 
   void _addPdfPage() {
-    var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
+    var lmBox = Boxes.getLayouts();
     var id = 'LI-${ const Uuid().v4()}';
-
+    var lm = lmBox.get(key);
     SuperDecoration newDecoration = newSuperDecoration();
     print('pageCount in addpage: $pageCount');
     DocumentProperties newdoc = DocumentProperties(
@@ -1705,8 +1713,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     setState(() {
       documentPropertiesList.add(newdoc);
     });
-    lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
-    lm[keyIndex].save();
+    lm?.docPropsList = docPropToBox(documentPropertiesList);
+    lm?.save();
     SheetList newsheetlist = SheetList(
         id: id,
         parentId: parentId,
@@ -1718,9 +1726,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     setState(() {
       spreadSheetList.add(newsheetlist);
     });
-    lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
-    lm[keyIndex]
-        .save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
+    lm?.spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm?.save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
     Boxes.saveSuperDecoration(newDecoration.toSuperDecorationBox());
     setState(() {
       selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
@@ -1728,7 +1735,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
   }
 
   void _addPdfPageAtIndex(int index) {
-    var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
+    var lmBox = Boxes.getLayouts();
+    var lm = lmBox.get(key);
     var id = 'LI-${ const Uuid().v4()}';
     var newDecoration = newSuperDecoration();
     
@@ -1761,9 +1769,9 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     print('Updated documentPropertiesList: $documentPropertiesList');
 
     // Update the LayoutModel and save the new list
-    lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
-    lm[keyIndex].save();
-    print('in addPage after adding to box: ${lm[keyIndex].docPropsList}');
+    lm?.docPropsList = docPropToBox(documentPropertiesList);
+    lm?.save();
+    print('in addPage after adding to box: ${lm?.docPropsList}');
 
     // Create a new SheetList instance
     SheetList newSheetList = SheetList(
@@ -1780,8 +1788,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
       _reassignSpreadSheetIndexPath(spreadSheetList);
     });
 
-    lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
-    lm[keyIndex].save();
+    lm?.spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm?.save();
 
     // Update the selectedIndex list at the specified index
     setState(() {
@@ -2112,10 +2120,11 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
   }
 
   void updateBox() {
-    var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
-    lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
-    lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
-    lm[keyIndex].save();
+    var lmBox = Boxes.getLayouts();
+    var lm = lmBox.get(key);
+    lm?.docPropsList = docPropToBox(documentPropertiesList);
+    lm?.spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm?.save();
   }
 
   void _checkLayoutName() {
@@ -2133,8 +2142,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         nameExists = false;
       });
     } else {
-      Boxes.getLayouts().values.toList()[keyIndex].name = layoutName.text;
-      Boxes.getLayouts().values.toList()[keyIndex].save();
+      Boxes.getLayouts().get(key)?.name = layoutName.text;
+      Boxes.getLayouts().get(key)?.save();
     }
   }
 
@@ -2176,10 +2185,14 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
           // _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
           //     as SheetText;
       setState(() {
+        if(whichPropertyTabIsClicked != 2){
+          whichPropertyTabIsClicked = 2;
+        }
       var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
       textDecorationNameController.text = item.textDecoration.name;
       decorationIndex = -1;
       updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+
       // if (// inputBlockExpansionList.length != item.inputBlocks.length) {
       //   // inputBlockExpansionList = List.generate(item.inputBlocks.length, (e)=>false);
       // }
@@ -2574,26 +2587,27 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
           highlightColor: hoverColor, 
           onTap: onTap ?? () {},
           child: Padding(
-            padding: const EdgeInsets.all(4.0).copyWith(bottom:2, top:2),
+            padding: const EdgeInsets.all(4.0).copyWith(bottom:4, top:4),
             child: Row(
+              mainAxisAlignment:MainAxisAlignment.center,
               children: [
-                // Icon(
-                //   icon,
-                //   size:  iconSize,
-                //   color: iconColor
-                // ),
-                Expanded(
-                  child: Text(
-                    ' ${text}',
-                    textAlign: TextAlign.start,
-                    style: GoogleFonts.lexend(
-                      color: fontColor, 
-                      fontSize: fontSize,
-                      letterSpacing: letterSpacing,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                Icon(
+                  icon,
+                  size:  18,
+                  color: iconColor
                 ),
+                // Expanded(
+                //   child: Text(
+                //     ' ${text}',
+                //     textAlign: TextAlign.start,
+                //     style: GoogleFonts.lexend(
+                //       color: fontColor, 
+                //       fontSize: fontSize,
+                //       letterSpacing: letterSpacing,
+                //       fontWeight: FontWeight.w600,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -2708,16 +2722,16 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                     children: [
                                       AnimatedContainer(
                                         duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:40, left:4,right:3),
-                                        height: 25,
+                                        margin: EdgeInsets.only(top:50, left:4,right:3),
+                                        height: 20,
                                         decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(8),
+                                          borderRadius:BorderRadius.circular(5),
                                           color:defaultPalette.tertiary
                                         ),
                                         width: 50,
                                         alignment: Alignment(0, 0),
                                         child:Text(
-                                          '+ txt',
+                                          'text',
                                           style: GoogleFonts.lexend(
                                             color: defaultPalette.primary, 
                                             fontSize: 12,
@@ -2857,9 +2871,9 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                       AnimatedContainer(
                                         duration: Durations.medium2,
                                         margin: EdgeInsets.only(top:4, left:4,right:3),
-                                        height:25,
+                                        height:20,
                                         decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(8),
+                                          borderRadius:BorderRadius.circular(5),
                                         color:defaultPalette.extras[1]),
                                         width: 50,
                                         alignment: Alignment(0, 0),
@@ -2867,7 +2881,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                         //   TablerIcons.txt,
                                         // ),
                                         child: Text(
-                                          ' + list ',
+                                          ' list ',
                                           style: GoogleFonts.lexend(
                                             color: defaultPalette.extras[0], 
                                             fontSize: 12,
@@ -2876,12 +2890,12 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                           ),
                                         )
                                         ),
-                                      SizedBox(height:2),
+                                      const SizedBox(height:2),
                                       //row
                                       toolBarButton(TablerIcons.dots, 'row',
                                       fontSize: 12,
                                       iconSize: 13,
-                                      tooltip: 'add a row list.',
+                                      tooltip: 'add a horizontal list.',
                                       hoverColor: defaultPalette.extras[1],
                                       onTap: (){
                                         setState(() {
@@ -2908,7 +2922,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                       toolBarButton(TablerIcons.dots_vertical, 'col',
                                       fontSize: 12,
                                       iconSize: 13,
-                                      tooltip: 'add a row list.',
+                                      tooltip: 'add a vertical list.',
                                       hoverColor: defaultPalette.extras[1],
                                       onTap: (){
                                         setState(() {
@@ -2932,18 +2946,17 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                       }, 
                                       ),
                                       
-                                      
                                       AnimatedContainer(
                                         duration: Durations.medium2,
                                         margin: EdgeInsets.only(top:4, left:4,right:3),
-                                        height:25,
+                                        height:20,
                                         decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(8),
+                                          borderRadius:BorderRadius.circular(5),
                                         color:defaultPalette.extras[3]),
                                         width: 50,
                                         alignment: Alignment(0, 0),
                                         child: Text(
-                                          ' + tbl ',
+                                          ' table ',
                                           style: GoogleFonts.lexend(
                                             color: defaultPalette.primary, 
                                             fontSize: 12,
@@ -2952,7 +2965,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                           ),
                                         )
                                         ),
-                                      SizedBox(height:2),
+                                      const SizedBox(height:2),
                                       //table
                                       toolBarButton(TablerIcons.table, 'table',
                                       fontSize: 12,
@@ -2982,125 +2995,42 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                           });
                                         },
                                       ),
-                                      Expanded(child: SizedBox()),
-                                      Tooltip(
-                                        message:'save the current layout.',
-                                        mouseCursor: SystemMouseCursors.click,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          color:defaultPalette.primary,
-                                          border: Border.all(),
-                                        ),
-                                        textStyle: GoogleFonts.lexend(
-                                          color: defaultPalette.extras[0], 
-                                          fontSize: 14,
-                                          letterSpacing: -0.5,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                                  saveLayout();
-                                                },
-                                          child: Container(
-                                            margin: EdgeInsets.only(bottom:4, left:4,right:3),
-                                            height:25,
-                                            decoration:BoxDecoration(
-                                              borderRadius:BorderRadius.circular(8),
-                                            color:defaultPalette.extras[0]),
-                                            width: 50,
-                                            alignment: Alignment(0, 0),
-                                            child: Text(
-                                              ' save ',
-                                              style: GoogleFonts.lexend(
-                                                color: defaultPalette.primary, 
-                                                fontSize: 12,
-                                                letterSpacing: -0.5,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            )
-                                            ),
-                                        ),
+                                      const Expanded(child: SizedBox()),
+                                      
+                                      toolBarButton(TablerIcons.device_floppy, 'save',
+                                      fontSize: 12,
+                                      iconSize: 13,
+                                      tooltip: 'save the current layout. ',
+                                      hoverColor: defaultPalette.secondary,
+                                      onTap: () {
+                                          setState(() {
+                                            saveLayout();
+                                          });
+                                        },
                                       ),
-                                      Tooltip(
-                                        message:'export as pdf. \nChoose the path to save it.',
-                                        mouseCursor: SystemMouseCursors.click,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          color:defaultPalette.primary,
-                                          border: Border.all(),
-                                        ),
-                                        textStyle: GoogleFonts.lexend(
-                                          color: defaultPalette.extras[0], 
-                                          fontSize: 14,
-                                          letterSpacing: -0.5,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        child: GestureDetector(
-                                          onTap: () async {
+                                      toolBarButton(TablerIcons.upload, 'export',
+                                      fontSize: 12,
+                                      iconSize: 13,
+                                      tooltip: 'export as pdf. \nChoose the path to save it.',
+                                      hoverColor: defaultPalette.secondary,
+                                      onTap: () async {
                                                   await _capturePng().then((onValue) {
                                                   _genPdf();
                                                 });
                                                 },
-                                          child: Container(
-                                            margin: EdgeInsets.only(bottom:4, left:4,right:3),
-                                            height:25,
-                                            decoration:BoxDecoration(
-                                              borderRadius:BorderRadius.circular(8),
-                                            color:defaultPalette.extras[0]),
-                                            width: 50,
-                                            alignment: Alignment(0, 0),
-                                            child: Text(
-                                              ' exprt ',
-                                              style: GoogleFonts.lexend(
-                                                color: defaultPalette.primary, 
-                                                fontSize: 12,
-                                                letterSpacing: -0.5,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            )
-                                            ),
-                                        ),
                                       ),
-                                      Tooltip(
-                                        message:'print as pdf.',
-                                        mouseCursor: SystemMouseCursors.click,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                          color:defaultPalette.primary,
-                                          border: Border.all(),
-                                        ),
-                                        textStyle: GoogleFonts.lexend(
-                                          color: defaultPalette.extras[0], 
-                                          fontSize: 14,
-                                          letterSpacing: -0.5,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        child: GestureDetector(
-                                          onTap: () async {
+                                      toolBarButton(TablerIcons.printer, 'print',
+                                      fontSize: 12,
+                                      iconSize: 13,
+                                      tooltip: 'print as pdf.',
+                                      hoverColor: defaultPalette.secondary,
+                                      onTap: () async {
                                                   await _capturePng().then((onValue) {
                                                   _printPdf();
                                                 });
                                                 },
-                                          child: Container(
-                                            margin: EdgeInsets.only(bottom:4, left:4,right:3),
-                                            height:25,
-                                            decoration:BoxDecoration(
-                                              borderRadius:BorderRadius.circular(8),
-                                            color:defaultPalette.extras[0]),
-                                            width: 50,
-                                            alignment: Alignment(0, 0),
-                                            child: Text(
-                                              ' print ',
-                                              style: GoogleFonts.lexend(
-                                                color: defaultPalette.primary, 
-                                                fontSize: 12,
-                                                letterSpacing: -0.5,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            )
-                                            ),
-                                        ),
                                       ),
+                                      SizedBox(height:5)
                                     ]
                                   )
                                   
@@ -3323,13 +3253,355 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                           ),
                           //
                           //
+                          /////REQUIRED FIELDS
+                          Positioned(
+                            left:sWidth * (1 - wH2DividerPosition),
+                            bottom: 0,
+                            height: (sHeight * 0.1)+10,
+                            width: sWidth * (wH2DividerPosition),
+                            
+                            child: Stack(
+                              children: [
+                                //required fields card
+                                Positioned.fill(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0).copyWith(top: 10),
+                                    child:Container(
+                                        padding: const EdgeInsets.all(3.0).copyWith(left: 3),
+                                        decoration: BoxDecoration(
+                                          color: defaultPalette.primary,
+                                          border:Border.all(width:2),
+                                          borderRadius: BorderRadius.circular(9).copyWith(
+                                          bottomLeft: Radius.circular(9),
+                                          bottomRight: Radius.circular(9),
+                                        ),
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Expanded(
+                                              flex:2,
+                                              child: Container(
+                                                height: (sHeight * 0.1)+10,
+                                                padding: const EdgeInsets.all(3.0).copyWith(left: 4),
+                                                alignment: Alignment(1, 1),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.secondary,
+                                                  border:Border.all(width:1.5),
+                                                  borderRadius: BorderRadius.circular(9).copyWith(
+                                                  bottomLeft: Radius.circular(9),
+                                                  bottomRight: Radius.circular(9),
+                                                ),
+                                                ),
+                                                child:Text(
+                                                '${SheetType.values[lm!.type].name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n')}  ',
+                                                maxLines:2,
+                                                overflow:TextOverflow.ellipsis,
+                                                textAlign: TextAlign.end,
+                                                style: GoogleFonts.lexend(
+                                                  fontSize: 12,
+                                                  color: defaultPalette.extras[0],
+                                                  letterSpacing: -1,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                  
+                                              ),
+                                            ),
+                                            const SizedBox(width: 2,),
+                                            Expanded(
+                                              flex:5,
+                                              child:Container(
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.primary,
+                                                  borderRadius: BorderRadius.circular(7),),
+                                                child: Row(
+                                                  children: [
+                                                    SizedBox(width: 2,),
+                                                    Expanded(
+                                                      child: ScrollConfiguration(
+                                                      behavior: ScrollBehavior()
+                                                          .copyWith(scrollbars: false),
+                                                      child: DynMouseScroll(
+                                                          durationMS: 500,
+                                                          scrollSpeed: 1,
+                                                          builder: (context, controller, physics) {
+                                                            return ScrollbarUltima(
+                                                              alwaysShowThumb: true,
+                                                              controller: controller,
+                                                              scrollbarPosition:
+                                                                  ScrollbarPosition.bottom,
+                                                              backgroundColor: defaultPalette.primary,
+                                                              isDraggable: true,
+                                                              maxDynamicThumbLength: 90,
+                                                              minDynamicThumbLength: 20,
+                                                              thumbBuilder:
+                                                                  (context, animation, widgetStates) {
+                                                                return Container(
+                                                                  margin: EdgeInsets.only(right: 4, top:0, bottom:mapValueDimensionBased(0, 10, sWidth, sHeight),left: 2),
+                                                                  decoration: BoxDecoration(
+                                                                      color: defaultPalette.extras[4],
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(2)),
+                                                                  height: 5,
+                                                                );
+                                                              },
+                                                              child: SingleChildScrollView(
+                                                                controller: controller,
+                                                                scrollDirection: Axis.horizontal,
+                                                                padding: const EdgeInsets.only(right: 2),
+                                                                physics: physics,
+                                                                child: LayoutBuilder(
+                                                                  builder: (context, constraints) {
+                                                                    double itemHeight = 32; // Approximate label height + margin
+                                                                    int rowCount = (constraints.maxHeight / itemHeight).floor().clamp(1, labelList.length ==0?1:labelList.length);
+
+                                                                    // Split items across rows vertically
+                                                                    List<List<RequiredText>> columns = [];
+                                                                    int colCount = (labelList.length / rowCount).ceil();
+
+                                                                    Widget _buildLabel(RequiredText label) {
+                                                                    return Container(
+                                                                      margin: const EdgeInsets.only(right: 4, bottom: 2, left: 2),
+                                                                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                                                                      decoration: BoxDecoration(
+                                                                        color: label.indexPath.index == -951 ? defaultPalette.extras[4] : defaultPalette.secondary,
+                                                                        border: Border.all(color: defaultPalette.extras[0], width: 1.5),
+                                                                        borderRadius: BorderRadius.circular(8),
+                                                                      ),
+                                                                      child: Text(
+                                                                        label.name,
+                                                                        style: GoogleFonts.lexend(
+                                                                          fontSize: 15,
+                                                                          color: label.indexPath.index == -951 ? defaultPalette.primary : defaultPalette.extras[0],
+                                                                          letterSpacing: -0.3,
+                                                                          fontWeight: FontWeight.w500,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }
+
+                                                                    for (int i = 0; i < colCount; i++) {
+                                                                      List<RequiredText> column = [];
+                                                                      for (int j = 0; j < rowCount; j++) {
+                                                                        int index = j + i * rowCount;
+                                                                        if (index < labelList.length) {
+                                                                          column.add(labelList[index]);
+                                                                        }
+                                                                      }
+                                                                      columns.add(column);
+                                                                    }
+
+                                                                    return Row(
+                                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                                      children: columns.map((columnItems) {
+                                                                        return Column(
+                                                                          children: columnItems.map((label) => _buildLabel(label)).toList(),
+                                                                        );
+                                                                      }).toList(),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              )
+
+                                                            );
+                                                          }
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ) 
+                                          )
+                                          ],
+                                        ),
+                                      ),
+                                     
+                                  ),
+                                ),
+                                //asterisk button
+                                ElevatedLayerButton(
+                                onClick: () {
+                                  void showPositionedSheetTypeOverlay({
+                                    required BuildContext context,
+                                    required Offset position,
+                                    required double width,
+                                    List<InputBlock>? inputBlocks,
+                                  }) {
+                                    final overlay = Overlay.of(context);
+                                    final entry = OverlayEntry(
+                                      builder: (context) {
+                                        return StatefulBuilder(builder: (context, updateState) {
+                                          
+                                          return Positioned(
+                                            left: position.dx,
+                                            top: position.dy,
+                                            child: GestureDetector(
+                                              onPanUpdate: (details) {
+                                                updateState((){
+                                                  position = Offset(position.dx + details.delta.dx,position.dy + details.delta.dy );
+                                                });
+                                              },
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                child: Container(
+                                                  width: sWidth/4,
+                                                  height: sHeight-80,
+                                                  padding: const EdgeInsets.all(4),
+                                                  decoration: BoxDecoration(
+                                                    color: defaultPalette.primary,
+                                                    borderRadius: BorderRadius.circular(20),
+                                                    border: Border.all(
+                                                      width: 2,
+                                                      color: defaultPalette.extras[0],
+                                                    )
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      // Search Bar
+                                                      Container(
+                                                        // padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                        decoration: BoxDecoration(
+                                                          border: Border.all(color: defaultPalette.primary),
+                                                          borderRadius: BorderRadius.circular(15),
+                                                        ),
+                                                        height: 30,
+                                                        child: TextFormField(
+                                                          style: GoogleFonts.lexend(
+                                                          color: defaultPalette.extras[0],
+                                                          letterSpacing:-1,
+                                                          fontSize: 15,
+                                                          ),
+                                                          onChanged: (value) => setState((){
+                                                            
+                                                          }),
+                                                          cursorColor: defaultPalette.tertiary,
+                                                          controller: textFieldSearchController,
+                                                          decoration: InputDecoration(
+                                                            contentPadding: EdgeInsets.all(0),
+                                                            hintText: 'searchTypes...',
+                                                            focusColor: defaultPalette.extras[0],
+                                                            hintStyle: GoogleFonts.lexend(
+                                                              color: defaultPalette.extras[0],
+                                                              letterSpacing:-1,
+                                                              fontSize: 15),
+                                                            prefixIcon: Icon(TablerIcons.search, size:15,
+                                                                color: defaultPalette.extras[0]),
+                                                            border: OutlineInputBorder(
+                                                              borderSide: BorderSide.none, 
+                                                              borderRadius: BorderRadius.circular(12),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 10),
+                                              
+                                                      // Filtered list inside styled container
+                                                      Expanded(
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.all(4),
+                                                          child: Column(
+                                                            children: [
+                                                              ...SheetType.values.asMap().entries.map((entry) {
+                                                                return  Material(
+                                                                  child: InkWell(
+                                                                    hoverColor: defaultPalette.secondary,
+                                                                    onTap: () {
+                                                                      setState(() {
+                                                                        lm!.type = entry.value.index;
+                                                                        lm!.save();
+                                                                        labelList = getLabelList(SheetType.values[lm!.type], labelList);
+                                                                        assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
+                                                                      });
+                                                                    },
+                                                                    child: Text(
+                                                                          entry.value.name,
+                                                                          maxLines: 1,
+                                                                          style: GoogleFonts.lexend(
+                                                                              fontSize: 15,
+                                                                              letterSpacing: -1,
+                                                                              fontWeight: FontWeight.w500),
+                                                                        ),
+                                                                  ),
+                                                                );
+                                                              },),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        });
+                                      },
+                                    );
+
+                                    overlay.insert(entry);
+
+                                    // Remove overlay on outside tap
+                                    OverlayEntry? dismissEntry;
+                                    dismissEntry = OverlayEntry(
+                                      builder: (_) => GestureDetector(
+                                        onTap: () {
+                                          entry.remove();
+                                          dismissEntry?.remove();
+                                        },
+                                        behavior: HitTestBehavior.translucent,
+                                        child: const SizedBox.expand(),
+                                      ),
+                                    );
+
+                                    overlay.insert(dismissEntry, below: entry);
+                                  }
+                                  
+                                  showPositionedSheetTypeOverlay(
+                                    context: context,
+                                    position: Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
+                                    width: sWidth/4,
+
+                                  );
+                                },
+                                buttonHeight:30,
+                                buttonWidth:30,
+                                borderRadius: BorderRadius.circular(999),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[4],
+                                  // border: Border.all(width: 1.2,color: defaultPalette.extras[4],),
+                                  
+                                ),
+                                topLayerChild: Text(
+                                          '*',
+                                          style: GoogleFonts.lexend(
+                                            fontSize: 27,
+                                            color: defaultPalette.primary,
+                                            letterSpacing: -1,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                               
+                                subfac: 3,
+                                depth: 3,
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                              ),
+                            
+                              ],
+                            ),
+                          ),
+                          //
+                          //
                           //////////PROPERTIES SECTION
                           Positioned(
                             width: sWidth * (wH2DividerPosition),
-                            top: Platform.isAndroid ? 35 : 0,
-                            height: Platform.isAndroid
-                                ? sHeight * 0.85
-                                : sHeight * 0.9,
+                            top: 0,
+                            height: sHeight * 0.9,
                             left: sWidth * (1 - wH2DividerPosition),
                             child: Stack(
                               children: [
@@ -4207,6 +4479,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                     ],
                                   ),
                                 ),
+                                
                                 //Content inside properties CARDS Main Parent
                                 Container(
                                   padding: EdgeInsets.only(top: 73),
@@ -4262,7 +4535,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                           //RESIZE HANDLE VERTICAL 1
                           Positioned(
                               top: Platform.isAndroid ? 35 : 0,
-                              left: (sWidth * wH1DividerPosition) - 5,
+                              left: (sWidth * wH1DividerPosition) - 6,
                               child: MouseRegion(
                                 cursor: SystemMouseCursors.resizeColumn,
                                 
@@ -4279,7 +4552,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                   child: Container(
                                     color: Colors.transparent,
                                     height: sHeight,
-                                    width: 10,
+                                    width: 8,
                                   ),
                                 ),
                               )),
@@ -4488,7 +4761,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                         // toggleOnTap: true,
                         onClick: () async {
                           final overlay =  OverlayEntry(builder: (context) => Scaffold(
-                              backgroundColor: defaultPalette.tertiary,
+                              backgroundColor: defaultPalette.extras[4],
                           body: Center(
                             child: LoadingAnimationWidget.newtonCradle(
                               color: Colors.white,
@@ -4506,11 +4779,14 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                           widget.onPop(await pdf.save());
                           
                           Navigator.pop(context);
-                          overlay.remove();
+                          Future.delayed(Durations.long1).then((value) {
+                            overlay.remove();
+                          },);
+                          
                         },
-                        buttonHeight: 30 ,
+                        buttonHeight: 40 ,
                         buttonWidth: 40 ,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(9998),
                         animationDuration: const Duration(milliseconds: 100),
                         animationCurve: Curves.ease,
                         topDecoration: BoxDecoration(
@@ -4747,6 +5023,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                 constraints: BoxConstraints(
                   minWidth: 0, // allow it to shrink
                   maxWidth: double.infinity, // no hard upper limit unless needed
+                  minHeight: 0, // allow it to shrink
+                  maxHeight: double.infinity,
                 ),
                 child: buildListWidget(
                                   sheetList[index] as SheetList),
@@ -4896,6 +5174,15 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                       scaleFactor: 0.08,
                       miniSize: 30,
                       imageUpdateInterval: 5000000,
+                      onTap: () {
+                        setState(() {
+                          panelIndex.id = '';
+                          panelIndex.parentId = '';
+                          panelIndex.itemIndexPath = IndexPath(index: -2);
+                          panelIndex.parentIndexPath = IndexPath(index: -2);
+                          print(panelIndex);
+                        });
+                      },
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minWidth: 0, // allow it to shrink
@@ -7460,8 +7747,46 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                        
   }
 
+  QuillEditorConfigurations copyWithFontSize20(QuillEditorConfigurations original) {
+  // Clone the Delta with size: 20 in all text segments
+    final newDelta = Delta();
+
+    for (final op in original.controller.document.toDelta().toList()) {
+      if (op.data is String) {
+        final text = op.data as String;
+        final attrs = Map<String, dynamic>.from(op.attributes ?? {});
+        attrs['size'] = 20;
+        newDelta.push(Operation.insert(text, attrs));
+      } else {
+        newDelta.push(op);
+      }
+    }
+
+    // Create a new document from updated Delta
+    final newDoc = Document.fromDelta(newDelta);
+
+    // Create a new controller with the new document
+    final newController = QuillController(
+      document: newDoc,
+      selection: original.controller.selection,
+      configurations: original.controller.configurations,
+      editorFocusNode: original.controller.editorFocusNode,
+      keepStyleOnNewLine: original.controller.keepStyleOnNewLine,
+      onDelete: original.controller.onDelete,
+      onReplaceText: original.controller.onReplaceText,
+      onSelectionChanged: original.controller.onSelectionChanged,
+      onSelectionCompleted: original.controller.onSelectionCompleted,
+      readOnly: original.controller.readOnly,
+    );
+
+    // Return a copy of the configuration with updated controller
+    return original.copyWith(controller: newController);
+  }
+
   double findSheetListBuildHeight(SheetList sheetList) {
     
+    
+
     double getMaxFontSizeFromOps(List<Map<String, dynamic>> lineOps) {
       double maxFontSize = 16.0; // fallback default
 
@@ -7480,10 +7805,13 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     }
 
     double calculateLineHeightForLine(List<Map<String, dynamic>> lineOps, double fontSize) {
-      double maxLineHeight = 1; // default
+      double maxLineHeight = 1.0;
+      String fontFamily = 'Lexend'; // default fallback
 
       for (var op in lineOps) {
-        final attributes = op['attributes'] as Map<String, dynamic>;
+        final attributes = op['attributes'] as Map<String, dynamic>? ?? {};
+
+        // Respect lineHeight attribute
         if (attributes.containsKey('lineHeight')) {
           final lhRaw = attributes['lineHeight'];
           double? lh = double.tryParse('$lhRaw');
@@ -7491,10 +7819,30 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
             maxLineHeight = lh;
           }
         }
+
+        // Extract font if specified
+        if (attributes.containsKey('font')) {
+          final fontAttr = attributes['font'];
+          fontFamily = fontAttr.toString();
+        }
       }
-      
-      return fontSize * maxLineHeight;
+
+      // Use a single sample string to calculate actual height
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: 'A', // Tall glyph, minimal width
+          style: TextStyle(
+            fontFamily: fontFamily, fontSize: fontSize),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+
+      final actualHeight = textPainter.height;
+
+      return actualHeight * maxLineHeight;
     }
+
 
     double calculateItemHeight(dynamic item) {
       double calculatedHeight = 0;
@@ -7572,6 +7920,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
       else if (item is SheetList) {
         // print(item.id);
         calculatedHeight = (findSheetListBuildHeight(item)+1.6+4).clamp(60, double.infinity);
+        //1.6 to add the borderWidth and 4 is padding compensation
         // print(item.id+': $calculatedHeight');
       }
 
@@ -7747,14 +8096,16 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
   }
 
   Future<void> saveLayout() async {
-    await _capturePng(pixelRatio: 1);
-    var lm = Boxes.getLayouts().values.toList().cast<LayoutModel>();
-    lm[keyIndex].docPropsList = docPropToBox(documentPropertiesList);
-    lm[keyIndex].spreadSheetList = spreadSheetToBox(spreadSheetList);
-    lm[keyIndex].modifiedAt = DateTime.now();
-    lm[keyIndex].pdf = _images;
-    lm[keyIndex].save();
-    print(lm[keyIndex].pdf?.length);
+    await _capturePng(pixelRatio: 0.5);
+    var lmBox = Boxes.getLayouts();
+    var lm = lmBox.get(key);
+    lm?.docPropsList = docPropToBox(documentPropertiesList);
+    lm?.spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lm?.modifiedAt = DateTime.now();
+    lm?.pdf = _images;
+    lm?.labelList = labelList;
+    lm?.save();
+    print(lm?.pdf?.length);
     saveDecorations(sheetDecorationList);
   }
 
@@ -7785,6 +8136,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
           print(newId);
           textItem = _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
         }
+        print('yo: '+newId);
       } on Exception catch (e) {
         // You can optionally handle the error here
         print('yo: '+newId);
@@ -8015,6 +8367,46 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     );
   }
 
+  void assignIndexPathsAndDisambiguate(
+    List<RequiredText> labelList,
+    List<SheetList> spreadSheetList,
+  ) {
+    final unmatchedLabels = labelList
+        .where((rt) => rt.indexPath.index == -951)
+        .toList(); // Only unset RequiredText
+
+    Map<String, List<SheetText>> matchedTexts = {};
+
+    void collectSheetTexts(SheetList sheetList) {
+      for (final item in sheetList.sheetList) {
+        if (item is SheetText) {
+          final name = item.name;
+          if (unmatchedLabels.any((rt) => rt.name == name)) {
+            matchedTexts.putIfAbsent(name, () => []).add(item);
+          }
+        } else if (item is SheetList) {
+          collectSheetTexts(item);
+        }
+      }
+    }
+
+    for (final sheet in spreadSheetList) {
+      collectSheetTexts(sheet);
+    }
+
+    for (final rt in unmatchedLabels) {
+      final matches = matchedTexts[rt.name];
+      if (matches != null && matches.isNotEmpty) {
+        // Assign the first matching indexPath to RequiredText
+        rt.indexPath = matches.first.indexPath;
+
+        // Rename any further duplicates
+        for (int i = 1; i < matches.length; i++) {
+          matches[i].name = '${matches[i].name} (${i + 1})';
+        }
+      }
+    }
+  }
 
   double _getPropertiesButtonWidth(String s) {
     var widthWeHave = (sWidth * (wH2DividerPosition));
@@ -10539,7 +10931,6 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                 int crossAxisCount = 4;
                 var iconWidth = (width / crossAxisCount)-4.6;
                 var fCrossAxisCount = width < 200 ? 1 : width > 300 ? width > 420 ? 4 : 3 : 2;
-
                 Color fontHex =hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value ?? defaultPalette.extras[0].hex);
                 
                 return Stack(
@@ -10552,7 +10943,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color:index==2? defaultPalette.primary:index==1?defaultPalette.extras[0]: defaultPalette.secondary,
-                          border: Border.all(width: 2, color:index==1?defaultPalette.secondary:defaultPalette.extras[0]),
+                          border: Border.all(width: 2, 
+                          color:index==1?defaultPalette.secondary:defaultPalette.extras[0]),
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
@@ -10569,7 +10961,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
                           margin:
-                              EdgeInsets.all(10).copyWith(left: 5, right: 10),
+                              EdgeInsets.all(10).copyWith(left: 5, right: 8),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: index == (currentCardIndex + 1) % 10
@@ -10717,6 +11109,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                   Row(
                                     children: [
                                       Expanded(child: titleTile('label', TablerIcons.signature, fontSize:15)),
+                                      //TextField
                                       Expanded(
                                         child: SizedBox(
                                           height: 20,
@@ -10724,9 +11117,64 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                             focusNode: fontFocusNodes[6],
                                             controller: fontTextControllers[4],
                                             enabled: !item.parentId.startsWith('TB'),
+                                            
                                             onSubmitted: (value) {
                                               setState(() {
-                                                item.name = value;
+                                                
+                                                  for (var requiredText in labelList) {
+                                                    if (value == requiredText.name) {
+                                                      print('yes input match');
+                                                      final path = requiredText.indexPath;
+
+                                                      if (path.index == -951) {
+                                                        print('yes index -951');
+                                                        requiredText.indexPath = item.indexPath;
+                                                        item.type = SheetTextType.values[requiredText.sheetTextType];
+                                                        item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(requiredText.sheetTextType,item.textEditorConfigurations.controller );
+                                                        item.name = value;
+                                                        print('yes index ' +requiredText.indexPath.toString());
+                                                      } else {
+                                                        print('no index not -951');
+                                                        print(path);
+                                                        final sheetText = getItemAtPath(path);
+                                                        if (sheetText.id == 'yo' || sheetText.id.isEmpty) {
+                                                          print('field empty');
+                                                          requiredText.indexPath = item.indexPath;
+                                                          item.type = SheetTextType.values[requiredText.sheetTextType];
+                                                          item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(requiredText.sheetTextType,item.textEditorConfigurations.controller );
+                                                          item.name = value;
+                                                        } else if (sheetText is SheetText){
+                                                          if (sheetText.name == requiredText.name) {
+                                                            print('name matcher ' +sheetText.name+' '+requiredText.name);
+                                                            item.name = '$value-1';
+                                                            // fontTextControllers[4].text = '$value-new';
+                                                            print('name matcher ' +sheetText.name+' '+item.name);
+                                                            break; 
+                                                          }
+                                                        }
+                                                      }
+                                                    } else{
+                                                      print('no input match');
+                                                      item.name = value;
+                                                      print('no input match '+item.name);
+                                                    }
+                                                  }
+                                                  
+
+                                                  // Final validation pass
+                                                  for (var requiredText in labelList) {
+                                                    // print('its '+requiredText.name);
+                                                    final sheetText = getItemAtPath(requiredText.indexPath);
+                                                    //  print('its '+requiredText.indexPath.toString());
+                                                    if (sheetText.id == 'yo' || sheetText.id.isEmpty||(sheetText as SheetText).name != requiredText.name) {
+                                                      if (requiredText.indexPath.index != -951) {
+                                                          print('ohno '+requiredText.name);
+                                                          requiredText.indexPath = IndexPath(index: -951);
+                                                        
+                                                      }
+                                                      
+                                                    }
+                                                  }
                                               });
                                             },
                                             textAlignVertical: TextAlignVertical.top,
@@ -16305,11 +16753,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                                     .marginAllController,
                                                 inputFormatters: [
                                                   NumericInputFormatter(
-                                                      maxValue: documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .pageFormatController
-                                                              .width /
-                                                          2.001)
+                                                      )
                                                 ],
                                                 textAlignVertical:
                                                     TextAlignVertical.top,
@@ -16358,7 +16802,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                                     fontSize: 12,
                                                     color: defaultPalette.black),
                                                 onChanged: (value) {
-                                                  // setState(() {
+                                                  setState(() {
                             
                                                   documentPropertiesList[
                                                           currentPageIndex]
@@ -16378,7 +16822,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                                                       .text = value;
                                                   // _updatePdfPreview(
                                                   //     '');
-                                                  // });
+                                                  });
                                                 },
                                                 enabled: !documentPropertiesList[
                                                         currentPageIndex]
@@ -18807,7 +19251,8 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
         bottom: 32,
         left: showDecorationLayers ? 12.5 : 12,
         child: AnimatedContainer(
-          duration: Durations.medium4,
+          duration:((whichPropertyTabIsClicked==2?whichTextPropertyTabIsClicked==2:false) ||(whichPropertyTabIsClicked==3?whichListPropertyTabIsClicked==1:false)||(whichPropertyTabIsClicked==4?whichTablePropertyTabIsClicked==2:false)) 
+              ? Durations.medium4:Duration.zero,
           curve: Curves.easeInOut,
           height:
               showDecorationLayers ? (sHeight * 0.9) - 240 : 0,
@@ -18833,7 +19278,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
                 //   // ),      
                 //                       ),
               ),
-              Text('Decor \n\nLayers \n \n     ',
+              Text('\n\nLayers \n \n     ',
                   style: GoogleFonts.bungee(
                       color: whichPropertyTabIsClicked != 3
                                 ? defaultPalette.extras[0]
@@ -23900,8 +24345,7 @@ Widget _buildSheetListWidget(SheetList sheetList, double width,
     );
   });
 }
-
-                  
+              
   void applySpans(SheetTable sheetTable) {
       final rows = sheetTable.cellData.length;
       final cols = sheetTable.columnData.length;

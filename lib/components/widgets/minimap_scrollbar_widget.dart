@@ -21,9 +21,11 @@ class MinimapScrollbarWidget extends StatefulWidget {
     this.position = MinimapPosition.right,
     this.headrHeight = 88.0,
     this.imageUpdateInterval = 100,
+    required this.onTap,
   });
   final ScrollController? controller;
   final ScrollPhysics physics;
+  final void Function() onTap;
   /// `child` is the widget that will be displayed in the main view.
   /// This widget will be wrapped in a [SingleChildScrollView].
   final Widget child;
@@ -243,10 +245,13 @@ class _MinimapScrollbarWidgetState extends State<MinimapScrollbarWidget> {
           height:double.infinity ,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTapDown: (details) => _onMinimapInteraction(
+            onTapDown: (details) { 
+              _onMinimapInteraction(
               details.localPosition,
               miniContentSize,
-            ),
+            );
+             widget.onTap();
+            },
             onVerticalDragUpdate: _isVertical
                 ? (details) => _onMinimapInteraction(
                       details.localPosition,

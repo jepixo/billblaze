@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:billblaze/home.dart';
 import 'package:billblaze/colors.dart';
+import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/layout_model.dart';
@@ -50,6 +51,7 @@ Future<void> main() async {
   Hive.registerAdapter(InputBlockAdapter());
   Hive.registerAdapter(SheetFunctionAdapter());
   Hive.registerAdapter(SumFunctionAdapter());
+  Hive.registerAdapter(RequiredTextAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   await Hive.openBox<LayoutModel>('layouts');
