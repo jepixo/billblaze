@@ -1,7 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:typed_data';
 
-import 'package:billblaze/models/bill/bill_type.dart';
+import 'package:billblaze/models/bill/required_text.dart';
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/document_properties_model.dart';
@@ -28,7 +28,7 @@ class LayoutModel extends HiveObject {
   @HiveField(7)
   int type;
   @HiveField(8)
-  List<String> labelList;
+  List<RequiredText> labelList;
 
   LayoutModel({
     required this.docPropsList,

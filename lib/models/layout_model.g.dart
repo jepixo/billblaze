@@ -25,7 +25,7 @@ class LayoutModelAdapter extends TypeAdapter<LayoutModel> {
       modifiedAt: fields[5] as DateTime,
       type: fields[7] as int,
       pdf: (fields[6] as List?)?.cast<Uint8List>(),
-      labelList: (fields[8] as List).cast<String>(),
+      labelList: (fields[8] as List).cast<RequiredText>(),
     );
   }
 
