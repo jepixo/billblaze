@@ -19,6 +19,7 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
   switch (type) {
     case SheetType.taxInvoice:
       defaultList =  [
+        //23
         RequiredText(name: 'title', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'invoiceNumber', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'invoiceDate', sheetTextType: SheetTextType.date.index, indexPath: IndexPath(index: -951), isOptional: false),
@@ -36,6 +37,7 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'placeOfDelivery', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'paymentTerms', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
         //signature
+        //39 -23 = 16
       ];
     case SheetType.billOfSupply:
       defaultList =  [
@@ -51,7 +53,7 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'placeOfSupply', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'placeOfDelivery', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
-        //signature
+        //signature 12
       ];
     case SheetType.creditNote:
       defaultList =  [

@@ -26,7 +26,6 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.da
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
-import 'package:billblaze/util/label_input_formatter.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
@@ -343,6 +342,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   var dragBackupValue;
   OverlayEntry? _overlay;
   List<InputBlock>? selectedInputBlocks =[];
+  OverlayEntry? sheetTypeBrowserEntry;
   //
   //
   //
@@ -502,6 +502,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     listDecorationNameController.dispose();
     decorationSearchController.dispose();
     listPropertyCardsController.dispose();
+    sheetTypeBrowserEntry?.dispose();
     // listDirectionPieController.dispose();
     // listMainAxisAlignmentPieController.dispose();
     // listCrossAxisAlignmentDirectionPieController.dispose();
@@ -3266,331 +3267,756 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 Positioned.fill(
                                   child: Padding(
                                     padding: const EdgeInsets.all(6.0).copyWith(top: 10),
-                                    child:Container(
-                                        padding: const EdgeInsets.all(3.0).copyWith(left: 3),
-                                        decoration: BoxDecoration(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3.0).copyWith(left: 3,right:0),
+                                      decoration: BoxDecoration(
                                           color: defaultPalette.primary,
-                                          border:Border.all(width:2),
-                                          borderRadius: BorderRadius.circular(9).copyWith(
-                                          bottomLeft: Radius.circular(9),
-                                          bottomRight: Radius.circular(9),
+                                          border:Border.all(width:2, color: defaultPalette.extras[0],),
+                                          borderRadius: BorderRadius.circular(9),
                                         ),
-                                        ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
                                         child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            Expanded(
-                                              flex:2,
-                                              child: Container(
-                                                height: (sHeight * 0.1)+10,
-                                                padding: const EdgeInsets.all(3.0).copyWith(left: 4),
-                                                alignment: Alignment(1, 1),
-                                                decoration: BoxDecoration(
-                                                  color: defaultPalette.secondary,
-                                                  border:Border.all(width:1.5),
-                                                  borderRadius: BorderRadius.circular(9).copyWith(
-                                                  bottomLeft: Radius.circular(9),
-                                                  bottomRight: Radius.circular(9),
-                                                ),
-                                                ),
-                                                child:Text(
-                                                '${SheetType.values[lm!.type].name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n')}  ',
-                                                maxLines:2,
-                                                overflow:TextOverflow.ellipsis,
-                                                textAlign: TextAlign.end,
-                                                style: GoogleFonts.lexend(
-                                                  fontSize: 12,
-                                                  color: defaultPalette.extras[0],
-                                                  letterSpacing: -1,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                  
-                                              ),
-                                            ),
-                                            const SizedBox(width: 2,),
-                                            Expanded(
-                                              flex:5,
-                                              child:Container(
-                                                decoration: BoxDecoration(
-                                                  color: defaultPalette.primary,
-                                                  borderRadius: BorderRadius.circular(7),),
-                                                child: Row(
-                                                  children: [
-                                                    SizedBox(width: 2,),
-                                                    Expanded(
-                                                      child: ScrollConfiguration(
-                                                      behavior: ScrollBehavior()
-                                                          .copyWith(scrollbars: false),
-                                                      child: DynMouseScroll(
-                                                          durationMS: 500,
-                                                          scrollSpeed: 1,
-                                                          builder: (context, controller, physics) {
-                                                            return ScrollbarUltima(
-                                                              alwaysShowThumb: true,
-                                                              controller: controller,
-                                                              scrollbarPosition:
-                                                                  ScrollbarPosition.bottom,
-                                                              backgroundColor: defaultPalette.primary,
-                                                              isDraggable: true,
-                                                              maxDynamicThumbLength: 90,
-                                                              minDynamicThumbLength: 20,
-                                                              thumbBuilder:
-                                                                  (context, animation, widgetStates) {
-                                                                return Container(
-                                                                  margin: EdgeInsets.only(right: 4, top:0, bottom:mapValueDimensionBased(0, 10, sWidth, sHeight),left: 2),
-                                                                  decoration: BoxDecoration(
-                                                                      color: defaultPalette.extras[4],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(2)),
-                                                                  height: 5,
-                                                                );
-                                                              },
-                                                              child: SingleChildScrollView(
-                                                                controller: controller,
-                                                                scrollDirection: Axis.horizontal,
-                                                                padding: const EdgeInsets.only(right: 2),
-                                                                physics: physics,
-                                                                child: LayoutBuilder(
-                                                                  builder: (context, constraints) {
-                                                                    double itemHeight = 32; // Approximate label height + margin
-                                                                    int rowCount = (constraints.maxHeight / itemHeight).floor().clamp(1, labelList.length ==0?1:labelList.length);
-
-                                                                    // Split items across rows vertically
-                                                                    List<List<RequiredText>> columns = [];
-                                                                    int colCount = (labelList.length / rowCount).ceil();
-
-                                                                    Widget _buildLabel(RequiredText label) {
-                                                                    return Container(
-                                                                      margin: const EdgeInsets.only(right: 4, bottom: 2, left: 2),
-                                                                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-                                                                      decoration: BoxDecoration(
-                                                                        color: label.indexPath.index == -951 ? defaultPalette.extras[4] : defaultPalette.secondary,
-                                                                        border: Border.all(color: defaultPalette.extras[0], width: 1.5),
-                                                                        borderRadius: BorderRadius.circular(8),
-                                                                      ),
-                                                                      child: Text(
-                                                                        label.name,
-                                                                        style: GoogleFonts.lexend(
-                                                                          fontSize: 15,
-                                                                          color: label.indexPath.index == -951 ? defaultPalette.primary : defaultPalette.extras[0],
-                                                                          letterSpacing: -0.3,
-                                                                          fontWeight: FontWeight.w500,
-                                                                        ),
-                                                                      ),
-                                                                    );
-                                                                  }
-
-                                                                    for (int i = 0; i < colCount; i++) {
-                                                                      List<RequiredText> column = [];
-                                                                      for (int j = 0; j < rowCount; j++) {
-                                                                        int index = j + i * rowCount;
-                                                                        if (index < labelList.length) {
-                                                                          column.add(labelList[index]);
-                                                                        }
-                                                                      }
-                                                                      columns.add(column);
-                                                                    }
-
-                                                                    return Row(
-                                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                                      children: columns.map((columnItems) {
-                                                                        return Column(
-                                                                          children: columnItems.map((label) => _buildLabel(label)).toList(),
-                                                                        );
-                                                                      }).toList(),
-                                                                    );
-                                                                  },
-                                                                ),
-                                                              )
-
-                                                            );
-                                                          }
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ) 
-                                          )
-                                          ],
-                                        ),
-                                      ),
-                                     
-                                  ),
-                                ),
-                                //asterisk button
-                                ElevatedLayerButton(
-                                onClick: () {
-                                  void showPositionedSheetTypeOverlay({
-                                    required BuildContext context,
-                                    required Offset position,
-                                    required double width,
-                                    List<InputBlock>? inputBlocks,
-                                  }) {
-                                    final overlay = Overlay.of(context);
-                                    final entry = OverlayEntry(
-                                      builder: (context) {
-                                        return StatefulBuilder(builder: (context, updateState) {
-                                          
-                                          return Positioned(
-                                            left: position.dx,
-                                            top: position.dy,
-                                            child: GestureDetector(
-                                              onPanUpdate: (details) {
-                                                updateState((){
-                                                  position = Offset(position.dx + details.delta.dx,position.dy + details.delta.dy );
-                                                });
-                                              },
-                                              child: Material(
-                                                color: Colors.transparent,
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              //the bill type display card
+                                              Expanded(
+                                                flex:15,
                                                 child: Container(
-                                                  width: sWidth/4,
-                                                  height: sHeight-80,
-                                                  padding: const EdgeInsets.all(4),
+                                                  height: (sHeight * 0.1)+10,
+                                                  padding: const EdgeInsets.all(3.0).copyWith(left: 4),
+                                                  alignment: Alignment(1, 1),
+                                                  decoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    border:Border.all(width:1.5,color: defaultPalette.extras[0],),
+                                                    borderRadius: BorderRadius.circular(9).copyWith(
+                                                    bottomLeft: Radius.circular(9),
+                                                    bottomRight: Radius.circular(9),
+                                                  ),
+                                                  ),
+                                                  child:Text(
+                                                  '${SheetType.values[lm!.type].name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n')}  ',
+                                                  maxLines:2,
+                                                  overflow:TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.end,
+                                                  style: GoogleFonts.lexend(
+                                                    fontSize: mapValueDimensionBased(10, 20, sWidth, sHeight, b: false),
+                                                    color: defaultPalette.primary,
+                                                    letterSpacing: -0.3,
+                                                    height: 1,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                                                        
+                                                ),
+                                              ),
+                                              //teh horizontal layout scroll
+                                              const SizedBox(width: 2,),
+                                              Expanded(
+                                                flex:50,
+                                                child:Container(
                                                   decoration: BoxDecoration(
                                                     color: defaultPalette.primary,
-                                                    borderRadius: BorderRadius.circular(20),
-                                                    border: Border.all(
-                                                      width: 2,
-                                                      color: defaultPalette.extras[0],
-                                                    )
-                                                  ),
-                                                  child: Column(
+                                                    borderRadius: BorderRadius.circular(7),),
+                                                  child: Row(
                                                     children: [
-                                                      // Search Bar
-                                                      Container(
-                                                        // padding: const EdgeInsets.symmetric(horizontal: 10),
-                                                        decoration: BoxDecoration(
-                                                          border: Border.all(color: defaultPalette.primary),
-                                                          borderRadius: BorderRadius.circular(15),
-                                                        ),
-                                                        height: 30,
-                                                        child: TextFormField(
-                                                          style: GoogleFonts.lexend(
-                                                          color: defaultPalette.extras[0],
-                                                          letterSpacing:-1,
-                                                          fontSize: 15,
-                                                          ),
-                                                          onChanged: (value) => setState((){
-                                                            
-                                                          }),
-                                                          cursorColor: defaultPalette.tertiary,
-                                                          controller: textFieldSearchController,
-                                                          decoration: InputDecoration(
-                                                            contentPadding: EdgeInsets.all(0),
-                                                            hintText: 'searchTypes...',
-                                                            focusColor: defaultPalette.extras[0],
-                                                            hintStyle: GoogleFonts.lexend(
-                                                              color: defaultPalette.extras[0],
-                                                              letterSpacing:-1,
-                                                              fontSize: 15),
-                                                            prefixIcon: Icon(TablerIcons.search, size:15,
-                                                                color: defaultPalette.extras[0]),
-                                                            border: OutlineInputBorder(
-                                                              borderSide: BorderSide.none, 
-                                                              borderRadius: BorderRadius.circular(12),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 10),
-                                              
-                                                      // Filtered list inside styled container
+                                                      SizedBox(width: 2,),
                                                       Expanded(
-                                                        child: Padding(
-                                                          padding: const EdgeInsets.all(4),
-                                                          child: Column(
-                                                            children: [
-                                                              ...SheetType.values.asMap().entries.map((entry) {
-                                                                return  Material(
-                                                                  child: InkWell(
-                                                                    hoverColor: defaultPalette.secondary,
-                                                                    onTap: () {
-                                                                      setState(() {
-                                                                        lm!.type = entry.value.index;
-                                                                        lm!.save();
-                                                                        labelList = getLabelList(SheetType.values[lm!.type], labelList);
-                                                                        assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
-                                                                      });
+                                                        child: ScrollConfiguration(
+                                                        behavior: ScrollBehavior()
+                                                            .copyWith(scrollbars: false),
+                                                        child: DynMouseScroll(
+                                                            durationMS: 500,
+                                                            scrollSpeed: 1,
+                                                            builder: (context, controller, physics) {
+                                                              return ScrollbarUltima(
+                                                                alwaysShowThumb: true,
+                                                                controller: controller,
+                                                                scrollbarPosition:
+                                                                    ScrollbarPosition.bottom,
+                                                                backgroundColor: defaultPalette.primary,
+                                                                isDraggable: true,
+                                                                maxDynamicThumbLength: 90,
+                                                                minDynamicThumbLength: 20,
+                                                                thumbBuilder:
+                                                                    (context, animation, widgetStates) {
+                                                                  return Container(
+                                                                    margin: EdgeInsets.only(right: 4, top:0, bottom:mapValueDimensionBased(0, 3, sWidth, sHeight),left: 2),
+                                                                    decoration: BoxDecoration(
+                                                                        color: defaultPalette.extras[0],
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(2)),
+                                                                    height: 5,
+                                                                  );
+                                                                },
+                                                                child: SingleChildScrollView(
+                                                                  controller: controller,
+                                                                  scrollDirection: Axis.horizontal,
+                                                                  padding: const EdgeInsets.only(right: 4),
+                                                                  physics: physics,
+                                                                  child: LayoutBuilder(
+                                                                    builder: (context, constraints) {
+                                                                      double itemHeight = 32; // Approximate label height + margin
+                                                                      int rowCount = (constraints.maxHeight / itemHeight).floor().clamp(1, labelList.length ==0?1:labelList.length);
+                                                                      // Split items across rows vertically
+                                                                      List<List<RequiredText>> columns = [];
+                                                                      int colCount = (labelList.length / rowCount).ceil();
+
+                                                                      Widget buildLabel(RequiredText label) {
+                                                                        final bool isMapped = label.indexPath.index != -951;
+                                                                        final SheetText? linkedText =
+                                                                            isMapped ? getItemAtPath(label.indexPath) as SheetText? : null;
+                                      
+                                                                        final String previewText = isMapped
+                                                                            ? linkedText?.textEditorConfigurations.controller.document.toPlainText().trim() ?? ''
+                                                                            : '';
+                                                                        final bool isOptional = label.isOptional;
+                                      
+                                                                        return Tooltip(
+                                                                          decoration: BoxDecoration(
+                                                                            color: defaultPalette.extras[0],
+                                                                            borderRadius: BorderRadius.circular(8)
+                                                                          ),
+                                                                          richMessage:  TextSpan(
+                                                                                    style: GoogleFonts.lexend(
+                                                                                      fontSize: 13,
+                                                                                      color: defaultPalette.primary,
+                                                                                    ),
+                                                                                    children: [
+                                                                                       TextSpan(
+                                                                                        text: label.name,
+                                                                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                      ),
+                                                                                      
+                                                                                      const TextSpan(text: '\n'),
+                                                                                      ...isMapped ?
+                                                                                      [const TextSpan(
+                                                                                        text: 'value: ',
+                                                                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                      ),
+                                                                                      TextSpan(
+                                                                                        text: previewText.isNotEmpty
+                                                                                            ? (previewText.length > 100
+                                                                                                ? previewText.substring(0, 100) + '...'
+                                                                                                : previewText)
+                                                                                            : '[Empty]',
+                                                                                      )]
+                                                                                      :[const TextSpan(
+                                                                                          text: 'Unassigned',
+                                                                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                      )],
+                                                                                      const TextSpan(text: '\n'),
+                                                                                      const TextSpan(
+                                                                                        text: 'type: ',
+                                                                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                      ),
+                                                                                      TextSpan(
+                                                                                        text: SheetTextType.values[label.sheetTextType].name,
+                                                                                      ),
+                                                                                      if(isOptional)
+                                                                                      ...[
+                                                                                        const TextSpan(text: '\n'),
+                                                                                        const TextSpan(
+                                                                                          text: 'optional',
+                                                                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                        ),
+                                                                                      ]
+                                                                                    ],
+                                                                                  )
+                                                                              ,
+                                                                          child: Container(
+                                                                            margin: const EdgeInsets.only(right: 4, bottom: 2, left: 0),
+                                                                            padding: const EdgeInsets.symmetric(vertical: 3, horizontal:8),
+                                                                            decoration: BoxDecoration(
+                                                                              color: !isMapped ? defaultPalette.extras[4] : defaultPalette.secondary,
+                                                                              border: Border.all(color:isMapped 
+                                                                                    ? defaultPalette.primary
+                                                                                    : defaultPalette.primary, width: 1.5),
+                                                                              borderRadius: BorderRadius.circular(20),
+                                                                            ),
+                                                                            child: Text(
+                                                                              label.name,
+                                                                              style: GoogleFonts.lexend(
+                                                                                fontSize: 14,
+                                                                                color: !isMapped
+                                                                                    ? defaultPalette.primary
+                                                                                    : defaultPalette.extras[0],
+                                                                                letterSpacing: -0.3,
+                                                                                fontWeight: FontWeight.w500,
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        );
+                                                                      }
+                                      
+                                      
+                                                                      for (int i = 0; i < colCount; i++) {
+                                                                        List<RequiredText> column = [];
+                                                                        for (int j = 0; j < rowCount; j++) {
+                                                                          int index = j + i * rowCount;
+                                                                          if (index < labelList.length) {
+                                                                            column.add(labelList[index]);
+                                                                          }
+                                                                        }
+                                                                        columns.add(column);
+                                                                      }
+                                      
+                                                                      return Row(
+                                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                                        children: columns.map((columnItems) {
+                                                                          return Column(
+                                                                            children: columnItems.map((label) => buildLabel(label)).toList(),
+                                                                          );
+                                                                        }).toList(),
+                                                                      );
                                                                     },
-                                                                    child: Text(
-                                                                          entry.value.name,
-                                                                          maxLines: 1,
-                                                                          style: GoogleFonts.lexend(
-                                                                              fontSize: 15,
-                                                                              letterSpacing: -1,
-                                                                              fontWeight: FontWeight.w500),
-                                                                        ),
                                                                   ),
-                                                                );
-                                                              },),
-                                                            ],
+                                                                )
+                                      
+                                                              );
+                                                            }
                                                           ),
                                                         ),
                                                       ),
                                                     ],
                                                   ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        });
-                                      },
-                                    );
-
-                                    overlay.insert(entry);
-
-                                    // Remove overlay on outside tap
-                                    OverlayEntry? dismissEntry;
-                                    dismissEntry = OverlayEntry(
-                                      builder: (_) => GestureDetector(
-                                        onTap: () {
-                                          entry.remove();
-                                          dismissEntry?.remove();
-                                        },
-                                        behavior: HitTestBehavior.translucent,
-                                        child: const SizedBox.expand(),
-                                      ),
-                                    );
-
-                                    overlay.insert(dismissEntry, below: entry);
-                                  }
-                                  
-                                  showPositionedSheetTypeOverlay(
-                                    context: context,
-                                    position: Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
-                                    width: sWidth/4,
-
-                                  );
-                                },
-                                buttonHeight:30,
-                                buttonWidth:30,
-                                borderRadius: BorderRadius.circular(999),
-                                animationDuration: const Duration(milliseconds: 100),
-                                animationCurve: Curves.ease,
-                                topDecoration: BoxDecoration(
-                                  color: defaultPalette.extras[4],
-                                  // border: Border.all(width: 1.2,color: defaultPalette.extras[4],),
-                                  
-                                ),
-                                topLayerChild: Text(
-                                          '*',
-                                          style: GoogleFonts.lexend(
-                                            fontSize: 27,
-                                            color: defaultPalette.primary,
-                                            letterSpacing: -1,
-                                            fontWeight: FontWeight.w500,
+                                                ) 
+                                            )
+                                            ],
                                           ),
-                                        ),
-                               
-                                subfac: 3,
-                                depth: 3,
-                                baseDecoration: BoxDecoration(
-                                  color: defaultPalette.extras[0],
-                                  border: Border.all(color: defaultPalette.extras[0]),
+                                      ),
+                                    ),
+                                     
+                                  ),
                                 ),
-                              ),
+                                //asterisk button
+                                Positioned(
+                                  top: mapValueDimensionBased(2, 4, sWidth, sHeight),
+                                  left: mapValueDimensionBased(2, 0, sWidth, sHeight),
+                                  child: ElevatedLayerButton(
+                                    onClick: () {
+                                      
+                                      void showPositionedSheetTypeOverlay({
+                                        required BuildContext context,
+                                        required Offset position,
+                                        required double width,
+                                        List<InputBlock>? inputBlocks,
+                                      }) {
+                                        var oWidth = width;
+                                        var oHeight = sHeight-40;
+                                        var typeList = SheetType.values;
+                                        final overlay = Overlay.of(context);
+                                        // Remove overlay on outside tap
+                                        if (sheetTypeBrowserEntry !=null) {
+                                        sheetTypeBrowserEntry!.remove();
+                                        sheetTypeBrowserEntry = null;
+                                      }
+                                        sheetTypeBrowserEntry = OverlayEntry(
+                                          builder: (context) {
+                                            return StatefulBuilder(builder: (context, updateState) {
+                                              
+                                              return Positioned(
+                                                left: position.dx,
+                                                top: position.dy,
+                                                child: GestureDetector(
+                                                  onPanUpdate: (details) {
+                                                    updateState((){
+                                                      position = Offset(position.dx + details.delta.dx,position.dy + details.delta.dy );
+                                                    });
+                                                  },
+                                                  child: Stack(
+                                                    children: [
+                                                      SizedBox(height: oHeight,width: oWidth,),
+                                                      Material(
+                                                        color: Colors.transparent,
+                                                        child: Container(
+                                                          width: oWidth,
+                                                          height: oHeight,
+                                                          padding: const EdgeInsets.all(4).copyWith(right: 0,left: 0),
+                                                          decoration: BoxDecoration(
+                                                            color: defaultPalette.primary,
+                                                            borderRadius: BorderRadius.circular(20),
+                                                            border: Border.all(
+                                                              width: 2,
+                                                              color: defaultPalette.extras[0],
+                                                            )
+                                                          ),
+                                                          child: Column(
+                                                            children: [
+                                                              // Search Bar
+                                                              Container(
+                                                                decoration: BoxDecoration(
+                                                                  border: Border.all(color: defaultPalette.primary),
+                                                                  borderRadius: BorderRadius.circular(15),
+                                                                ),
+                                                                height: 30,
+                                                                child: TextFormField(
+                                                                  style: GoogleFonts.lexend(
+                                                                  color: defaultPalette.extras[0],
+                                                                  letterSpacing:-1,
+                                                                  fontSize: 15,
+                                                                  ),
+                                                                  onChanged: (value) => updateState((){
+                                                                    typeList = SheetType.values.where((sheetType) =>
+                                                                              sheetType.name.toLowerCase().contains(value.toLowerCase()))
+                                                                          .toList();
+                                                                  }),
+                                                                  cursorColor: defaultPalette.tertiary,
+                                                                  controller: textFieldSearchController,
+                                                                  decoration: InputDecoration(
+                                                                    contentPadding: EdgeInsets.all(0),
+                                                                    hintText: 'searchTypes...',
+                                                                    focusColor: defaultPalette.extras[0],
+                                                                    hintStyle: GoogleFonts.lexend(
+                                                                      color: defaultPalette.extras[0],
+                                                                      letterSpacing:-1,
+                                                                      fontSize: 15),
+                                                                    prefixIcon: Icon(TablerIcons.search, size:25,
+                                                                        color: defaultPalette.extras[0]),
+                                                                    suffixIcon: GestureDetector(
+                                                                      onTap: () {
+                                                                        
+                                                                        sheetTypeBrowserEntry?.remove();
+                                                                        sheetTypeBrowserEntry = null;
+                                                                      },
+                                                                      child: Icon(TablerIcons.x, size:25,
+                                                                          color: defaultPalette.extras[0]),
+                                                                    ),
+                                                                    border: OutlineInputBorder(
+                                                                      borderSide: BorderSide.none, 
+                                                                      borderRadius: BorderRadius.circular(12),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(height: 10),
+                                                      
+                                                              // Filtered list inside styled container
+                                                              Expanded(
+                                                                child:ScrollConfiguration(
+                                                                behavior: ScrollBehavior()
+                                                                    .copyWith(scrollbars: false),
+                                                                child: DynMouseScroll(
+                                                                    durationMS: 500,
+                                                                    scrollSpeed: 1,
+                                                                    builder: (context, controller, physics) {
+                                                                      return ClipRRect(
+                                                                        borderRadius: BorderRadius.circular(15),
+                                                                        child: SingleChildScrollView(
+                                                                          controller: controller,
+                                                                          physics: physics,
+                                                                          padding: const EdgeInsets.all(4).copyWith(left: 6,right: 6),
+                                                                          child: Column(
+                                                                            children: [
+                                                                              ...typeList.asMap().entries.map((entry) {
+                                                                                return  MouseRegion(
+                                                                                  cursor:SystemMouseCursors.click,
+                                                                                  child: GestureDetector(
+                                                                                    onTap: () {
+                                                                                      setState(() {
+                                                                                        lm!.type = entry.value.index;
+                                                                                        lm!.save();
+                                                                                        labelList = getLabelList(SheetType.values[lm!.type], labelList);
+                                                                                        assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
+                                                                                      });
+                                                                                      updateState(() {
+                                                                                        
+                                                                                      },);
+                                                                                    },
+                                                                                    child: Stack(
+                                                                                      children: [
+                                                                                        Container(
+                                                                                          width: oWidth,
+                                                                                          height: 112,
+                                                                                          margin:const EdgeInsets.all(2).copyWith(left: 0,right:0),
+                                                                                          decoration: BoxDecoration(
+                                                                                            color:defaultPalette.extras[0],
+                                                                                            borderRadius: BorderRadius.circular(12),
+                                                                                          ),
+                                                                                        ),
+                                                                                        if(lm!.type == entry.value.index)
+                                                                                        Positioned(
+                                                                                          right: -10,
+                                                                                          top: -15,
+                                                                                          child: Icon(TablerIcons.north_star,size: 150,color:defaultPalette.primary.withOpacity(0.05),)),
+                                                                                        Container(
+                                                                                          margin:const EdgeInsets.all(2).copyWith(left: 0,right:0),
+                                                                                          child: Row(
+                                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                            children: [
+                                                                                              Container(
+                                                                                                height: 100,
+                                                                                                width: 65,
+                                                                                                margin:const EdgeInsets.all(6),
+                                                                                                alignment: Alignment(0, -0.8),
+                                                                                                decoration: BoxDecoration(
+                                                                                                    color:defaultPalette.primary,
+                                                                                                    borderRadius: BorderRadius.circular(10)
+                                                                                                  ),
+                                                                                                child: Column(
+                                                                                                  children: [
+                                                                                                    Text(
+                                                                                                      getLabelList(entry.value,null).length.toString(),
+                                                                                                      maxLines: 1,
+                                                                                                      style: GoogleFonts.lexend(
+                                                                                                        fontSize: 45,
+                                                                                                        letterSpacing: -1,
+                                                                                                        color: defaultPalette.extras[0],
+                                                                                                        fontWeight: FontWeight.w500),
+                                                                                                      ),
+                                                                                                      Row(
+                                                                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                                                        children: [
+                                                                                                          Text(
+                                                                                                      getLabelList(entry.value,null).where((el) => !el.isOptional,).toList().length.toString(),
+                                                                                                      maxLines: 1,
+                                                                                                      style: GoogleFonts.lexend(
+                                                                                                        fontSize: 25,
+                                                                                                        letterSpacing: -1,
+                                                                                                        color: defaultPalette.extras[4],
+                                                                                                        fontWeight: FontWeight.w500),
+                                                                                                      ),
+                                                                                                          Text(
+                                                                                                      getLabelList(entry.value,null).where((el) => el.isOptional,).toList().length.toString(),
+                                                                                                      maxLines: 1,
+                                                                                                      style: GoogleFonts.lexend(
+                                                                                                        fontSize: 25,
+                                                                                                        letterSpacing: -1,
+                                                                                                        color: defaultPalette.extras[0],
+                                                                                                        fontWeight: FontWeight.w500),
+                                                                                                      ),
+                                                                                                        ],
+                                                                                                      )
+                                                                                                  ],
+                                                                                                ),
+                                                                                              ),
+                                                                                              Expanded(
+                                                                                                child:SizedBox(
+                                                                                                  height: 110,
+                                                                                                  child: ScrollConfiguration(
+                                                                                                  behavior: ScrollBehavior()
+                                                                                                      .copyWith(scrollbars: false),
+                                                                                                  child: DynMouseScroll(
+                                                                                                      durationMS: 500,
+                                                                                                      scrollSpeed: 1,
+                                                                                                      builder: (context, controller, physics) {
+                                                                                                        return ScrollbarUltima(
+                                                                                                          alwaysShowThumb: true,
+                                                                                                          controller: controller,
+                                                                                                          scrollbarPosition:
+                                                                                                              ScrollbarPosition.left,
+                                                                                                          backgroundColor: defaultPalette.primary,
+                                                                                                          isDraggable: true,
+                                                                                                          maxDynamicThumbLength: 50,
+                                                                                                          minDynamicThumbLength: 20,
+                                                                                                          scrollbarPadding:  EdgeInsets.only(bottom: 8, top:20,left: 0),
+                                                                                                          thumbBuilder:
+                                                                                                              (context, animation, widgetStates) {
+                                                                                                            return Container(
+                                                                                                              decoration: BoxDecoration(
+                                                                                                                  color: defaultPalette.primary,
+                                                                                                                  borderRadius:
+                                                                                                                      BorderRadius.circular(2)),
+                                                                                                              width: 5,
+                                                                                                            );
+                                                                                                          },
+                                                                                                          child: SingleChildScrollView(
+                                                                                                            controller: controller,
+                                                                                                            physics: physics,
+                                                                                                            padding:  EdgeInsets.only(left:10,),
+                                                                                                            child: Column(
+                                                                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                                              children: [
+                                                                                                                SizedBox(height: 60,),
+                                                                                                                ...getLabelList(entry.value,null).asMap().entries.map((ent) {
+                                                                                                                return RichText(
+                                                                                                                  maxLines: 1,
+                                                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                                                  text:TextSpan(children:[
+                                                                                                                  TextSpan(
+                                                                                                                    text:'${ent.key+1}.',
+                                                                                                                  
+                                                                                                                    style: GoogleFonts.lexend(
+                                                                                                                      fontSize: 12,
+                                                                                                                      letterSpacing: -0.2,
+                                                                                                                      color:ent.value.isOptional? defaultPalette.primary.withOpacity(0.6):defaultPalette.extras[4],
+                                                                                                                      fontWeight: FontWeight.w300),
+                                                                                                                    ),
+                                                                                                                  TextSpan(
+                                                                                                                    text:' ${ent.value.name}',
+                                                                                                                    style: GoogleFonts.lexend(
+                                                                                                                      fontSize: 12,
+                                                                                                                      letterSpacing: -0.2,
+                                                                                                                      color: defaultPalette.primary.withOpacity(0.6),
+                                                                                                                      fontWeight: FontWeight.w300),
+                                                                                                                    )
+                                                                                                                  ])
+                                                                                                                );
+                                                                                                              },).toList()],
+                                                                                                            ),
+                                                                                                          ),
+                                                                                                        );
+                                                                                                      }
+                                                                                                    ),
+                                                                                                  ),
+                                                                                                )
+                                                                                              ),
+                                                                                              SizedBox(
+                                                                                                height: 110,
+                                                                                                child: Column(
+                                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                                                                  children: [
+                                                                                                    Expanded(
+                                                                                                      child: Padding(
+                                                                                                        padding: const EdgeInsets.all(10),
+                                                                                                        child: Text(
+                                                                                                          entry.value.name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n'),
+                                                                                                          maxLines: 2,
+                                                                                                          textAlign: TextAlign.end,
+                                                                                                          style: GoogleFonts.lexend(
+                                                                                                            fontSize: 17,
+                                                                                                            letterSpacing: -1,
+                                                                                                            height: 1,
+                                                                                                            color: defaultPalette.primary,
+                                                                                                            fontWeight: FontWeight.w500),
+                                                                                                          ),
+                                                                                                      ),
+                                                                                                    ),
+                                                                                                    Container(
+                                                                                                      height: 5,
+                                                                                                      width: 50,
+                                                                                                      margin: EdgeInsets.all(8),
+                                                                                                      decoration: BoxDecoration(
+                                                                                                      color:defaultPalette.primary,
+                                                                                                      borderRadius: BorderRadius.circular(10)
+                                                                                                    ),
+                                                                                                    )
+                                                                                                  ],
+                                                                                                ),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        )
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                );
+                                                                              },),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    }
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //left handle resize
+                                                      Positioned(
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeLeftRight,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                if (oWidth>200 && oWidth<sWidth) {
+                                                                  position = Offset(position.dx + details.delta.dx,position.dy );
+                                                                }
+                                                                oWidth = (oWidth + (-details.delta.dx)).clamp(200, sWidth);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:5, height: sHeight,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //right handle resize
+                                                      Positioned(
+                                                        right: 0,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeLeftRight,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                oWidth = (oWidth + (details.delta.dx)).clamp(200, sWidth);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:5, height: sHeight,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //top handle resize
+                                                      Positioned(
+                                                        top: 0,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeUpDown,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                if (oHeight>200) {
+                                                                  position = Offset(position.dx,position.dy + details.delta.dy);
+                                                                }
+                                                                oHeight = (oHeight + (-details.delta.dy)).clamp(200, sHeight);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:oWidth, height:5,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //bottom handle resize
+                                                      Positioned(
+                                                        top: oHeight-5,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeUpDown,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                oHeight = (oHeight + (details.delta.dy)).clamp(200, sHeight);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:oWidth, height:5,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //bottomLeft handle resize
+                                                      Positioned(
+                                                        top: oHeight-5,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeUpRightDownLeft,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                oHeight = (oHeight + (details.delta.dy)).clamp(200, sHeight);
+                                                                if (oWidth>200 && oWidth<sWidth) {
+                                                                  position = Offset(position.dx + details.delta.dx,position.dy );
+                                                                }
+                                                                oWidth = (oWidth + (-details.delta.dx)).clamp(200, sWidth);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:10, height:10,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //bottomRight handle resize
+                                                      Positioned(
+                                                        top: oHeight-5,
+                                                        right: 0,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeUpLeftDownRight,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                oHeight = (oHeight + (details.delta.dy)).clamp(200, sHeight);
+                                                                
+                                                                oWidth = (oWidth + (details.delta.dx)).clamp(200, sWidth);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:10, height:10,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //topRight handle resize
+                                                      Positioned(
+                                                        top: 0,
+                                                        right: 0,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeUpRightDownLeft,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                if (oHeight>200) {
+                                                                  position = Offset(position.dx,position.dy + details.delta.dy);
+                                                                }
+                                                                oHeight = (oHeight + (-details.delta.dy)).clamp(200, sHeight);
+                                                                oWidth = (oWidth + (details.delta.dx)).clamp(200, sWidth);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:10, height:10,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                      //topLeft handle resize
+                                                      Positioned(
+                                                        top: 0,
+                                                        child: MouseRegion(
+                                                          cursor:SystemMouseCursors.resizeUpLeftDownRight,
+                                                          child: GestureDetector(
+                                                            behavior: HitTestBehavior.opaque,
+                                                            onPanUpdate: (details) {
+                                                              updateState((){
+                                                                if (oHeight>200) {
+                                                                  position = Offset(position.dx,position.dy + details.delta.dy);
+                                                                }
+                                                                oHeight = (oHeight + (-details.delta.dy)).clamp(200, sHeight);
+                                                                if (oWidth>200 && oWidth<sWidth) {
+                                                                  position = Offset(position.dx + details.delta.dx,position.dy );
+                                                                }
+                                                                oWidth = (oWidth + (-details.delta.dx)).clamp(200, sWidth);
+                                                              });
+                                                            },
+                                                            child: SizedBox(width:10, height:10,)
+                                                            ),
+                                                        )
+                                                        ),
+                                                    
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            });
+                                          },
+                                        );
+                                  
+                                        overlay.insert(sheetTypeBrowserEntry!);
+                                      }
+                                      
+                                      if (sheetTypeBrowserEntry ==null) {
+                                        showPositionedSheetTypeOverlay(
+                                          context: context,
+                                          position: Offset((sWidth * wH1DividerPosition),35),
+                                          width: sWidth * (1 - wH1DividerPosition - wH2DividerPosition),
+                                                                          
+                                        );
+                                      } else {
+                                        sheetTypeBrowserEntry!.remove();
+                                        sheetTypeBrowserEntry = null;
+                                      }
+                                    },
+                                    buttonHeight: mapValueDimensionBased(30, 43, sWidth, sHeight),
+                                    buttonWidth: mapValueDimensionBased(30, 43, sWidth, sHeight),
+                                    borderRadius: BorderRadius.circular(999),
+                                    animationDuration: const Duration(milliseconds: 100),
+                                    animationCurve: Curves.ease,
+                                    topDecoration: BoxDecoration(
+                                      color: defaultPalette.extras[labelList.any((label) => label.indexPath.index == -951)?4:0],
+                                      border: Border.all(width: 2, color: defaultPalette.primary,),
+                                      
+                                    ),
+                                    topLayerChild: Center(
+                                      child: Icon(
+                                        TablerIcons.north_star,
+                                        color: defaultPalette.primary,
+                                        size:  mapValueDimensionBased(16, 28, sWidth, sHeight),)
+                                    ),
+                                  
+                                    subfac: 3,
+                                    depth: 3,
+                                    baseDecoration: BoxDecoration(
+                                      color: defaultPalette.extras[0],
+                                      border: Border.all(color: defaultPalette.extras[0]),
+                                    ),
+                                  ),
+                                ),
                             
                               ],
                             ),
@@ -24278,7 +24704,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       ],
     );
   }
-  
+ 
   List<List<SheetTableCell>> defaultSheetTableCellData(String parentId, SuperDecoration sheetTableDecoration, IndexPath indexPath) {
   const rows = 5;
   const cols = 8;
@@ -24333,19 +24759,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
   List<SheetTableRow> defaultSheetTableRowData(String parentId, String rowDecoration, IndexPath indexPath) {
 
-  return List.generate(5, (index) {
-    return SheetTableRow(
-      id: 'RW-${ const Uuid().v4()}',
-      parentId: parentId,
-      size: 30,
-      rowDecoration: rowDecoration,
-      indexPath: IndexPath(
-        parent: indexPath,
-        index: index)
-    );
-  });
-}
-              
+    return List.generate(5, (index) {
+      return SheetTableRow(
+        id: 'RW-${ const Uuid().v4()}',
+        parentId: parentId,
+        size: 30,
+        rowDecoration: rowDecoration,
+        indexPath: IndexPath(
+          parent: indexPath,
+          index: index)
+      );
+    });
+  }
+
   void applySpans(SheetTable sheetTable) {
       final rows = sheetTable.cellData.length;
       final cols = sheetTable.columnData.length;

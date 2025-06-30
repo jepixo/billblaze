@@ -27,6 +27,7 @@ import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart';
 import 'package:uuid/uuid.dart';
 
 final cCardIndexProvider = StateProvider<int>((ref) {
@@ -2369,6 +2370,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }) {
     return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
   }
-  double mapValueDimensionBased(double outMin, double outMax, double w, double h){
-    return mapValue(value: h*w, inMin: 500*800, inMax: 1187*2194, outMin: outMin, outMax: outMax);
+  
+  double mapValueDimensionBased(double outMin, double outMax, double w, double h,{bool b = true}){
+    return mapValue(value:b? h*w:h, inMin:b? 500*800:500, inMax:b? 1187*2194:1187, outMin: outMin, outMax: outMax);
   }
