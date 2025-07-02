@@ -28,6 +28,8 @@ class SheetTextBox extends SheetItem {
   List<InputBlock> inputBlocks;
   @HiveField(8)
   int type;
+  @HiveField(9)
+  bool locked;
 
   SheetTextBox({
     required this.textDecoration,
@@ -39,9 +41,9 @@ class SheetTextBox extends SheetItem {
     required super.indexPath,
     List<InputBlock>? inputBlocks,
     this.type = 0,
+    this.locked = false,
   }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
 
-  
 }
 
 class SheetText extends SheetItem {
@@ -55,6 +57,7 @@ class SheetText extends SheetItem {
   SuperDecoration textDecoration;
   List<InputBlock> inputBlocks;
   SheetTextType type;
+  bool locked;
 
   //
   SheetText._({
@@ -68,6 +71,7 @@ class SheetText extends SheetItem {
     required super.indexPath,
     required this.inputBlocks,
     required this.type,
+    required this.locked,
   })  : focusNode = FocusNode(),
         scrollController = ScrollController(),
         toolBarConfigurations = QuillSimpleToolbarConfigurations(
@@ -90,6 +94,7 @@ class SheetText extends SheetItem {
     required IndexPath indexPath,
     List<InputBlock>? inputBlocks,
     SheetTextType type = SheetTextType.string,
+    bool locked = false,
   }) {
     final controller = textEditorController ??
         QuillController(
@@ -116,15 +121,12 @@ class SheetText extends SheetItem {
         indexPath: indexPath,
         inputBlocks: inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2], id: id)],
         type: type,
+        locked: locked,
         );
   }
 
   Delta getTextEditorDocumentAsDelta() {
     return textEditorController.document.toDelta();
-  }
-
-  QuillSimpleToolbarConfigurations getToolBarConfig() {
-    return toolBarConfigurations;
   }
 
   List<Map<String, dynamic>> getTextEditorDocumentAsJson() {
@@ -145,6 +147,7 @@ class SheetText extends SheetItem {
     IndexPath? indexPath,
     List<InputBlock>? inputBlocks,
     SheetTextType? type, 
+    bool? locked,
   }) {
     return SheetText._(
       textEditorController: textEditorController ?? this.textEditorController,
@@ -158,6 +161,7 @@ class SheetText extends SheetItem {
       indexPath: indexPath?? this.indexPath,
       inputBlocks: inputBlocks ?? this.inputBlocks,
       type: type ?? this.type,
+      locked: locked ?? this.locked,
     );
   }
 
@@ -177,6 +181,7 @@ class SheetText extends SheetItem {
         textDecoration: item.textDecoration.toSuperDecorationBox(),
         inputBlocks: item.inputBlocks,
         type: item.type.index,
+        locked: item.locked,
         );
   }
 }
