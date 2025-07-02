@@ -111,12 +111,12 @@ class SheetTableCellBox extends SheetItem {
     required super.indexPath,
     });
 
-  SheetTableCell toSheetTableCell( Function findItem, Function textFieldTapDown, IndexPath sheetTableIndexPath ) {
+  SheetTableCell toSheetTableCell( Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),IndexPath sheetTableIndexPath ) {
     super.indexPath.parent = sheetTableIndexPath;
     return SheetTableCell(
       id: super.id, 
       parentId: super.parentId,
-      sheetItem: unboxSheetItem(sheetItem,findItem,textFieldTapDown,super.indexPath),
+      sheetItem: unboxSheetItem(sheetItem,findItem,textFieldTapDown,getReplaceTextFunctionForType,super.indexPath),
       data: data,
       colSpan: colSpan,
       rowSpan: rowSpan,
@@ -129,7 +129,7 @@ class SheetTableCellBox extends SheetItem {
       );
   }
   
-  SheetItem unboxSheetItem(SheetItem sheetItem, Function findItem, Function textFieldTapDown, IndexPath sheetTableCellIndexPath) {
+  SheetItem unboxSheetItem(SheetItem sheetItem, Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q), IndexPath sheetTableCellIndexPath) {
     sheetItem.indexPath.parent = sheetTableCellIndexPath;
     if (sheetItem is SheetTextBox) {
       return addTextField(
@@ -137,18 +137,21 @@ class SheetTableCellBox extends SheetItem {
         parentId: sheetItem.parentId, 
         findItem: findItem, 
         textFieldTapDown: textFieldTapDown, 
+        getReplaceTextFunctionForType: getReplaceTextFunctionForType,
         docString: sheetItem.textEditorController,
         textDecoration: sheetItem.textDecoration.toSuperDecoration(),
         hide: sheetItem.hide,
         name: sheetItem.name,
         indexPath: sheetItem.indexPath,
         inputBlocks: sheetItem.inputBlocks,
+        type: SheetTextType.values[sheetItem.type],
+        locked: sheetItem.locked,
         );
     }
     else if (sheetItem is SheetListBox){
-      return (sheetItem).toSheetList(findItem,textFieldTapDown);
+      return (sheetItem).toSheetList(findItem,textFieldTapDown,getReplaceTextFunctionForType);
     } else if (sheetItem is SheetTableBox){
-      return sheetItem.toSheetTable(findItem,textFieldTapDown);
+      return sheetItem.toSheetTable(findItem,textFieldTapDown,getReplaceTextFunctionForType);
     }
     return sheetItem;
   }
@@ -160,6 +163,7 @@ class SheetTableCellBox extends SheetItem {
     required String parentId,
     required Function findItem,
     required Function textFieldTapDown,
+    required bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),
     required String name,
     required bool hide,
     required List<Map<String, dynamic>>
@@ -168,6 +172,7 @@ class SheetTableCellBox extends SheetItem {
     required IndexPath indexPath,
     required List<InputBlock> inputBlocks,
     SheetTextType type = SheetTextType.string,
+    bool locked = false,
   }) {
     Delta delta;
     // print('DocString: $docString');
@@ -224,16 +229,16 @@ class SheetTableCellBox extends SheetItem {
         },
       );
     }
-
+    textController.onReplaceText = getReplaceTextFunctionForType(type.index ,textController);
+    if (locked) {
+      textController.onReplaceText =(int _, int _y, Object? _x)=>false;
+    }
     String newId = id.isEmpty ? 'TX-${ const Uuid() .v4()}': id;
     var textEditorConfigurations = QuillEditorConfigurations(
       enableScribble: true,
       enableSelectionToolbar: true,
       autoFocus: true,
       onTapOutside: (event, focusNode) {
-        //     if (!focusNode.hasFocus) {
-        //   focusNode.requestFocus();
-        // }
       },
       // textSelectionControls: NoMenuTextSelectionControls(),
       contextMenuBuilder: (context, rawEditorState) {
@@ -277,7 +282,8 @@ class SheetTableCellBox extends SheetItem {
       textDecoration: textDecoration, 
       indexPath: indexPath,
       inputBlocks: inputBlocks,
-      type: type
+      type: type,
+      locked: locked,
     );
   }
 

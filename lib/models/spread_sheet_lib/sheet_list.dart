@@ -4,7 +4,8 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/box_provider.dart';
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart'; 
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
@@ -42,10 +43,10 @@ class SheetListBox extends SheetItem {
       this.size = const [0,0]
       });
 
-  SheetList toSheetList(Function findItem, Function textFieldTapDown) {
+  SheetList toSheetList(Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),) {
     // print('A PARENT: '+ size.toString());
     return SheetList(
-        sheetList: unboxSheetList(sheetList,findItem,textFieldTapDown),
+        sheetList: unboxSheetList(sheetList,findItem,textFieldTapDown,getReplaceTextFunctionForType),
         direction: direction == true ? Axis.vertical : Axis.horizontal,
         id: super.id,
         parentId: super.parentId,
@@ -58,14 +59,14 @@ class SheetListBox extends SheetItem {
         );
   }
 
-  List<SheetItem> unboxSheetList(List<SheetItem> sheetList, Function findItem, Function textFieldTapDown){
+  List<SheetItem> unboxSheetList(List<SheetItem> sheetList, Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),){
     return sheetList.map((e) {
       if (e is SheetTextBox) {
         return e;
       } else if ( e is SheetListBox) {
-        return e.toSheetList(findItem,textFieldTapDown);
+        return e.toSheetList(findItem,textFieldTapDown,getReplaceTextFunctionForType);
       } else if (e is SheetTableBox) {
-        return e.toSheetTable(findItem,textFieldTapDown);
+        return e.toSheetTable(findItem,textFieldTapDown,getReplaceTextFunctionForType);
       } else {
         return e;
       }

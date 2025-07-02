@@ -4,6 +4,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_ce
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
 
 part 'sheet_table.g.dart';
@@ -26,6 +27,8 @@ class SheetTableBox extends SheetItem {
   SuperDecorationBox sheetTablebgDecoration;
   @HiveField(10)
   String name;
+  @HiveField(11)
+  bool expand;
 
   SheetTableBox({
     required super.id, 
@@ -39,9 +42,10 @@ class SheetTableBox extends SheetItem {
     SuperDecorationBox? sheetTablebgDecoration,
     required super.indexPath,
     this.name = 'unlabeled',
+    this.expand = true,
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
-  SheetTable toSheetTable(Function findItem, Function textFieldTapDown) {
+  SheetTable toSheetTable(Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),) {
     return SheetTable(
       id: super.id, 
       parentId: super.parentId,
@@ -49,11 +53,12 @@ class SheetTableBox extends SheetItem {
       pinnedColumns: pinnedColumns,
       columnData: columnData.map((e) => e.toSheetTableColumn(),).toList(),
       rowData: rowData.map((e) => e.toSheetTableRow(),).toList(),
-      cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown,super.indexPath),).toList(),).toList(),
+      cellData: cellData.map((e) => e.map((e) => e.toSheetTableCell(findItem,textFieldTapDown,getReplaceTextFunctionForType,super.indexPath),).toList(),).toList(),
       sheetTableDecoration: sheetTableDecoration.toSuperDecoration(),
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecoration(),
       indexPath: super.indexPath,
       name: name,
+      expand:expand,
       );
   }
   
@@ -71,6 +76,7 @@ class SheetTable extends SheetItem {
   SuperDecoration sheetTableDecoration;
   SuperDecoration sheetTablebgDecoration;
   String name;
+  bool expand;
 
   SheetTable({
     required super.id,
@@ -84,6 +90,7 @@ class SheetTable extends SheetItem {
     SuperDecoration? sheetTablebgDecoration,
     required super.indexPath,
     this.name ='unlabeled',
+    this.expand = true,
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTableBox toSheetTableBox() {
@@ -99,6 +106,7 @@ class SheetTable extends SheetItem {
       sheetTablebgDecoration: sheetTablebgDecoration.toSuperDecorationBox(),
       indexPath: super.indexPath,
       name: name,
+      expand: expand,
       );
   }
 
