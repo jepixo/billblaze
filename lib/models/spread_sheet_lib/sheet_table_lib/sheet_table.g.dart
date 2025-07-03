@@ -30,13 +30,14 @@ class SheetTableBoxAdapter extends TypeAdapter<SheetTableBox> {
       sheetTablebgDecoration: fields[9] as SuperDecorationBox?,
       indexPath: fields[2] as IndexPath,
       name: fields[10] as String,
+      expand: fields[11] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableBox obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(3)
       ..write(obj.cellData)
       ..writeByte(4)
@@ -53,6 +54,8 @@ class SheetTableBoxAdapter extends TypeAdapter<SheetTableBox> {
       ..write(obj.sheetTablebgDecoration)
       ..writeByte(10)
       ..write(obj.name)
+      ..writeByte(11)
+      ..write(obj.expand)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

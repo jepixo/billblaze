@@ -35,7 +35,10 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'reverseChargeFlag', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'placeOfDelivery', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'totalPayable', sheetTextType: SheetTextType.number.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'paymentTerms', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false)
+        
         //signature
         //39 -23 = 16
       ];
@@ -52,7 +55,9 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'recipientAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'placeOfSupply', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'totalPayable', sheetTextType: SheetTextType.number.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'placeOfDelivery', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false)
         //signature 12
       ];
     case SheetType.creditNote:
@@ -77,8 +82,10 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'placeOfSupply', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'state/PlaceCode', sheetTextType: SheetTextType.integer.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'totalPayable', sheetTextType: SheetTextType.number.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'paymentTerms', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
-        //signature
+        RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false)
+      //signature
       ];
     case SheetType.debitNote:
       defaultList =  [
@@ -102,7 +109,9 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'placeOfSupply', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'state/PlaceCode', sheetTextType: SheetTextType.integer.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'totalPayable', sheetTextType: SheetTextType.number.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'paymentTerms', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false)
         //signature
       ];
   

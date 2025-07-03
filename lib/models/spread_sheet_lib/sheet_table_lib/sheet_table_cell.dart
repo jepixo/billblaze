@@ -1,4 +1,3 @@
-
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
@@ -57,7 +56,7 @@ class SheetTableCell extends SheetItem {
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRuleBox(),
       indexPath: indexPath,
-      );
+    );
   }
 
   SheetItem boxSheetItem(SheetItem sheetItem) {
@@ -86,9 +85,9 @@ class SheetTableCellBox extends SheetItem {
   @HiveField(6)
   bool hasError = false;
   @HiveField(7)
-  int rowSpan =1;
+  int rowSpan = 1;
   @HiveField(8)
-  int colSpan =1;
+  int colSpan = 1;
   @HiveField(9)
   String? ownerId;
   @HiveField(10)
@@ -126,15 +125,16 @@ class SheetTableCellBox extends SheetItem {
       ownerId: ownerId,
       validationRule: validationRule?.toValidationRule(),
       indexPath: super.indexPath,
-      );
+    );
   }
   
   SheetItem unboxSheetItem(SheetItem sheetItem, Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q), IndexPath sheetTableCellIndexPath) {
     sheetItem.indexPath.parent = sheetTableCellIndexPath;
     if (sheetItem is SheetTextBox) {
+      // print('name: ${sheetItem.name}, and locked: ${sheetItem.locked}, parent: ${sheetItem.parentId.substring(0,2)}');
       return addTextField(
-        id: sheetItem.id, 
-        parentId: sheetItem.parentId, 
+        id: sheetItem.id,
+        parentId: sheetItem.parentId,
         findItem: findItem, 
         textFieldTapDown: textFieldTapDown, 
         getReplaceTextFunctionForType: getReplaceTextFunctionForType,
@@ -146,7 +146,7 @@ class SheetTableCellBox extends SheetItem {
         inputBlocks: sheetItem.inputBlocks,
         type: SheetTextType.values[sheetItem.type],
         locked: sheetItem.locked,
-        );
+      );
     }
     else if (sheetItem is SheetListBox){
       return (sheetItem).toSheetList(findItem,textFieldTapDown,getReplaceTextFunctionForType);
@@ -154,9 +154,8 @@ class SheetTableCellBox extends SheetItem {
       return sheetItem.toSheetTable(findItem,textFieldTapDown,getReplaceTextFunctionForType);
     }
     return sheetItem;
+    }
   }
-  
-}
 
   SheetText addTextField({
     required String id ,
@@ -172,9 +171,10 @@ class SheetTableCellBox extends SheetItem {
     required IndexPath indexPath,
     required List<InputBlock> inputBlocks,
     SheetTextType type = SheetTextType.string,
-    bool locked = false,
+    required bool locked,
   }) {
     Delta delta;
+    // print('name: $name, and locked: $locked');
     // print('DocString: $docString');
     if (inputBlocks[0].indexPath.index ==-69) {
       inputBlocks=[InputBlock(indexPath: indexPath, blockIndex: [-2], id: id)];

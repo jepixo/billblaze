@@ -41,14 +41,14 @@ class SheetTextBox extends SheetItem {
     required super.indexPath,
     List<InputBlock>? inputBlocks,
     this.type = 0,
-    this.locked = false,
+    required this.locked,
   }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
 
 }
 
 class SheetText extends SheetItem {
   final QuillController textEditorController;
-  final QuillEditorConfigurations textEditorConfigurations;
+  QuillEditorConfigurations textEditorConfigurations;
   final FocusNode focusNode;
   final ScrollController scrollController;
   final QuillSimpleToolbarConfigurations toolBarConfigurations;
@@ -170,13 +170,14 @@ class SheetText extends SheetItem {
     //     'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
     // print(
     //     'inputBlocks text: ${item.inputBlocks}');   
+    // print('ToBOX name: ${item.name}, and locked: ${item.locked}');
     return SheetTextBox(
         textEditorController:
             textEditorController.document.toDelta().toJson(),
         id: item.id,
         parentId: item.parentId,
-        hide: hide,
-        name: name,
+        hide: item.hide,
+        name: item.name,
         indexPath: indexPath,
         textDecoration: item.textDecoration.toSuperDecorationBox(),
         inputBlocks: item.inputBlocks,
@@ -184,6 +185,7 @@ class SheetText extends SheetItem {
         locked: item.locked,
         );
   }
+
 }
 
 
