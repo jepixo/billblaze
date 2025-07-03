@@ -8,7 +8,6 @@ import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
-import 'package:billblaze/components/printing_lib/printing.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
 import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
@@ -62,7 +61,7 @@ import "package:billblaze/components/color_picker.dart"
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:billblaze/colors.dart';
-// import 'package:printing/printing.dart';
+import 'package:printing/printing.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
@@ -221,8 +220,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   Map<String, List<String>> categorizedFonts = {};    
   double hDividerPosition = 0.5;
   double wH1DividerPosition = 0.2;
-  double wH2DividerPosition = 0.23;
-  double wVDividerPosition = 0.5;
+  double wH2DividerPosition = 0.24;
   double _cardPosition = 0;
   double textFieldHeight = 40;
   double pdfPreviewPaddingScaleFactor = 1;
@@ -256,29 +254,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   final FocusNode itemDecorationNameFocusNode = FocusNode();
   List<FocusNode> fontFocusNodes = List.generate(7, (e)=>FocusNode());
   zz.TransformationController transformationcontroller = zz.TransformationController();
-  late TabController tabcunt;
-  List<Color> paletteColors = [
-    Colors.black,
-    Colors.white,
-    Color(int.parse('0xffEA2027')),
-    Color(int.parse('0xff006264')),
-    Color(int.parse('0xff1B1464')),
-    Color(int.parse('0xff5758BB')),
-    Color(int.parse('0xff6F1E51')),
-    Color(int.parse('0xffB53471')),
-    Color(int.parse('0xffEE5A24')),
-    Color(int.parse('0xff009432')),
-    Color(int.parse('0xff0652DD')),
-    Color(int.parse('0xff9980FA')),
-    Color(int.parse('0xff833471')),
-    Color(int.parse('0xff112CBC4')),
-    Color(int.parse('0xffFDA7DF')),
-    Color(int.parse('0xffED4C67')),
-    Color(int.parse('0xffF79F1F')),
-    Color(int.parse('0xffA3CB38')),
-    Color(int.parse('0xff1289A7')),
-    Color(int.parse('0xffD980FA'))
-  ];
   List<GlobalKey> globalKeys = [];
   List<Uint8List> _images = [];
   var filteredFonts = [];
@@ -423,7 +398,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       documentPropertiesList = boxToDocProp(lm?.docPropsList);
       layoutName.text = lm!.name;
       initialLayoutName = lm!.name;
-      labelList = lm!.labelList;
+      labelList = lm!.labelList.isEmpty? getLabelList(SheetType.values[lm!.type],null):lm!.labelList;
+      
       // sheetListItem = spreadSheetList[currentPageIndex];
     }
 
@@ -433,7 +409,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
 
     // ─── 6) Controllers & listeners ────────────────────────────────────────
-    tabcunt = TabController(length: 2, vsync: this);
+    // tabcunt = TabController(length: 2, vsync: this);
     globalKeys = List.generate(10000, (_) => GlobalKey());
     fetchFonts();
     // _findItem();
@@ -474,7 +450,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     setState(() {
       var x = 80 / sHeight;
       wH1DividerPosition = wH1DividerPosition.clamp(50/sWidth,1);
-      wVDividerPosition = wVDividerPosition.clamp(x, 1);
       wH2DividerPosition = wH2DividerPosition.clamp((170/sWidth), 0.48);
       
       // if (!hasRenderedOnce) {
@@ -2440,7 +2415,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   void _showOverlayAt(Offset globalPosition, String s, String p) {
     // remove existing
     _overlay?.remove();
-
+    //the overlay for table axis resize
     // create new
     _overlay = OverlayEntry(builder: (context) {
       return Positioned(
@@ -3065,7 +3040,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         },
                                       ),
                                       //itemTable
-                                      toolBarButton(TablerIcons.logs, 'table',
+                                      toolBarButton(TablerIcons.logs, 'itemTable',
                                       fontSize: 12,
                                       iconSize: 13,
                                       tooltip: 'add an item table with fields corresponding to the current bill type.\nFields include Item Description, Quantity, Rate, Unit, etc.',
@@ -3081,6 +3056,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               generateInvoiceTable(SheetType.values[lm!.type], newId, spreadSheetList[currentPageIndex].id, newDecoration, newIndexPath)
                                             );
                                           });
+                                          assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
                                         },
                                       ),
                                       const Expanded(child: SizedBox()),
@@ -3450,84 +3426,89 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       int colCount = (labelList.length / rowCount).ceil();
 
                                                                       Widget buildLabel(RequiredText label) {
+                                                                        final bool isItemSheet = label.name == 'itemSheet';
                                                                         final bool isMapped = label.indexPath.index != -951;
+
                                                                         final SheetText? linkedText =
-                                                                            isMapped ? getItemAtPath(label.indexPath) as SheetText? : null;
-                                      
-                                                                        final String previewText = isMapped
-                                                                            ? linkedText?.textEditorConfigurations.controller.document.toPlainText().trim() ?? ''
+                                                                            !isItemSheet && isMapped ? getItemAtPath(label.indexPath) as SheetText? : null;
+                                                                        final String previewText = isMapped && linkedText != null
+                                                                            ? linkedText.textEditorConfigurations.controller.document.toPlainText().trim()
                                                                             : '';
                                                                         final bool isOptional = label.isOptional;
-                                      
+
                                                                         return Tooltip(
                                                                           decoration: BoxDecoration(
                                                                             color: defaultPalette.extras[0],
-                                                                            borderRadius: BorderRadius.circular(8)
+                                                                            borderRadius: BorderRadius.circular(8),
                                                                           ),
-                                                                          richMessage:  TextSpan(
-                                                                                    style: GoogleFonts.lexend(
-                                                                                      fontSize: 13,
-                                                                                      color: defaultPalette.primary,
-                                                                                    ),
-                                                                                    children: [
-                                                                                       TextSpan(
-                                                                                        text: label.name,
-                                                                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                                                                      ),
-                                                                                      
-                                                                                      const TextSpan(text: '\n'),
-                                                                                      ...isMapped ?
-                                                                                      [const TextSpan(
-                                                                                        text: 'value: ',
-                                                                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                                                                      ),
-                                                                                      TextSpan(
-                                                                                        text: previewText.isNotEmpty
+                                                                          richMessage: TextSpan(
+                                                                            style: GoogleFonts.lexend(
+                                                                              fontSize: 13,
+                                                                              color: defaultPalette.primary,
+                                                                            ),
+                                                                            children: [
+                                                                              TextSpan(
+                                                                                text: label.name,
+                                                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                                                              ),
+                                                                              const TextSpan(text: '\n'),
+                                                                              if (isMapped)
+                                                                                ...[
+                                                                                  const TextSpan(
+                                                                                    text: 'value: ',
+                                                                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                  ),
+                                                                                  TextSpan(
+                                                                                    text: isItemSheet
+                                                                                        ? '[SheetTable assigned]'
+                                                                                        : (previewText.isNotEmpty
                                                                                             ? (previewText.length > 100
-                                                                                                ? previewText.substring(0, 100) + '...'
+                                                                                                ? '${previewText.substring(0, 100)}...'
                                                                                                 : previewText)
-                                                                                            : '[Empty]',
-                                                                                      )]
-                                                                                      :[const TextSpan(
-                                                                                          text: 'Unassigned',
-                                                                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                                                                      )],
-                                                                                      const TextSpan(text: '\n'),
-                                                                                      const TextSpan(
-                                                                                        text: 'type: ',
-                                                                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                                                                      ),
-                                                                                      TextSpan(
-                                                                                        text: SheetTextType.values[label.sheetTextType].name,
-                                                                                      ),
-                                                                                      if(isOptional)
-                                                                                      ...[
-                                                                                        const TextSpan(text: '\n'),
-                                                                                        const TextSpan(
-                                                                                          text: 'optional',
-                                                                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                                                                        ),
-                                                                                      ]
-                                                                                    ],
-                                                                                  )
-                                                                              ,
+                                                                                            : '[Empty]'),
+                                                                                  ),
+                                                                                ]
+                                                                              else
+                                                                                const TextSpan(
+                                                                                  text: 'Unassigned',
+                                                                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                ),
+                                                                              const TextSpan(text: '\n'),
+                                                                              const TextSpan(
+                                                                                text: 'type: ',
+                                                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                                                              ),
+                                                                              TextSpan(
+                                                                                text: isItemSheet
+                                                                                    ? 'table'
+                                                                                    : SheetTextType.values[label.sheetTextType].name,
+                                                                              ),
+                                                                              if (isOptional) ...[
+                                                                                const TextSpan(text: '\n'),
+                                                                                const TextSpan(
+                                                                                  text: 'optional',
+                                                                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                                                                ),
+                                                                              ],
+                                                                            ],
+                                                                          ),
                                                                           child: Container(
                                                                             margin: const EdgeInsets.only(right: 4, bottom: 2, left: 0),
-                                                                            padding: const EdgeInsets.symmetric(vertical: 3, horizontal:8),
+                                                                            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                                                                             decoration: BoxDecoration(
                                                                               color: !isMapped ? defaultPalette.extras[4] : defaultPalette.secondary,
-                                                                              border: Border.all(color:isMapped 
-                                                                                    ? defaultPalette.primary
-                                                                                    : defaultPalette.primary, width: 1.5),
+                                                                              border: Border.all(
+                                                                                color: defaultPalette.primary,
+                                                                                width: 1.5,
+                                                                              ),
                                                                               borderRadius: BorderRadius.circular(20),
                                                                             ),
                                                                             child: Text(
                                                                               label.name,
                                                                               style: GoogleFonts.lexend(
                                                                                 fontSize: 14,
-                                                                                color: !isMapped
-                                                                                    ? defaultPalette.primary
-                                                                                    : defaultPalette.extras[0],
+                                                                                color:
+                                                                                    !isMapped ? defaultPalette.primary : defaultPalette.extras[0],
                                                                                 letterSpacing: -0.3,
                                                                                 fontWeight: FontWeight.w500,
                                                                               ),
@@ -3535,6 +3516,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           ),
                                                                         );
                                                                       }
+
                                       
                                       
                                                                       for (int i = 0; i < colCount; i++) {
@@ -5294,6 +5276,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           Navigator.pop(context);
                           Future.delayed(Durations.long1).then((value) {
                             overlay.remove();
+                            sheetTypeBrowserEntry?.remove();
                           },);
                           
                         },
@@ -8070,7 +8053,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         },
         child: Container(
           margin: const EdgeInsets.all(4).copyWith(right:4),
-          height:tableHeight+18+30,
+          height:tableHeight+18+30+(sheetTable.name=='unlabeled'?0:18), // _+_+label height
           width:tableWidth,
           decoration:BoxDecoration(
             color:defaultPalette.primary,
@@ -8086,148 +8069,165 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Stack(
+            child: Column(
               children: [
-                // the grey bg for table cells
-                Container(
-                  margin: EdgeInsets.only(top:19, left:15, bottom: 5,right: 6),
-                  decoration: BoxDecoration(
-                  color:defaultPalette.secondary,
-                  borderRadius: BorderRadius.circular(3)
+                if(sheetTable.name!='unlabeled')
+                SizedBox(
+                  height: 18,
+                  child: Text(sheetTable.name,
+                    maxLines:1,
+                    overflow:TextOverflow.ellipsis,
+                    style: GoogleFonts.lexend(
+                    letterSpacing: -1,
+                    fontSize: 12
+                  ),),
                 ),
-                ),
-                // the Table
-                Row(
-                  children: [
-                    // 1,2,3,4 numbers side
-                    Column(
-                      children:[ 
-                        Container(
-                          height:22.5,
-                          alignment: Alignment(0, 0),
-                          decoration: BoxDecoration(
-                            color: defaultPalette.primary,
-                            border: Border(
-                              top: BorderSide.none,
-                              left: BorderSide.none,
-                              bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
-                              right: BorderSide.none),
-                          ),
-                        ),
-                        ...sheetTable.rowData.asMap().entries.map((rowEntry){
-                        return numberSideHeader(rowEntry.key+1);
-                      }).toList()
-                      ],
-                    ),
-                    // ABCD and Cells
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.only(right: 8),
-                        child: ScrollConfiguration(
-                          behavior: ScrollBehavior()
-                              .copyWith(scrollbars: false),
-                          child: DynMouseScroll(
-                              durationMS: 500,
-                              scrollSpeed: 1,
-                              builder: (context, controller, physics) {
-                                return ScrollbarUltima(
-                                  alwaysShowThumb: true,
-                                  controller: controller,
-                                  scrollbarPosition:
-                                      ScrollbarPosition.bottom,
-                                  backgroundColor: defaultPalette.primary,
-                                  isDraggable: true,
-                                  maxDynamicThumbLength: 90,
-                                  thumbBuilder:
-                                      (context, animation, widgetStates) {
-                                    return Container(
-                                      margin: EdgeInsets.only(bottom: 7.5),
-                                      decoration: BoxDecoration(
-                                          // border: Border.all(
-                                          //   color:defaultPalette.extras[0].withOpacity(0.4)
-                                          // ),
-                                          color: defaultPalette.primary,
-                                          borderRadius:
-                                              BorderRadius.circular(2)),
-                                      height: 6,
-                                    );
-                                  },
-                                  child: SingleChildScrollView(
-                                  padding:const EdgeInsets.only(bottom: 4),
-                                  controller: controller,
-                                  physics: physics,
-                                  scrollDirection:Axis.horizontal,
-                                  child: SizedBox(
-                                    width: tableWidth+1,
-                                    child: Column(
-                                      children:[
-                                        //A B C D Headers
-                                        Row(
-                                        children: [
-                                          SizedBox(width:1),
-                                          ...sheetTable.columnData.asMap().entries.map((colEntry){
-                                          return alphabetHeader(numberToColumnLabel(colEntry.key+1), colEntry.key+1);
-                                        }).toList()],
-                                        ),
-                                        Expanded(
-                                          child: CustomMultiChildLayout(
-                                            delegate: SheetTableUIWidgetLayoutDelegate(
-                                              cells: sheetTable.cellData,
-                                              columnData: sheetTable.columnData,
-                                              rowData: sheetTable.rowData,
-                                            ),
-                                            children:[
-                                            for (var rowEntry in sheetTable.cellData)
-                                              for (var cell in rowEntry)
-                                                if (cell.isVisible)
-                                                  LayoutId(
-                                                    id: cell.id, // like "A1", "B3"
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        var (row, col) = parseCellId(cell.id);
-                                                        setState(() {
-                                                          item = cell.sheetItem as SheetText;
-                                                          panelIndex.id = cell.sheetItem.id;
-                                                          panelIndex.parentId = cell.sheetItem.parentId;
-                                                          panelIndex.parentIndexPath = sheetTable.indexPath;
-                                                          panelIndex.itemIndexPath = cell.sheetItem.indexPath;
-                                                          sheetTableItem = sheetTable;
-                                                          _findSheetTableItem(sheetTable);
-                                                          sheetTableVariables.rowLayerIndex = row;
-                                                          sheetTableVariables.columnLayerIndex = col;
-                                                          whichTablePropertyTabIsClicked = 1;
-                                                        });
-                                                      },
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          color: defaultPalette.primary,
-                                                          borderRadius: BorderRadius.circular(2),
-                                                        ),
-                                                        margin: const EdgeInsets.all(1),
-                                                        child: buildSheetTableTextWidget(cell.sheetItem as SheetText),
-                                                      ),
-                                                    ),
-                                                  )
-                                          ],
-                                          ),
-                                        ),
-
-                                        
-                                      ]
-                                      
-                                    ),
-                                  )
-                                ),
-                              );
-                            }
-                          ),
-                        ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // the grey bg for table cells
+                      Container(
+                        margin: EdgeInsets.only(top:19, left:15, bottom: 5,right: 6),
+                        decoration: BoxDecoration(
+                        color:defaultPalette.secondary,
+                        borderRadius: BorderRadius.circular(3)
                       ),
-                    )
+                      ),
+                      // the Table
+                      Row(
+                        children: [
+                          // 1,2,3,4 numbers side
+                          Column(
+                            children:[ 
+                              Container(
+                                height:22.5,
+                                alignment: Alignment(0, 0),
+                                decoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border(
+                                    top: BorderSide.none,
+                                    left: BorderSide.none,
+                                    bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+                                    right: BorderSide.none),
+                                ),
+                              ),
+                              ...sheetTable.rowData.asMap().entries.map((rowEntry){
+                              return numberSideHeader(rowEntry.key+1);
+                            }).toList()
+                            ],
+                          ),
+                          // ABCD and Cells
+                          Expanded(
+                            child: Container(
+                              margin: EdgeInsets.only(right: 8),
+                              child: ScrollConfiguration(
+                                behavior: ScrollBehavior()
+                                    .copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                    durationMS: 500,
+                                    scrollSpeed: 1,
+                                    builder: (context, controller, physics) {
+                                      return ScrollbarUltima(
+                                        alwaysShowThumb: true,
+                                        controller: controller,
+                                        scrollbarPosition:
+                                            ScrollbarPosition.bottom,
+                                        backgroundColor: defaultPalette.primary,
+                                        isDraggable: true,
+                                        maxDynamicThumbLength: 90,
+                                        thumbBuilder:
+                                            (context, animation, widgetStates) {
+                                          return Container(
+                                            margin: EdgeInsets.only(bottom: 7.5),
+                                            decoration: BoxDecoration(
+                                                // border: Border.all(
+                                                //   color:defaultPalette.extras[0].withOpacity(0.4)
+                                                // ),
+                                                color: defaultPalette.primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(2)),
+                                            height: 6,
+                                          );
+                                        },
+                                        child: SingleChildScrollView(
+                                        padding:const EdgeInsets.only(bottom: 4),
+                                        controller: controller,
+                                        physics: physics,
+                                        scrollDirection:Axis.horizontal,
+                                        child: SizedBox(
+                                          width: tableWidth+1,
+                                          child: Column(
+                                            children:[
+                                              //A B C D Headers
+                                              Row(
+                                              children: [
+                                                SizedBox(width:1),
+                                                ...sheetTable.columnData.asMap().entries.map((colEntry){
+                                                return alphabetHeader(numberToColumnLabel(colEntry.key+1), colEntry.key+1);
+                                              }).toList()],
+                                              ),
+                                              Expanded(
+                                                child: CustomMultiChildLayout(
+                                                  delegate: SheetTableUIWidgetLayoutDelegate(
+                                                    cells: sheetTable.cellData,
+                                                    columnData: sheetTable.columnData,
+                                                    rowData: sheetTable.rowData,
+                                                  ),
+                                                  children:[
+                                                  for (var rowEntry in sheetTable.cellData)
+                                                    for (var cell in rowEntry)
+                                                      if (cell.isVisible)
+                                                        LayoutId(
+                                                          id: cell.id, // like "A1", "B3"
+                                                          child: GestureDetector(
+                                                            onTap: () {
+                                                              var (row, col) = parseCellId(cell.id);
+                                                              setState(() {
+                                                                item = cell.sheetItem as SheetText;
+                                                                panelIndex.id = cell.sheetItem.id;
+                                                                panelIndex.parentId = cell.sheetItem.parentId;
+                                                                panelIndex.parentIndexPath = sheetTable.indexPath;
+                                                                panelIndex.itemIndexPath = cell.sheetItem.indexPath;
+                                                                sheetTableItem = sheetTable;
+                                                                _findSheetTableItem(sheetTable);
+                                                                sheetTableVariables.rowLayerIndex = row;
+                                                                sheetTableVariables.columnLayerIndex = col;
+                                                                whichTablePropertyTabIsClicked = 1;
+                                                              });
+                                                            },
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                color: defaultPalette.primary,
+                                                                borderRadius: BorderRadius.circular(2),
+                                                              ),
+                                                              margin: const EdgeInsets.all(1),
+                                                              child: buildSheetTableTextWidget(cell.sheetItem as SheetText),
+                                                            ),
+                                                          ),
+                                                        )
+                                                ],
+                                                ),
+                                              ),
                   
-                  ],
+                                              
+                                            ]
+                                            
+                                          ),
+                                        )
+                                      ),
+                                    );
+                                  }
+                                ),
+                              ),
+                            ),
+                          )
+                        
+                        ],
+                      ),
+                    
+                    ],
+                  ),
                 ),
-              
               ],
             ),
           ),
@@ -8348,8 +8348,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   }
 
   double findSheetListBuildHeight(SheetList sheetList) {
-    
-    
 
     double getMaxFontSizeFromOps(List<Map<String, dynamic>> lineOps) {
       double maxFontSize = 16.0; // fallback default
@@ -8740,12 +8738,50 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     return false;
   }
 
-  bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int index,QuillController controller) {
-    
+  bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int index,QuillController controller, {
+    check = false,
+    // QuillEditorConfigurations? configs = null,
+  }) {
+      var type =SheetTextType.values[index];
+      var placeholder = type==SheetTextType.number
+            ? 'Enter Number'
+            : type==SheetTextType.integer
+            ? 'Enter Integer'
+            : type==SheetTextType.bool
+            ? 'Enter bool'
+            : type==SheetTextType.date
+            ? 'Enter Date'
+            : type==SheetTextType.time
+            ? 'Enter Time'
+            : type==SheetTextType.phone
+            ? 'Enter Number'
+            : 'Enter Text';
+      setState(() {
+      item.textEditorConfigurations = item.textEditorConfigurations.copyWith(placeholder: placeholder);
+      print('vyuihyuihyuih '+placeholder);
+    });
+                                                    
       switch (SheetTextType.values[index]) {
         case SheetTextType.number:
-            print(controller.document.toDelta());
-            return  (int index, int length, Object? data) {
+          if(check){
+            controller.onReplaceText = (int index, int length, Object? data) => true;
+          String oldText = controller.document.toPlainText();
+          if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
+          final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
+          oldText = numericMatch?.group(0) ?? 'yo';
+          // print(controller.document.toDelta());
+          // Enforce reset if old text is not a valid number
+          if (double.tryParse(oldText) == null) {
+            oldText = '0';
+            controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+            // print(controller.document.toDelta());
+          } else {
+            controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+          }
+            
+          }
+          
+          return  (int index, int length, Object? data) {
             if (data is! String) return false;
 
             final oldText = controller.document.toPlainText();
@@ -8757,7 +8793,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             if (newText.trim().isEmpty) return true;
 
             // Try parsing as a number
-            final parsed = double.tryParse(newText);
+            final parsed = double.tryParse(newText.replaceAll(',', ''));
             final isValid = parsed != null;
 
             if (isValid) {
@@ -8779,10 +8815,29 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               return false; // Block invalid input
             }
           };
-          
-
+        
         case SheetTextType.integer:
+          if(check)
+          {controller.onReplaceText = (int index, int length, Object? data) => true;
+          String oldText = controller.document.toPlainText();
+          if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
+          final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
+          oldText = numericMatch?.group(0) ?? 'yo';
+          // Enforce reset if old text is not a valid number
+          if (int.tryParse(oldText) == null) {
+            if (double.tryParse(oldText) == null) {
+            oldText = '0';
+            controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+            } else {
+              var d= double.tryParse(oldText);
+              controller.replaceText(0, controller.document.length - 1, d!.round().toString(), const TextSelection.collapsed(offset: 1));
           
+            }
+          } else {
+            controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+          }
+          }
+         
           return  (int index, int length, Object? data) {
             if (data is! String) return false;
 
@@ -8809,7 +8864,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         case SheetTextType.bool:
           const trueValues = ['true', '1', 'yes', 'positive', 'ha', 'yup','haa'];
           const falseValues = ['false', '0', 'no', 'negative', 'na', 'nope', 'nah'];
+          if(check){
+            
+          String oldText = controller.document.toPlainText().trim().toLowerCase();
 
+          String normalized = 'false'; // default fallback
+          if (trueValues.contains(oldText)) {
+            normalized = 'true';
+          } else if (falseValues.contains(oldText)) {
+            normalized = 'false';
+          }
+          if (oldText != normalized) {
+            controller.onReplaceText = (int index, int length, Object? data) => true;
+              controller.replaceText(
+                0,
+                controller.document.length - 1,
+                normalized,
+                const TextSelection.collapsed(offset: 1),
+              );
+          }
+          }
 
           return  (int index, int length, Object? data) {
             if (data is! String) return false;
@@ -8836,42 +8910,52 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           };
           
         
-        // case SheetTextType.time:
-        //   return (int index, int length, Object? data) {
-        //     // print('hey'+data.toString());
-        //     if (data is! String) return false;
-        //     if (data =='') {
-        //       // print('backspace'+data.toString());
-        //       return false;
-        //     }
-        //     final doc = controller.document;
-        //     final plain = doc.toPlainText().trim();
-        //     // print(plain+data.toString());
-        //     final timeMatch = RegExp(r'(\d{2})\D+(\d{2})').firstMatch(plain+data.toString());
-        //     if (timeMatch == null) return false;
-        //     int hour = int.tryParse(timeMatch.group(1)!) ?? 0;
-        //     int minute = int.tryParse(timeMatch.group(2)!) ?? 0;
-        //     if (hour > 24) hour = 24;
-        //     if (minute > 59) minute = 59;
-        //     final newHour = hour.toString().padLeft(2, '0');
-        //     final newMinute = minute.toString().padLeft(2, '0');
-        //     final separator = plain.substring(timeMatch.start + 2, timeMatch.end - 2);
-        //     final newTime = '$newHour$separator$newMinute';
-        //     final attrs = doc.toDelta().slice(timeMatch.start, timeMatch.end).first.attributes ?? {};
-        //     SchedulerBinding.instance.addPostFrameCallback((_) {
-        //       controller.replaceText(
-        //         timeMatch.start,
-        //         timeMatch.end - timeMatch.start,
-        //         Delta()..insert(newTime, attrs),
-        //         TextSelection.collapsed(offset: timeMatch.start + newTime.length),
-        //       );
-        //     });
-        //     return true;
-        //   };
-        //   break;
 
         case SheetTextType.phone:
+          if(check)
           {
+            final doc = controller.document;
+            final delta = doc.toDelta();
+            final plainText = doc.toPlainText();
+
+            Map<String, dynamic>? getAttrsAt(int offset) {
+              int current = 0;
+              for (final op in delta.toList()) {
+                final text = op.data is String ? op.data as String : '';
+                if (current + text.length > offset) return op.attributes;
+                current += text.length;
+              }
+              return null;
+            }
+
+            // Clean text
+            final cleaned = plainText.trim();
+            final digitsOnly = cleaned.replaceAll(RegExp(r'[^\d+]'), '');
+
+            // Extract country code if present
+            final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(digitsOnly);
+            final countryCode = countryCodeMatch?.group(0) ?? '';
+            final numberPart = digitsOnly.replaceFirst(RegExp(r'^\+\d{1,3}'), '');
+
+            // Limit digits to 10
+            final truncatedNumber = numberPart.replaceAll(RegExp(r'[^\d]'), '').substring(0, numberPart.length.clamp(0, 10));
+            final formatted = [
+              if (countryCode.isNotEmpty) countryCode,
+              if (truncatedNumber.isNotEmpty) truncatedNumber,
+            ].join(' ');
+
+            final attrs = getAttrsAt(0);
+
+            // Allow temporary replacement
+            controller.onReplaceText = (int index, int length, Object? data) => true;
+
+            controller.replaceText(
+              0,
+              controller.document.length - 1,
+              Delta()..insert(formatted, attrs),
+              TextSelection.collapsed(offset: formatted.length),
+            );
+            }
 
             // Enforce rules for future edits
             return (int index, int length, Object? data) {
@@ -8892,7 +8976,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               // Total digits (excluding country code) must not exceed 10
               return numberDigits <= 10;
             };
-          }
+          
           break;
 
         case SheetTextType.string:
@@ -8905,16 +8989,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   Widget buildInvalidToast(String message) {
     return Container(
       padding: EdgeInsets.all(2),
-      margin: const EdgeInsets.only(top: 2, left: 2, right: 2),
-      width: (sWidth*wH2DividerPosition),
-      height: 50,
+      margin: const EdgeInsets.only(top: 11, left: 2, right: 5,bottom: 6),
+      width: (sWidth*wH2DividerPosition)-10,
+      height: 52,
       decoration: BoxDecoration(
         color: defaultPalette.primary,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: defaultPalette.extras[0], width: 2),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         child: Text(
           '  ${message.replaceAll(RegExp(r'\n'), '')}',
           maxLines: 1,
@@ -8938,33 +9022,50 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         .toList(); // Only unset RequiredText
 
     Map<String, List<SheetText>> matchedTexts = {};
+    Map<String, List<SheetTable>> matchedTables = {};
 
-    void collectSheetTexts(SheetList sheetList) {
+    void collectItems(SheetList sheetList) {
       for (final item in sheetList.sheetList) {
         if (item is SheetText) {
           final name = item.name;
-          if (unmatchedLabels.any((rt) => rt.name == name)) {
+          if (unmatchedLabels.any((rt) => rt.name == name && rt.name != 'itemSheet')) {
             matchedTexts.putIfAbsent(name, () => []).add(item);
           }
+        } else if (item is SheetTable) {
+          final name = item.name;
+          if (unmatchedLabels.any((rt) => rt.name == 'itemSheet' && rt.name == name)) {
+            matchedTables.putIfAbsent(name, () => []).add(item);
+          }
         } else if (item is SheetList) {
-          collectSheetTexts(item);
+          collectItems(item);
         }
       }
     }
 
     for (final sheet in spreadSheetList) {
-      collectSheetTexts(sheet);
+      collectItems(sheet);
     }
 
     for (final rt in unmatchedLabels) {
-      final matches = matchedTexts[rt.name];
-      if (matches != null && matches.isNotEmpty) {
-        // Assign the first matching indexPath to RequiredText
-        rt.indexPath = matches.first.indexPath;
+      if (rt.name == 'itemSheet') {
+        final matches = matchedTables[rt.name];
+        if (matches != null && matches.isNotEmpty) {
+          rt.indexPath = matches.first.indexPath;
 
-        // Rename any further duplicates
-        for (int i = 1; i < matches.length; i++) {
-          matches[i].name = '${matches[i].name} (${i + 1})';
+          // Rename further SheetTables if needed
+          for (int i = 1; i < matches.length; i++) {
+            matches[i].name = '${matches[i].name} (${i + 1})';
+          }
+        }
+      } else {
+        final matches = matchedTexts[rt.name];
+        if (matches != null && matches.isNotEmpty) {
+          rt.indexPath = matches.first.indexPath;
+
+          // Rename further SheetTexts if needed
+          for (int i = 1; i < matches.length; i++) {
+            matches[i].name = '${matches[i].name} (${i + 1})';
+          }
         }
       }
     }
@@ -9661,7 +9762,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                               if (newText.trim().isEmpty) return true;
 
-                              final parsed = int.tryParse(newText);
+                              final parsed = int.tryParse(newText.replaceAll(',', ''));
                               if (parsed != null) return true;
 
                               controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
@@ -11637,8 +11738,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ],
                                   ),  
                                   const SizedBox(
-                                        height:4
-                                      ),
+                                    height:4
+                                  ),
                                   //Selected Text
                                   Container(
                                     width: width,
@@ -11679,64 +11780,76 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             focusNode: fontFocusNodes[6],
                                             controller: fontTextControllers[4],
                                             enabled: !item.parentId.startsWith('TB'),
-                                            
                                             onSubmitted: (value) {
                                               setState(() {
-                                                
-                                                  for (var requiredText in labelList) {
+                                                  /// what are we doing here:
+                                                  /// 
+                                                  /// going through each requriedText(RT) in the labelList and seeing if the
+                                                  /// submitted value matches the RT.name, if it does then check if rt.indexPath.index ==-951
+                                                  /// if yes then that means the RT was unassigned so go ahead and assign the indexPath of this text to that RT
+                                                  /// if no then fetch the item at rt.indexPath.index, if that item doesnt exist then again uk the drill else dont allow the item.name to update.
+                                                  /// then finally for double check fetch the item for each RT and see if they exist, if they dont then assign the indexPath path to -951.
+                                                  for (int j = 0; j < labelList.length; j++) {
+                                                    final requiredText = labelList[j];
                                                     if (value == requiredText.name) {
-                                                      print('yes input match');
                                                       final path = requiredText.indexPath;
 
                                                       if (path.index == -951) {
-                                                        print('yes index -951');
                                                         requiredText.indexPath = item.indexPath;
                                                         item.type = SheetTextType.values[requiredText.sheetTextType];
-                                                        item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(requiredText.sheetTextType,item.textEditorConfigurations.controller );
+                                                        item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(
+                                                          requiredText.sheetTextType,
+                                                          item.textEditorConfigurations.controller,
+                                                          check: true,
+                                                        );
                                                         item.name = value;
-                                                        print('yes index ' +requiredText.indexPath.toString());
                                                       } else {
-                                                        print('no index not -951');
-                                                        print(path);
                                                         final sheetText = getItemAtPath(path);
                                                         if (sheetText.id == 'yo' || sheetText.id.isEmpty) {
-                                                          print('field empty');
                                                           requiredText.indexPath = item.indexPath;
                                                           item.type = SheetTextType.values[requiredText.sheetTextType];
-                                                          item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(requiredText.sheetTextType,item.textEditorConfigurations.controller );
+                                                          item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(
+                                                            requiredText.sheetTextType,
+                                                            item.textEditorConfigurations.controller,
+                                                            check: true,
+
+                                                          );
                                                           item.name = value;
-                                                        } else if (sheetText is SheetText){
-                                                          if (sheetText.name == requiredText.name) {
-                                                            print('name matcher ' +sheetText.name+' '+requiredText.name);
+                                                        } else if (sheetText is SheetText) {
+                                                          if (sheetText.name == requiredText.name && sheetText.name !=item.name ) {
                                                             item.name = '$value-1';
-                                                            // fontTextControllers[4].text = '$value-new';
-                                                            print('name matcher ' +sheetText.name+' '+item.name);
-                                                            break; 
+                                                            break;
                                                           }
                                                         }
                                                       }
-                                                    } else{
-                                                      print('no input match');
+                                                    } else {
+                                                      print('object');
                                                       item.name = value;
-                                                      print('no input match '+item.name);
+                                                      // item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(
+                                                      //       SheetTextType.string.index,
+                                                      //       item.textEditorConfigurations.controller,
+                                                      //     );
+                                                      // item.textEditorConfigurations = item.textEditorConfigurations.copyWith(placeholder: 'Enter String');
                                                     }
                                                   }
+
                                                   
 
                                                   // Final validation pass
-                                                  for (var requiredText in labelList) {
-                                                    // print('its '+requiredText.name);
-                                                    final sheetText = getItemAtPath(requiredText.indexPath);
-                                                    //  print('its '+requiredText.indexPath.toString());
-                                                    if (sheetText.id == 'yo' || sheetText.id.isEmpty||(sheetText as SheetText).name != requiredText.name) {
-                                                      if (requiredText.indexPath.index != -951) {
-                                                          print('ohno '+requiredText.name);
-                                                          requiredText.indexPath = IndexPath(index: -951);
-                                                        
+                                                  for (int j = 0; j < labelList.length; j++) {
+                                                    final requiredText = labelList[j];
+                                                    if (requiredText.indexPath.index != -951)  {
+                                                      final sheetText = getItemAtPath(requiredText.indexPath);
+                                                      if (sheetText is! SheetTable) {
+                                                        if (sheetText.id == 'yo' || sheetText.id.isEmpty || (sheetText as SheetText).name != requiredText.name) {
+                                                          
+                                                            requiredText.indexPath = IndexPath(index: -951);
+                                                          
+                                                        }
                                                       }
-                                                      
                                                     }
                                                   }
+
                                               });
                                             },
                                             textAlignVertical: TextAlignVertical.top,
@@ -11773,8 +11886,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ), 
                                   
                                   const SizedBox(
-                                        height:4
-                                      ),
+                                    height:4
+                                  ),
                                   //'hide'
                                   Container(
                                     margin: EdgeInsets.all(2),
@@ -11819,6 +11932,66 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       textBuilder: (value) {
                                         return Text(
                                           value == false ? 'visible' : 'hidden',
+                                          style: GoogleFonts.lexend(
+                                                letterSpacing: -1,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                                color: defaultPalette.black),
+                                        );
+                                      },
+                                      height: 23,
+                                      spacing: (width) - 100,
+                                    ),
+                                  ),
+                                  //'lock'
+                                  Container(
+                                    margin: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10), 
+                                    color:defaultPalette.secondary,
+                                    border: Border.all(
+                                      width:0.2
+                                    ),),
+                                    child: AnimatedToggleSwitch<bool>.dual(
+                                      current: item.locked,
+                                      first: false,
+                                      second: true,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          item.locked = value; 
+                                          if (item.locked) {
+                                            item.textEditorConfigurations.controller.onReplaceText = (int _,int_x, Object? _r) => false;
+                                          } else {
+                                            item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(item.type.index, item.textEditorConfigurations.controller);
+                                          }
+                                        });
+                                      },
+                                      animationCurve: Curves.easeInOutExpo,
+                                      animationDuration: Durations.medium4,
+                                      borderWidth:
+                                          2, // backgroundColor is set independently of the current selection
+                                      styleBuilder: (value) => ToggleStyle(
+                                          borderRadius: BorderRadius.circular(10),
+                                          indicatorBorderRadius: BorderRadius.circular(15),
+                                          borderColor: defaultPalette.secondary,
+                                          backgroundColor: defaultPalette.secondary,
+                                          indicatorBorder:
+                                              Border.all(
+                                                width: 1.2,
+                                                color: defaultPalette.extras[0]),
+                                          indicatorColor: defaultPalette
+                                              .primary), // indicatorColor changes and animates its value with the selection
+                                      iconBuilder: (value) {
+                                        return Icon(
+                                            value == false
+                                                ? TablerIcons.lock_open
+                                                : TablerIcons.lock,
+                                            size: 16,
+                                            color: defaultPalette.extras[0]);
+                                      },
+                                      textBuilder: (value) {
+                                        return Text(
+                                          value == false ? 'unlocked' : 'locked',
                                           style: GoogleFonts.lexend(
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
@@ -15720,7 +15893,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   subfac: 2.5,
                                                   depth:2.5,
                                                   baseDecoration: BoxDecoration(
-                                                    color: defaultPalette.extras[3],
+                                                    color: defaultPalette.extras[0],
                                                     border: Border.all(),
                                                   ),
                                                 ),
@@ -15797,7 +15970,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               subfac: 2.5,
                                               depth:2.5,
                                               baseDecoration: BoxDecoration(
-                                                color: defaultPalette.extras[3],
+                                                color: defaultPalette.extras[0],
                                                 border: Border.all(),
                                               ),
                                             ),
@@ -15820,10 +15993,55 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 // focusNode: fontFocusNodes[6],
                                                 controller: tableTextControllers[10],
                                                 onSubmitted: (value) {
-                                                  setState(() {
-                                                    sheetTableItem.name = value;
-                                                  });
+                                                  RequiredText itemSheetLabel = labelList.firstWhere(
+                                                    (rt) => rt.name == 'itemSheet',
+                                                    orElse: () => RequiredText(name: '', sheetTextType: 0, indexPath:IndexPath(index: -567), isOptional:true),
+                                                  );
+                                                  if (itemSheetLabel.indexPath.index != -567 && value == itemSheetLabel.name) {
+                                                    if (itemSheetLabel.indexPath.index == -951) {
+                                                      // Not assigned yet, assign this table to it
+                                                      setState(() {
+                                                        itemSheetLabel.indexPath = sheetTableItem.indexPath;
+                                                        sheetTableItem.name = value;
+                                                      });
+                                                    } else {
+                                                      final existingItem = getItemAtPath(itemSheetLabel.indexPath);
+
+                                                      if (existingItem is! SheetTable) {
+                                                        // Reassign because previous assignment was not a SheetTable
+                                                        setState(() {
+                                                          itemSheetLabel.indexPath = sheetTableItem.indexPath;
+                                                          sheetTableItem.name = value;
+                                                        });
+                                                      }
+                                                      // Else: already assigned to another SheetTable, so do nothing
+                                                    }
+                                                  } else {
+                                                    // Normal rename case
+                                                    setState(() {
+                                                      sheetTableItem.name = value;
+                                                    });
+                                                  }
+
+                                                  
+                                                    // print('its '+requiredText.name);
+                                                    if (itemSheetLabel.indexPath.index != -567) {
+                                                      print('imhere');
+                                                      final existingItem = getItemAtPath(itemSheetLabel.indexPath);
+                                                      
+                                                      if (existingItem is! SheetTable || existingItem.name != 'itemSheet') {
+                                                        // Reassign because previous assignment was not a SheetTable
+                                                        setState(() {
+                                                          itemSheetLabel.indexPath = IndexPath(index: -951);
+                                                        });
+                                                        print(labelList);
+                                                      }
+                                                    }
+                                                    //  print('its '+requiredText.indexPath.toString());
+                                                    
+                                                  
                                                 },
+
                                                 textAlignVertical: TextAlignVertical.top,
                                                 textAlign: TextAlign.end,
                                                 cursorColor: defaultPalette.tertiary,
@@ -24930,7 +25148,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             parent: cellIndexPath,
             index: col), 
           inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-
+          locked: false,
           ),
         rowSpan: 1,
         colSpan: 1,
@@ -24977,6 +25195,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     return SheetTable(
       id: newId,
       parentId: parentId, // set later
+      name: 'itemSheet',
       cellData: generateInvoiceCellData(
         parentId: newId,
         sheetTableDecoration: newDecoration,

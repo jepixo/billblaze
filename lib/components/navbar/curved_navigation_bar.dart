@@ -11,11 +11,12 @@ import 'package:flutter/material.dart';
 typedef _LetIndexPage = bool Function(int value);
 
 class CurvedNavigationBar extends StatefulWidget {
-  final List<Widget> items;
+  final List<Icon> items;
   final int index;
   final Color color;
   final Color? buttonBackgroundColor;
   final Color backgroundColor;
+  final Color buttonIconColor;
   final ValueChanged<int>? onTap;
   final _LetIndexPage letIndexChange;
   final Curve animationCurve;
@@ -39,6 +40,7 @@ class CurvedNavigationBar extends StatefulWidget {
     this.color = Colors.white,
     this.buttonBackgroundColor,
     this.backgroundColor = Colors.blueAccent,
+    this.buttonIconColor = Colors.black,
     this.onTap,
     _LetIndexPage? letIndexChange,
     this.animationCurve = Curves.easeOut,
@@ -69,7 +71,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
   late int _endingIndex;
   late double _pos;
   double _buttonHide = 0;
-  late Widget _icon;
+  late Icon _icon;
   late AnimationController _animationController;
   late int _length;
 
@@ -164,12 +166,19 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                               const Duration(milliseconds: 200),
                           animationCurve: Curves.ease,
                           topDecoration: BoxDecoration(
-                            color: defaultPalette.primary,
+                            color: widget.buttonBackgroundColor,
                             border: Border.all(),
                           ),
-                          topLayerChild: _icon,
+                          topLayerChild: Transform.rotate(
+                            angle: -pi/2,
+                            child: Icon(
+                              _icon.icon,
+                              color: widget.buttonIconColor,
+                              size: _icon.size,
+                            ),
+                          ),
                           baseDecoration: BoxDecoration(
-                            color: defaultPalette.tertiary,
+                            color: widget.color,
                             border: Border.all(),
                           ),
                           subfac: 5,
@@ -216,7 +225,9 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                           position: _pos,
                           length: _length,
                           index: widget.items.indexOf(item),
-                          child: Center(child: item),
+                          child: Center(child: Transform.rotate(
+                            angle: 3 * pi / 2,
+                            child: item)),
                         );
                       }).toList()),
                     ),

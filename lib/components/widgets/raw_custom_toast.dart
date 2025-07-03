@@ -75,9 +75,9 @@ class CustomToastState extends State<CustomToast> {
       key: positionedKey,
       curve: Curves.easeOutBack,
       top:null,
-      bottom: 10,
+      bottom: 0,
       // left: 0,
-      right: 3,
+      right: 0,
       child: Material(
         color: Colors.transparent,
         child: AnimatedScale(

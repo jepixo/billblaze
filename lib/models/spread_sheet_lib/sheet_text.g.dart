@@ -28,13 +28,14 @@ class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
       indexPath: fields[2] as IndexPath,
       inputBlocks: (fields[7] as List?)?.cast<InputBlock>(),
       type: fields[8] as int,
+      locked: fields[9] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTextBox obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(3)
       ..write(obj.textEditorController)
       ..writeByte(4)
@@ -47,6 +48,8 @@ class SheetTextBoxAdapter extends TypeAdapter<SheetTextBox> {
       ..write(obj.inputBlocks)
       ..writeByte(8)
       ..write(obj.type)
+      ..writeByte(9)
+      ..write(obj.locked)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
