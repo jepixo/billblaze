@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:math' as math;
@@ -1618,62 +1619,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               var data= extractBIAnalyticsData(Boxes.getLayouts());
 
                               print(data);
-                              final _scopes = [
-                                drive.DriveApi.driveFileScope, // to create new Google Sheets
-                                sheets.SheetsApi.spreadsheetsScope,
-                              ];
 
-                              // Future<void> createSheetFromExistingSession(String accessToken) async {
-                              //   final authClient = authenticatedClient(
-                              //     http.Client(),
-                              //     AccessCredentials(
-                              //       AccessToken(
-                              //         'Bearer',
-                              //         accessToken,
-                              //         DateTime.now().add(Duration(hours: 1)), // Ideally use actual expiry
-                              //       ),
-                              //       null,
-                              //       [
-                              //         'https://www.googleapis.com/auth/drive.file',
-                              //         'https://www.googleapis.com/auth/spreadsheets',
-                              //       ],
-                              //     ),
-                              //   );
-
-                              //   try {
-                              //     // 1. Create a new Sheet
-                              //     final driveApi = drive.DriveApi(authClient);
-                              //     final file = drive.File()
-                              //       ..name = "MyLayoutModels"
-                              //       ..mimeType = "application/vnd.google-apps.spreadsheet";
-                              //     final newFile = await driveApi.files.create(file);
-                              //     print("✅ Created sheet with ID: ${newFile.id}");
-                              //     // 2. Write sample data
-                              //     final sheetsApi = sheets.SheetsApi(authClient);
-                              //     await sheetsApi.spreadsheets.values.update(
-                              //       sheets.ValueRange.fromJson({
-                              //         'values': [
-                              //           ['Name', 'Amount'],
-                              //           ['Joel', '1200'],
-                              //         ]
-                              //       }),
-                              //       newFile.id!,
-                              //       "Sheet1!A1",
-                              //       valueInputOption: "RAW",
-                              //     );
-                              //     print("✅ Data written to sheet.");
-                              //   } catch (e) {
-                              //     print("❌ Error using Sheets/Drive APIs: $e");
-                              //   } finally {
-                              //     authClient.close();
-                              //   }
-                              // }
-                              // await createSheetFromExistingSession(ref.read(authCredentialsProvider)!.accessToken);
-
-                              Future<void> authenticateAndCreateSheet() async {
+                              Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox) async {
                                 final gap.GoogleSignIn googleSignIn = gap.GoogleSignIn(
                                   params: gap.GoogleSignInParams(
-                                    clientId: gSignInClientId, // Your Windows client ID
+                                    clientId: gSignInClientId,
                                     clientSecret: gSignInClientSecret,
                                     redirectPort: 3000,
                                     scopes: [
@@ -1681,75 +1631,145 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       'https://www.googleapis.com/auth/drive.file',
                                       'https://www.googleapis.com/auth/drive',
                                       'https://www.googleapis.com/auth/spreadsheets',
+                                      'https://www.googleapis.com/auth/documents',
                                     ],
                                   ),
                                 );
 
                                 try {
-                                  gap.GoogleSignInCredentials?  creds;
-                                  if (ref.read(authCredentialsProvider)==null) {
+                                  gap.GoogleSignInCredentials? creds;
+                                  if (ref.read(authCredentialsProvider) == null) {
                                     creds = await googleSignIn.signInOnline();
                                     if (creds == null) {
-                                    print("Google Sign-In failed or was canceled.");
-                                    return;
+                                      print("Google Sign-In failed or was canceled.");
+                                      return;
                                     } else {
-                                      ref.read(authCredentialsProvider.notifier).update((state) => creds,);
+                                      ref.read(authCredentialsProvider.notifier).update((state) => creds);
                                     }
                                   } else {
                                     creds = ref.read(authCredentialsProvider);
                                   }
 
-                                  
-                                   
-                                  // Build authenticated client for Google APIs
                                   final authClient = authenticatedClient(
                                     http.Client(),
                                     AccessCredentials(
-                                      AccessToken(
-                                        'Bearer',
-                                        creds!.accessToken,
-                                        DateTime.now().toUtc().add(const Duration(hours: 1)), // adjust expiry if needed
-                                      ),
+                                      AccessToken('Bearer', creds!.accessToken, DateTime.now().toUtc().add(Duration(hours: 1))),
                                       null,
                                       [
-                                        'https://www.googleapis.com/auth/drive.file',
+                                        'https://www.googleapis.com/auth/drive',
                                         'https://www.googleapis.com/auth/spreadsheets',
+                                        'https://www.googleapis.com/auth/documents',
                                       ],
                                     ),
                                   );
 
-                                  // 1. Create a new Google Sheet in the user's Drive
                                   final driveApi = drive.DriveApi(authClient);
-                                  final file = drive.File()
-                                    ..name = "MyLayoutModels"
-                                    ..mimeType = "application/vnd.google-apps.spreadsheet";
-
-                                  final newFile = await driveApi.files.create(file);
-                                  print("✅ Created sheet with ID: ${newFile.id}");
-
-                                  // 2. Write sample data to that sheet
                                   final sheetsApi = sheets.SheetsApi(authClient);
+
+                                  // 1️⃣ Look for existing sheet named 'LayoutModelBox'
+                                  final fileList = await driveApi.files.list(q: "name='LayoutModelBox' and mimeType='application/vnd.google-apps.spreadsheet'");
+                                  String sheetId;
+                                  if (fileList.files != null && fileList.files!.isNotEmpty) {
+                                    sheetId = fileList.files!.first.id!;
+                                    print("📄 Found existing sheet with ID: $sheetId");
+                                  } else {
+                                    // 🆕 Create new spreadsheet
+                                    final newFile = await driveApi.files.create(drive.File()
+                                      ..name = "LayoutModelBox"
+                                      ..mimeType = "application/vnd.google-apps.spreadsheet");
+                                    sheetId = newFile.id!;
+                                    print("✅ Created new sheet with ID: $sheetId");
+                                  }
+
+                                  // 2️⃣ Clear existing sheet contents
+                                  await sheetsApi.spreadsheets.values.clear(
+                                    sheets.ClearValuesRequest(),
+                                    sheetId,
+                                    "Sheet1",
+                                  );
+
+                                  // 3️⃣ Prepare header row
+                                  final headers = [
+                                    "id",
+                                    "name",
+                                    "createdAt",
+                                    "modifiedAt",
+                                    "type",
+                                    "spreadsheetDocId",
+                                    "docPropsList",
+                                    "labelList",
+                                    "hasPdf"
+                                  ];
+
+                                  List<List<dynamic>> allRows = [headers];
+
+                                  for (final layout in layoutBox.values) {
+                                    // 4️⃣ Upload spreadsheetList to Google Doc
+                                    final docResponse = await http.post(
+                                      Uri.parse('https://docs.googleapis.com/v1/documents'),
+                                      headers: {
+                                        'Authorization': 'Bearer ${creds.accessToken}',
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: jsonEncode({'title': layout.id}),
+                                    );
+
+                                    if (docResponse.statusCode != 200) {
+                                      print("❌ Failed to create doc for layout ${layout.id}");
+                                      continue;
+                                    }
+
+                                    final docId = jsonDecode(docResponse.body)['documentId'];
+
+                                    // Insert JSON text into doc
+                                    await http.post(
+                                      Uri.parse('https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
+                                      headers: {
+                                        'Authorization': 'Bearer ${creds.accessToken}',
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: jsonEncode({
+                                        'requests': [
+                                          {
+                                            'insertText': {
+                                              'location': {'index': 1},
+                                              'text': jsonEncode(layout.spreadSheetList),
+                                            }
+                                          }
+                                        ]
+                                      }),
+                                    );
+
+                                    // 5️⃣ Construct row
+                                    allRows.add([
+                                      layout.id,
+                                      layout.name,
+                                      layout.createdAt.toIso8601String(),
+                                      layout.modifiedAt.toIso8601String(),
+                                      layout.type,
+                                      docId,
+                                      jsonEncode(layout.docPropsList),
+                                      jsonEncode(layout.labelList),
+                                      layout.pdf != null && layout.pdf!.isNotEmpty ? "yes" : "no"
+                                    ]);
+                                  }
+
+                                  // 6️⃣ Write to Sheet
                                   await sheetsApi.spreadsheets.values.update(
-                                    sheets.ValueRange.fromJson({
-                                      'values': [
-                                        ['Name', 'Amount'],
-                                        ['Joel', '1200'],
-                                      ]
-                                    }),
-                                    newFile.id!,
+                                    sheets.ValueRange.fromJson({'values': allRows}),
+                                    sheetId,
                                     "Sheet1!A1",
                                     valueInputOption: "RAW",
                                   );
 
-                                  print("✅ Data written to sheet.");
-
+                                  print("✅ Synced all LayoutModels to Google Sheet and Docs.");
                                   authClient.close();
                                 } catch (e) {
-                                  print("❌ Error during Google Sign-In or Sheets API access: $e");
+                                  print("❌ Error during authentication or data sync: $e");
                                 }
                               }
 
-                              await authenticateAndCreateSheet();
+                              await authenticateAndSyncLayoutModels(Boxes.getLayouts());
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
                             buttonWidth: (sWidth/7).clamp(100, double.infinity),

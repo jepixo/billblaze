@@ -526,3 +526,15 @@ List<SheetDecoration> decodeItemDecorationList(List<dynamic> list) {
     throw Exception('Unsupported type');
   }).toList();
 }
+
+Map<String, SheetDecoration> decodeItemDecorationMap(Map<dynamic, dynamic> rawMap) {
+  return rawMap.map((key, item) {
+    if (item['type'] == 'ItemDecoration') {
+      return MapEntry(key, ItemDecoration.fromJson(item['value']));
+    } else if (item['type'] == 'SuperDecoration') {
+      return MapEntry(key, SuperDecoration.fromJson(item['value']));
+    }
+    throw Exception('Unsupported type: ${item['type']}');
+  });
+}
+

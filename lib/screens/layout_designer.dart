@@ -243,7 +243,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   PieMenuController opsFormatPieController = PieMenuController();
   List<SheetList> spreadSheetList = [];
   List<DocumentProperties> documentPropertiesList = [];
-  List<SheetDecoration> sheetDecorationList = [];
+  // List<SheetDecoration> sheetDecorationList = [];
+  Map<String, SheetDecoration> sheetDecorationMap ={};
   FocusNode marginAllFocus = FocusNode();
   FocusNode marginTopFocus = FocusNode();
   FocusNode marginBottomFocus = FocusNode();
@@ -257,7 +258,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<GlobalKey> globalKeys = [];
   List<Uint8List> _images = [];
   var filteredFonts = [];
-  var filteredDecorations =[];
+  Map<String, SheetDecoration> filteredDecorations ={};
   late LayoutModel? lm;
   GlobalKey spreadSheetKey = GlobalKey();
   Color dialogSelectColor = Color(0xFF000000);
@@ -337,35 +338,54 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     setState(() => isLoading = true);
 
     // ─── 2) Extract tiny JSON maps tagged with type ────────────────────────
-    final rawList = Boxes
-        .getDecorations()
-        .values
-        .map((box) {
-          // print(box.id);
-          if (box is ItemDecorationBox) {
-            return {'type': 'ItemDecoration', 'value': box.itemDecoration};
-          } else {
-            // SuperDecorationBox extends SheetDecoration, but carries only List<String>
-            return {
-              'type': 'SuperDecoration',
-              'value': (box as SuperDecorationBox).toSuperDecoration().toJson(),
-            };
-          }
-        })
-        .toList();
+    // final rawList = Boxes
+    //     .getDecorations()
+    //     .values
+    //     .map((box) {
+    //       // print(box.id);
+    //       if (box is ItemDecorationBox) {
+    //         return {'type': 'ItemDecoration', 'value': box.itemDecoration};
+    //       } else {
+    //         // SuperDecorationBox extends SheetDecoration, but carries only List<String>
+    //         return {
+    //           'type': 'SuperDecoration',
+    //           'value': (box as SuperDecorationBox).toSuperDecoration().toJson(),
+    //         };
+    //       }
+    //     })
+    //     .toList();
+    
+    final rawMap = Boxes.getDecorations().toMap().map((key, box) {
+      if (box is ItemDecorationBox) {
+        return MapEntry(key, {
+          'type': 'ItemDecoration',
+          'value': box.itemDecoration, // pass as-is
+        });
+      } else if (box is SuperDecorationBox) {
+        return MapEntry(key, {
+          'type': 'SuperDecoration',
+          'value': box.toSuperDecoration().toJson(), // needs toJson
+        });
+      } else {
+        return MapEntry(key, null); // skip unknown
+      }
+    })..removeWhere((k, v) => v == null);
+
 
     // ─── 3) Offload decoding entirely into an isolate ───────────────────────
-    final List<SheetDecoration> decoded =
-        await compute(decodeItemDecorationList, rawList);
+    // final List<SheetDecoration> decoded = await compute(decodeItemDecorationList, rawList);
+
+    sheetDecorationMap = await compute(decodeItemDecorationMap, rawMap);
 
     // ─── 4) Back on main isolate: assign your lists ─────────────────────────
-    sheetDecorationList = decoded
-    ..sort((a, b) {
-      int indexA = int.parse(a.id.split('/').last);
-      int indexB = int.parse(b.id.split('/').last);
-      return indexA.compareTo(indexB);
-    });
-    filteredDecorations = sheetDecorationList;
+    // sheetDecorationList = decoded
+    // ..sort((a, b) {
+    //   int indexA = int.parse(a.id.split('/').last);
+    //   int indexB = int.parse(b.id.split('/').last);
+    //   return indexA.compareTo(indexB);
+    // });
+    
+    filteredDecorations = sheetDecorationMap;
 
     // ─── 5) Your original Hive & layout logic ──────────────────────────────
     final box = Boxes.getLayouts();
@@ -792,7 +812,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 locked: locked,
                 ));
         lm?.save();
-        saveDecorations(sheetDecorationList);
+        saveDecorations(sheetDecorationMap);
       });
     }
 
@@ -991,7 +1011,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     List<SheetDecoration> list =[];
     for (var i = 0; i < itemDecorationList.length; i++) {
       var tmpinx = int.tryParse(itemDecorationList[i].substring(itemDecorationList[i].indexOf('/') + 1))??-155;
-      list.add(sheetDecorationList[tmpinx]);
+      list.add(sheetDecorationMap[itemDecorationList[i]]!);
     }
     return list;
   }
@@ -1269,9 +1289,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   }
 
   SuperDecoration newSuperDecoration() {
-    var newDecoId = 'dSPR-${Uuid().v4()}/${sheetDecorationList.length}';
+    var newDecoId = 'dSPR-${Uuid().v4()}';
     print(newDecoId);
-    sheetDecorationList.add(SuperDecoration(id: newDecoId));
+    sheetDecorationMap.addAll({newDecoId:SuperDecoration(id: newDecoId)});
     return SuperDecoration(id: newDecoId);
   }
 
@@ -1397,7 +1417,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           _findSheetListItem();
         },
         child: buildDecoratedContainer(
-            sheetDecorationList[ int.tryParse(sheetList.listDecoration.id.substring(sheetList.listDecoration.id.indexOf('/') + 1))??0] as SuperDecoration,
+            sheetDecorationMap[sheetList.listDecoration.id] as SuperDecoration,
             IntrinsicHeight(
               child: sheetList.direction == Axis.vertical
                   //For Columns in the pdf side of things
@@ -1413,9 +1433,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         
                           if (sheetTextItem is SheetText && !sheetTextItem.hide) {
                             // print('in buildSheetListWidget item is: $item');
-                            var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
+                            // var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
           
-                            SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
+                            SuperDecoration textDecor = sheetDecorationMap[sheetTextItem.textDecoration.id] as SuperDecoration;
       
                             Alignment containerAlignment = Alignment.topLeft;
         
@@ -1485,9 +1505,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         
                           if (item is SheetText && !item.hide) {
                             // print('in buildSheetListWidget item is: $item');
-                            var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-171;
+                            // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-171;
           
-                            SuperDecoration textDecor = sheetDecorationList[tmpinx] as SuperDecoration;
+                            SuperDecoration textDecor = sheetDecorationMap[item.textDecoration.id] as SuperDecoration;
       
                             return IgnorePointer(
                               key: ValueKey(item),
@@ -1520,13 +1540,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
 
   Widget _buildSheetTableWidget(SheetTable sheetTable){
-  var tblbginx = int.tryParse(sheetTable.sheetTablebgDecoration.id.substring(sheetTable.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
+  // var tblbginx = int.tryParse(sheetTable.sheetTablebgDecoration.id.substring(sheetTable.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
   var tableHeight = 0.0;
   var tableWidth = 0.0;
   sheetTable.rowData.forEach((element) => tableHeight += element.size,);
   sheetTable.columnData.forEach((element) => tableWidth += element.size,);
   return buildDecoratedContainer(
-    sheetDecorationList[tblbginx] as SuperDecoration,
+    sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration,
     SizedBox(
       width: sheetTable.expand? null:tableWidth,
       height:tableHeight,
@@ -1581,64 +1601,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   disable: true,
                 ),
               ),
-      ],
-    );
-  },
-),
-
-      // child: TableView.builder(
-      //   rowCount:(sheetTable).rowData.length,
-      //   columnCount: (sheetTable).columnData.length,
-      //   // pinnedRowCount: (sheetTable).pinnedRows,
-      //   horizontalDetails: ScrollableDetails.horizontal(physics: NeverScrollableScrollPhysics()),
-      //   verticalDetails: ScrollableDetails.vertical(physics: NeverScrollableScrollPhysics()),
-      //   columnBuilder: (int i) {
+              ],
+            );
+          },
+        ),
           
-      //     return TableSpan(
-      //       extent: FixedTableSpanExtent((sheetTable).columnData[i].size),
-      //       // padding: SpanPadding.all(3)
-      //       );
-      //   },
-      //   rowBuilder: (int i) {
+      )
           
-      //     return TableSpan(
-      //       extent: FixedTableSpanExtent((sheetTable).rowData[i].size),
-      //       );
-      //   }, 
-      //   cellBuilder: (BuildContext context, TableVicinity vicinity) {
-          
-          
-          
-      //     var rowIndex =  vicinity.row;
-      //     var columnIndex = vicinity.column;                      
-      //     return TableViewCell(
-      //       columnMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].colSpan,
-      //       columnMergeStart: vicinity.column,
-      //       rowMergeSpan: (sheetTable).cellData[rowIndex][columnIndex].rowSpan,
-      //       rowMergeStart: vicinity.row,
-      //       child: () {
-      //         if (sheetTable.cellData[rowIndex][columnIndex].sheetItem is SheetText){
-      //           return _buildSheetTableTextWidget(
-      //             sheetTable.cellData[rowIndex][columnIndex].sheetItem as SheetText,
-      //             disable:true
-      //             );
-      //         }
-      //         return const SizedBox();
-      //       }(),
-      //     );
-      //   }),
-          
-          )
-          
-          , false
+    , false
   );
                     
 }
 
   Widget _buildSheetTableTextWidget(SheetText sheetText, {bool disable = true}) {
-    var tmpinx = int.tryParse(sheetText.textDecoration.id.substring(sheetText.textDecoration.id.indexOf('/') + 1))??-111;
+    // var tmpinx = int.tryParse(sheetText.textDecoration.id.substring(sheetText.textDecoration.id.indexOf('/') + 1))??-111;
         
-    SuperDecoration decor = sheetDecorationList[tmpinx] as SuperDecoration;
+    SuperDecoration decor = sheetDecorationMap[sheetText.textDecoration.id] as SuperDecoration;
     
     return ClipRRect(
       borderRadius:BorderRadius.circular(0),
@@ -1963,13 +1941,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       });
     }
   }
-  // void animateToPage(int page) {
-  //   var duration = const Duration(milliseconds: 300);
-  //   var curve = Curves.easeIn;
-  //   pageViewIndicatorController.animateToPage(page,
-  //       duration: duration, curve: curve);
-  // }
-
+  
   List<SheetItem> _reassignSheetListTreeIndexPath(List<SheetItem> items, [IndexPath? parent]) {
     for (int i = 0; i < items.length; i++) {
       final item = items[i];
@@ -2232,10 +2204,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         if(whichPropertyTabIsClicked != 2){
           whichPropertyTabIsClicked = 2;
         }
-      var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
-      textDecorationNameController.text = sheetDecorationList[tmpinx].name;
+      // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
+      textDecorationNameController.text = sheetDecorationMap[item.textDecoration.id]!.name;
       decorationIndex = -1;
-      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+      updateSheetDecorationvariables(sheetDecorationMap[item.textDecoration.id] as SuperDecoration);
 
       // if (// inputBlockExpansionList.length != item.inputBlocks.length) {
       //   // inputBlockExpansionList = List.generate(item.inputBlocks.length, (e)=>false);
@@ -2262,10 +2234,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             // print('sheetDecorationVariables hello.');
             // print(sheetListItem.parentId);
       setState(() {
-        var tmpinx = int.tryParse(sheetListItem.listDecoration.id.substring(sheetListItem.listDecoration.id.indexOf('/') + 1))??-111;
+        // var tmpinx = int.tryParse(sheetListItem.listDecoration.id.substring(sheetListItem.listDecoration.id.indexOf('/') + 1))??-111;
         listDecorationNameController.text = sheetListItem.listDecoration.name;
         decorationIndex = -1;
-        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+        updateSheetDecorationvariables(sheetDecorationMap[sheetListItem.listDecoration.id] as SuperDecoration);
         // print('sheetDecorationVariables initiated.');
         // print(sheetListItem.listDecoration.id);
         // print(sheetListItem.listDecoration.itemDecorationList);
@@ -2300,37 +2272,37 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             return;
           }
         }
-        var tmpinx = int.tryParse(sheetTable!.sheetTableDecoration.id.substring(sheetTable!.sheetTableDecoration.id.indexOf('/') + 1))??-42;
-        var tmpbginx = int.tryParse(sheetTable!.sheetTablebgDecoration.id.substring(sheetTable!.sheetTablebgDecoration.id.indexOf('/') + 1))??-42;
-        var rwinx = int.tryParse(sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-42;
-        var clinx = int.tryParse(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-42;
+        // var tmpinx = int.tryParse(sheetTable!.sheetTableDecoration.id.substring(sheetTable!.sheetTableDecoration.id.indexOf('/') + 1))??-42;
+        // var tmpbginx = int.tryParse(sheetTable!.sheetTablebgDecoration.id.substring(sheetTable!.sheetTablebgDecoration.id.indexOf('/') + 1))??-42;
+        // var rwinx = int.tryParse(sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-42;
+        // var clinx = int.tryParse(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-42;
         sheetTableItem = sheetTable!;
         panelIndex.parentId = sheetTable!.id;
         panelIndex.parentIndexPath = sheetTable!.indexPath;
         whichPropertyTabIsClicked = 4;
         decorationIndex=-1;
         if(updateVariables) updateSheetTableVariables(sheetTable!);
-        tableDecorationNameController.text = sheetDecorationList[tmpinx].name;
+        tableDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTableDecoration.id]!.name;
         tableDecorationPath..clear()..add(sheetTable!.sheetTableDecoration.id);
-        tablebgDecorationNameController.text = sheetDecorationList[tmpbginx].name;
-        tablebgDecorationPath..clear()..add(sheetDecorationList[tmpbginx].id);
-        rowDecorationNameController.text = sheetDecorationList[rwinx].name; 
-        rowDecorationPath..clear()..add(sheetDecorationList[rwinx].id); 
-        columnDecorationNameController.text = sheetDecorationList[clinx].name;   
-        columnDecorationPath..clear()..add(sheetDecorationList[clinx].id);
+        tablebgDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]!.name;
+        tablebgDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]!.id);
+        rowDecorationNameController.text = sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.name; 
+        rowDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.id); 
+        columnDecorationNameController.text = sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.name;   
+        columnDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.id);
         
          switch (whichTableDecorationIsClicked) {
           case 0:
-            updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.sheetTableDecoration.id] as SuperDecoration);
             break;
           case 1:
-            updateSheetDecorationvariables(sheetDecorationList[tmpbginx] as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id] as SuperDecoration);
             break;
           case 2:
-            updateSheetDecorationvariables(sheetDecorationList[rwinx] as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]! as SuperDecoration);
             break;
           case 3:
-            updateSheetDecorationvariables(sheetDecorationList[clinx] as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]! as SuperDecoration);
             break;
           default:
         }
@@ -2353,7 +2325,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     setState((){
       
       sheetDecorationVariables = superDecoration.itemDecorationList.map((ex) {
-        var tmpinx = int.tryParse(ex.substring(ex.indexOf('/') + 1))??-42;
+        // var tmpinx = int.tryParse(ex.substring(ex.indexOf('/') + 1))??-42;
         return SheetDecorationVariables(
           id:ex,
           isExpanded: true,
@@ -2363,10 +2335,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           borderFocusNodes : List.generate( 3,(index) => FocusNode(),),
           borderRadiusFocusNodes : List.generate( 5,(index) => FocusNode(),),
           listBorderFocusNodes : List.generate( 5,(index) => FocusNode(),),
-          listShadowFocusNodes :sheetDecorationList[tmpinx].id =='yo'
+          listShadowFocusNodes :sheetDecorationMap[ex]!.id =='yo'
           ?[ List.generate( 5,(index) => FocusNode(),)]
-          : List.generate(sheetDecorationList[tmpinx] is ItemDecoration
-            ? (sheetDecorationList[tmpinx] as ItemDecoration).decoration.boxShadow?.length??1
+          : List.generate(sheetDecorationMap[ex] is ItemDecoration
+            ? (sheetDecorationMap[ex] as ItemDecoration).decoration.boxShadow?.length??1
             : 1,
           (i) {
             return List.generate( 5,(index) => FocusNode(),);
@@ -4415,7 +4387,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         child: ElevatedLayerButton(
                                                           onClick: () {
                                                             setState(() {
-                                                              var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
+                                                              // var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
                                                       
                                                               whichPropertyTabIsClicked = 2;
                                                               whichTextPropertyTabIsClicked = 2;
@@ -4425,8 +4397,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               isListDecorationLibraryToggled = false;
                                                               isListDecorationPropertiesToggled = false;
                                                               showDecorationLayers = false;
-                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                              textDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                              updateSheetDecorationvariables(sheetDecorationMap[textDecorationPath.last] as SuperDecoration);
+                                                              textDecorationNameController.text = (sheetDecorationMap[textDecorationPath.last] as SuperDecoration).name;
                                                       
                                                             });
                                                           },
@@ -4466,7 +4438,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   // isTapped: false,0
                                                   onClick: () {
                                                     setState(() {
-                                                      var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
+                                                      // var tmpinx = int.tryParse(textDecorationPath.last.substring(textDecorationPath.last.indexOf('/') + 1))??-33;
                                                        
                                                         
                                                       whichPropertyTabIsClicked = 2;
@@ -4480,8 +4452,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                      decorationIndex = -1;
                                                       isListDecorationLibraryToggled = false;
                                                       isListDecorationPropertiesToggled = false;
-                                                      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                      textDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                      updateSheetDecorationvariables(sheetDecorationMap[textDecorationPath.last] as SuperDecoration);
+                                                      textDecorationNameController.text = (sheetDecorationMap[textDecorationPath.last] as SuperDecoration).name;
                                                       
               
                                                     });
@@ -4613,15 +4585,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           onClick: () {
                                                             setState(() {
                                                               if (whichPropertyTabIsClicked != 3) {
-                                                                var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                // var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
                                                                 whichPropertyTabIsClicked = 3;
                                                                 _findSheetListItem();
                                                                 decorationIndex = -1;
                                                                 isListDecorationLibraryToggled = false;
                                                                 isListDecorationPropertiesToggled = false;
                                                                 showDecorationLayers = false;
-                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                                listDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                                updateSheetDecorationvariables(sheetDecorationMap[listDecorationPath.last] as SuperDecoration);
+                                                                listDecorationNameController.text = (sheetDecorationMap[listDecorationPath.last] as SuperDecoration).name;
                                                               
                                                               }
                                                               if (whichPropertyTabIsClicked == 3 && whichListPropertyTabIsClicked !=1) {
@@ -4673,15 +4645,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   onClick: () {
                                                     setState(() {
                                                       if (whichPropertyTabIsClicked != 3) {
-                                                        var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
+                                                        // var tmpinx = int.tryParse(listDecorationPath.last.substring(listDecorationPath.last.indexOf('/') + 1))??-33;
                                                         whichPropertyTabIsClicked = 3;
                                                         _findSheetListItem();
                                                         decorationIndex = -1;
                                                         isListDecorationLibraryToggled = false;
                                                         isListDecorationPropertiesToggled = false;
                                                         showDecorationLayers = false;
-                                                        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                        listDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                        updateSheetDecorationvariables(sheetDecorationMap[listDecorationPath.last] as SuperDecoration);
+                                                        listDecorationNameController.text = (sheetDecorationMap[listDecorationPath.last] as SuperDecoration).name;
                                                       
                                                       }
                                                     });
@@ -4772,15 +4744,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           onClick: () {
                                                             setState(() {
                                                               if (whichPropertyTabIsClicked != 4) {
-                                                                var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                // var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
                                                                 whichPropertyTabIsClicked = 4;
                                                                 // _findSheetListItem();
                                                                 decorationIndex = -1;
                                                                 isListDecorationLibraryToggled = false;
                                                                 isListDecorationPropertiesToggled = false;
                                                                 // showDecorationLayers = false;
-                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                                tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                                updateSheetDecorationvariables(sheetDecorationMap[tableDecorationPath.last] as SuperDecoration);
+                                                                tableDecorationNameController.text = (sheetDecorationMap[tableDecorationPath.last] as SuperDecoration).name;
                                                             
                                                               }
                                                               if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=0) {
@@ -4826,15 +4798,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           onClick: () {
                                                             setState(() {
                                                               if (whichPropertyTabIsClicked != 4) {
-                                                                var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                                // var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
                                                                 whichPropertyTabIsClicked = 4;
                                                                 // _findSheetListItem();
                                                                 decorationIndex = -1;
                                                                 isListDecorationLibraryToggled = false;
                                                                 isListDecorationPropertiesToggled = false;
                                                                 // showDecorationLayers = false;
-                                                                updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                                tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                                updateSheetDecorationvariables(sheetDecorationMap[tableDecorationPath.last] as SuperDecoration);
+                                                                tableDecorationNameController.text = (sheetDecorationMap[tableDecorationPath.last] as SuperDecoration).name;
                                                             
                                                               }
                                                               if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
@@ -4878,7 +4850,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         child: ElevatedLayerButton(
                                                           onClick: () {
                                                             setState(() {
-                                                            var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                            // var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
                                                             if (whichPropertyTabIsClicked != 4) {
                                                               whichPropertyTabIsClicked = 4;
                                                               // _findSheetListItem();
@@ -4886,8 +4858,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               isListDecorationLibraryToggled = false;
                                                               isListDecorationPropertiesToggled = false;
                                                               // showDecorationLayers = false;
-                                                              updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                              tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                              updateSheetDecorationvariables(sheetDecorationMap[tableDecorationPath.last] as SuperDecoration);
+                                                              tableDecorationNameController.text = (sheetDecorationMap[tableDecorationPath.last] as SuperDecoration).name;
                                                           
                                                             }
                                                             if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=2) {
@@ -4952,15 +4924,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   onClick: () {
                                                     setState(() {
                                                       if (whichPropertyTabIsClicked != 4) {
-                                                        var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
+                                                        // var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
                                                         whichPropertyTabIsClicked = 4;
                                                         // _findSheetListItem();
                                                         decorationIndex = -1;
                                                         isListDecorationLibraryToggled = false;
                                                         isListDecorationPropertiesToggled = false;
                                                         // showDecorationLayers = false;
-                                                        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
-                                                        tableDecorationNameController.text = (sheetDecorationList[tmpinx] as SuperDecoration).name;
+                                                        updateSheetDecorationvariables(sheetDecorationMap[tableDecorationPath.last] as SuperDecoration);
+                                                        tableDecorationNameController.text = (sheetDecorationMap[tableDecorationPath.last] as SuperDecoration).name;
                                                             
                                                       }
                                                     });
@@ -8706,18 +8678,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     lm?.labelList = labelList;
     lm?.save();
     print(lm?.pdf?.length);
-    saveDecorations(sheetDecorationList);
+    saveDecorations(sheetDecorationMap);
   }
 
-  void saveDecorations(List<SheetDecoration> sheetDecorationList) {
+  void saveDecorations(Map<String, SheetDecoration> sheetDecorationMap) {
     final decorationBox = Boxes.getDecorations();
 
-    for (var decoration in sheetDecorationList) {
-      if (decoration is SuperDecoration) {
-        decorationBox.put(decoration.id, decoration.toSuperDecorationBox());
+    for (var decoration in sheetDecorationMap.entries) {
+      if (decoration.value is SuperDecoration) {
+        decorationBox.put(decoration.key, (decoration.value as SuperDecoration).toSuperDecorationBox());
         // print('Saved SuperDecoration with ID: ${decoration.id}');
       } else {
-        decorationBox.put(decoration.id, (decoration as ItemDecoration).toItemDecorationBox());
+        decorationBox.put(decoration.key, (decoration.value as ItemDecoration).toItemDecorationBox());
         // print('Saved ItemDecoration with ID: ${decoration.id}');
       }
     }
@@ -8757,10 +8729,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         if (panelIndex.parentId.startsWith("TB")) {
           _findSheetTableItem(null);
         }
-        var tmpinx = int.tryParse(textItem.textDecoration.id.substring(textItem.textDecoration.id.indexOf('/') + 1))??-155;
+        // var tmpinx = int.tryParse(textItem.textDecoration.id.substring(textItem.textDecoration.id.indexOf('/') + 1))??-155;
         // print((sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList);
         decorationIndex =-1;
-        updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+        updateSheetDecorationvariables(sheetDecorationMap[textItem.textDecoration.id] as SuperDecoration);
         // print(sheetDecorationVariables.length);
         whichPropertyTabIsClicked = 2;
         // propertyTabController.jumpToPage(1);
@@ -14893,15 +14865,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             },
             onSwipeCancelled: (activity) {},
             cardBuilder: (context, index) {
-              var tblinx = int.tryParse(sheetTableItem.sheetTableDecoration.id.substring(sheetTableItem.sheetTableDecoration.id.indexOf('/') + 1))??-69;
-              var tblbginx = int.tryParse(sheetTableItem.sheetTablebgDecoration.id.substring(sheetTableItem.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
-              var rowinx = int.tryParse(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-33;
-              var colinx = int.tryParse(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-33;
+              // var tblinx = int.tryParse(sheetTableItem.sheetTableDecoration.id.substring(sheetTableItem.sheetTableDecoration.id.indexOf('/') + 1))??-69;
+              // var tblbginx = int.tryParse(sheetTableItem.sheetTablebgDecoration.id.substring(sheetTableItem.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
+              // var rowinx = int.tryParse(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-33;
+              // var colinx = int.tryParse(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-33;
               var width = (sWidth * wH2DividerPosition - 30);
-              var sheetTableDecoration = sheetDecorationList[tblinx];
-              var rowDecoration = sheetDecorationList[rowinx];
-              var columnDecoration = sheetDecorationList[colinx];
-              var sheetTablebgDecoration = sheetDecorationList[tblbginx];
+              var sheetTableDecoration = sheetDecorationMap[sheetTableItem.sheetTableDecoration.id];
+              // var rowDecoration = sheetDecorationMap[sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration];
+              // var columnDecoration = sheetDecorationMap[sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration];
+              var sheetTablebgDecoration = sheetDecorationMap[sheetTableItem.sheetTablebgDecoration.id];
               String selectedDecorationTitle = 
               whichTableDecorationIsClicked == 0
               ? ' Table'
@@ -18441,12 +18413,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<Widget> buildSuperDecorationSwiperInterface(List<String> itemDecorationPath, TextEditingController itemDecorationNameController){
     final width = (sWidth*wH2DividerPosition)-35;
     final isSizeBigForRow = (sWidth * wH2DividerPosition) > 200;
-    var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-4;
-    var itinx = 0;
+    var inx = itemDecorationPath.last;
+    var itinx = '';
     print(sheetTableVariables.rowLayerIndex);
     if(decorationIndex !=-1){
-      itinx = int.tryParse((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
-                                              
+      // itinx = int.tryParse((sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
+      itinx = (sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex];                              
     }
     
    // print('inxindex: '+inx.toString()+'||itinx: '+itinx.toString()+'\\decorationIndex: '+decorationIndex.toString());
@@ -18549,10 +18521,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               decorationIndex = -1;
                               isListDecorationLibraryToggled = false;
                               isListDecorationPropertiesToggled = false;
-                              updateSheetDecorationvariables(sheetDecorationList[inx] as SuperDecoration);
-                              itemDecorationNameController.text = (sheetDecorationList[inx] as SuperDecoration).name;
-                              print(sheetDecorationList[inx].id);    
-                              print((sheetDecorationList[inx] as SuperDecoration).itemDecorationList);
+                              updateSheetDecorationvariables(sheetDecorationMap[inx] as SuperDecoration);
+                              itemDecorationNameController.text = (sheetDecorationMap[inx] as SuperDecoration).name;
+                              print(sheetDecorationMap[inx]!.id);    
+                              print((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList);
                                
                             });
                           },
@@ -18659,19 +18631,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           depth: 1.7,
                           onClick: () {
                             setState(() {
-                              var itemDecoId = 'dITM-${ const Uuid().v4()}/'+sheetDecorationList.length.toString();
+                              var itemDecoId = 'dITM-${ const Uuid().v4()}';
                               var itemDecoration = ItemDecoration(id: itemDecoId);
-                              var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-2;
-
-                              if ((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length < 70) {
+                              // var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-2;
+                              var inx = itemDecorationPath.last;
+                              if ((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length < 70) {
                                 // Add the new decoration to the main list
-                                sheetDecorationList.add(itemDecoration);
+                                sheetDecorationMap.addAll({itemDecoration.id:itemDecoration});
                                 print('added to main list');
-                                (sheetDecorationList[inx] as SuperDecoration).itemDecorationList =  [...(sheetDecorationList[inx] as SuperDecoration).itemDecorationList, itemDecoId];
+                                (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList =  [...(sheetDecorationMap[inx] as SuperDecoration).itemDecorationList, itemDecoId];
                                 print('added to super list');
                                 // Get the reference to the SuperDecoration from the list
                                 
-                                updateSheetDecorationvariables(sheetDecorationList[inx] as  SuperDecoration);
+                                updateSheetDecorationvariables(sheetDecorationMap[inx] as  SuperDecoration);
                                 
                               } else {
                                 print('Guys come on, turn this into a super now');
@@ -18802,8 +18774,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         padding: const EdgeInsets.only(left:2.0),
                                         child: Text(
                                           '' + (decorationIndex == -1  
-                                          ? (sheetDecorationList[inx] as SuperDecoration) 
-                                          : sheetDecorationList[itinx]).runtimeType.toString()
+                                          ? (sheetDecorationMap[inx] as SuperDecoration) 
+                                          : sheetDecorationMap[itinx]).runtimeType.toString()
                                           .replaceAll(RegExp(r'Decoration'), '')
                                           .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()), maxLines:1,
                                             style: GoogleFonts.rockSalt(
@@ -18866,25 +18838,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           onChanged:
                                               (value) {
                                             setState(() {
-                                            var currentItemDecoration = sheetDecorationList[inx];
+                                            var currentItemDecoration = sheetDecorationMap[inx];
                                             // itemDecorationNameController.text = value;
                                             if (decorationIndex == -1) {
                                               if (currentItemDecoration is SuperDecoration) {
                                                 // Update the decoration and the name in the list item
                                                 var updatedDecoration = currentItemDecoration.copyWith(name: value);
-                                                sheetDecorationList[inx] = updatedDecoration;
+                                                sheetDecorationMap[inx] = updatedDecoration;
                                                   
                                               }
                                             } else {
-                                              currentItemDecoration = sheetDecorationList[itinx];
+                                              currentItemDecoration = sheetDecorationMap[itinx];
 
                                               try {
                                                 if (currentItemDecoration is SuperDecoration) {
                                                   currentItemDecoration= currentItemDecoration.copyWith(name: value);
-                                                  sheetDecorationList[itinx] = currentItemDecoration;
+                                                  sheetDecorationMap[itinx] = currentItemDecoration;
                                                 } else if (currentItemDecoration is ItemDecoration) {
                                                   currentItemDecoration = currentItemDecoration.copyWith(name: value);
-                                                  sheetDecorationList[itinx] = currentItemDecoration;
+                                                  sheetDecorationMap[itinx] = currentItemDecoration;
                                                 }
                                               } on Exception catch (e) {
                                                 print('Error updating decoration: $e');
@@ -18918,11 +18890,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 children: [
                                                   TextSpan(text: 'id: '),
                                                   TextSpan(
-                                                    text:sheetDecorationList[inx].id =='yo'
+                                                    text:sheetDecorationMap[inx]!.id =='yo'
                                                     ?''
                                                     : decorationIndex == -1 
-                                                    ? (sheetDecorationList[inx] as SuperDecoration).id 
-                                                    : (sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex],
+                                                    ? (sheetDecorationMap[inx] as SuperDecoration).id 
+                                                    : (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex],
                                                     style: GoogleFonts.lexend(color: defaultPalette.extras[0], fontSize: 6, fontWeight: FontWeight.normal),
                                                   ),
                                                 ])),
@@ -18942,16 +18914,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   padding: EdgeInsets.only(
                                       right: 3),
                                   child:buildDecoratedContainer(
-                                          decorationIndex ==
-                                                  -1
-                                              ? (sheetDecorationList[inx] as SuperDecoration)
+                                          decorationIndex == -1
+                                              ? (sheetDecorationMap[inx] as SuperDecoration)
                                               : SuperDecoration(
                                                   id: 'yo',
                                                   itemDecorationList: [
-                                                      ...(sheetDecorationList[inx] as SuperDecoration)
-                                                          .itemDecorationList
-                                                          .sublist(0, (decorationIndex + 1).clamp(0, (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length))
-                                                    ]),
+                                                    ...(sheetDecorationMap[inx] as SuperDecoration)
+                                                        .itemDecorationList
+                                                        .sublist(0, (decorationIndex + 1).clamp(0, (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length))
+                                                ]),
                                           SizedBox(
                                               width: 30,
                                               height: 30),
@@ -19023,7 +18994,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 // print('Parent decoration ID: ${sheetListItem.listDecoration.id}');
                                       
                                                 // Step 1: Get the parent decoration safely
-                                                var parentItemDecoration = sheetDecorationList[inx];
+                                                var parentItemDecoration = sheetDecorationMap[inx];
                                       
                                                 if (parentItemDecoration == null) {
                                                   print('Error: Could not find parent decoration.');
@@ -19037,7 +19008,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 }
                                       
                                                 // Step 2: Create a new decoration based on the current one
-                                                var currentItemDecoration = sheetDecorationList[itinx];
+                                                var currentItemDecoration = sheetDecorationMap[itinx];
                                       
                                                 if (currentItemDecoration == null) {
                                                   print(
@@ -19048,10 +19019,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 // Step 3: Create the new decoration
                                                 SheetDecoration newDecoration;
                                                 if (currentItemDecoration is ItemDecoration) {
-                                                  newDecoration = currentItemDecoration.copyWith(id:'dITM-$decoId/'+sheetDecorationList.length.toString());
+                                                  newDecoration = currentItemDecoration.copyWith(id:'dITM-$decoId');
                                                 } else if (currentItemDecoration is SuperDecoration) {
                                                   newDecoration = currentItemDecoration.copyWith(
-                                                    id: 'dSPR-$decoId/'+sheetDecorationList.length.toString(),
+                                                    id: 'dSPR-$decoId',
                                                     itemDecorationList: List<String>.from(currentItemDecoration.itemDecorationList),
                                                   );
                                                 } else {
@@ -19060,7 +19031,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 }
                                       
                                                 // Step 4: Add the new decoration to the list
-                                                sheetDecorationList.add(newDecoration);
+                                                sheetDecorationMap.addAll({newDecoration.id:newDecoration});
                                                 // print('New decoration added with ID: $decoId');
                                       
                                                 // Step 5: Update the parent decoration with the new ID
@@ -19074,16 +19045,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   itemDecorationList: updatedItemDecorationList,
                                                 );
                                       
-                                                // Step 6: Update the list item and the sheet decoration list
-                                                int parentIndex = sheetDecorationList.indexWhere((decoration) =>
-                                                    decoration.id == parentItemDecoration.id);
                                       
-                                                if (parentIndex != -1) {
-                                                  sheetDecorationList[parentIndex] = updatedParentDecoration;
-                                                  print('Updated parent decoration with new ID list.');
-                                                } else {
-                                                  print('Error: Could not update parent decoration.');
-                                                }
+                                                  sheetDecorationMap[parentItemDecoration.id] = updatedParentDecoration;
                                             }
                                       
                                       
@@ -19114,10 +19077,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             roundButton(() {
                                               if (decorationIndex !=
                                                         -1) {
-                                                if ((sheetDecorationList[inx] as SuperDecoration)
+                                                if ((sheetDecorationMap[inx] as SuperDecoration)
                                                         .itemDecorationList
                                                         .length >
-                                                    1) {(sheetDecorationList[inx] as SuperDecoration)
+                                                    1) {(sheetDecorationMap[inx] as SuperDecoration)
                                                       .itemDecorationList
                                                       .removeAt(
                                                           decorationIndex);
@@ -19154,8 +19117,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
                                     children: itemDecorationPath.map((ex) {
-                                      var tmpinx = int.tryParse(itemDecorationPath[(itemDecorationPath.indexOf(ex)-1).clamp(0, double.infinity).ceil()].substring(itemDecorationPath[(itemDecorationPath.indexOf(ex)-1).clamp(0, double.infinity).ceil()].indexOf('/') + 1))??-55;
-                                      
+                                      // var tmpinx = int.tryParse(itemDecorationPath[(itemDecorationPath.indexOf(ex)-1).clamp(0, double.infinity).ceil()].substring(itemDecorationPath[(itemDecorationPath.indexOf(ex)-1).clamp(0, double.infinity).ceil()].indexOf('/') + 1))??-55;
+                                      var tmpinx = itemDecorationPath[(itemDecorationPath.indexOf(ex)-1).clamp(0, double.infinity).ceil()];
                                       return 
                                         Wrap(
                                           children: [
@@ -19171,8 +19134,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       itemDecorationPath.removeRange(itemDecorationPath.indexOf(ex) + 1, itemDecorationPath.length);
                                                       decorationIndex =-1;
                                                       var tmpinx = int.tryParse(ex.substring(ex.indexOf('/') + 1))??-12;
-                                                      itemDecorationNameController.text = sheetDecorationList[tmpinx].name;
-                                                      updateSheetDecorationvariables(sheetDecorationList[tmpinx] as SuperDecoration);
+                                                      itemDecorationNameController.text = sheetDecorationMap[tmpinx]!.name;
+                                                      updateSheetDecorationvariables(sheetDecorationMap[tmpinx] as SuperDecoration);
                                                     });
                                                   },
                                                 child:itemDecorationPath.indexOf(ex)==0
@@ -19182,7 +19145,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,),
                                                   child: Text(
-                                                    (sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList.indexOf(ex).toString(),
+                                                    (sheetDecorationMap[tmpinx] as SuperDecoration).itemDecorationList.indexOf(ex).toString(),
                                                     style: GoogleFonts.lexend(
                                                     fontSize: 12,
                                                     letterSpacing: -1,
@@ -19253,7 +19216,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             SheetDecoration currentItemDecoration = SuperDecoration(id: 'yo', name: 'name');
                             
                             if (decorationIndex != -1) {
-                            currentItemDecoration = sheetDecorationList[itinx];
+                            currentItemDecoration = sheetDecorationMap[itinx]!;
                             }
                             return SingleChildScrollView(
                               controller:!isListDecorationLibraryToggled? controller:null,
@@ -19283,7 +19246,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           (p0) {
                                         // print(p0);
                                         setState(() {
-                                        var selectedItemDecoration =sheetDecorationList[itinx] as ItemDecoration;
+                                        var selectedItemDecoration =sheetDecorationMap[itinx] as ItemDecoration;
                     
                                         // Update the decoration with new pinned properties
                                         selectedItemDecoration = selectedItemDecoration.copyWith(
@@ -19357,10 +19320,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         );
                     
                                         // ✅ Update the main decoration list with the modified item decoration
-                                        int index = sheetDecorationList.indexWhere((decoration) => decoration.id == selectedItemDecoration.id);
-                                        if (index != -1) {
-                                          sheetDecorationList[index] = selectedItemDecoration;
-                                        }
+                                        // int index = sheetDecorationMap.indexWhere((decoration) => decoration.id == selectedItemDecoration.id);
+                                        
+                                        sheetDecorationMap[selectedItemDecoration.id] = selectedItemDecoration;
+                                        
                     
                                         // ✅ Update the decoration in the sheetListItem
                                           
@@ -19687,19 +19650,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   //ALL THE EDITOR UIs
                                   if (decorationIndex != -1 && !isListDecorationLibraryToggled && itinx !=-1)
-                                    if (sheetDecorationList[itinx]
+                                    if (sheetDecorationMap[itinx]
                                       is ItemDecoration)
                                     ...buildItemDecorationEditor(context,
-                                        (sheetDecorationList[itinx]
+                                        (sheetDecorationMap[itinx]
                                             as ItemDecoration), shadowLayerIndex: sheetDecorationVariables[decorationIndex].listShadowLayerSelectedIndex),
                                   //If selected layer is superdecoration
                                   if (decorationIndex != -1 && !isListDecorationLibraryToggled && itinx !=-1)
-                                    if (sheetDecorationList[itinx]
+                                    if (sheetDecorationMap[itinx]
                                       is SuperDecoration)
-                                        ...buildSuperDecorationEditor(context,sheetDecorationList[itinx]
+                                        ...buildSuperDecorationEditor(context,sheetDecorationMap[itinx]
                                             as SuperDecoration),
                                   if(decorationIndex == -1 && !isListDecorationLibraryToggled )
-                                  ...buildSuperDecorationEditor(context,sheetDecorationList[inx] as SuperDecoration),
+                                  ...buildSuperDecorationEditor(context,sheetDecorationMap[inx] as SuperDecoration),
                                             
                                   //THE LIBRARY FOR DECORATION          
                                   if(isListDecorationLibraryToggled)
@@ -19716,11 +19679,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 message: 'addNewSuperDecoration.',
                                                 child: roundButton(
                                                   () { 
-                                                    var currentItemDecoration = (sheetDecorationList[inx] as SuperDecoration); 
+                                                    var currentItemDecoration = (sheetDecorationMap[inx] as SuperDecoration); 
                                                       
                                                   setState(() {
                                                     if (currentItemDecoration.itemDecorationList.length < 70) {
-                                                      (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.add(newSuperDecoration().id);
+                                                      (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.add(newSuperDecoration().id);
                                                     } else {
                                                       print('Guys come on, turn this into a super now');
                                                     }
@@ -19762,7 +19725,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             padding: EdgeInsets.only(right:7),
                                             itemCount: filteredDecorations.length,
                                             itemBuilder: (context, index) {
-                                              final e = filteredDecorations[index]; // 'e' now comes from filteredDecorations[index]
+                                              final e = filteredDecorations[filteredDecorations.keys.toList()[index]]; // 'e' now comes from filteredDecorations[index]
                                           
                                               // You need to correctly determine 'inx' if it's used to access sheetDecorationList
                                               // If 'inx' is meant to be the index within 'filteredDecorations', then it's 'index'.
@@ -19776,7 +19739,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               // However, looking at your 'add' button, 'inx' is `sheetDecorationList[inx]`, which implies `inx` is a global index.
                                               // You must ensure `inx` is correctly determined. If `inx` is a state variable representing the currently selected SuperDecoration's index,
                                               // you would use that.
-                                               // Assuming 'inx' is a state variable for the active SuperDecoration's index.
+                                              // Assuming 'inx' is a state variable for the active SuperDecoration's index.
                                           
                                               return Container(
                                                 width: width,
@@ -19807,7 +19770,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             height: 75,
                                                             width: 55,
                                                             child: buildDecoratedContainer(
-                                                              !(e is ItemDecoration) ? e : SuperDecoration(id: 'yo', itemDecorationList: [e.id]),
+                                                              e! is! ItemDecoration ? e as SuperDecoration : SuperDecoration(id: 'yo', itemDecorationList: [e.id]),
                                                               // The SizedBox here seems misplaced as a parameter to buildDecoratedContainer
                                                               // It should likely be an additional widget in the row/column, or part of the buildDecoratedContainer implementation.
                                                               // Assuming it's part of the `buildDecoratedContainer`'s arguments, but it looks like a typo.
@@ -19896,7 +19859,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           message: 'add this as a layer to the current SuperDecoration.',
                                                           child: roundButton(
                                                             () {
-                                                              var currentItemDecoration = (sheetDecorationList[inx] as SuperDecoration);
+                                                              var currentItemDecoration = (sheetDecorationMap[inx] as SuperDecoration);
                                           
                                                               if (currentItemDecoration.itemDecorationList.length < 70) {
                                                                 
@@ -19906,8 +19869,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   var updatedDecoration = currentItemDecoration.copyWith(
                                                                     itemDecorationList: updatedList,
                                                                   );
-                                                                  sheetDecorationList[inx] = updatedDecoration;
-                                                                  updateSheetDecorationvariables(sheetDecorationList[inx] as SuperDecoration); // Pass the original, or the updated?
+                                                                  sheetDecorationMap[inx] = updatedDecoration;
+                                                                  updateSheetDecorationvariables(sheetDecorationMap[inx] as SuperDecoration); // Pass the original, or the updated?
                                                                   print('New decoration added');
                                                                   print(updatedDecoration.itemDecorationList);
                                                                 
@@ -19936,10 +19899,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             message: 'switch the current SuperDecoration with this one.',
                                                             child: roundButton(
                                                               () {
-                                                                var tmpinx = int.tryParse(e.id.substring(e.id.indexOf('/') + 1)) ?? -33;
+                                                                var tmpinx = e.id;
                                                                 switch (whichPropertyTabIsClicked) {
                                                                   case 2:
-                                                                    item.textDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                    item.textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                     updateSheetDecorationvariables(e);
                                                                     decorationIndex = -1;
                                                                     itemDecorationPath
@@ -19947,7 +19910,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       ..add(e.id);
                                                                     break;
                                                                   case 3:
-                                                                    sheetListItem.listDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                    sheetListItem.listDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                     updateSheetDecorationvariables(e);
                                                                     decorationIndex = -1;
                                                                     itemDecorationPath
@@ -19968,11 +19931,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           var cell = row[j];
                                                                           if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.columnData[j].columnDecoration) {
                                                                             print('cell');
-                                                                            sheetTableItem.columnData[j].columnDecoration = sheetDecorationList[tmpinx].id;
+                                                                            sheetTableItem.columnData[j].columnDecoration = sheetDecorationMap[tmpinx]!.id;
                                                                           }
                                                                           if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.rowData[i].rowDecoration) {
                                                                             print('bell');
-                                                                            sheetTableItem.rowData[i].rowDecoration = sheetDecorationList[tmpinx].id;
+                                                                            sheetTableItem.rowData[i].rowDecoration = sheetDecorationMap[tmpinx]!.id;
                                                                           }
                                                                           print('sell');
                                                                           print((cell.sheetItem as SheetText).textDecoration.id);
@@ -19982,13 +19945,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                               ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id)) {
                                                                             print(cell.sheetItem);
                                                                             print('dell');
-                                                                            (cell.sheetItem as SheetText).textDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                            (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                           }
                                                                         }
                                                                       }
-                                                                      sheetTableItem.sheetTableDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                      sheetTableItem.sheetTableDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                     } else if (whichTableDecorationIsClicked == 1) {
-                                                                      sheetTableItem.sheetTablebgDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                      sheetTableItem.sheetTablebgDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                       updateSheetDecorationvariables(e);
                                                                       decorationIndex = -1;
                                                                       itemDecorationPath
@@ -20005,10 +19968,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                             ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id ||
                                                                                 (cell.sheetItem as SheetText).textDecoration.id ==
                                                                                     sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration)) {
-                                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                         }
                                                                       }
-                                                                      sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration = sheetDecorationList[tmpinx].id;
+                                                                      sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration = sheetDecorationMap[tmpinx]!.id;
                                                                     } else if (whichTableDecorationIsClicked == 3) {
                                                                       updateSheetDecorationvariables(e);
                                                                       decorationIndex = -1;
@@ -20023,10 +19986,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                                 (cell.sheetItem as SheetText).textDecoration.id ==
                                                                                     sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration)) {
                                                                           print(cell.sheetItem);
-                                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationList[tmpinx] as SuperDecoration;
+                                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
                                                                         }
                                                                       }
-                                                                      sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration = sheetDecorationList[tmpinx].id;
+                                                                      sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration = sheetDecorationMap[tmpinx]!.id;
                                                                     }
                                                                     break;
                                                                 }
@@ -20043,9 +20006,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             message: '''add it's child layers to the current SuperDecoration.''',
                                                             child: roundButton(
                                                               () {
-                                                                if ((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length < 70) {
-                                                                  if ((sheetDecorationList[inx]) is SuperDecoration) {
-                                                                    (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.addAll(e.itemDecorationList);
+                                                                if ((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length < 70) {
+                                                                  if ((sheetDecorationMap[inx]) is SuperDecoration) {
+                                                                    (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.addAll(e.itemDecorationList);
                                                                   } else {
                                                                     print('Error: Decoration is not a SuperDecoration');
                                                                   }
@@ -20114,10 +20077,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       onChanged: (query) {
                         setState(() {
                           // Filter the list of SheetDecoration by their names
-                          filteredDecorations = sheetDecorationList
-                              .where((decoration) =>
-                                  decoration.name.toLowerCase().contains(query.toLowerCase()))
-                              .toList();
+                          filteredDecorations = Map.fromEntries(
+                            sheetDecorationMap.entries.where(
+                              (entry) => entry.value.name.toLowerCase().contains(query.toLowerCase()),
+                            ),
+                          );
                             // Debugging output
                         });
                       },
@@ -20205,13 +20169,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     durationMS: 500,
                     scrollSpeed: 1,
                     builder: (context, controller, physics) {
-                      List<MapEntry<int, SheetDecoration>> decorationEntries = (sheetDecorationList[inx] as SuperDecoration).itemDecorationList
+                      List<MapEntry<int, SheetDecoration>> decorationEntries = (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList
                       .asMap().entries.toList().reversed.map((entry) {
                         // Get the actual decoration using the ID
-                        var tmpinx = int.tryParse(entry.value.substring(entry.value.indexOf('/') + 1))??-155;
+                        var tmpinx =entry.value;
     
-                        final decoration = sheetDecorationList[tmpinx];
-                        return MapEntry(entry.key, decoration);
+                        final decoration = sheetDecorationMap[tmpinx];
+                        return MapEntry(entry.key, decoration!);
                       }).toList();
                       return ScrollbarUltima.semicircle(
                         alwaysShowThumb: true,
@@ -20229,7 +20193,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           child: ReorderableListView(
                             onReorder: (oldIndex, newIndex) {
                               setState(() {
-                                final itemList = (sheetDecorationList[inx] as SuperDecoration)
+                                final itemList = (sheetDecorationMap[inx] as SuperDecoration)
                                     .itemDecorationList.reversed.toList();
 
                                 final elem = itemList
@@ -20266,10 +20230,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ' ' +
                                         newIndex.toString());
                                   }
-                                  (sheetDecorationList[inx] as SuperDecoration)
+                                  (sheetDecorationMap[inx] as SuperDecoration)
                                     .itemDecorationList = itemList.reversed.toList();
                                   
-                                updateSheetDecorationvariables((sheetDecorationList[inx] as SuperDecoration));
+                                updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
                               });
                             },
                             proxyDecorator:
@@ -20282,7 +20246,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             children: [
                               for (final entry in decorationEntries)
                                 ReorderableDragStartListener(
-                                  index: (((sheetDecorationList[inx] as SuperDecoration)
+                                  index: (((sheetDecorationMap[inx] as SuperDecoration)
                                           .itemDecorationList
                                           .length -
                                       1) -
@@ -20294,9 +20258,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       AnimatedContainer(
                                         duration: Duration(
                                             milliseconds: (500 +
-                                                    (300 /(((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length == 1 
+                                                    (300 /(((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length == 1 
                                                     ? 2 
-                                                    : (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length) - 1)) * entry.key)
+                                                    : (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length) - 1)) * entry.key)
                                                 .round()),
                                         curve: Curves.easeIn,
                                         height: (((sHeight * 0.9) - 250) / (decorationIndex == entry.key ? 8 : 10.3))
@@ -20341,7 +20305,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         duration: Duration(
                                             milliseconds: (500 +
                                                     (300 /
-                                                            (((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length) -
+                                                            (((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length) -
                                                                 1)) *
                                                         entry.key)
                                                 .round()),
@@ -20429,7 +20393,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   SuperDecoration(
                                                       id: 'id',
                                                       itemDecorationList: [
-                                                        (sheetDecorationList[inx] as SuperDecoration)
+                                                        (sheetDecorationMap[inx] as SuperDecoration)
                                                             .itemDecorationList[entry.key]
                                                       ]),
                                                   SizedBox(
@@ -20470,10 +20434,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     if (decorationIndex !=entry.key) {
                                                         decorationIndex =entry.key;
                                                         print(decorationIndex);
-                                                        itinx = int.tryParse((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
+                                                        itinx = (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex];
        
-                                                        var itemDecoration = sheetDecorationList[itinx];
-                                                        itemDecorationNameController .text =itemDecoration.name;
+                                                        var itemDecoration = sheetDecorationMap[itinx];
+                                                        itemDecorationNameController .text =itemDecoration!.name;
                                                         isListDecorationLibraryToggled =false;
                                                         print(decorationIndex);
                                                         // updateListDecorationVariables(sIndex: -1);
@@ -20486,7 +20450,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         } else{
                                                           print(decorationIndex);
                                                           // _findSheetListItem();
-                                                          updateSheetDecorationvariables((sheetDecorationList[inx] as SuperDecoration));
+                                                          updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
                                                           
                                                           decorationIndex = entry.key;
                                                           }
@@ -20495,8 +20459,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 },
                                                 onDoubleTap: () {
                                                   setState(() {
-                                                    var tmpinx = int.tryParse((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[entry.key].substring((sheetDecorationList[inx] as SuperDecoration).itemDecorationList[entry.key].indexOf('/') + 1))??-88;
-                                                    var itemDecoration = sheetDecorationList[tmpinx];
+                                                    var tmpinx = (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[entry.key];
+                                                    var itemDecoration = sheetDecorationMap[tmpinx];
                                                     if (itemDecoration is SuperDecoration) {    
                                                     listDecorationNameController.text = itemDecoration.name;
                                                     isListDecorationLibraryToggled = false;
@@ -20524,7 +20488,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         duration: Duration(
                                             milliseconds: (500 +
                                                     (300 /
-                                                            (((sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationList[inx] as SuperDecoration).itemDecorationList.length) -
+                                                            (((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length == 1 ? 2 : (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length) -
                                                                 1)) *
                                                         entry.key)
                                                 .round()),
@@ -20551,16 +20515,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   if (decorationIndex !=
                                                       -1) {
                                                     setState(() {
-                                                      if ((sheetDecorationList[inx] as SuperDecoration)
+                                                      if ((sheetDecorationMap[inx] as SuperDecoration)
                                                               .itemDecorationList
                                                               .length >
                                                           0) {
-                                                        (sheetDecorationList[inx] as SuperDecoration)
+                                                        (sheetDecorationMap[inx] as SuperDecoration)
                                                             .itemDecorationList
                                                             .removeAt(
                                                                 decorationIndex);
                                                         decorationIndex =-1;
-                                                        updateSheetDecorationvariables((sheetDecorationList[inx] as SuperDecoration));
+                                                        updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
                                                       }
 
                                                     });
@@ -20658,57 +20622,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           ),
         ),
       ),
-      //dropdown to switch betwee table row and column
-      if(false)
-        Positioned(
-          top:75,
-          left:42,
-          child: ClipRRect(
-            borderRadius:BorderRadius.circular(5),
-            child: Material(
-                    color: defaultPalette.transparent,
-                    child: InkWell(
-                      hoverColor: defaultPalette.primary,
-                      highlightColor: defaultPalette.primary,
-                      splashColor: defaultPalette.primary,
-                      onTap:(){
-                        setState(() {
-                          isTableDecorationModeDropped= !isTableDecorationModeDropped;
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: Durations.medium4,
-                        height:isTableDecorationModeDropped? 110:26,
-                        width: width-90,
-                        decoration:BoxDecoration(
-                          color: isTableDecorationModeDropped? defaultPalette.primary: defaultPalette.transparent,
-                          border: isTableDecorationModeDropped? Border.all():null,
-                          borderRadius:BorderRadius.circular(5),
-                        ),
-                        child: Stack(children: [
-                          Positioned(
-                            top:5,
-                            width: width-90,
-                            child: Row(
-                              children: [
-                                // Expanded(child: Text(selectedDecorationTitle,style: GoogleFonts.rockSalt())),
-                                Icon(TablerIcons.transfer_vertical, size:18),
-                                SizedBox(width:2)
-                              ],
-                            )),
-                          // switchTableDecorationTile(0, ' Table', 30),
-                          // switchTableDecorationTile(1, ' Tablebg', 50),
-                          // switchTableDecorationTile(2, ' Row '+(sheetTableVariables.rowLayerIndex+1).toString(), 70),
-                          // switchTableDecorationTile(3, ' Column '+ numberToColumnLabel(sheetTableVariables.columnLayerIndex+1), 90),
-                          
-                          // Text(sheetTableItem.id.startsWith('TB')? 'Table':'Row')
-                        ],)
-                      ),
-                    ),
-                  ),
-          )
-        ),
-                            
+                           
       ];
   }
 
@@ -20721,8 +20635,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
     var index = -1;
     return superDecoration.itemDecorationList.map((e) {
-      var tmpinx = int.tryParse(e.substring(e.indexOf('/') + 1))??-33;
-      var itemDecoration = sheetDecorationList[tmpinx];
+      var tmpinx = e;
+      var itemDecoration = sheetDecorationMap[tmpinx];
       index++;
       // print('yo: '+index.toString()+' '+ sheetDecorationVariables.length.toString());
       if (itemDecoration is ItemDecoration) {
@@ -20784,7 +20698,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         return GestureDetector(
               onTap: () {
                 setState(() {
-                  var itemDecoration =  sheetDecorationList[tmpinx];
+                  var itemDecoration =  sheetDecorationMap[tmpinx];
                   if (itemDecoration is SuperDecoration) {    
                   listDecorationNameController.text = itemDecoration.name;
                   textDecorationNameController.text = itemDecoration.name;
@@ -20830,7 +20744,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       ),              
                     ),
                     Expanded(
-                      child: Text(itemDecoration.name +' ',
+                      child: Text(itemDecoration!.name +' ',
                       textAlign: TextAlign.end,
                       style: GoogleFonts.lexend(
                         fontSize: 20,
@@ -20984,9 +20898,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     String pinnedKey =
         isBorderRadius ? 'decoration' : (isMargin ? 'margin' : 'padding');
     String subKey = isBorderRadius ? 'borderRadius' : '';
-    var tmpinx = int.tryParse(sheetDecorationVariables[index].id.substring(sheetDecorationVariables[index].id.indexOf('/') + 1))??-155;
-     
-    ItemDecoration currentItemDecoration = sheetDecorationList[tmpinx] as ItemDecoration;
+    var tmpinx = sheetDecorationVariables[index].id;
+    ItemDecoration currentItemDecoration = sheetDecorationMap[tmpinx] as ItemDecoration;
     final pinnedMap = currentItemDecoration
         .pinned[pinnedKey];
     final topIsPinned =
@@ -21066,7 +20979,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               currentItemDecoration.copyWith(
                   padding: inset);
         }
-        sheetDecorationList[tmpinx] = currentItemDecoration;
+        sheetDecorationMap[tmpinx] = currentItemDecoration;
       });
     }
 
@@ -21118,7 +21031,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               currentItemDecoration.copyWith(
                   padding: inset);
         }
-        sheetDecorationList[tmpinx] = currentItemDecoration;
+        sheetDecorationMap[tmpinx] = currentItemDecoration;
       });
     }
 
@@ -21323,7 +21236,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   false;
                             }
                           }
-                          sheetDecorationList[tmpinx] = currentItemDecoration;
+                          sheetDecorationMap[tmpinx] = currentItemDecoration;
 
 
                         });
@@ -22090,9 +22003,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
   ) {
     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
-    var tmpinx = int.tryParse(sheetDecorationVariables[index].id.substring(sheetDecorationVariables[index].id.indexOf('/') + 1))??-155;
+    var tmpinx = sheetDecorationVariables[index].id;
     ItemDecoration currentItemDecoration = itemDecoration ?? 
-        sheetDecorationList[tmpinx] as ItemDecoration;
+        sheetDecorationMap[tmpinx] as ItemDecoration;
     Border currentBorder =
         (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
     final borderRadiusControllers = [
@@ -22278,7 +22191,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         );
 
                         // Update the decoration in the sheetDecorationList
-                        sheetDecorationList[tmpinx] = currentItemDecoration;
+                        sheetDecorationMap[tmpinx] = currentItemDecoration;
  
                       });
 
@@ -22372,7 +22285,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             );
 
                             // Update the decoration in the sheetDecorationList
-                            sheetDecorationList[tmpinx] = currentItemDecoration;
+                            sheetDecorationMap[tmpinx] = currentItemDecoration;
  
                           });
                         },
@@ -22537,7 +22450,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         decoration: currentItemDecoration
                                             .decoration
                                             .copyWith(color: hexToColor(value)));
-                              sheetDecorationList[tmpinx] = currentItemDecoration;
+                              sheetDecorationMap[tmpinx] = currentItemDecoration;
                               });
                             },
                             textAlignVertical: TextAlignVertical.top,
@@ -22604,7 +22517,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             .decoration
                                             .copyWith(color: value));
                                 
-                                  sheetDecorationList[tmpinx] = currentItemDecoration;
+                                  sheetDecorationMap[tmpinx] = currentItemDecoration;
                                 
                               });
                               },);
@@ -22706,7 +22619,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             .color ??defaultPalette.transparent).alpha)));
                                            
                                   setState(() { 
-                                  sheetDecorationList[tmpinx] = currentItemDecoration;
+                                  sheetDecorationMap[tmpinx] = currentItemDecoration;
                                   });
                                 },
                               ),
@@ -22731,7 +22644,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     .decoration.color ??defaultPalette.transparent).alpha)));
                                       
                                       setState(() {
-                                      sheetDecorationList[tmpinx] = currentItemDecoration;
+                                      sheetDecorationMap[tmpinx] = currentItemDecoration;
                                       });
                                     },
                                   ),
@@ -22752,7 +22665,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 defaultPalette.transparent).withAlpha(value)));
                           
                           setState(() {
-                          sheetDecorationList[tmpinx] = currentItemDecoration;
+                          sheetDecorationMap[tmpinx] = currentItemDecoration;
                           });
                         },
                       ),
@@ -22811,7 +22724,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       .copyWith(
                                           border: Border.all(
                                               color: hexToColor(value))));
-                          sheetDecorationList[tmpinx] = currentItemDecoration;                   
+                          sheetDecorationMap[tmpinx] = currentItemDecoration;                   
                         });
                       },
                       textAlignVertical: TextAlignVertical.top,
@@ -22881,7 +22794,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     border: Border.all(
                                         color: value?? defaultPalette.extras[0])));
                           
-                          sheetDecorationList[tmpinx] = currentItemDecoration;
+                          sheetDecorationMap[tmpinx] = currentItemDecoration;
                           
                         });
                         },);
@@ -23163,7 +23076,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 ),
                               ));        
                             setState(() {
-                              sheetDecorationList[tmpinx] = currentItemDecoration;
+                              sheetDecorationMap[tmpinx] = currentItemDecoration;
                             });
                           },
                         ),
@@ -23199,7 +23112,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 ),
                               ));        
                             setState(() {
-                              sheetDecorationList[tmpinx] = currentItemDecoration;
+                              sheetDecorationMap[tmpinx] = currentItemDecoration;
                             });
                           },
                         ),
@@ -23257,10 +23170,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     shadowLayerIndex = shadowLayerIndex == -1
     ?  0
     : shadowLayerIndex;
-    var tmpinx = int.tryParse(sheetDecorationVariables[sIndex].id.substring(sheetDecorationVariables[sIndex].id.indexOf('/') + 1))??-155;
-    
+    var tmpinx =sheetDecorationVariables[sIndex].id;
     ItemDecoration currentItemDecoration = 
-        sheetDecorationList[tmpinx] as ItemDecoration;
+        sheetDecorationMap[tmpinx] as ItemDecoration;
     List<BoxShadow> currentShadow =
         currentItemDecoration.decoration.boxShadow ?? [BoxShadow()];
     currentShadow = [...(currentShadow.isEmpty ? [BoxShadow()] : currentShadow)];
@@ -23341,7 +23253,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   transform: currentItemDecoration.transform
                   );
                
-               sheetDecorationList[tmpinx] = currentItemDecoration;
+               sheetDecorationMap[tmpinx] = currentItemDecoration;
               });
             },
             child: Text(
@@ -23411,7 +23323,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   pinned: currentItemDecoration.pinned,
                   transform: currentItemDecoration.transform
                   );
-                sheetDecorationList[tmpinx] = currentItemDecoration;      
+                sheetDecorationMap[tmpinx] = currentItemDecoration;      
               });
             },
           ),
@@ -23548,7 +23460,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .decoration
                                                 .copyWith(
                                                     boxShadow: currentShadow));
-                                    sheetDecorationList[tmpinx] = currentItemDecoration;
+                                    sheetDecorationMap[tmpinx] = currentItemDecoration;
                                     sheetDecorationVariables[sIndex].listShadowFocusNodes = List.generate( 
                                       currentItemDecoration.decoration.boxShadow!.length,(index) => List.generate( 5,(index) => FocusNode(),)
                                     ,);     
@@ -23704,7 +23616,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   pinned: currentItemDecoration.pinned,
                                                   transform: currentItemDecoration.transform
                                                   );    
-                                               sheetDecorationList[tmpinx] = currentItemDecoration;                       
+                                               sheetDecorationMap[tmpinx] = currentItemDecoration;                       
                                               });
                                             },
                                             // textAlignVertical: TextAlignVertical.top,
@@ -23956,7 +23868,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   pinned: currentItemDecoration.pinned,
                                                   transform: currentItemDecoration.transform
                                                   );    
-                                               sheetDecorationList[tmpinx] = currentItemDecoration;       
+                                               sheetDecorationMap[tmpinx] = currentItemDecoration;       
                                           sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = (shadowLayerIndex -
                                                                 1)
                                                             .clamp(0,
@@ -24006,7 +23918,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   pinned: currentItemDecoration.pinned,
                                                   transform: currentItemDecoration.transform
                                                   );    
-                                               sheetDecorationList[tmpinx] = currentItemDecoration;         
+                                               sheetDecorationMap[tmpinx] = currentItemDecoration;         
                                           sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = shadowLayerIndex +1;            
                                           //  shadowLayerIndex = currentShadow.length-1;
                                         });
@@ -24083,7 +23995,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   pinned: currentItemDecoration.pinned,
                                   transform: currentItemDecoration.transform
                                   );    
-                                sheetDecorationList[tmpinx] = currentItemDecoration;                  
+                                sheetDecorationMap[tmpinx] = currentItemDecoration;                  
                           });
                               },);
                             },
@@ -24128,7 +24040,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             pinned: currentItemDecoration.pinned,
                             transform: currentItemDecoration.transform
                             );    
-                          sheetDecorationList[tmpinx] = currentItemDecoration;                  
+                          sheetDecorationMap[tmpinx] = currentItemDecoration;                  
                           });
                           
                         },
@@ -24159,7 +24071,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               pinned: currentItemDecoration.pinned,
                               transform: currentItemDecoration.transform
                               );    
-                            sheetDecorationList[tmpinx] = currentItemDecoration;                  
+                            sheetDecorationMap[tmpinx] = currentItemDecoration;                  
                           });
                           
                         },
@@ -24181,10 +24093,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
   ) {
     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
-    var tmpinx = int.tryParse(sheetDecorationVariables[index].id.substring(sheetDecorationVariables[index].id.indexOf('/') + 1))??-155;
-    
+    var tmpinx = sheetDecorationVariables[index].id;
     ItemDecoration currentItemDecoration = 
-        sheetDecorationList[tmpinx] as ItemDecoration;
+        sheetDecorationMap[tmpinx] as ItemDecoration;
     final currentDecorationImage = currentItemDecoration.decoration.image;
     // final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 84:48))/2;
     final widthBig =
@@ -24351,7 +24262,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-              sheetDecorationList[tmpinx] = currentItemDecoration;
+              sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
           };
         } else if (value is FilterQuality) {
@@ -24370,7 +24281,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 filterQuality: value,
                 invertColors: currentDecorationImage.invertColors,
               )));
-              sheetDecorationList[tmpinx] = currentItemDecoration;
+              sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
           };
         } else if (value is double) {
@@ -24392,7 +24303,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-             sheetDecorationList[tmpinx] = currentItemDecoration;
+             sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
 
             currentItemDecoration = currentItemDecoration.copyWith(
@@ -24417,7 +24328,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-              sheetDecorationList[tmpinx] = currentItemDecoration;
+              sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
 
             currentItemDecoration = currentItemDecoration.copyWith(
@@ -24439,7 +24350,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
               )));
-              sheetDecorationList[tmpinx] = currentItemDecoration;
+              sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
           };
         }
@@ -24517,7 +24428,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                 currentItemDecoration = currentItemDecoration.copyWith(
                     decoration: currentItemDecoration.decoration);
-                sheetDecorationList[tmpinx] = currentItemDecoration; 
+                sheetDecorationMap[tmpinx] = currentItemDecoration; 
               });
             },
             child: Icon(
@@ -24585,7 +24496,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                   currentItemDecoration = currentItemDecoration.copyWith(
                       decoration: currentItemDecoration.decoration);
-                  sheetDecorationList[tmpinx] = currentItemDecoration; 
+                  sheetDecorationMap[tmpinx] = currentItemDecoration; 
                 });
               },
             ),
@@ -24665,7 +24576,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                 currentItemDecoration = currentItemDecoration.copyWith(
                     decoration: currentItemDecoration.decoration);
-                sheetDecorationList[tmpinx] = currentItemDecoration;
+                sheetDecorationMap[tmpinx] = currentItemDecoration;
               });
             },
             child: Row(
@@ -24736,7 +24647,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                   currentItemDecoration = currentItemDecoration.copyWith(
                       decoration: currentItemDecoration.decoration);
-                  sheetDecorationList[tmpinx] = currentItemDecoration;
+                  sheetDecorationMap[tmpinx] = currentItemDecoration;
                 });
               },
             ),
@@ -24861,7 +24772,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   fit: currentDecorationImage !=null
                                     ? currentDecorationImage.fit
                                     : BoxFit.fitWidth)));
-                         sheetDecorationList[tmpinx] = currentItemDecoration;                     
+                         sheetDecorationMap[tmpinx] = currentItemDecoration;                     
                         });
                       }
                     }
@@ -24916,7 +24827,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     .fit
                                                 : BoxFit
                                                     .fitWidth)));
-                                    sheetDecorationList[tmpinx] = currentItemDecoration;             
+                                    sheetDecorationMap[tmpinx] = currentItemDecoration;             
                                     });
                                   }
                                 }, Icon(TablerIcons.photo_plus, size: 15),
@@ -24942,7 +24853,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   currentItemDecoration
                                                       .decoration
                                                       .backgroundBlendMode));
-                                sheetDecorationList[tmpinx] = currentItemDecoration;                  
+                                sheetDecorationMap[tmpinx] = currentItemDecoration;                  
                                 }, Icon(TablerIcons.trash, size: 15),
                                     isSelected: true),
                               ],
@@ -25123,7 +25034,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           currentItemDecoration =
                               currentItemDecoration.copyWith(
                                   decoration: currentItemDecoration.decoration);
-                         sheetDecorationList[tmpinx] = currentItemDecoration;     
+                         sheetDecorationMap[tmpinx] = currentItemDecoration;     
                         });
                       },
                       animationCurve: Curves.easeInOutExpo,
