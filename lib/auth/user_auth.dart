@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:billblaze/providers/env_provider.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -67,25 +68,11 @@ class AuthRepository {
     }
   }
 
-//
-//
-//
-//
-//
-
-//
-//
-//
-//
-//
-//
-//comment for web
   Future<void> _googleLoginWindows(WidgetRef ref) async {
     final gap.GoogleSignIn _googleSignIn = gap.GoogleSignIn(
-      params: const gap.GoogleSignInParams(
-        clientId:
-            '32563284353-81718rg07bvkg7ji1ud9e3ub76vh35pi.apps.googleusercontent.com',
-        clientSecret: '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',
+      params: gap.GoogleSignInParams(
+        clientId: gSignInClientId,
+        clientSecret: gSignInClientSecret,
         redirectPort: 3000,
       ),
     );
@@ -94,11 +81,13 @@ class AuthRepository {
       final creds = await _googleSignIn.signInOnline();
       if (creds == null) {
         print('Could not sign in');
+        return;
       }
+       ref.read(authCredentialsProvider.notifier).update((state) => creds,);
       // Now, sign in with Firebase using the obtained credentials
 
       final credential = GoogleAuthProvider.credential(
-        accessToken: creds!.accessToken,
+        accessToken: creds.accessToken,
         idToken: creds.idToken,
       );
 
@@ -111,10 +100,8 @@ class AuthRepository {
       // Handle error here
     }
   } //
-
-//
-//
-//
+  //
+  //
   Future<void> googleLogOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();

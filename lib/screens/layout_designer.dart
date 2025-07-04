@@ -25,6 +25,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.da
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
+import 'package:billblaze/providers/env_provider.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
@@ -183,7 +184,6 @@ class LayoutDesigner extends ConsumerStatefulWidget {
 
 class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     with TickerProviderStateMixin {
-  final _googleFontsApiKey = 'AIzaSyBSG_5VsGG03fTeSihFNxYSCVN3m6Ltb0c';
   bool isLoading = true;
   String selectedFontCategory = 'san-serif';
   late List<RequiredText> labelList;
@@ -2193,7 +2193,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
   Future<void> fetchFonts() async {
     final url = Uri.parse(
-      "https://www.googleapis.com/webfonts/v1/webfonts?key=$_googleFontsApiKey",
+      "https://www.googleapis.com/webfonts/v1/webfonts?key=$googleFontsApiKey",
     );
     final response = await http.get(url);
 
@@ -3427,10 +3427,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                                                                       Widget buildLabel(RequiredText label) {
                                                                         final bool isItemSheet = label.name == 'itemSheet';
-                                                                        final bool isMapped = label.indexPath.index != -951;
-
+                                                                        bool isMapped = label.indexPath.index != -951;
+                                                                        if (getItemAtPath(label.indexPath).id == 'yo') {
+                                                                          label.indexPath = IndexPath(index: -951);
+                                                                          isMapped = false;
+                                                                        }
                                                                         final SheetText? linkedText =
                                                                             !isItemSheet && isMapped ? getItemAtPath(label.indexPath) as SheetText? : null;
+                                                                        
                                                                         final String previewText = isMapped && linkedText != null
                                                                             ? linkedText.textEditorConfigurations.controller.document.toPlainText().trim()
                                                                             : '';
@@ -3492,25 +3496,58 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                               ],
                                                                             ],
                                                                           ),
-                                                                          child: Container(
-                                                                            margin: const EdgeInsets.only(right: 4, bottom: 2, left: 0),
-                                                                            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
-                                                                            decoration: BoxDecoration(
-                                                                              color: !isMapped ? defaultPalette.extras[4] : defaultPalette.secondary,
-                                                                              border: Border.all(
-                                                                                color: defaultPalette.primary,
-                                                                                width: 1.5,
+                                                                          child: GestureDetector(
+                                                                            onTap: () {
+                                                                              if (item.id != 'yo' || item.id != '' ) {
+                                                                                
+                                                                                if (label.name !='itemSheet' && label.indexPath.index ==-951) {
+                                                                                  setState(() {
+                                                                                    item.name = label.name;
+                                                                                    label.indexPath = item.indexPath;
+                                                                                    item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(
+                                                                                      label.sheetTextType, 
+                                                                                      item.textEditorConfigurations.controller,
+                                                                                      check: true,
+                                                                                      );
+                                                                                    doubleCheckLabelList(labelList);
+                                                                                  });
+                                                                                } else {
+                                                                                  var sheetItem = getItemAtPath(label.indexPath);
+                                                                                  if (sheetItem is! SheetText) {
+                                                                                    doubleCheckLabelList(labelList);
+                                                                                  } else {
+                                                                                    setState(() {
+                                                                                      panelIndex.id = sheetItem.id;
+                                                                                      panelIndex.parentId = sheetItem.parentId;
+                                                                                      panelIndex.itemIndexPath = sheetItem.indexPath;
+                                                                                      panelIndex.parentIndexPath = sheetItem.indexPath.parent;
+                                                                                      item = sheetItem;
+                                                                                    });
+                                                                                  }
+
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            child: Container(
+                                                                              margin: const EdgeInsets.only(right: 4, bottom: 2, left: 0),
+                                                                              padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+                                                                              decoration: BoxDecoration(
+                                                                                color: !isMapped ? defaultPalette.extras[4] : defaultPalette.secondary,
+                                                                                border: Border.all(
+                                                                                  color: defaultPalette.primary,
+                                                                                  width: 1.5,
+                                                                                ),
+                                                                                borderRadius: BorderRadius.circular(20),
                                                                               ),
-                                                                              borderRadius: BorderRadius.circular(20),
-                                                                            ),
-                                                                            child: Text(
-                                                                              label.name,
-                                                                              style: GoogleFonts.lexend(
-                                                                                fontSize: 14,
-                                                                                color:
-                                                                                    !isMapped ? defaultPalette.primary : defaultPalette.extras[0],
-                                                                                letterSpacing: -0.3,
-                                                                                fontWeight: FontWeight.w500,
+                                                                              child: Text(
+                                                                                label.name,
+                                                                                style: GoogleFonts.lexend(
+                                                                                  fontSize: 14,
+                                                                                  color:
+                                                                                      !isMapped ? defaultPalette.primary : defaultPalette.extras[0],
+                                                                                  letterSpacing: -0.3,
+                                                                                  fontWeight: FontWeight.w500,
+                                                                                ),
                                                                               ),
                                                                             ),
                                                                           ),
@@ -7755,6 +7792,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       panelIndex.id =
                           '';
                       _reassignSheetListIndexPath(sheetList);    
+                      doubleCheckLabelList(labelList);
                     });
                     Navigator.pop(
                         context);
@@ -8742,24 +8780,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     check = false,
     // QuillEditorConfigurations? configs = null,
   }) {
-      var type =SheetTextType.values[index];
-      var placeholder = type==SheetTextType.number
-            ? 'Enter Number'
-            : type==SheetTextType.integer
-            ? 'Enter Integer'
-            : type==SheetTextType.bool
-            ? 'Enter bool'
-            : type==SheetTextType.date
-            ? 'Enter Date'
-            : type==SheetTextType.time
-            ? 'Enter Time'
-            : type==SheetTextType.phone
-            ? 'Enter Number'
-            : 'Enter Text';
-      setState(() {
-      item.textEditorConfigurations = item.textEditorConfigurations.copyWith(placeholder: placeholder);
-      print('vyuihyuihyuih '+placeholder);
-    });
+      if (check) {
+        var type =SheetTextType.values[index];
+        var placeholder = type==SheetTextType.number
+              ? 'Enter Number'
+              : type==SheetTextType.integer
+              ? 'Enter Integer'
+              : type==SheetTextType.bool
+              ? 'Enter bool'
+              : type==SheetTextType.date
+              ? 'Enter Date'
+              : type==SheetTextType.time
+              ? 'Enter Time'
+              : type==SheetTextType.phone
+              ? 'Enter Number'
+              : 'Enter Text';
+        setState(() {
+        item.textEditorConfigurations = item.textEditorConfigurations.copyWith(placeholder: placeholder);
+        print('vyuihyuihyuih '+placeholder);
+            });
+      }
                                                     
       switch (SheetTextType.values[index]) {
         case SheetTextType.number:
@@ -9071,6 +9111,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
   }
 
+  void doubleCheckLabelList(labelList){
+    for (int j = 0; j < labelList.length; j++) {
+      final requiredText = labelList[j];
+      if (requiredText.indexPath.index != -951)  {
+        final sheetText = getItemAtPath(requiredText.indexPath);
+        if (sheetText is! SheetTable) {
+          if (sheetText.id == 'yo' || sheetText.id.isEmpty || (sheetText as SheetText).name != requiredText.name) {
+            
+              requiredText.indexPath = IndexPath(index: -951);
+            
+          }
+        }
+      }
+    }
+  }
+  
   double _getPropertiesButtonWidth(String s) {
     var widthWeHave = (sWidth * (wH2DividerPosition));
     switch (s) {
@@ -11782,6 +11838,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             enabled: !item.parentId.startsWith('TB'),
                                             onSubmitted: (value) {
                                               setState(() {
+                                                  if(lm!.type == 0) {
+                                                    item.name = value;
+                                                    return;
+                                                  }
                                                   /// what are we doing here:
                                                   /// 
                                                   /// going through each requriedText(RT) in the labelList and seeing if the
@@ -11836,19 +11896,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   
 
                                                   // Final validation pass
-                                                  for (int j = 0; j < labelList.length; j++) {
-                                                    final requiredText = labelList[j];
-                                                    if (requiredText.indexPath.index != -951)  {
-                                                      final sheetText = getItemAtPath(requiredText.indexPath);
-                                                      if (sheetText is! SheetTable) {
-                                                        if (sheetText.id == 'yo' || sheetText.id.isEmpty || (sheetText as SheetText).name != requiredText.name) {
-                                                          
-                                                            requiredText.indexPath = IndexPath(index: -951);
-                                                          
-                                                        }
-                                                      }
-                                                    }
-                                                  }
+                                                  doubleCheckLabelList(labelList);
 
                                               });
                                             },

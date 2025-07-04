@@ -7,6 +7,11 @@ import 'package:billblaze/components/balloon_slider/widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/providers/auth_provider.dart';
+import 'package:billblaze/providers/env_provider.dart';
+import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
+import 'package:http/http.dart' as http;
+import 'package:googleapis_auth/auth_io.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
@@ -29,6 +34,8 @@ import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart';
 import 'package:uuid/uuid.dart';
+import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:googleapis/sheets/v4.dart' as sheets;
 
 final cCardIndexProvider = StateProvider<int>((ref) {
   return 0;
@@ -1141,7 +1148,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         500)),
               ),
             ),
-            //Layout colored dots
             AnimatedPositioned(
               duration: Durations.medium2,
               top: topPadPosDistance +80,
@@ -1176,7 +1182,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 
               ),
             ),
-            //
+            // //
             //Layout&
             AnimatedPositioned(
               duration: Durations.medium2,
@@ -1267,7 +1273,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         alignment: Alignment.topLeft,
                         padding: EdgeInsets.only(
                           top: 5,
-                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight),
+                          left: mapValueDimensionBased( 7, 15, sWidth,sHeight,useWidth: true),
+                          right: mapValueDimensionBased( 7, 15, sWidth,sHeight,useWidth: true),
                         ),
                         transform: Matrix4.identity()
                         ..translate(isLayoutTab
@@ -1275,13 +1282,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                         decoration: BoxDecoration(
-                          color: defaultPalette
-                                      .primary,
-                          borderRadius:
-                              BorderRadius.circular(
-                                isLayoutTab
-                                    ? 10
-                                    : 900)),
+                          color: defaultPalette.extras[0],
+                          border: Border.all(),
+                          borderRadius: BorderRadius.circular(
+                            isLayoutTab
+                                ? 10
+                                : 900 
+                            )
+                          ),
                         
                         child: Text(
                           'Layout',
@@ -1289,10 +1297,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.start,
                           style: GoogleFonts.lexend(
-                            fontSize: mapValueDimensionBased( 16, 30, sWidth,sHeight),
-                            color: defaultPalette.extras[0].withOpacity(0.6),
-                            letterSpacing: -1,
-
+                            fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
+                            color: defaultPalette.primary,
+                            letterSpacing: -0.8,
+                            fontWeight: FontWeight.w500
                           ),
                         ),
                       ),
@@ -1331,7 +1339,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
                             depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
                             topDecoration: BoxDecoration(
-                              color: defaultPalette.extras[0],
+                              color: defaultPalette.primary,
                               border: Border.all(),
                             ),
                             topLayerChild: Row(
@@ -1346,16 +1354,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       alignment: Alignment(-1, -1),
                                       padding: EdgeInsets.only(
                                         top: 5,
-                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight),
+                                        right: mapValueDimensionBased( 7, 15, sWidth,sHeight,),
                                       ),
                                       child: Text(
                                         'Create \nNew',
-                                        maxLines: 2,
+                                        maxLines: 4,
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.start,
                                         style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
-                                          color: defaultPalette.primary,
+                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight,),
+                                          color: defaultPalette.extras[0],
                                           letterSpacing: -1,
                                       
                                         ),
@@ -1406,7 +1415,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                         decoration: BoxDecoration(
-                          color: defaultPalette.primary,
+                          color: defaultPalette.tertiary,
+                          border: Border.all(),
                           borderRadius:
                               BorderRadius.circular(
                                 isLayoutTab
@@ -1419,9 +1429,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.start,
                           style: GoogleFonts.lexend(
-                            fontSize: mapValueDimensionBased( 16, 30, sWidth,sHeight),
-                            color: defaultPalette.extras[0].withOpacity(0.6),
-                            letterSpacing: -1,
+                            fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
+                            color: defaultPalette.extras[0],
+                            // color: defaultPalette.primary.withOpacity(1),
+                            letterSpacing: -0.8,
+                            fontWeight: FontWeight.w500
 
                           ),
                         ),
@@ -1485,16 +1497,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
                             depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
                             topDecoration: BoxDecoration(
-                              color: defaultPalette.extras[0],
+                              color: defaultPalette.primary,
                               border: Border.all(),
                             ),
                             topLayerChild: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  // Icon(
-                                  //   IconsaxPlusLinear.grid_3,
-                                  //   size: 40,
-                                  // ),
                                   Expanded(
                                     child: Container(
                                       alignment: Alignment(-1, -1),
@@ -1509,9 +1517,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         textAlign: TextAlign.start,
                                         style: GoogleFonts.lexend(
                                           fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
-                                          color: defaultPalette.primary,
+                                          color: defaultPalette.extras[0],
                                           letterSpacing: -1,
-                                      
+                                          fontWeight: FontWeight.w400
                                         ),
                                       ),
                                     ),
@@ -1528,7 +1536,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 )
               ),
             ),
-            // BG templastelbutton
+            // BG templatelbutton
             Positioned(
             left:mapValueDimensionBased( 5, 10, sWidth,sHeight)+ ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
     
@@ -1539,7 +1547,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 duration: Durations.medium3,
                 curve: Curves.easeIn,
                 height:((sHeight/2.5)-40)/2-mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                width: (sWidth/5)+ mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 0, outMax: 45),
+                width:  (sWidth/4),
+                // width: (sWidth/5)+ mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 0, outMax: 45),
                 alignment: Alignment.topRight,
                 padding: EdgeInsets.only(
                   top: mapValueDimensionBased( 35, 70, sWidth,sHeight),
@@ -1552,52 +1561,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 //   ..rotateY( isLayoutTab? 0: -math.pi / 2),
                 decoration: BoxDecoration(
                   color: defaultPalette.tertiary,
-                  borderRadius:
-                      BorderRadius.circular( 10)),
-                
-                // child: Transform.rotate(
-                //   angle: pi/2,
-                //   child: Text(
-                //     'Browser',
-                //     maxLines: 2,
-                //     overflow: TextOverflow.ellipsis,
-                //     textAlign: TextAlign.end,
-                //     style: GoogleFonts.lexend(
-                //       fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
-                //       color: defaultPalette.primary.withOpacity(0.6),
-                //       letterSpacing: -0.2,
-                //       height: -2
-                //     ),
-                //   ),
-                // ),
-                            ),
+                  border: Border.all(),
+                  borderRadius: BorderRadius.circular( 10)),
+                ),
               ),
             ),
-            //blackLine
-            AnimatedPositioned(
-              duration: Durations.long1,
-              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30): sWidth,
-              top: (sHeight / 3) + 100 + mapValueDimensionBased(10, -10, sWidth, sHeight),
-              child: Container(
-                height:2,
-                width: (sWidth/15),
-                decoration:BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),color: defaultPalette.extras[0]),
-              )
-            ),
-            //greenLine
-            AnimatedPositioned(
-              duration: Durations.long4,
-              left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30):sWidth,
-              top:  (sHeight / 3)+100 +17,
-              child: Container(
-                height:2,
-                width: (sWidth/2),
-                decoration:BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  color: defaultPalette.tertiary),
-              )),        
-            // templatebutton
+            // //blackLine
+            // AnimatedPositioned(
+            //   duration: Durations.long1,
+            //   left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30): sWidth,
+            //   top: (sHeight / 3) + 100 + mapValueDimensionBased(10, -10, sWidth, sHeight),
+            //   child: Container(
+            //     height:2,
+            //     width: (sWidth/15),
+            //     decoration:BoxDecoration(
+            //       borderRadius: BorderRadius.circular(999),color: defaultPalette.extras[0]),
+            //   )
+            // ),
+            // //greenLine
+            // AnimatedPositioned(
+            //   duration: Durations.long4,
+            //   left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30):sWidth,
+            //   top:  (sHeight / 3)+100 +17,
+            //   child: Container(
+            //     height:2,
+            //     width: (sWidth/2),
+            //     decoration:BoxDecoration(
+            //       borderRadius: BorderRadius.circular(999),
+            //       color: defaultPalette.tertiary),
+            //   )),        
+            // // templatebutton
             AnimatedPositioned(
               duration: Durations.medium3,
               bottom: 1.6*(sHeight / 18),
@@ -1621,20 +1614,152 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           //   : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: math.pi / 2),
                         child: ElevatedLayerButton(
-                            onClick: () {
+                            onClick: () async {
                               var data= extractBIAnalyticsData(Boxes.getLayouts());
 
                               print(data);
+                              final _scopes = [
+                                drive.DriveApi.driveFileScope, // to create new Google Sheets
+                                sheets.SheetsApi.spreadsheetsScope,
+                              ];
+
+                              // Future<void> createSheetFromExistingSession(String accessToken) async {
+                              //   final authClient = authenticatedClient(
+                              //     http.Client(),
+                              //     AccessCredentials(
+                              //       AccessToken(
+                              //         'Bearer',
+                              //         accessToken,
+                              //         DateTime.now().add(Duration(hours: 1)), // Ideally use actual expiry
+                              //       ),
+                              //       null,
+                              //       [
+                              //         'https://www.googleapis.com/auth/drive.file',
+                              //         'https://www.googleapis.com/auth/spreadsheets',
+                              //       ],
+                              //     ),
+                              //   );
+
+                              //   try {
+                              //     // 1. Create a new Sheet
+                              //     final driveApi = drive.DriveApi(authClient);
+                              //     final file = drive.File()
+                              //       ..name = "MyLayoutModels"
+                              //       ..mimeType = "application/vnd.google-apps.spreadsheet";
+                              //     final newFile = await driveApi.files.create(file);
+                              //     print("✅ Created sheet with ID: ${newFile.id}");
+                              //     // 2. Write sample data
+                              //     final sheetsApi = sheets.SheetsApi(authClient);
+                              //     await sheetsApi.spreadsheets.values.update(
+                              //       sheets.ValueRange.fromJson({
+                              //         'values': [
+                              //           ['Name', 'Amount'],
+                              //           ['Joel', '1200'],
+                              //         ]
+                              //       }),
+                              //       newFile.id!,
+                              //       "Sheet1!A1",
+                              //       valueInputOption: "RAW",
+                              //     );
+                              //     print("✅ Data written to sheet.");
+                              //   } catch (e) {
+                              //     print("❌ Error using Sheets/Drive APIs: $e");
+                              //   } finally {
+                              //     authClient.close();
+                              //   }
+                              // }
+                              // await createSheetFromExistingSession(ref.read(authCredentialsProvider)!.accessToken);
+
+                              Future<void> authenticateAndCreateSheet() async {
+                                final gap.GoogleSignIn googleSignIn = gap.GoogleSignIn(
+                                  params: gap.GoogleSignInParams(
+                                    clientId: gSignInClientId, // Your Windows client ID
+                                    clientSecret: gSignInClientSecret,
+                                    redirectPort: 3000,
+                                    scopes: [
+                                      'email',
+                                      'https://www.googleapis.com/auth/drive.file',
+                                      'https://www.googleapis.com/auth/drive',
+                                      'https://www.googleapis.com/auth/spreadsheets',
+                                    ],
+                                  ),
+                                );
+
+                                try {
+                                  gap.GoogleSignInCredentials?  creds;
+                                  if (ref.read(authCredentialsProvider)==null) {
+                                    creds = await googleSignIn.signInOnline();
+                                    if (creds == null) {
+                                    print("Google Sign-In failed or was canceled.");
+                                    return;
+                                    } else {
+                                      ref.read(authCredentialsProvider.notifier).update((state) => creds,);
+                                    }
+                                  } else {
+                                    creds = ref.read(authCredentialsProvider);
+                                  }
+
+                                  
+                                   
+                                  // Build authenticated client for Google APIs
+                                  final authClient = authenticatedClient(
+                                    http.Client(),
+                                    AccessCredentials(
+                                      AccessToken(
+                                        'Bearer',
+                                        creds!.accessToken,
+                                        DateTime.now().toUtc().add(const Duration(hours: 1)), // adjust expiry if needed
+                                      ),
+                                      null,
+                                      [
+                                        'https://www.googleapis.com/auth/drive.file',
+                                        'https://www.googleapis.com/auth/spreadsheets',
+                                      ],
+                                    ),
+                                  );
+
+                                  // 1. Create a new Google Sheet in the user's Drive
+                                  final driveApi = drive.DriveApi(authClient);
+                                  final file = drive.File()
+                                    ..name = "MyLayoutModels"
+                                    ..mimeType = "application/vnd.google-apps.spreadsheet";
+
+                                  final newFile = await driveApi.files.create(file);
+                                  print("✅ Created sheet with ID: ${newFile.id}");
+
+                                  // 2. Write sample data to that sheet
+                                  final sheetsApi = sheets.SheetsApi(authClient);
+                                  await sheetsApi.spreadsheets.values.update(
+                                    sheets.ValueRange.fromJson({
+                                      'values': [
+                                        ['Name', 'Amount'],
+                                        ['Joel', '1200'],
+                                      ]
+                                    }),
+                                    newFile.id!,
+                                    "Sheet1!A1",
+                                    valueInputOption: "RAW",
+                                  );
+
+                                  print("✅ Data written to sheet.");
+
+                                  authClient.close();
+                                } catch (e) {
+                                  print("❌ Error during Google Sign-In or Sheets API access: $e");
+                                }
+                              }
+
+                              await authenticateAndCreateSheet();
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
-                            buttonWidth: (sWidth/10).clamp(100, double.infinity),
+                            buttonWidth: (sWidth/7).clamp(100, double.infinity),
                             borderRadius: BorderRadius.circular(10),
                             animationDuration: const Duration(milliseconds: 200),
                             animationCurve: Curves.ease,
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
                             depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
                             topDecoration: BoxDecoration(
-                              color: defaultPalette.extras[0],
+                              color: defaultPalette.primary,
                               border: Border.all(),
                             ),
                             topLayerChild: Row(
@@ -1658,9 +1783,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         textAlign: TextAlign.start,
                                         style: GoogleFonts.lexend(
                                           fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
-                                          color: defaultPalette.primary,
+                                          color: defaultPalette.extras[0],
                                           letterSpacing: -1,
-                                      
+                                          fontWeight: FontWeight.w400
                                         ),
                                       ),
                                     ),
@@ -3201,6 +3326,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
   }
   
-  double mapValueDimensionBased(double outMin, double outMax, double w, double h,{bool b = true}){
-    return mapValue(value:b? h*w:h, inMin:b? 500*800:500, inMax:b? 1187*2194:1187, outMin: outMin, outMax: outMax);
+  double mapValueDimensionBased(double outMin, double outMax, double w, double h,{bool b = true, bool useWidth= false}){
+    return mapValue(value:b? useWidth? w: h*w:h, inMin:b? useWidth? 800: 500*800:500, inMax:b? useWidth? 2194:1187*2194:1187, outMin: outMin, outMax: outMax);
   }
