@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
@@ -40,6 +42,37 @@ class SheetTableRowBox extends SheetItem {
       indexPath: indexPath,
       );
   }
+  
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'SheetTableRowBox',
+        'id': id,
+        'parentId': parentId,
+        'indexPath': indexPath.toJson(),
+        'size': size,
+        'minSize': minSize,
+        'maxSize': maxSize,
+        'hide': hide,
+        'rowDecoration': rowDecoration,
+      };
+
+  factory SheetTableRowBox.fromMap(Map<String, dynamic> map) => SheetTableRowBox(
+        id: map['id'],
+        parentId: map['parentId'],
+        indexPath: IndexPath.fromJson(map['indexPath']),
+        size: (map['size'] as num).toDouble(),
+        minSize: (map['minSize'] as num).toDouble(),
+        maxSize: (map['maxSize'] as num).toDouble(),
+        hide: map['hide'],
+        rowDecoration: map['rowDecoration'],
+      );
+
+  @override
+  String toJson() => jsonEncode(toMap());
+
+  factory SheetTableRowBox.fromJson(String json) =>
+    SheetTableRowBox.fromMap(jsonDecode(json));
+
 }
 
 class SheetTableRow extends SheetItem {

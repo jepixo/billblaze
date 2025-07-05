@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // import 'package:fleather/fleather.dart';
 // import 'dart:math';
+import 'dart:convert';
+
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
@@ -44,6 +46,43 @@ class SheetTextBox extends SheetItem {
     required this.locked,
   }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
 
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'SheetTextBox',
+        'id': id,
+        'parentId': parentId,
+        'indexPath': indexPath.toJson(),
+        'textEditorController': textEditorController,
+        'textDecoration': textDecoration.toMap(),
+        'name': name,
+        'hide': hide,
+        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+        'typeIndex': type,
+        'locked': locked,
+      };
+
+  String toJson() => jsonEncode(toMap());
+
+  factory SheetTextBox.fromMap(Map<String, dynamic> map) {
+    return SheetTextBox(
+      id: map['id'],
+      parentId: map['parentId'],
+      indexPath: IndexPath.fromJson(map['indexPath']),
+      textEditorController: List<Map<String, dynamic>>.from(
+          map['textEditorController'] as List),
+      textDecoration: SuperDecorationBox.fromMap(map['textDecoration']),
+      name: map['name'],
+      hide: map['hide'],
+      inputBlocks: (map['inputBlocks'] as List)
+          .map((e) => InputBlock.fromMap(e))
+          .toList(),
+      type: map['typeIndex'], // renamed to avoid conflict with class name
+      locked: map['locked'],
+    );
+  }
+
+  factory SheetTextBox.fromJson(String json) =>
+      SheetTextBox.fromMap(jsonDecode(json));
 }
 
 class SheetText extends SheetItem {

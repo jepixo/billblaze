@@ -1,14 +1,16 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first 
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:hive/hive.dart';
+
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/box_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart'; 
-import 'package:hive/hive.dart';
-
-import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 
 part 'sheet_list.g.dart';
 
@@ -72,6 +74,47 @@ class SheetListBox extends SheetItem {
       }
     },).toList();
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'SheetListBox', // Optional type tag for polymorphic decoding
+        'id': id,
+        'parentId': parentId,
+        'indexPath': indexPath.toJson(),
+        'sheetList': sheetList.map((e) => e.toMap()).toList(),
+        'direction': direction,
+        'mainAxisAlignment': mainAxisAlignment,
+        'crossAxisAlignment': crossAxisAlignment,
+        'decorationId': decorationId,
+        'mainAxisSize': mainAxisSize,
+        'size': size,
+      };
+
+  /// ✅ jsonEncode-friendly
+  String toJson() => jsonEncode(toMap());
+
+  /// ♻️ Convert back from a map
+  factory SheetListBox.fromMap(Map<String, dynamic> map) {
+    return SheetListBox(
+      id: map['id'],
+      parentId: map['parentId'],
+      indexPath: IndexPath.fromJson(map['indexPath']),
+      sheetList: (map['sheetList'] as List)
+          .map((e) => SheetItem.fromMap(e)) // type-aware decoding
+          .toList(),
+      direction: map['direction'],
+      mainAxisAlignment: map['mainAxisAlignment'],
+      crossAxisAlignment: map['crossAxisAlignment'],
+      decorationId: map['decorationId'],
+      mainAxisSize: map['mainAxisSize'],
+      size: (map['size'] as List).map((e) => (e as num).toDouble()).toList(),
+    );
+  }
+
+  /// For consistency
+  factory SheetListBox.fromJson(String json) => SheetListBox.fromMap(jsonDecode(json));
+
+
 }
 
 class SheetList extends SheetItem {

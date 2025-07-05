@@ -1,18 +1,22 @@
-import 'package:billblaze/colors.dart';
-import 'package:billblaze/models/index_path.dart';
-import 'package:billblaze/models/input_block.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
-import 'package:billblaze/screens/layout_designer.dart';
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:billblaze/colors.dart';
+import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/input_block.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
+import 'package:billblaze/screens/layout_designer.dart';
 
 part 'sheet_table_cell.g.dart';
 
@@ -25,7 +29,6 @@ class SheetTableCell extends SheetItem {
   int colSpan =1;
   String? ownerId;
   String? errorMessage;
-  ValidationRule? validationRule;
 
   SheetTableCell({
     required super.id, 
@@ -37,7 +40,6 @@ class SheetTableCell extends SheetItem {
     this.colSpan =1,
     this.rowSpan =1,
     this.errorMessage,
-    this.validationRule,
     this.ownerId,
     required super.indexPath,
     });
@@ -52,9 +54,6 @@ class SheetTableCell extends SheetItem {
       rowSpan: rowSpan,
       hasError: hasError,
       isVisible: isVisible,
-      errorMessage: errorMessage,
-      ownerId: ownerId,
-      validationRule: validationRule?.toValidationRuleBox(),
       indexPath: indexPath,
     );
   }
@@ -88,12 +87,6 @@ class SheetTableCellBox extends SheetItem {
   int rowSpan = 1;
   @HiveField(8)
   int colSpan = 1;
-  @HiveField(9)
-  String? ownerId;
-  @HiveField(10)
-  String? errorMessage;
-  @HiveField(11)
-  ValidationRuleBox? validationRule;
 
   SheetTableCellBox({
     required super.id, 
@@ -104,9 +97,6 @@ class SheetTableCellBox extends SheetItem {
     this.hasError = false,
     this.colSpan =1,
     this.rowSpan =1,
-    this.errorMessage,
-    this.validationRule,
-    this.ownerId,
     required super.indexPath,
     });
 
@@ -121,9 +111,6 @@ class SheetTableCellBox extends SheetItem {
       rowSpan: rowSpan,
       hasError: hasError,
       isVisible: isVisible,
-      errorMessage: errorMessage,
-      ownerId: ownerId,
-      validationRule: validationRule?.toValidationRule(),
       indexPath: super.indexPath,
     );
   }
@@ -155,6 +142,41 @@ class SheetTableCellBox extends SheetItem {
     }
     return sheetItem;
     }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'SheetTableCellBox',
+        'id': id,
+        'parentId': parentId,
+        'indexPath': indexPath.toJson(),
+        'data': data,
+        'sheetItem': sheetItem.toMap(),
+        'isVisible': isVisible,
+        'hasError': hasError,
+        'rowSpan': rowSpan,
+        'colSpan': colSpan,
+      };
+
+  factory SheetTableCellBox.fromMap(Map<String, dynamic> map) => 
+  SheetTableCellBox(
+        id: map['id'],
+        parentId: map['parentId'],
+        indexPath: IndexPath.fromJson(map['indexPath']),
+        data: map['data'],
+        sheetItem: SheetItem.fromMap(map['sheetItem']),
+        isVisible: map['isVisible'],
+        hasError: map['hasError'],
+        rowSpan: map['rowSpan'],
+        colSpan: map['colSpan'],
+      );
+  
+  @override
+  String toJson() => jsonEncode(toMap());
+
+  factory SheetTableCellBox.fromJson(String json) =>
+      SheetTableCellBox.fromMap(jsonDecode(json));
+
+  
   }
 
   SheetText addTextField({

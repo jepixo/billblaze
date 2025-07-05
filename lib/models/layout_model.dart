@@ -51,7 +51,7 @@ class LayoutModel extends HiveObject {
   @override
   String toString() {
     // TODO: implement toString
-    return '${docPropsList.length}, ${spreadSheetList.length}, ${ id}, ${name},';
+    return '${docPropsList.length}, ${spreadSheetList.length}, ${ id}, ${name}';
   }
 }
 

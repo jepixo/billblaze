@@ -1,13 +1,15 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:convert';
 import 'dart:ui' as ui;
 
-import 'package:billblaze/components/color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
+
+import 'package:billblaze/components/color_picker.dart';
 
 part 'sheet_decoration.g.dart';
 
@@ -48,6 +50,23 @@ class SuperDecorationBox extends SheetDecoration {
         name: name,
         itemDecorationList: itemDecorationList);
   }
+  Map<String, dynamic> toMap() => {
+        'type': 'SuperDecorationBox',
+        'id': id,
+        'name': name,
+        'itemDecorationList': itemDecorationList,
+      };
+
+  factory SuperDecorationBox.fromMap(Map<String, dynamic> map) => SuperDecorationBox(
+        id: map['id'],
+        name: map['name'] ?? 'Untitled',
+        itemDecorationList: List<String>.from(map['itemDecorationList'] ?? []),
+      );
+
+  String toJson() => jsonEncode(toMap());
+  factory SuperDecorationBox.fromJson(String json) =>
+      SuperDecorationBox.fromMap(jsonDecode(json));
+
 }
 
 @HiveType(typeId: 8)
@@ -64,8 +83,29 @@ class ItemDecorationBox extends SheetDecoration {
   ItemDecoration toItemDecoration() {
     return ItemDecoration.fromJson(itemDecoration);
   }
+  
 
 
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'itemDecoration': itemDecoration,
+      'id': super.id,
+      'name': super.name,
+    };
+  }
+
+  factory ItemDecorationBox.fromMap(Map<String, dynamic> map) {
+    return ItemDecorationBox(
+      itemDecoration: Map<String, dynamic>.from((map['itemDecoration'] as Map<String, dynamic>)), 
+      id: map['id'],
+      name: map['name'],
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory ItemDecorationBox.fromJson(String source) => ItemDecorationBox.fromMap(json.decode(source) as Map<String, dynamic>);
 }
 
 class ItemDecoration extends SheetDecoration {

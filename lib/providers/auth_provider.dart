@@ -1,3 +1,4 @@
+import 'package:billblaze/providers/env_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,4 +13,21 @@ final authRepositoryProvider = StateProvider((ref) {
 });
 final authCredentialsProvider = StateProvider<gap.GoogleSignInCredentials?>((ref) {
   return ;
+});
+
+final gapSignInProvider = StateProvider<gap.GoogleSignIn>((ref) {
+  return gap.GoogleSignIn(
+    params: gap.GoogleSignInParams(
+      clientId: gSignInClientId,
+      clientSecret: gSignInClientSecret,
+      redirectPort: 3000,
+      scopes: [
+        'email',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/documents',
+      ],
+    ),
+  );
 });

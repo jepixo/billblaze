@@ -7,7 +7,10 @@ import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
+import 'package:billblaze/models/bill/required_text.dart';
+import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/env_provider.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
@@ -1621,21 +1624,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               print(data);
 
                               Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox) async {
-                                final gap.GoogleSignIn googleSignIn = gap.GoogleSignIn(
-                                  params: gap.GoogleSignInParams(
-                                    clientId: gSignInClientId,
-                                    clientSecret: gSignInClientSecret,
-                                    redirectPort: 3000,
-                                    scopes: [
-                                      'email',
-                                      'https://www.googleapis.com/auth/drive.file',
-                                      'https://www.googleapis.com/auth/drive',
-                                      'https://www.googleapis.com/auth/spreadsheets',
-                                      'https://www.googleapis.com/auth/documents',
-                                    ],
-                                  ),
-                                );
-
+                                
+                                var googleSignIn = ref.read(gapSignInProvider);
                                 try {
                                   gap.GoogleSignInCredentials? creds;
                                   if (ref.read(authCredentialsProvider) == null) {
@@ -1705,6 +1695,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                                   for (final layout in layoutBox.values) {
                                     // 4️⃣ Upload spreadsheetList to Google Doc
+                                    // Look for existing doc with title == layout.id
+                                  final existingDocSearch = await driveApi.files.list(q: "name='${layout.id}' and mimeType='application/vnd.google-apps.document'");
+                                  String docId;
+
+                                  if (existingDocSearch.files != null && existingDocSearch.files!.isNotEmpty) {
+                                    docId = existingDocSearch.files!.first.id!;
+                                    print("📄 Found existing doc for ${layout.id} with ID: $docId");
+
+                                    // Clear old contents (replace with a blank space or wipe all content range)
+                                    await http.post(
+                                      Uri.parse('https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
+                                      headers: {
+                                        'Authorization': 'Bearer ${creds.accessToken}',
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: jsonEncode({
+                                        'requests': [
+                                          {
+                                            'deleteContentRange': {
+                                              'range': {
+                                                'startIndex': 1,
+                                                'endIndex': 999999999999, // Very large value to ensure all content is wiped
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      }),
+                                    );
+                                  } else {
+                                    // Create new doc
                                     final docResponse = await http.post(
                                       Uri.parse('https://docs.googleapis.com/v1/documents'),
                                       headers: {
@@ -1719,7 +1739,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       continue;
                                     }
 
-                                    final docId = jsonDecode(docResponse.body)['documentId'];
+                                    docId = jsonDecode(docResponse.body)['documentId'];
+                                    print("🆕 Created new doc with ID: $docId");
+                                  }
 
                                     // Insert JSON text into doc
                                     await http.post(
@@ -1733,7 +1755,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           {
                                             'insertText': {
                                               'location': {'index': 1},
-                                              'text': jsonEncode(layout.spreadSheetList),
+                                              'text': jsonEncode(
+                                                    layout.spreadSheetList.map((e) => e.toMap()).toList()
+                                                  ),
                                             }
                                           }
                                         ]
@@ -1748,8 +1772,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       layout.modifiedAt.toIso8601String(),
                                       layout.type,
                                       docId,
-                                      jsonEncode(layout.docPropsList),
-                                      jsonEncode(layout.labelList),
+                                      jsonEncode(layout.docPropsList.map((e) => e.toJson()).toList()),
+                                      jsonEncode(layout.labelList.map((e) => e.toJson()).toList()),
                                       layout.pdf != null && layout.pdf!.isNotEmpty ? "yes" : "no"
                                     ]);
                                   }
@@ -1770,47 +1794,170 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               }
 
                               await authenticateAndSyncLayoutModels(Boxes.getLayouts());
-                            },
-                            buttonHeight: ((sHeight/2.5)-40)/2,
-                            buttonWidth: (sWidth/7).clamp(100, double.infinity),
-                            borderRadius: BorderRadius.circular(10),
-                            animationDuration: const Duration(milliseconds: 200),
-                            animationCurve: Curves.ease,
-                            subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                            depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                            topDecoration: BoxDecoration(
-                              color: defaultPalette.primary,
-                              border: Border.all(),
-                            ),
-                            topLayerChild: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  // Icon(
-                                  //   IconsaxPlusLinear.grid_3,
-                                  //   size: 40,
-                                  // ),
-                                  Expanded(
-                                    child: Container(
-                                      alignment: Alignment(-1, -1),
-                                      padding: EdgeInsets.only(
-                                        top: 5,
-                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
-                                      ),
-                                      child: Text(
-                                        'Templates \nView',
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.start,
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
-                                          color: defaultPalette.extras[0],
-                                          letterSpacing: -1,
-                                          fontWeight: FontWeight.w400
+                              
+                              Future<Map<String, dynamic>> fetchAndReconstructLayoutModels() async {
+                                final googleSignIn = ref.read(gapSignInProvider);
+
+                                try {
+                                  gap.GoogleSignInCredentials? creds;
+                                  if (ref.read(authCredentialsProvider) == null) {
+                                    creds = await googleSignIn.signInOnline();
+                                    if (creds == null) {
+                                      print("❌ Google Sign-In failed.");
+                                      throw Exception("Sign-in failed");
+                                    } else {
+                                      ref.read(authCredentialsProvider.notifier).update((state) => creds);
+                                    }
+                                  } else {
+                                    creds = ref.read(authCredentialsProvider);
+                                  }
+
+                                  final authClient = authenticatedClient(
+                                    http.Client(),
+                                    AccessCredentials(
+                                      AccessToken('Bearer', creds!.accessToken, DateTime.now().toUtc().add(Duration(hours: 1))),
+                                      creds.refreshToken,
+                                      [
+                                        'https://www.googleapis.com/auth/drive',
+                                        'https://www.googleapis.com/auth/spreadsheets',
+                                        'https://www.googleapis.com/auth/documents',
+                                      ],
+                                    ),
+                                  );
+
+                                  final driveApi = drive.DriveApi(authClient);
+                                  final sheetsApi = sheets.SheetsApi(authClient);
+
+                                  // 🔍 Find the sheet
+                                  final fileList = await driveApi.files.list(q: "name='LayoutModelBox' and mimeType='application/vnd.google-apps.spreadsheet'");
+                                  if (fileList.files == null || fileList.files!.isEmpty) {
+                                    throw Exception("LayoutModelBox spreadsheet not found");
+                                  }
+
+                                  final sheetId = fileList.files!.first.id!;
+                                  final sheetData = await sheetsApi.spreadsheets.values.get(sheetId, "Sheet1");
+
+                                  final rows = sheetData.values;
+                                  if (rows == null || rows.length < 2) {
+                                    throw Exception("No layout data in sheet");
+                                  }
+
+                                  final headers = rows.first;
+                                  final Map<String, dynamic> box = {};
+                                  box.clear();
+
+                                  for (int i = 1; i < rows.length; i++) {
+                                    final row = rows[i];
+                                    final headerStrings = headers.map((e) => e.toString()).toList();
+
+                                    final data = Map<String, dynamic>.fromIterables(
+                                      headerStrings,
+                                      row + List.filled(headerStrings.length - row.length, ''),
+                                    );
+
+                                    // 📥 Fetch spreadsheetList JSON from Google Doc
+                                    final docId = data['spreadsheetDocId'];
+                                    final docResponse = await http.get(
+                                      Uri.parse('https://docs.googleapis.com/v1/documents/$docId'),
+                                      headers: {
+                                        'Authorization': 'Bearer ${creds.accessToken}',
+                                        'Content-Type': 'application/json',
+                                      },
+                                    );
+
+                                    if (docResponse.statusCode != 200) {
+                                      print("❌ Failed to fetch Google Doc $docId");
+                                      continue;
+                                    }
+
+                                    final docBody = jsonDecode(docResponse.body);
+                                    final content = docBody['body']['content'] as List? ?? [];
+
+                                    final textRuns = content
+                                        .expand((e) => (e['paragraph']?['elements'] as List?) ?? [])
+                                        .map((e) => e['textRun']?['content'])
+                                        .whereType<String>();
+
+                                    final firstTextElement = textRuns.join();
+
+
+                                    // 🧱 Rebuild spreadsheetList
+                                    final spreadsheetListRaw = jsonDecode(firstTextElement.trim());
+                                    final List<SheetListBox> spreadsheetList = (spreadsheetListRaw as List)
+                                        .map((e) => SheetListBox.fromMap(e))
+                                        .toList();
+
+                                    // 🧱 Build LayoutModel
+                                    final model = LayoutModel(
+                                      id: data['id'],
+                                      name: data['name'],
+                                      createdAt: DateTime.parse(data['createdAt']),
+                                      modifiedAt: DateTime.parse(data['modifiedAt']),
+                                      type: int.tryParse(data['type'].toString()) ?? 0,
+                                      spreadSheetList: spreadsheetList,
+                                      docPropsList: (jsonDecode(data['docPropsList']) as List)
+                                          .map((e) => DocumentPropertiesBox.fromJson(e))
+                                          .toList(),
+                                      labelList: (jsonDecode(data['labelList']) as List)
+                                          .map((e) => RequiredText.fromJson(e))
+                                          .toList(),
+                                      pdf: (data['hasPdf'] == 'yes') ? [] : null, // You can skip real PDF loading here
+                                    );
+
+                                    box.addAll({model.id: model});
+                                  }
+
+                                  print("✅ LayoutModelBox loaded from Google Sheet and Docs");
+                                  return box;
+                                } catch (e) {
+                                  print("❌ Failed to fetch LayoutModels: $e");
+                                  rethrow;
+                                }
+                              }
+                              
+                              var gmap = await fetchAndReconstructLayoutModels();
+                               print(gmap['BI-78f0f65a-26f9-43fe-bfa6-7c03f10f88cf'].spreadSheetList);
+                              },
+                              buttonHeight: ((sHeight/2.5)-40)/2,
+                              buttonWidth: (sWidth/7).clamp(100, double.infinity),
+                              borderRadius: BorderRadius.circular(10),
+                              animationDuration: const Duration(milliseconds: 200),
+                              animationCurve: Curves.ease,
+                              subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                              depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                              topDecoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                border: Border.all(),
+                              ),
+                              topLayerChild: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // Icon(
+                                    //   IconsaxPlusLinear.grid_3,
+                                    //   size: 40,
+                                    // ),
+                                    Expanded(
+                                      child: Container(
+                                        alignment: Alignment(-1, -1),
+                                        padding: EdgeInsets.only(
+                                          top: 5,
+                                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                                        ),
+                                        child: Text(
+                                          'Templates \nView',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.start,
+                                          style: GoogleFonts.lexend(
+                                            fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
+                                            color: defaultPalette.extras[0],
+                                            letterSpacing: -1,
+                                            fontWeight: FontWeight.w400
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ]),
+                                  ]),
                             baseDecoration: BoxDecoration(
                               color: Colors.transparent,
                               // border: Border.all(),

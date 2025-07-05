@@ -25,9 +25,6 @@ class SheetTableCellBoxAdapter extends TypeAdapter<SheetTableCellBox> {
       hasError: fields[6] as bool,
       colSpan: fields[8] as int,
       rowSpan: fields[7] as int,
-      errorMessage: fields[10] as String?,
-      validationRule: fields[11] as ValidationRuleBox?,
-      ownerId: fields[9] as String?,
       indexPath: fields[2] as IndexPath,
     );
   }
@@ -35,7 +32,7 @@ class SheetTableCellBoxAdapter extends TypeAdapter<SheetTableCellBox> {
   @override
   void write(BinaryWriter writer, SheetTableCellBox obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(9)
       ..writeByte(3)
       ..write(obj.data)
       ..writeByte(4)
@@ -48,12 +45,6 @@ class SheetTableCellBoxAdapter extends TypeAdapter<SheetTableCellBox> {
       ..write(obj.rowSpan)
       ..writeByte(8)
       ..write(obj.colSpan)
-      ..writeByte(9)
-      ..write(obj.ownerId)
-      ..writeByte(10)
-      ..write(obj.errorMessage)
-      ..writeByte(11)
-      ..write(obj.validationRule)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
