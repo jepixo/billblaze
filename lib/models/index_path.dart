@@ -33,4 +33,17 @@ class IndexPath {
       index: index ?? this.index,
     );
   }
+  Map<String, dynamic> toJson() => {
+    'path': toList(), // e.g., [1, 2, 3]
+  };
+
+  // ✅ DESERIALIZATION: Rebuild tree from list
+  factory IndexPath.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> path = json['path'];
+    IndexPath? result;
+    for (final value in path) {
+      result = IndexPath(index: value as int, parent: result);
+    }
+    return result!;
+  }
 }

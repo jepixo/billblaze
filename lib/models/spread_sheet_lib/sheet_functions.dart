@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
+import 'dart:convert';
+
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/input_block.dart';
@@ -20,6 +22,23 @@ class SheetFunction {
   dynamic result(Function getItemAtPath) {
     throw UnimplementedError('Subclasses must override result()');
   }
+  Map<String, dynamic> toMap() {
+    throw UnimplementedError('Subclasses must override toMap()');
+  }
+
+  static SheetFunction fromMap(Map<String, dynamic> map) {
+    switch (map['type']) {
+      case 'sum':
+        return SumFunction.fromMap(map);
+      // Add more subclasses here if needed
+      default:
+        throw Exception('Unknown SheetFunction type: ${map['type']}');
+    }
+  }
+
+  String toJson() => jsonEncode(toMap());
+  static SheetFunction fromJson(String json) => fromMap(jsonDecode(json));
+
 }
 
 @HiveType(typeId:17)
@@ -62,6 +81,21 @@ class SumFunction extends SheetFunction {
 
     return sum;
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'sum',
+        'returnType': returnType,
+        'name': name,
+        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+      };
+
+  factory SumFunction.fromMap(Map<String, dynamic> map) => SumFunction(
+        (map['inputBlocks'] as List)
+            .map((e) => InputBlock.fromMap(e))
+            .toList(),
+      );
+
 }
 
 class IfFunction extends SheetFunction {

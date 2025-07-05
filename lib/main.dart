@@ -55,6 +55,7 @@ Future<void> main() async {
   Hive.registerAdapter(RequiredTextAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
+  // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
   await Hive.openBox<LayoutModel>('layouts');
   await Hive.openBox<SheetDecoration>('decorations');
   

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
@@ -62,6 +64,54 @@ class SheetTableBox extends SheetItem {
       );
   }
   
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'SheetTableBox',
+        'id': id,
+        'parentId': parentId,
+        'indexPath': indexPath.toJson(),
+        'cellData': cellData
+            .map((row) => row.map((cell) => cell.toMap()).toList())
+            .toList(),
+        'rowData': rowData.map((r) => r.toMap()).toList(),
+        'columnData': columnData.map((c) => c.toMap()).toList(),
+        'pinnedRows': pinnedRows,
+        'pinnedColumns': pinnedColumns,
+        'sheetTableDecoration': sheetTableDecoration.toMap(),
+        'sheetTablebgDecoration': sheetTablebgDecoration.toMap(),
+        'name': name,
+        'expand': expand,
+      };
+
+  factory SheetTableBox.fromMap(Map<String, dynamic> map) => SheetTableBox(
+        id: map['id'],
+        parentId: map['parentId'],
+        indexPath: IndexPath.fromJson(map['indexPath']),
+        cellData: (map['cellData'] as List)
+            .map((row) => (row as List)
+                .map((cell) => SheetTableCellBox.fromMap(cell))
+                .toList())
+            .toList(),
+        rowData: (map['rowData'] as List)
+            .map((r) => SheetTableRowBox.fromMap(r))
+            .toList(),
+        columnData: (map['columnData'] as List)
+            .map((c) => SheetTableColumnBox.fromMap(c))
+            .toList(),
+        pinnedRows: map['pinnedRows'],
+        pinnedColumns: map['pinnedColumns'],
+        sheetTableDecoration:
+            SuperDecorationBox.fromMap(map['sheetTableDecoration']),
+        sheetTablebgDecoration:
+            SuperDecorationBox.fromMap(map['sheetTablebgDecoration']),
+        name: map['name'],
+        expand: map['expand'],
+      );
+  @override
+  String toJson() => jsonEncode(toMap());
+
+  factory SheetTableBox.fromJson(String json) =>
+    SheetTableBox.fromMap(jsonDecode(json));
 
 }
 
@@ -112,78 +162,3 @@ class SheetTable extends SheetItem {
 
 }
 
-
-enum ValidationType {
-  number,
-  text,
-  dropdown,
-  regex,
-  date,
-  email,
-  custom,
-}
-
-class ValidationRule {
-  final ValidationType type;
-  final bool required;
-  final String? regexPattern;
-  final List<String>? allowedValues; // for dropdowns
-  final String? customMessage;
-  final String? customFunction; // for API or DSL rule definitions
-
-  ValidationRule({
-    required this.type,
-    this.required = false,
-    this.regexPattern,
-    this.allowedValues,
-    this.customMessage,
-    this.customFunction,
-  });
-
-  ValidationRuleBox toValidationRuleBox(){
-    return ValidationRuleBox(
-      type: type.index,
-      required: required,
-      regexPattern: regexPattern,
-      allowedValues: allowedValues,
-      customMessage: customMessage,
-      customFunction: customFunction 
-      );
-  }
-}
-
-@HiveType(typeId: 13)
-class ValidationRuleBox {
-  @HiveField(0)
-  final int type;
-  @HiveField(1)
-  final bool required;
-  @HiveField(2)
-  final String? regexPattern;
-  @HiveField(3)
-  final List<String>? allowedValues; // for dropdowns
-  @HiveField(4)
-  final String? customMessage;
-  @HiveField(5)
-  final String? customFunction; // for API or DSL rule definitions
-
-  ValidationRuleBox({
-    required this.type,
-    this.required = false,
-    this.regexPattern,
-    this.allowedValues,
-    this.customMessage,
-    this.customFunction,
-  });
-
-  ValidationRule toValidationRule() {
-    return ValidationRule(
-      type:ValidationType.values[type],
-      required: required,
-      regexPattern: regexPattern,
-      allowedValues: allowedValues,
-      customMessage: customMessage,
-      customFunction: customFunction 
-    );
-  }
-}

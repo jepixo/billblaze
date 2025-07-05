@@ -1,4 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:convert';
+
 import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 import 'package:hive/hive.dart';
 
@@ -31,4 +33,25 @@ class InputBlock {
     // TODO: implement toString
     return '${indexPath.toString()}, ${blockIndex.toString()}, $id, ${function.runtimeType.toString()}, $isExpanded';
   }
+  Map<String, dynamic> toMap() => {
+        'indexPath': indexPath.toJson(),
+        'blockIndex': blockIndex,
+        'id': id,
+        'isExpanded': isExpanded,
+        'function': function?.toMap(), // null-safe
+      };
+
+  factory InputBlock.fromMap(Map<String, dynamic> map) => InputBlock(
+        indexPath: IndexPath.fromJson(map['indexPath']),
+        blockIndex: List<int>.from(map['blockIndex']),
+        id: map['id'],
+        isExpanded: map['isExpanded'] ?? false,
+        function: map['function'] != null
+            ? SheetFunction.fromMap(map['function'])
+            : null,
+      );
+
+  String toJson() => jsonEncode(toMap());
+  factory InputBlock.fromJson(String json) =>
+      InputBlock.fromMap(jsonDecode(json));
 }
