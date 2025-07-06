@@ -144,7 +144,8 @@ class SheetTableCellBox extends SheetItem {
     }
 
   @override
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap() {
+    var map = {
         'type': 'SheetTableCellBox',
         'id': id,
         'parentId': parentId,
@@ -156,6 +157,9 @@ class SheetTableCellBox extends SheetItem {
         'rowSpan': rowSpan,
         'colSpan': colSpan,
       };
+      print(map);
+    return map;
+    } 
 
   factory SheetTableCellBox.fromMap(Map<String, dynamic> map) => 
   SheetTableCellBox(

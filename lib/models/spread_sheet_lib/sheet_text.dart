@@ -47,7 +47,8 @@ class SheetTextBox extends SheetItem {
   }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
 
   @override
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap() {
+    var map = {
         'type': 'SheetTextBox',
         'id': id,
         'parentId': parentId,
@@ -61,6 +62,9 @@ class SheetTextBox extends SheetItem {
         'locked': locked,
       };
 
+      print('SheetTextBox: '+map.toString());
+    return map;
+    } 
   String toJson() => jsonEncode(toMap());
 
   factory SheetTextBox.fromMap(Map<String, dynamic> map) {

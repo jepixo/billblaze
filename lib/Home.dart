@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
+import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
@@ -13,6 +14,8 @@ import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/env_provider.dart';
+import 'package:billblaze/repo/google_cloud_storage_repository.dart';
+import 'package:flutter_multiple_loaders/flutter_multiple_loaders.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
@@ -33,6 +36,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:loading_indicator/loading_indicator.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
@@ -1550,21 +1555,24 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: AnimatedContainer(
                 duration: Durations.medium3,
                 curve: Curves.easeIn,
-                height:((sHeight/2.5)-40)/2-mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                width:  (sWidth/4),
+                height:isLayoutTab?((sHeight/2.5))/2-mapValueDimensionBased( 10,10, sWidth,sHeight):0,
+                // width:  (sWidth/4),
+                width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+
                 // width: (sWidth/5)+ mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 0, outMax: 45),
-                alignment: Alignment.topRight,
+                alignment: Alignment.topLeft,
                 padding: EdgeInsets.only(
-                  top: mapValueDimensionBased( 35, 70, sWidth,sHeight),
-                  right:mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 15, outMax: 10)
+                  // top: mapValueDimensionBased(2, 8, sWidth,sHeight),
+                  // left:mapValueDimensionBased(5, 8, sWidth,sHeight),
+                  // right:mapValueDimensionBased(5, 8, sWidth,sHeight),
                 ),
-                // transform: Matrix4.identity()
-                // ..translate(isLayoutTab
-                //       ? 0.0
-                //       : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                //   ..rotateY( isLayoutTab? 0: -math.pi / 2),
+                transform: Matrix4.identity()
+                        ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                 decoration: BoxDecoration(
-                  color: defaultPalette.tertiary,
+                  color: defaultPalette.extras[0],
                   border: Border.all(),
                   borderRadius: BorderRadius.circular( 10)),
                 ),
@@ -1594,389 +1602,593 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             //       borderRadius: BorderRadius.circular(999),
             //       color: defaultPalette.tertiary),
             //   )),        
-            // // templatebutton
-            AnimatedPositioned(
-              duration: Durations.medium3,
+            // // Cloud buttons
+            
+            Positioned(
+              // duration: Durations.medium3,
               bottom: 1.6*(sHeight / 18),
-              left: ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
-             
+              left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
               child: IgnorePointer(
                 ignoring: !isLayoutTab,
                 child: Stack(  
                   children: [
                     SizedBox(
-                      height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
-                      width: (sWidth/5),
+                      height:isLayoutTab? (sHeight/2.5)-50:0,
+                      width: (sWidth/10),
                     ),
                     Positioned(
                       bottom: 0,
-                      child: AnimatedContainer(
-                        duration: Durations.medium3,
-                         transform: Matrix4.identity()
-                          // ..translate(isLayoutTab
-                          //   ? 0.0
-                          //   : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
-                        child: ElevatedLayerButton(
-                            onClick: () async {
-                              var data= extractBIAnalyticsData(Boxes.getLayouts());
-
-                              print(data);
-
-                              Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox) async {
-                                
-                                var googleSignIn = ref.read(gapSignInProvider);
-                                try {
-                                  gap.GoogleSignInCredentials? creds;
-                                  if (ref.read(authCredentialsProvider) == null) {
-                                    creds = await googleSignIn.signInOnline();
-                                    if (creds == null) {
-                                      print("Google Sign-In failed or was canceled.");
-                                      return;
-                                    } else {
-                                      ref.read(authCredentialsProvider.notifier).update((state) => creds);
-                                    }
-                                  } else {
-                                    creds = ref.read(authCredentialsProvider);
-                                  }
-
-                                  final authClient = authenticatedClient(
-                                    http.Client(),
-                                    AccessCredentials(
-                                      AccessToken('Bearer', creds!.accessToken, DateTime.now().toUtc().add(Duration(hours: 1))),
-                                      null,
-                                      [
-                                        'https://www.googleapis.com/auth/drive',
-                                        'https://www.googleapis.com/auth/spreadsheets',
-                                        'https://www.googleapis.com/auth/documents',
-                                      ],
-                                    ),
-                                  );
-
-                                  final driveApi = drive.DriveApi(authClient);
-                                  final sheetsApi = sheets.SheetsApi(authClient);
-
-                                  // 1️⃣ Look for existing sheet named 'LayoutModelBox'
-                                  final fileList = await driveApi.files.list(q: "name='LayoutModelBox' and mimeType='application/vnd.google-apps.spreadsheet'");
-                                  String sheetId;
-                                  if (fileList.files != null && fileList.files!.isNotEmpty) {
-                                    sheetId = fileList.files!.first.id!;
-                                    print("📄 Found existing sheet with ID: $sheetId");
-                                  } else {
-                                    // 🆕 Create new spreadsheet
-                                    final newFile = await driveApi.files.create(drive.File()
-                                      ..name = "LayoutModelBox"
-                                      ..mimeType = "application/vnd.google-apps.spreadsheet");
-                                    sheetId = newFile.id!;
-                                    print("✅ Created new sheet with ID: $sheetId");
-                                  }
-
-                                  // 2️⃣ Clear existing sheet contents
-                                  await sheetsApi.spreadsheets.values.clear(
-                                    sheets.ClearValuesRequest(),
-                                    sheetId,
-                                    "Sheet1",
-                                  );
-
-                                  // 3️⃣ Prepare header row
-                                  final headers = [
-                                    "id",
-                                    "name",
-                                    "createdAt",
-                                    "modifiedAt",
-                                    "type",
-                                    "spreadsheetDocId",
-                                    "docPropsList",
-                                    "labelList",
-                                    "hasPdf"
-                                  ];
-
-                                  List<List<dynamic>> allRows = [headers];
-
-                                  for (final layout in layoutBox.values) {
-                                    // 4️⃣ Upload spreadsheetList to Google Doc
-                                    // Look for existing doc with title == layout.id
-                                  final existingDocSearch = await driveApi.files.list(q: "name='${layout.id}' and mimeType='application/vnd.google-apps.document'");
-                                  String docId;
-
-                                  if (existingDocSearch.files != null && existingDocSearch.files!.isNotEmpty) {
-                                    docId = existingDocSearch.files!.first.id!;
-                                    print("📄 Found existing doc for ${layout.id} with ID: $docId");
-
-                                    // Clear old contents (replace with a blank space or wipe all content range)
-                                    await http.post(
-                                      Uri.parse('https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
-                                      headers: {
-                                        'Authorization': 'Bearer ${creds.accessToken}',
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: jsonEncode({
-                                        'requests': [
-                                          {
-                                            'deleteContentRange': {
-                                              'range': {
-                                                'startIndex': 1,
-                                                'endIndex': 999999999999, // Very large value to ensure all content is wiped
-                                              }
-                                            }
-                                          }
-                                        ]
-                                      }),
-                                    );
-                                  } else {
-                                    // Create new doc
-                                    final docResponse = await http.post(
-                                      Uri.parse('https://docs.googleapis.com/v1/documents'),
-                                      headers: {
-                                        'Authorization': 'Bearer ${creds.accessToken}',
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: jsonEncode({'title': layout.id}),
-                                    );
-
-                                    if (docResponse.statusCode != 200) {
-                                      print("❌ Failed to create doc for layout ${layout.id}");
-                                      continue;
-                                    }
-
-                                    docId = jsonDecode(docResponse.body)['documentId'];
-                                    print("🆕 Created new doc with ID: $docId");
-                                  }
-
-                                    // Insert JSON text into doc
-                                    await http.post(
-                                      Uri.parse('https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
-                                      headers: {
-                                        'Authorization': 'Bearer ${creds.accessToken}',
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: jsonEncode({
-                                        'requests': [
-                                          {
-                                            'insertText': {
-                                              'location': {'index': 1},
-                                              'text': jsonEncode(
-                                                    layout.spreadSheetList.map((e) => e.toMap()).toList()
-                                                  ),
-                                            }
-                                          }
-                                        ]
-                                      }),
-                                    );
-
-                                    // 5️⃣ Construct row
-                                    allRows.add([
-                                      layout.id,
-                                      layout.name,
-                                      layout.createdAt.toIso8601String(),
-                                      layout.modifiedAt.toIso8601String(),
-                                      layout.type,
-                                      docId,
-                                      jsonEncode(layout.docPropsList.map((e) => e.toJson()).toList()),
-                                      jsonEncode(layout.labelList.map((e) => e.toJson()).toList()),
-                                      layout.pdf != null && layout.pdf!.isNotEmpty ? "yes" : "no"
-                                    ]);
-                                  }
-
-                                  // 6️⃣ Write to Sheet
-                                  await sheetsApi.spreadsheets.values.update(
-                                    sheets.ValueRange.fromJson({'values': allRows}),
-                                    sheetId,
-                                    "Sheet1!A1",
-                                    valueInputOption: "RAW",
-                                  );
-
-                                  print("✅ Synced all LayoutModels to Google Sheet and Docs.");
-                                  authClient.close();
-                                } catch (e) {
-                                  print("❌ Error during authentication or data sync: $e");
-                                }
-                              }
-
-                              await authenticateAndSyncLayoutModels(Boxes.getLayouts());
-                              
-                              Future<Map<String, dynamic>> fetchAndReconstructLayoutModels() async {
-                                final googleSignIn = ref.read(gapSignInProvider);
-
-                                try {
-                                  gap.GoogleSignInCredentials? creds;
-                                  if (ref.read(authCredentialsProvider) == null) {
-                                    creds = await googleSignIn.signInOnline();
-                                    if (creds == null) {
-                                      print("❌ Google Sign-In failed.");
-                                      throw Exception("Sign-in failed");
-                                    } else {
-                                      ref.read(authCredentialsProvider.notifier).update((state) => creds);
-                                    }
-                                  } else {
-                                    creds = ref.read(authCredentialsProvider);
-                                  }
-
-                                  final authClient = authenticatedClient(
-                                    http.Client(),
-                                    AccessCredentials(
-                                      AccessToken('Bearer', creds!.accessToken, DateTime.now().toUtc().add(Duration(hours: 1))),
-                                      creds.refreshToken,
-                                      [
-                                        'https://www.googleapis.com/auth/drive',
-                                        'https://www.googleapis.com/auth/spreadsheets',
-                                        'https://www.googleapis.com/auth/documents',
-                                      ],
-                                    ),
-                                  );
-
-                                  final driveApi = drive.DriveApi(authClient);
-                                  final sheetsApi = sheets.SheetsApi(authClient);
-
-                                  // 🔍 Find the sheet
-                                  final fileList = await driveApi.files.list(q: "name='LayoutModelBox' and mimeType='application/vnd.google-apps.spreadsheet'");
-                                  if (fileList.files == null || fileList.files!.isEmpty) {
-                                    throw Exception("LayoutModelBox spreadsheet not found");
-                                  }
-
-                                  final sheetId = fileList.files!.first.id!;
-                                  final sheetData = await sheetsApi.spreadsheets.values.get(sheetId, "Sheet1");
-
-                                  final rows = sheetData.values;
-                                  if (rows == null || rows.length < 2) {
-                                    throw Exception("No layout data in sheet");
-                                  }
-
-                                  final headers = rows.first;
-                                  final Map<String, dynamic> box = {};
-                                  box.clear();
-
-                                  for (int i = 1; i < rows.length; i++) {
-                                    final row = rows[i];
-                                    final headerStrings = headers.map((e) => e.toString()).toList();
-
-                                    final data = Map<String, dynamic>.fromIterables(
-                                      headerStrings,
-                                      row + List.filled(headerStrings.length - row.length, ''),
-                                    );
-
-                                    // 📥 Fetch spreadsheetList JSON from Google Doc
-                                    final docId = data['spreadsheetDocId'];
-                                    final docResponse = await http.get(
-                                      Uri.parse('https://docs.googleapis.com/v1/documents/$docId'),
-                                      headers: {
-                                        'Authorization': 'Bearer ${creds.accessToken}',
-                                        'Content-Type': 'application/json',
-                                      },
-                                    );
-
-                                    if (docResponse.statusCode != 200) {
-                                      print("❌ Failed to fetch Google Doc $docId");
-                                      continue;
-                                    }
-
-                                    final docBody = jsonDecode(docResponse.body);
-                                    final content = docBody['body']['content'] as List? ?? [];
-
-                                    final textRuns = content
-                                        .expand((e) => (e['paragraph']?['elements'] as List?) ?? [])
-                                        .map((e) => e['textRun']?['content'])
-                                        .whereType<String>();
-
-                                    final firstTextElement = textRuns.join();
-
-
-                                    // 🧱 Rebuild spreadsheetList
-                                    final spreadsheetListRaw = jsonDecode(firstTextElement.trim());
-                                    final List<SheetListBox> spreadsheetList = (spreadsheetListRaw as List)
-                                        .map((e) => SheetListBox.fromMap(e))
-                                        .toList();
-
-                                    // 🧱 Build LayoutModel
-                                    final model = LayoutModel(
-                                      id: data['id'],
-                                      name: data['name'],
-                                      createdAt: DateTime.parse(data['createdAt']),
-                                      modifiedAt: DateTime.parse(data['modifiedAt']),
-                                      type: int.tryParse(data['type'].toString()) ?? 0,
-                                      spreadSheetList: spreadsheetList,
-                                      docPropsList: (jsonDecode(data['docPropsList']) as List)
-                                          .map((e) => DocumentPropertiesBox.fromJson(e))
-                                          .toList(),
-                                      labelList: (jsonDecode(data['labelList']) as List)
-                                          .map((e) => RequiredText.fromJson(e))
-                                          .toList(),
-                                      pdf: (data['hasPdf'] == 'yes') ? [] : null, // You can skip real PDF loading here
-                                    );
-
-                                    box.addAll({model.id: model});
-                                  }
-
-                                  print("✅ LayoutModelBox loaded from Google Sheet and Docs");
-                                  return box;
-                                } catch (e) {
-                                  print("❌ Failed to fetch LayoutModels: $e");
-                                  rethrow;
-                                }
-                              }
-                              
-                              var gmap = await fetchAndReconstructLayoutModels();
-                               print(gmap['BI-78f0f65a-26f9-43fe-bfa6-7c03f10f88cf'].spreadSheetList);
-                              },
-                              buttonHeight: ((sHeight/2.5)-40)/2,
-                              buttonWidth: (sWidth/7).clamp(100, double.infinity),
-                              borderRadius: BorderRadius.circular(10),
-                              animationDuration: const Duration(milliseconds: 200),
-                              animationCurve: Curves.ease,
-                              subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                              depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                              topDecoration: BoxDecoration(
-                                color: defaultPalette.primary,
-                                border: Border.all(),
-                              ),
-                              topLayerChild: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    // Icon(
-                                    //   IconsaxPlusLinear.grid_3,
-                                    //   size: 40,
-                                    // ),
-                                    Expanded(
-                                      child: Container(
-                                        alignment: Alignment(-1, -1),
-                                        padding: EdgeInsets.only(
-                                          top: 5,
-                                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                      child: Row(
+                        children: [
+                          AnimatedContainer(
+                            duration: Durations.medium3,
+                             transform: Matrix4.identity()
+                              ..translate(isLayoutTab
+                                ? 0.0
+                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                              ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                            child: ElevatedLayerButton(
+                                onClick: () async {
+                                  OverlayEntry? overlay;
+                                    overlay =  OverlayEntry(builder: (context) => Scaffold(
+                                    backgroundColor: defaultPalette.tertiary,
+                                    body: Center(
+                                      // child: LoadingAnimationWidget.newtonCradle(
+                                      //   color: Colors.white,
+                                      //   size: 150,
+                                      // ),
+                                      child: SizedBox(
+                                        height: 200,
+                                        // child: ParticleVortexLoader(
+                                        //     options: LoaderOptions(
+                                        //       durationMs: 2500,
+                                        //       color: defaultPalette.extras[0].withOpacity(0.8),
+                                        //       backgroundColor: defaultPalette.tertiary ,
+                                        //       secondaryColor: defaultPalette.secondary,
+                                        //       tertiaryColor: defaultPalette.primary,
+                                        //       size: LoaderSize.extraLarge,
+                                        //       strokeWidth: 25
+                                        //     ), 
+                                        //     size: 8,
+                                        // ),
+                                        child: LoadingIndicator(
+                                            indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                            colors: [defaultPalette.extras[0],defaultPalette.extras[0],defaultPalette.extras[0]],       /// Optional, The color collections
+                                            strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                            backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                            pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
                                         ),
-                                        child: Text(
-                                          'Templates \nView',
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          textAlign: TextAlign.start,
+                                      )
+                                    ),),);
+                                    Overlay.of(context).insert(
+                                      overlay
+                                    );
+                                  var box =Boxes.getLayouts();
+                                  final gmap = await fetchAndReconstructLayoutModels(ref);
+                                  overlay.remove();
+
+                                  for (var lmEntry in gmap.entries) {
+                                    final id = lmEntry.key;
+                                    final incoming = lmEntry.value as LayoutModel;
+                                    final existing = box.get(id);
+                                    
+
+                                    if (existing != null && incoming.modifiedAt.isBefore(existing.modifiedAt)) {
+                                      if (!mounted) return;
+
+                                      final shouldOverwrite = await showDialog<int>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          backgroundColor: defaultPalette.primary,
+                                          title: Text("Older ${incoming.id.startsWith('LY-')? 'Layout': incoming.type == 0? 'Bill': SheetType.values[incoming.type].name} In The Cloud!",
                                           style: GoogleFonts.lexend(
-                                            fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
-                                            color: defaultPalette.extras[0],
-                                            letterSpacing: -1,
-                                            fontWeight: FontWeight.w400
+                                              fontSize: 25,
+                                              color: defaultPalette.extras[0],
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Do you want to overwrite it?",
+                                                style: GoogleFonts.lexend(
+                                                  fontSize: 14,
+                                                  color: defaultPalette.extras[0],
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                                ),
+                                                SizedBox(height: 4,),
+                                              Column(
+                                                 mainAxisSize: MainAxisSize.min,
+                                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  //incoming lm
+                                                  Row(
+                                                    children: [
+                                                      Icon(TablerIcons.cloud),
+                                                      SizedBox(width: 2,),
+                                                      Text(
+                                                      " ${incoming.name}",
+                                                        style: GoogleFonts.lexend(
+                                                          fontSize: 14, 
+                                                          color: defaultPalette.extras[0],
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  RichText(
+                                                  textAlign: TextAlign.start,
+                                                  maxLines: 1,
+                                                  // overflow: TextOverflow.ellipsis,
+                                                  text: TextSpan(
+                                                    style: GoogleFonts.lexend(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w300,
+                                                      letterSpacing: -0.2,
+                                                    ),
+                                                    children: [
+                                                      TextSpan(
+                                                        text: 'Created: ',
+                                                        style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      TextSpan(
+                                                        text: DateFormat("EEE MMM d, y 'at' h:mm a").format(incoming.createdAt),
+                                                        style: TextStyle(color: defaultPalette.extras[0]),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  ),
+                                                  RichText(
+                                                    textAlign: TextAlign.start,
+                                                    maxLines: 1,
+                                                    // overflow: TextOverflow.ellipsis,
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w300,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Modified: ',
+                                                          style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        TextSpan(
+                                                          text: DateFormat("EEE MMM d, y 'at' h:mm a").format(incoming.modifiedAt),
+                                                          style: TextStyle(color: defaultPalette.extras[4]),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 4,),
+                                                  //existing lm
+                                                  Row(
+                                                    children: [
+                                                      Icon(TablerIcons.server),
+                                                      SizedBox(width: 2,),
+                                                      Text(
+                                                      " ${existing.name}",
+                                                        style: GoogleFonts.lexend(
+                                                          fontSize: 14, 
+                                                          color: defaultPalette.extras[0],
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  RichText(
+                                                  textAlign: TextAlign.start,
+                                                  maxLines: 1,
+                                                  // overflow: TextOverflow.ellipsis,
+                                                  text: TextSpan(
+                                                    style: GoogleFonts.lexend(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w300,
+                                                      letterSpacing: -0.2,
+                                                    ),
+                                                    children: [
+                                                      TextSpan(
+                                                        text: 'Created: ',
+                                                        style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      TextSpan(
+                                                        text: DateFormat("EEE MMM d, y 'at' h:mm a").format(existing.createdAt),
+                                                        style: TextStyle(color: defaultPalette.extras[0]),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  ),
+                                                  RichText(
+                                                    textAlign: TextAlign.start,
+                                                    maxLines: 1,
+                                                    // overflow: TextOverflow.ellipsis,
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w300,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Modified: ',
+                                                          style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        TextSpan(
+                                                          text: DateFormat("EEE MMM d, y 'at' h:mm a").format(existing.modifiedAt),
+                                                          style: TextStyle(color: defaultPalette.tertiary),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                
+                                                ],
+                                              )
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, 0),
+                                              child: Text("Nah",
+                                              style: GoogleFonts.lexend(
+                                              fontSize: 14,
+                                              color: defaultPalette.extras[0],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                              ),
+                                            ),
+                                            TextButton(
+                                              
+                                              onPressed: () => Navigator.pop(ctx, 1),
+                                              child: Text("Overwrite",
+                                              style: GoogleFonts.lexend(
+                                              fontSize: 14,
+                                              color: defaultPalette.extras[4],
+                                              fontWeight: FontWeight.w500,
+                                              ),
+                                              ),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, 2),
+                                              child: Text("Keep Both",
+                                              style: GoogleFonts.lexend(
+                                              fontSize: 14,
+                                              color: defaultPalette.tertiary,
+                                              fontWeight: FontWeight.w500,
+                                              ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+
+                                      if (shouldOverwrite == 0) continue;
+                                      if (shouldOverwrite == 1) {
+                                        box.put(id, incoming.copyWith(pdf: existing.pdf));
+                                      } else if (shouldOverwrite ==2) {
+                                        var newId = '${existing.id.substring(0,4)}${Uuid().v4()}';
+                                        var newlm = LayoutModel(
+                                          docPropsList: incoming.docPropsList, 
+                                          spreadSheetList: incoming.spreadSheetList, 
+                                          id: newId, name: incoming.name+'-old', 
+                                          createdAt: incoming.createdAt, 
+                                          modifiedAt: incoming.modifiedAt,
+                                          labelList:incoming.labelList,
+                                          pdf: existing.pdf,
+                                          type: incoming.type,
+
+                                          );
+                                        box.put(newId, newlm);
+                                      }
+                                    }
+
+                                  }
+
+                                  setState(() {
+                                    filteredLayoutBox = box.values.toList();
+                                  });
+                                 
+                                },
+                                buttonHeight: ((sHeight/2.5)-40)/2,
+                                buttonWidth: (sWidth/20),
+                                borderRadius: BorderRadius.circular(10),
+                                animationDuration: const Duration(milliseconds: 200),
+                                animationCurve: Curves.ease,
+                                subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(),
+                                ),
+                                topLayerChild: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          padding: EdgeInsets.only(
+                                            top: 5,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Icon(TablerIcons.cloud,size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
+                                              Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
+                                            ],
+                                          )
+                                        ),
+                                      ),
+                                    ]),
+                                baseDecoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  // border: Border.all(),
+                                ),
+                              ),
+                          ),
+                          AnimatedContainer(
+                            duration: Durations.medium3,
+                             transform: Matrix4.identity()
+                              ..translate(isLayoutTab
+                                ? 0.0
+                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                              ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                            child: ElevatedLayerButton(
+                                onClick: () async {
+                                   OverlayEntry? overlay;
+                                    overlay =  OverlayEntry(builder: (context) => Scaffold(
+                                    backgroundColor: defaultPalette.tertiary,
+                                    body: Center(
+                                      // child: LoadingAnimationWidget.newtonCradle(
+                                      //   color: Colors.white,
+                                      //   size: 150,
+                                      // ),
+                                      child: SizedBox(
+                                        height: 150,
+                                        child: LoadingIndicator(
+                                            indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                            colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
+                                            strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                            backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                            pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                        ),
+                                      )
+                                    ),),);
+                                    Overlay.of(context).insert(
+                                      overlay
+                                    );
+                                 await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref).then((value) {
+                                   overlay?.remove();
+                                 },);
+                                },
+                                buttonHeight: ((sHeight/2.5)-40)/2,
+                                buttonWidth: (sWidth/20),
+                                borderRadius: BorderRadius.circular(10),
+                                animationDuration: const Duration(milliseconds: 200),
+                                animationCurve: Curves.ease,
+                                subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(),
+                                ),
+                                topLayerChild: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          padding: EdgeInsets.only(
+                                            top: 5,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Icon(TablerIcons.cloud, size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
+                                              Icon(TablerIcons.upload, size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
+                                            ],
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ]),
-                            baseDecoration: BoxDecoration(
-                              color: Colors.transparent,
-                              // border: Border.all(),
-                            ),
+                                    ]),
+                                baseDecoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  // border: Border.all(),
+                                ),
+                              ),
                           ),
+                        ],
                       ),
                     ),
-                      
                   ],
                 )
               ),
             ),
-            //quote
+            //toggle bwteen layouts and templates
+            AnimatedPositioned(
+              duration: Durations.medium3,
+              bottom: 1.6*(sHeight / 18) -sWidth/30,
+              left: isLayoutTab?((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+3*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)):sWidth/2,
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Transform.rotate(
+                  alignment: Alignment(-1, -1),
+                  angle: -pi/2,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: AnimatedToggleSwitch<bool>.dual(
+                      current: isLayoutTileView,
+                      first: true,
+                      second: false,
+                      onChanged: (value) {
+                        setState(() {
+                          isLayoutTileView = value;
+                        });
+                      },
+                      animationCurve:
+                          Curves.easeInOutExpo,
+                      animationDuration:
+                          Durations.medium4,
+                      borderWidth:
+                          2, // backgroundColor is set independently of the current selection
+                      styleBuilder: (value) =>
+                          ToggleStyle(
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(8),
+                              indicatorBorderRadius:
+                                  BorderRadius.circular(5),
+                              
+                              borderColor:
+                                  defaultPalette
+                                      .tertiary,
+                              backgroundColor:
+                                  defaultPalette
+                                      .tertiary,
+                              indicatorColor:
+                                  defaultPalette
+                                          .primary), // indicatorColor changes and animates its value with the selection
+                      iconBuilder: (value) {
+                        return Icon(
+                            value? TablerIcons
+                                    .layout
+                                : TablerIcons
+                                    .template,
+                            size: 12,
+                            color: defaultPalette
+                                .extras[0]);
+                      },
+                      textBuilder: (value) {
+                        return Text(
+                          value ? 'tmp'
+                              : 'lyt',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              GoogleFonts.bungee(
+                                  fontSize: mapValueDimensionBased( 12, 30, sWidth,sHeight)),
+                        );
+                      },
+                      height:sWidth/30,
+                      spacing:(sHeight/5)-110,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+                                          
+            // AnimatedPositioned(
+            //   duration: Durations.medium3,
+            //   bottom: 1.6*(sHeight / 18),
+            //   left: ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
+            //   child: IgnorePointer(
+            //     ignoring: !isLayoutTab,
+            //     child: Stack(  
+            //       children: [
+            //         SizedBox(
+            //           height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
+            //           width: (sWidth/5),
+            //         ),
+            //         Positioned(
+            //           bottom: 0,
+            //           child: AnimatedContainer(
+            //             duration: Durations.medium3,
+            //              transform: Matrix4.identity()
+            //               // ..translate(isLayoutTab
+            //               //   ? 0.0
+            //               //   : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+            //               ..rotateZ( isLayoutTab? 0: math.pi / 2),
+            //             child: ElevatedLayerButton(
+            //                 onClick: () async {
+            //                   var data= extractBIAnalyticsData(Boxes.getLayouts());
+            //                   var box =Boxes.getLayouts();
+            //                   for (var lm in box.values) {
+            //                     print(lm);
+            //                     for (var i = 0; i < ((lm) as LayoutModel).spreadSheetList.length; i++) {
+            //                       var el =(lm as LayoutModel).spreadSheetList[i];
+            //                       print(el.id);
+            //                       for (var j = 0; j < el.sheetList.length; j++) {
+            //                         print(el.sheetList[j].toString());
+            //                       }
+            //                     }
+            //                   }
+            //                   print(data);
+            //                   
+
+            //                   await authenticateAndSyncLayoutModels(Boxes.getLayouts());                      
+            
+            
+            //                   var gmap = await fetchAndReconstructLayoutModels();
+            //                   for (var lm in gmap.entries) {
+            //                     box.put(lm.key, (lm.value as LayoutModel).copyWith(
+            //                       pdf: box.get(lm.key)?.pdf
+            //                     ));
+            //                   }                            
+            //                   setState(() {
+            //                     filteredLayoutBox = box.values.toList();
+            //                   });
+            //                   },
+            //                   buttonHeight: ((sHeight/2.5)-40)/2,
+            //                   buttonWidth: (sWidth/7).clamp(100, double.infinity),
+            //                   borderRadius: BorderRadius.circular(10),
+            //                   animationDuration: const Duration(milliseconds: 200),
+            //                   animationCurve: Curves.ease,
+            //                   subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+            //                   depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+            //                   topDecoration: BoxDecoration(
+            //                     color: defaultPalette.primary,
+            //                     border: Border.all(),
+            //                   ),
+            //                   topLayerChild: Row(
+            //                       mainAxisAlignment: MainAxisAlignment.start,
+            //                       children: [
+            //                         // Icon(
+            //                         //   IconsaxPlusLinear.grid_3,
+            //                         //   size: 40,
+            //                         // ),
+            //                         Expanded(
+            //                           child: Container(
+            //                             alignment: Alignment(-1, -1),
+            //                             padding: EdgeInsets.only(
+            //                               top: 5,
+            //                               left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+            //                             ),
+            //                             child: Text(
+            //                               'Templates \nView',
+            //                               maxLines: 2,
+            //                               overflow: TextOverflow.ellipsis,
+            //                               textAlign: TextAlign.start,
+            //                               style: GoogleFonts.lexend(
+            //                                 fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
+            //                                 color: defaultPalette.extras[0],
+            //                                 letterSpacing: -1,
+            //                                 fontWeight: FontWeight.w400
+            //                               ),
+            //                             ),
+            //                           ),
+            //                         ),
+            //                       ]),
+            //                 baseDecoration: BoxDecoration(
+            //                   color: Colors.transparent,
+            //                   // border: Border.all(),
+            //                 ),
+            //               ),
+            //           ),
+            //         ),
+            //       ],
+            //     )
+            //   ),
+            // ),
+
+            // //quote
             AnimatedPositioned(
               duration: Durations.medium2,
               left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + 2*mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
               bottom: isLayoutTab ?   1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
               child: Text(
-                  'Pay up, \nbuttercup!',
+                  ' Pay up, \n buttercup!',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   // textAlign: TextAlign.end,
@@ -2688,6 +2900,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             ),
             
             //  gradient
+            AnimatedPositioned(
+              duration: Durations.medium2,
+              left:sWidth / (sWidth / 120),
+              top: isBillTab ?  (sHeight / 4): sHeight / 4,
+              child: GestureDetector(
+                onTap: () {
+                  print(extractBIAnalyticsData(Boxes.getLayouts()));
+                },
+                child: Container(
+                  width: sWidth/2,
+                  height: sHeight/2,
+                  decoration: BoxDecoration(
+                    color: defaultPalette.primary
+                  ),
+                ),
+              )
+            ),
             
             // //BillsList
             AnimatedPositioned(
@@ -2964,40 +3193,22 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     ),
                                                     child: ElevatedLayerButton(
                                                       onClick: () {
-                                                        final box = Boxes.getLayouts();
-                                                        final name = Boxes.getBillName();
-                                                        var key = 'BI-${const Uuid().v4()}';
-                                                        var prevLm =box.getAt(i);
-                                                        // keyIndex = box.length;
-                                                        var lm = LayoutModel(
-                                                          createdAt: DateTime.now(),
-                                                          modifiedAt: DateTime.now(),
-                                                          name: '${prevLm?.name??''}-revised',
-                                                          docPropsList: prevLm?.docPropsList??[],
-                                                          spreadSheetList:prevLm?.spreadSheetList?? [],
-                                                          id: key,
-                                                          type: SheetType.taxInvoice.index,
-                                                          labelList: prevLm?.labelList ??[],
-                                                        );
-                                                        
-                                                        box.put(key, lm);
-                                                        lm.save();
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                          builder: (c) =>  Material(
-                                                                  child: PopScope(
-                                                                child: LayoutDesigner(
-                                                                  id: key,
-                                                                  onPop: (pdf) {
-                                                                  },
-                                                                  
-                                                                ),
-                                                                canPop: false,
-                                                              )
-                                                            )
-                                                          )
-                                                        );
+                                                        Navigator.push(context, MaterialPageRoute(
+                                                          builder: (context) {
+                                                            return PopScope(
+                                                              canPop: false,
+                                                              child: LayoutDesigner(
+                                                                id: Boxes.getLayouts().keyAt(i),
+                                                                onPop: (pdf) {
+                                                                  setState(() {
+                                                                  filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                                });
+                                                                },
+                                                                exportPdf: true,
+                                                              ),
+                                                            );
+                                                          },
+                                                        ));
                                                       },
                                                       buttonHeight: 30,
                                                       buttonWidth: 30,
@@ -3494,5 +3705,22 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }
   
   double mapValueDimensionBased(double outMin, double outMax, double w, double h,{bool b = true, bool useWidth= false}){
-    return mapValue(value:b? useWidth? w: h*w:h, inMin:b? useWidth? 800: 500*800:500, inMax:b? useWidth? 2194:1187*2194:1187, outMin: outMin, outMax: outMax);
+    return mapValue(
+    value:b
+    ? useWidth
+      ? w
+      : h*w
+    :h, 
+    inMin:b
+    ? useWidth
+      ? 800
+      : 500*800
+    :500, 
+    inMax:b
+    ? useWidth
+      ? 2194
+      :1187*2194
+    :1187, 
+    outMin: outMin, outMax: outMax);
   }
+

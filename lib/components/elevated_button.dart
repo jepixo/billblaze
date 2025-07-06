@@ -15,6 +15,7 @@ class ElevatedLayerButton extends StatefulWidget {
   final double subfac;
   final double depth;
   final bool extrudeLeft;
+  final Alignment topAlignment;
 
   const ElevatedLayerButton({
     Key? key,
@@ -32,6 +33,7 @@ class ElevatedLayerButton extends StatefulWidget {
     this.subfac = 10,
     this.depth = 4,
     this.extrudeLeft = true,
+    this.topAlignment = const Alignment(0, 0)
   }) : super(key: key);
 
   @override
@@ -143,7 +145,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
                 child: Container(
                   width: widget.buttonWidth! - subfac,
                   height: widget.buttonHeight! - subfac,
-                  alignment: Alignment.center,
+                  alignment: widget.topAlignment,
                   decoration: widget.topDecoration?.copyWith(
                     borderRadius: widget.borderRadius,
                   ),

@@ -11,10 +11,9 @@ final authRepositoryProvider = StateProvider((ref) {
   return AuthRepository(
       auth: ref.read(authPr), googleSignIn: ref.read(googleSigninPr));
 });
-final authCredentialsProvider = StateProvider<gap.GoogleSignInCredentials?>((ref) {
-  return ;
+final authTokenManagerProvider = StateProvider<AuthTokenManager>((ref) {
+  return AuthTokenManager();
 });
-
 final gapSignInProvider = StateProvider<gap.GoogleSignIn>((ref) {
   return gap.GoogleSignIn(
     params: gap.GoogleSignInParams(
