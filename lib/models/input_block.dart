@@ -33,23 +33,34 @@ class InputBlock {
     // TODO: implement toString
     return '${indexPath.toString()}, ${blockIndex.toString()}, $id, ${function.runtimeType.toString()}, $isExpanded';
   }
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap() {
+    var map = {
         'indexPath': indexPath.toJson(),
         'blockIndex': blockIndex,
         'id': id,
         'isExpanded': isExpanded,
         'function': function?.toMap(), // null-safe
       };
+      print(map);
+    return map;
+    }
 
-  factory InputBlock.fromMap(Map<String, dynamic> map) => InputBlock(
-        indexPath: IndexPath.fromJson(map['indexPath']),
-        blockIndex: List<int>.from(map['blockIndex']),
-        id: map['id'],
-        isExpanded: map['isExpanded'] ?? false,
-        function: map['function'] != null
-            ? SheetFunction.fromMap(map['function'])
-            : null,
-      );
+  factory InputBlock.fromMap(Map<String, dynamic> map) {
+    return InputBlock(
+      indexPath: map['indexPath'] != null
+          ? IndexPath.fromJson(map['indexPath'])
+          : IndexPath(index: -6),
+      blockIndex: map['blockIndex'] != null
+          ? List<int>.from(map['blockIndex'])
+          : [],
+      id: map['id'] ?? '',
+      isExpanded: map['isExpanded'] ?? false,
+      function: map['function'] != null
+          ? SheetFunction.fromMap(map['function'])
+          : null,
+    );
+  }
+
 
   String toJson() => jsonEncode(toMap());
   factory InputBlock.fromJson(String json) =>

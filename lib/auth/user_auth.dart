@@ -83,7 +83,7 @@ class AuthRepository {
         print('Could not sign in');
         return;
       }
-       ref.read(authCredentialsProvider.notifier).update((state) => creds,);
+      //  ref.read(authCredentialsProvider.notifier).update((state) => creds,);
       // Now, sign in with Firebase using the obtained credentials
 
       final credential = GoogleAuthProvider.credential(
@@ -185,4 +185,16 @@ class AuthRepository {
 
     return id;
   }
+}
+
+class AuthTokenManager {
+  final gap.GoogleSignInCredentials? credentials;
+  final DateTime? expiryTime;
+
+  const AuthTokenManager({this.credentials, this.expiryTime});
+
+  bool get isValid =>
+      credentials != null &&
+      expiryTime != null &&
+      DateTime.now().isBefore(expiryTime!);
 }

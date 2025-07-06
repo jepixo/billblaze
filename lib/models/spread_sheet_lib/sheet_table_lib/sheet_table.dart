@@ -65,7 +65,8 @@ class SheetTableBox extends SheetItem {
   }
   
   @override
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap() {
+    var map = {
         'type': 'SheetTableBox',
         'id': id,
         'parentId': parentId,
@@ -82,6 +83,9 @@ class SheetTableBox extends SheetItem {
         'name': name,
         'expand': expand,
       };
+      print('SheetTableBox: '+map.toString());
+    return map;
+    } 
 
   factory SheetTableBox.fromMap(Map<String, dynamic> map) => SheetTableBox(
         id: map['id'],
@@ -113,6 +117,13 @@ class SheetTableBox extends SheetItem {
   factory SheetTableBox.fromJson(String json) =>
     SheetTableBox.fromMap(jsonDecode(json));
 
+  @override
+  String toString() {
+    // TODO: implement toString
+    return '_||SheetTable||_ ${name}, ${id}, ${cellData
+            .map((row) => row.map((cell) => cell.toMap()).toList())
+            .toList().toString()}---------';
+  }
 }
 
 

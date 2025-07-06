@@ -172,10 +172,12 @@ final propertyCardIndexProvider = StateProvider<int>((ref) {
 class LayoutDesigner extends ConsumerStatefulWidget {
   final String? id;
   final void Function(Uint8List pdf) onPop;
+  final bool exportPdf;
   const LayoutDesigner({
     Key? key,
     this.id,
-    required this.onPop
+    required this.onPop,
+    this.exportPdf = false,
   }) : super(key: key);
 
   @override
@@ -448,6 +450,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     setState(() => isLoading = false);
     _renderPagePreviewOnProperties();
     assignIndexPathsAndDisambiguate(labelList,spreadSheetList);
+    // IF EXPORT BILL BUTTON IS CLICKED v
+    Future.delayed(Durations.extralong4).then((c) async {if (widget.exportPdf) {
+      final overlay =  OverlayEntry(builder: (context) => Scaffold(
+        backgroundColor: defaultPalette.extras[1],
+        body: Center(
+          child: LoadingAnimationWidget.newtonCradle(
+            color: Colors.white,
+            size: 150,
+          ),
+        ),),);
+        Overlay.of(context).insert(
+          overlay
+        );
+       await _capturePng().then((onValue) {
+          _genPdf();
+        });
+       if (mounted) {
+        Navigator.pop(context);
+        Future.delayed(Durations.long1).then((value) {
+          overlay.remove();
+          sheetTypeBrowserEntry?.remove();
+        },);
+      }
+
+    }});
   }
 
   // ─── Tab change handlers ─────────────────────────────────────────────────

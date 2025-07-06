@@ -1,18 +1,18 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:typed_data';
 
-import 'package:billblaze/models/bill/bill_type.dart';
-import 'package:billblaze/models/bill/required_text.dart';
-import 'package:billblaze/models/index_path.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
 
+import 'package:billblaze/models/bill/bill_type.dart';
+import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
+import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 
 part 'layout_model.g.dart';
 
@@ -48,10 +48,34 @@ class LayoutModel extends HiveObject {
     this.pdf = null,
     this.labelList = const [],
   });
-  @override
-  String toString() {
-    // TODO: implement toString
-    return '${docPropsList.length}, ${spreadSheetList.length}, ${ id}, ${name}';
+  // @override
+  // String toString() {
+  //   // TODO: implement toString
+  //   return '${docPropsList.length}, ${spreadSheetList.length}, ${ id}, ${name}';
+  // }
+
+  LayoutModel copyWith({
+    List<DocumentPropertiesBox>? docPropsList,
+    List<SheetListBox>? spreadSheetList,
+    String? id,
+    String? name,
+    DateTime? createdAt,
+    DateTime? modifiedAt,
+    List<Uint8List>? pdf,
+    int? type,
+    List<RequiredText>? labelList,
+  }) {
+    return LayoutModel(
+      docPropsList: docPropsList ?? this.docPropsList,
+      spreadSheetList: spreadSheetList ?? this.spreadSheetList,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      modifiedAt: modifiedAt ?? this.modifiedAt,
+      pdf: pdf ?? this.pdf,
+      type: type ?? this.type,
+      labelList: labelList ?? this.labelList,
+    );
   }
 }
 

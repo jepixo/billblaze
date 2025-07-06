@@ -75,8 +75,9 @@ class SheetListBox extends SheetItem {
     },).toList();
   }
 
-  @override
-  Map<String, dynamic> toMap() => {
+   @override
+  Map<String, dynamic> toMap() {
+    var map = {
         'type': 'SheetListBox', // Optional type tag for polymorphic decoding
         'id': id,
         'parentId': parentId,
@@ -89,12 +90,18 @@ class SheetListBox extends SheetItem {
         'mainAxisSize': mainAxisSize,
         'size': size,
       };
+      print('SheetListBox: '+ map.toString());
+    return map;
+    } 
+
 
   /// ✅ jsonEncode-friendly
   String toJson() => jsonEncode(toMap());
 
   /// ♻️ Convert back from a map
   factory SheetListBox.fromMap(Map<String, dynamic> map) {
+    // print('in SheetListFromMap: '+map['id']);
+    // print('in SheetListFromMap: '+map['sheetList'].toString());
     return SheetListBox(
       id: map['id'],
       parentId: map['parentId'],
@@ -268,6 +275,11 @@ class SheetList extends SheetItem {
       mainAxisSize: mainAxisSize ?? this.mainAxisSize,
       indexPath: indexPath ?? this.indexPath,
     );
+  }
+  @override
+  String toString() {
+    // TODO: implement toString
+    return super.toString()+', len: '+sheetList.length.toString()+'.  ';
   }
 }
 

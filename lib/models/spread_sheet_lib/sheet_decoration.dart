@@ -50,12 +50,16 @@ class SuperDecorationBox extends SheetDecoration {
         name: name,
         itemDecorationList: itemDecorationList);
   }
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap(){
+    var map = {
         'type': 'SuperDecorationBox',
         'id': id,
         'name': name,
         'itemDecorationList': itemDecorationList,
       };
+      print(map);
+    return map;
+    } 
 
   factory SuperDecorationBox.fromMap(Map<String, dynamic> map) => SuperDecorationBox(
         id: map['id'],
@@ -88,11 +92,13 @@ class ItemDecorationBox extends SheetDecoration {
 
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
+    var map = <String, dynamic>{
       'itemDecoration': itemDecoration,
       'id': super.id,
       'name': super.name,
     };
+    print(map);
+    return map;
   }
 
   factory ItemDecorationBox.fromMap(Map<String, dynamic> map) {

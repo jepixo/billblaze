@@ -45,7 +45,8 @@ class SheetTableColumnBox extends SheetItem {
   }
   
   @override
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> toMap(){
+    var map = {
         'type': 'SheetTableColumnBox',
         'id': id,
         'parentId': parentId,
@@ -57,6 +58,9 @@ class SheetTableColumnBox extends SheetItem {
         'columnDecoration': columnDecoration,
       };
 
+      print(map);
+    return map;
+    } 
   factory SheetTableColumnBox.fromMap(Map<String, dynamic> map) => SheetTableColumnBox(
         id: map['id'],
         parentId: map['parentId'],
