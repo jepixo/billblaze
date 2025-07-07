@@ -13,7 +13,6 @@ import 'package:billblaze/models/index_path.dart';
 
 part 'sheet_item.g.dart';
 
-var parentId = Uuid().v4();
 
 @HiveType(typeId: 1)
 class SheetItem extends HiveObject {
