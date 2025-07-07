@@ -12,10 +12,13 @@ import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/env_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:flutter_multiple_loaders/flutter_multiple_loaders.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
@@ -81,6 +84,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   bool even = true;
   DateTime dateTimeNow = DateTime.now();
   bool isLayoutTileView = false;
+  bool isTemplateView = false;
   TextEditingController layoutSearchController = TextEditingController();
   FocusNode layoutSearchFocusNode = FocusNode();
   late List<LayoutModel> filteredLayoutBox;
@@ -91,6 +95,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   late AnimationController sliderController;
   late AnimationController titleFontFadeController;
   Orientation? _lastOrientation;
+  Map<double, double> monthRevenueMap = {};
   // bool isHomeTab = true;
   Key titleMainKey = GlobalKey();
 
@@ -365,6 +370,65 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       sliderController.forward().then((n) => func);
     });
   }
+
+  void extractAnalyticalData() {
+    monthRevenueMap ={};
+  final layouts = Boxes.getLayouts().values.toList();
+
+  final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
+  final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
+
+  double totalRevenue = 0;
+
+  // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
+
+  for (final layout in layouts) {
+    try {
+      final totalPayableLabel = layout.labelList.firstWhere(
+        (lbl) => lbl.name == 'totalPayable',
+      );
+
+      if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951) {
+        final item = getItemAtPath(totalPayableLabel.indexPath, layout.spreadSheetList);
+        if (item is SheetTextBox) {
+          final List<Map<String, dynamic>> rawDelta = List<Map<String, dynamic>>.from(item.textEditorController);
+          final delta = Delta.fromJson(rawDelta);
+          final doc = Document.fromDelta(delta);
+          final rawText = doc.toPlainText();
+          final value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+
+          totalRevenue += value;
+
+          final month = layout.createdAt.month.ceilToDouble(); // 👈 1 to 12
+
+          monthRevenueMap.update(month, (existing) => existing + value, ifAbsent: () => value);
+        }
+      }
+    } catch (_) {
+      // Skip this layout
+    }
+  }
+
+  // ✅ Sort by calendar month (1–12)
+  final sortedMonthRevenue = Map.fromEntries(
+    List.generate(12, (i) => i + 1)
+        .map((month) => MapEntry(month, monthRevenueMap[month] ?? 0)),
+  );
+
+  // 👇 For Debug or Console Output
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  for (final entry in sortedMonthRevenue.entries) {
+    print("${monthNames[entry.key - 1]}: ₹${entry.value.toStringAsFixed(2)}");
+  }
+
+  print("🧾 Total Invoices: $invoiceCount");
+  print("🧮 Credit Notes: $creditNoteCount");
+  print("💰 Total Revenue: ₹${totalRevenue.toStringAsFixed(2)}");
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1638,7 +1702,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       //   size: 150,
                                       // ),
                                       child: SizedBox(
-                                        height: 200,
+                                        height: 150,
                                         // child: ParticleVortexLoader(
                                         //     options: LoaderOptions(
                                         //       durationMs: 2500,
@@ -2008,72 +2072,74 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               duration: Durations.medium3,
               bottom: 1.6*(sHeight / 18) -sWidth/30,
               left: isLayoutTab?((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+3*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)):sWidth/2,
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: Transform.rotate(
-                  alignment: Alignment(-1, -1),
-                  angle: -pi/2,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: AnimatedToggleSwitch<bool>.dual(
-                      current: isLayoutTileView,
-                      first: true,
-                      second: false,
-                      onChanged: (value) {
-                        setState(() {
-                          isLayoutTileView = value;
-                        });
-                      },
-                      animationCurve:
-                          Curves.easeInOutExpo,
-                      animationDuration:
-                          Durations.medium4,
-                      borderWidth:
-                          2, // backgroundColor is set independently of the current selection
-                      styleBuilder: (value) =>
-                          ToggleStyle(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(8),
-                              indicatorBorderRadius:
-                                  BorderRadius.circular(5),
-                              
-                              borderColor:
-                                  defaultPalette
-                                      .tertiary,
-                              backgroundColor:
-                                  defaultPalette
-                                      .tertiary,
-                              indicatorColor:
-                                  defaultPalette
-                                          .primary), // indicatorColor changes and animates its value with the selection
-                      iconBuilder: (value) {
-                        return Icon(
-                            value? TablerIcons
-                                    .layout
-                                : TablerIcons
-                                    .template,
-                            size: 12,
-                            color: defaultPalette
-                                .extras[0]);
-                      },
-                      textBuilder: (value) {
-                        return Text(
-                          value ? 'tmp'
-                              : 'lyt',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              GoogleFonts.bungee(
-                                  fontSize: mapValueDimensionBased( 12, 30, sWidth,sHeight)),
-                        );
-                      },
-                      height:sWidth/30,
-                      spacing:(sHeight/5)-110,
-                    ),
+              child: Transform.rotate(
+                alignment: Alignment(-1, -1),
+                angle: -pi/2,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: AnimatedToggleSwitch<bool>.dual(
+                    current: isTemplateView,
+                    first: true,
+                    second: false,
+                    onChanged: (value) {
+                      setState(() {
+                        isTemplateView = value;
+                      });
+                    },
+                    animationCurve:
+                        Curves.easeInOutExpo,
+                    animationDuration:
+                        Durations.medium4,
+                    borderWidth:
+                        2, // backgroundColor is set independently of the current selection
+                    styleBuilder: (value) =>
+                        ToggleStyle(
+                            borderRadius:
+                                BorderRadius
+                                    .circular(8),
+                            indicatorBorderRadius:
+                                BorderRadius.circular(8),
+                            indicatorBorder: Border.all(),
+                            borderColor:value ?
+                                defaultPalette
+                                    .tertiary : defaultPalette.extras[0],
+                            backgroundColor: value ?
+                                defaultPalette
+                                    .tertiary : defaultPalette.extras[0],
+                            indicatorColor:
+                                defaultPalette
+                                        .primary), // indicatorColor changes and animates its value with the selection
+                    iconBuilder: (value) {
+                      return Icon(
+                          !value? TablerIcons
+                                  .layout
+                              : TablerIcons
+                                  .template,
+                          size: 12,
+                          color: defaultPalette
+                              .extras[0]);
+                    },
+                    textBuilder: (value) {
+                      return Text(
+                        value ? 'template'
+                            : 'layout',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            GoogleFonts.lexend(
+                                fontSize: mapValueDimensionBased( 10, 30, sWidth,sHeight),
+                                fontWeight: FontWeight.w500,
+                                color: !value ?
+                                defaultPalette
+                                    .primary : defaultPalette.extras[0],
+                                ),
+                      );
+                    },
+                    height:sWidth/30,
+                    spacing:(sHeight/5)-110,
                   ),
                 ),
               ),
@@ -2836,33 +2902,34 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
             ),
             //Bills colored dots
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              top: topPadPosDistance +80,
-              left: isBillTab ? 120 : (sWidth / 1.8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox(width:4),
-                  Container(
-                  decoration: BoxDecoration(
-                    color: defaultPalette.extras[0],
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(height: dotSize,width:dotSize),
-                  ),
-                  SizedBox(width:4),
-                  Container(
-                  decoration: BoxDecoration(
-                    color: defaultPalette.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(height: dotSize, width:dotSize),
-                  ),
-                ]
+            // AnimatedPositioned(
+            //   duration: Durations.medium2,
+            //   top: topPadPosDistance +80,
+            //   left: isBillTab ? 120 : (sWidth / 1.8),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.end,
+            //     children: [
+            //       SizedBox(width:4),
+            //       Container(
+            //       decoration: BoxDecoration(
+            //         color: defaultPalette.extras[0],
+            //         shape: BoxShape.circle,
+            //       ),
+            //       child: SizedBox(height: dotSize,width:dotSize),
+            //       ),
+            //       SizedBox(width:4),
+            //       Container(
+            //       decoration: BoxDecoration(
+            //         color: defaultPalette.primary,
+            //         shape: BoxShape.circle,
+            //       ),
+            //       child: SizedBox(height: dotSize, width:dotSize),
+            //       ),
+            //     ]
                 
-              ),
-            ),
+            //   ),
+            // ),
+            // //
             //
             //Bill$€₹
             AnimatedPositioned(
@@ -2899,24 +2966,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
             ),
             
-            //  gradient
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              left:sWidth / (sWidth / 120),
-              top: isBillTab ?  (sHeight / 4): sHeight / 4,
-              child: GestureDetector(
-                onTap: () {
-                  print(extractBIAnalyticsData(Boxes.getLayouts()));
-                },
-                child: Container(
-                  width: sWidth/2,
-                  height: sHeight/2,
-                  decoration: BoxDecoration(
-                    color: defaultPalette.primary
-                  ),
-                ),
-              )
-            ),
             
             // //BillsList
             AnimatedPositioned(
@@ -3543,6 +3592,375 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 ),
                 ),
                    
+                ),
+              ),
+            ),
+            //  gradient
+           AnimatedPositioned(
+              duration: Durations.medium2,
+              left: 90,
+              top: isBillTab ? 70 : sHeight / 4,
+              child: IgnorePointer(
+                ignoring: !isBillTab,
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    extractAnalyticalData();
+                  }), // Rebuild on tap
+                  child: Container(
+                    width: sWidth / 2.05 - 90,
+                    height: sHeight / 2.5,
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(8)
+                      ),
+                    child: Builder(builder: (context) {
+                    
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        // Text("🧾 Invoices: $invoiceCount", style: TextStyle(color: Colors.black)),
+                        // Text("🧮 Credit Notes: $creditNoteCount", style: TextStyle(color: Colors.black)),
+                        // Text("💰 Total Revenue: ₹${totalRevenue.toStringAsFixed(2)}", style: TextStyle(color: Colors.black)),
+                        // const SizedBox(height: 16),
+                        Text("📊 Revenue by Month:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        for (final entry in monthRevenueMap.entries)
+                          Text("📅 ${entry.key}: ₹${entry.value.toStringAsFixed(2)}", style: TextStyle(color: Colors.black)),
+                      //   Expanded(
+                      //     child: LineChart(
+                      //       LineChartData(
+                      //         gridData: FlGridData(
+                      //           show: true,
+                      //           drawVerticalLine: true,
+                      //           horizontalInterval: 1000,
+                      //           verticalInterval: 1,
+                      //           getDrawingHorizontalLine: (value) {
+                      //             return FlLine(
+                      //               color: defaultPalette.tertiary,
+                      //               strokeWidth: 1,
+                      //             );
+                      //           },
+                      //           getDrawingVerticalLine: (value) {
+                      //             return FlLine(
+                      //               color: defaultPalette.tertiary,
+                      //               strokeWidth: 1,
+                      //             );
+                      //           },
+                      //         ),
+                      //         titlesData: FlTitlesData(
+                      //           show: true,
+                      //           rightTitles: AxisTitles(
+                      //             sideTitles: SideTitles(showTitles: false),
+                      //           ),
+                      //           topTitles: AxisTitles(
+                      //             sideTitles: SideTitles(showTitles: false),
+                      //           ),
+                      //           bottomTitles: AxisTitles(
+                      //             sideTitles: SideTitles(
+                      //               showTitles: true,
+                      //               // reservedSize: 30,
+                      //               interval: 1,
+                      //               // getTitlesWidget: bottomTitleWidgets,
+                      //             ),
+                      //           ),
+                      //           leftTitles: AxisTitles(
+                      //             sideTitles: SideTitles(
+                      //               showTitles:true,
+                      //               interval: 2000,
+                      //               getTitlesWidget: (value, meta) => Text(
+                      //                 meta.formattedValue,
+                      //                 style: GoogleFonts.lexend(fontSize: 12),),
+                      //               // reservedSize: 42,
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         borderData: FlBorderData(
+                      //           show: true,
+                      //           border: Border.all(color: const Color(0xff37434d)),
+                      //         ),
+                      //         // minX: 0,
+                      //         // maxX: 11,
+                      //         // minY: 0,
+                      //         // maxY: 6,
+                      //         lineBarsData: [
+                      //           LineChartBarData(
+                      //             spots: [
+                      //               // for (final entry in monthRevenueMap.entries)
+                      //                 FlSpot(0, 0),
+                      //                 FlSpot(1, monthRevenueMap[1]!),
+                      //                 FlSpot(6, monthRevenueMap[6]!),
+                      //                 FlSpot(7, monthRevenueMap[7]!)
+                                    
+                      //             ],
+                      //             isCurved: false,
+                      //             gradient: LinearGradient(
+                      //               colors: [defaultPalette.extras[0], defaultPalette.secondary],
+                      //             ),
+                      //             barWidth: 5,
+                      //             isStrokeCapRound: true,
+                      //             dotData: const FlDotData(
+                      //               show: true,
+                      //             ),
+                      //             belowBarData: BarAreaData(
+                      //               show: true,
+                      //               gradient: LinearGradient(
+                      //                 colors: [defaultPalette.tertiary, defaultPalette.primary],
+                      //                 transform: GradientRotation(pi/2)
+                      //               ),
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       )
+                      //     ),
+                      //   )
+                      // ,
+                        Expanded(child: 
+                        LineChart(
+                          LineChartData(
+                lineTouchData: LineTouchData(
+                  getTouchedSpotIndicator:
+                      (LineChartBarData barData, List<int> spotIndexes) {
+                    return spotIndexes.map((spotIndex) {
+                      final spot = barData.spots[spotIndex];
+                      if (spot.x == 0 || spot.x == 6) {
+                        return null;
+                      }
+                      return TouchedSpotIndicatorData(
+                        FlLine(
+                          color: defaultPalette.tertiary,
+                          strokeWidth: 4,
+                        ),
+                        FlDotData(
+                          getDotPainter: (spot, percent, barData, index) {
+                            if (index.isEven) {
+                              return FlDotCirclePainter(
+                                radius: 8,
+                                color: Colors.white,
+                                strokeWidth: 5,
+                                strokeColor:
+                                    defaultPalette.tertiary,
+                              );
+                            } else {
+                              return FlDotSquarePainter(
+                                size: 16,
+                                color: Colors.white,
+                                strokeWidth: 5,
+                                strokeColor:defaultPalette.tertiary,
+                              );
+                            }
+                          },
+                        ),
+                      );
+                    }).toList();
+                  },
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                      return touchedBarSpots.map((barSpot) {
+                        final flSpot = barSpot;
+                        if (flSpot.x == 0 || flSpot.x == 6) {
+                          return null;
+                        }
+
+                        TextAlign textAlign;
+                        switch (flSpot.x.toInt()) {
+                          case 1:
+                            textAlign = TextAlign.left;
+                            break;
+                          case 5:
+                            textAlign = TextAlign.right;
+                            break;
+                          default:
+                            textAlign = TextAlign.center;
+                        }
+
+                        return LineTooltipItem(
+                          'yo \n',
+                          TextStyle(
+                            color: defaultPalette.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: flSpot.y.toString(),
+                              style: TextStyle(
+                                color: defaultPalette.primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: ' dough ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                          textAlign: textAlign,
+                        );
+                      }).toList();
+                    },
+                  ),
+                  touchCallback:
+                      (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                    if (!event.isInterestedForInteractions ||
+                        lineTouch == null ||
+                        lineTouch.lineBarSpots == null) {
+                      setState(() {
+                        // touchedValue = -1;
+                      });
+                      return;
+                    }
+                    final value = lineTouch.lineBarSpots![0].x;
+
+                    if (value == 0 || value == 6) {
+                      setState(() {
+                        // touchedValue = -1;
+                      });
+                      return;
+                    }
+
+                    setState(() {
+                      // touchedValue = value;
+                    });
+                  },
+                ),
+                extraLinesData: ExtraLinesData(
+                  horizontalLines: [
+                    HorizontalLine(
+                      y: 1.8,
+                      color:defaultPalette.tertiary,
+                      strokeWidth: 3,
+                      dashArray: [20, 10],
+                    ),
+                  ],
+                ),
+                lineBarsData: [
+                  LineChartBarData(
+                    isStepLineChart: true,
+                    spots: [
+                      FlSpot(0, 0),
+                      FlSpot(1, monthRevenueMap[1]!),
+                      FlSpot(6, monthRevenueMap[6]!),
+                      FlSpot(7, monthRevenueMap[7]!)
+                    ],
+                    isCurved: false,
+                    barWidth: 4,
+                    color: defaultPalette.tertiary,
+                    belowBarData: BarAreaData(
+                      show: true,
+                      spotsLine: BarAreaSpotsLine(
+                        show: true,
+                        flLineStyle: FlLine(
+                          color: defaultPalette.tertiary,
+                          strokeWidth: 2,
+                        ),
+                        checkToShowSpotLine: (spot) {
+                          if (spot.x == 0 || spot.x == 6) {
+                            return false;
+                          }
+
+                          return true;
+                        },
+                      ),
+                    ),
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        if (index.isEven) {
+                          return FlDotCirclePainter(
+                            radius: 6,
+                            color: Colors.white,
+                            strokeWidth: 3,
+                            strokeColor: defaultPalette.tertiary,
+                          );
+                        } else {
+                          return FlDotSquarePainter(
+                            size: 12,
+                            color: Colors.white,
+                            strokeWidth: 3,
+                            strokeColor: defaultPalette.tertiary,
+                          );
+                        }
+                      },
+                      checkToShowDot: (spot, barData) {
+                        return spot.x != 0 && spot.x != 6;
+                      },
+                    ),
+                  ),
+                ],
+                minY: 0,
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border.all(
+                    color: defaultPalette.extras[0],
+                  ),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawHorizontalLine: true,
+                  drawVerticalLine: true,
+                  checkToShowHorizontalLine: (value) => value % 1 == 0,
+                  checkToShowVerticalLine: (value) => value % 1 == 0,
+                  getDrawingHorizontalLine: (value) {
+                    if (value == 0) {
+                      return  FlLine(
+                        color: defaultPalette.tertiary,
+                        strokeWidth: 2,
+                      );
+                    } else {
+                      return  FlLine(
+                        color: defaultPalette.tertiary,
+                        strokeWidth: 0.5,
+                      );
+                    }
+                  },
+                  getDrawingVerticalLine: (value) {
+                    if (value == 0) {
+                      return const FlLine(
+                        color: Colors.redAccent,
+                        strokeWidth: 10,
+                      );
+                    } else {
+                      return  FlLine(
+                        color: defaultPalette.tertiary,
+                        strokeWidth: 0.5,
+                      );
+                    }
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 46,
+                      // getTitlesWidget: leftTitleWidgets,
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      // getTitlesWidget: bottomTitleWidgets,
+                    ),
+                  ),
+                ),
+              ),
+                ))
+                      ],
+                    );
+                  }),
+
+                  ),
                 ),
               ),
             ),

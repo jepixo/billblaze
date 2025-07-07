@@ -757,15 +757,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       enableSelectionToolbar: true,
       autoFocus: true,
       onTapOutside: (event, focusNode) {
-        //     if (!focusNode.hasFocus) {
-        //   focusNode.requestFocus();
-        // }
       },
-      // textSelectionControls: NoMenuTextSelectionControls(),
       contextMenuBuilder: (context, rawEditorState) {
         return Container();
       },
-      // padding: EdgeInsets.all(2),
       controller: textController,
       placeholder: isCell
       ? null
@@ -1766,7 +1761,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     lm?.save();
     SheetList newsheetlist = SheetList(
         id: id,
-        parentId: parentId,
+        parentId: lm!.id,
         sheetList: [],
         listDecoration: newDecoration,
         indexPath: IndexPath(index: spreadSheetList.length)
@@ -1825,7 +1820,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     // Create a new SheetList instance
     SheetList newSheetList = SheetList(
         id: id,
-        parentId: parentId,
+        parentId: lm?.id??'yo',
         sheetList: [],
         listDecoration: newDecoration,
         indexPath: IndexPath(index:-1)
@@ -3503,10 +3498,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                                   setState(() {
                                                                                     item.name = label.name;
                                                                                     label.indexPath = item.indexPath;
+                                                                                    item.type = SheetTextType.values[label.sheetTextType];
                                                                                     item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(
-                                                                                      label.sheetTextType, 
+                                                                                      label.sheetTextType,
                                                                                       item.textEditorConfigurations.controller,
                                                                                       check: true,
+                                                                                      textItem: item,
                                                                                       );
                                                                                     doubleCheckLabelList(labelList);
                                                                                   });
@@ -6422,10 +6419,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
       return null;
     }
-
+    print(sheetText.type);
     var extractedDate = null;
     if (sheetText.type == SheetTextType.date) {
       extractedDate = extractDateFromDelta(sheetText.textEditorController.document);
+      print('date');
     }
     if (sheetText.locked) {
       sheetText.textEditorConfigurations.controller.onReplaceText =(x,b,m)=>false;
@@ -6480,7 +6478,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     TablerIcons.toggle_left,
                     size:15),
                   ):
-              Icon(
+              Icon( sheetText.locked?
+                 TablerIcons.lock:
                 sheetText.type == SheetTextType.string
                 ? TablerIcons.cursor_text
                 : sheetText.type == SheetTextType.integer
@@ -6499,96 +6498,28 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               if(sheetText.type == SheetTextType.date|| sheetText.type == SheetTextType.time || sheetText.type == SheetTextType.phone)
               const SizedBox(width:2),
               
-              if(sheetText.name != 'unlabeled' || sheetText.type == SheetTextType.phone)
+              if(sheetText.name != 'unlabeled')
           ...[
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 120),
-              child: Column(
-                children: [
-                  if(sheetText.type == SheetTextType.phone)
-                  ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: 20),
-                  child: CountryCodePicker(
-                    padding: EdgeInsets.only(left:2, right:4),
-                    insetPadding: EdgeInsets.all(100),
-                    flagWidth: 16,
-                    // hideMainText: true,
-                    margin: EdgeInsets.only(right:2),
-                    alignLeft: false,
-                    mode: CountryCodePickerMode.dialog,
-                    onChanged: (country) {
-                      print('Country code selected: ${country.code}');
-                    },
-                    initialSelection: 'AW',
-                    elevation: 1,
-                    shadowColor: defaultPalette.extras[0].withOpacity(0.3),
-                    surfaceTintColor: defaultPalette.extras[0],
-                    barrierColor: defaultPalette.extras[0].withOpacity(0.3),
-                    showFlag: true,
-                    showDropDownButton: false,
-                    dialogBackgroundColor: defaultPalette.primary,
-                    dialogTextStyle:  GoogleFonts.lexend(
-                      fontSize: 15,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w400,
-                    ),
-                    textStyle:  GoogleFonts.lexend(
-                      fontSize: 12,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w600,
-                    ),
-                    searchStyle:  GoogleFonts.lexend(
-                      fontSize: 15,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w400,
-                    ),
-                    searchDecoration: InputDecoration(
-                      labelStyle: GoogleFonts.lexend(
-                        fontSize: 24,
-                        // fontWeight: FontWeight.w600,
-                        color: defaultPalette.extras[0],
-                      ),
-                      hintStyle: GoogleFonts.lexend(
-                        fontSize: 15,
-                        color: defaultPalette.extras[0].withOpacity(0.6),
-                      ),
-                      errorStyle: GoogleFonts.lexend(
-                        fontSize: 15,
-                        color: defaultPalette.extras[0].withOpacity(0.6),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
-                        borderRadius: BorderRadius.circular(8)
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
-                        borderRadius: BorderRadius.circular(8)
-                      )
-                    ),
-                    
-                  ),
-                ),
-                    if(sheetText.name != 'unlabeled')
-                    Text(
-                        sheetText.name,
-                        maxLines: 2,
-                        overflow:TextOverflow.ellipsis,
-                        style: GoogleFonts.lexend(
-                          letterSpacing: -1,
-                          height:0.9,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                          color: defaultPalette.black),
-                      ),
-                  ],
+              constraints: BoxConstraints(maxWidth: mapValue(value: (sWidth *
+                                (1 - wH1DividerPosition - wH2DividerPosition)).clamp(200, double.infinity), inMin: 200, inMax: 2122, outMin: 20, outMax: 200)),
+              child: 
+              Text(
+                  sheetText.name,
+                  maxLines: 2,
+                  overflow:TextOverflow.ellipsis,
+                  style: GoogleFonts.lexend(
+                    letterSpacing: -1,
+                    height:0.9,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    color: defaultPalette.black),
                 ),
               ),
               const SizedBox(width:4),],
               //the fields
               Expanded(
+              flex: 50,
               child: sheetText.type == SheetTextType.date
                   ? Container(
                       padding: EdgeInsets.symmetric(horizontal:0, vertical: 0),
@@ -6753,6 +6684,74 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 ),
               ),
               ],
+              if(sheetText.type == SheetTextType.phone)
+              ...[const SizedBox(width: 2),
+              ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: 20),
+                  child: CountryCodePicker(
+                    padding: EdgeInsets.only(left:2, right:4),
+                    insetPadding: EdgeInsets.all(100),
+                    flagWidth: 16,
+                    // hideMainText: true,
+                    margin: EdgeInsets.only(right:2),
+                    alignLeft: false,
+                    mode: CountryCodePickerMode.dialog,
+                    onChanged: (country) {
+                      print('Country code selected: ${country.code}');
+                    },
+                    initialSelection: 'AW',
+                    elevation: 1,
+                    shadowColor: defaultPalette.extras[0].withOpacity(0.3),
+                    surfaceTintColor: defaultPalette.extras[0],
+                    barrierColor: defaultPalette.extras[0].withOpacity(0.3),
+                    showFlag: true,
+                    showDropDownButton: false,
+                    dialogBackgroundColor: defaultPalette.primary,
+                    dialogTextStyle:  GoogleFonts.lexend(
+                      fontSize: 15,
+                      letterSpacing: -1,
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textStyle:  GoogleFonts.lexend(
+                      fontSize: 12,
+                      letterSpacing: -1,
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w600,
+                    ),
+                    searchStyle:  GoogleFonts.lexend(
+                      fontSize: 15,
+                      letterSpacing: -1,
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w400,
+                    ),
+                    searchDecoration: InputDecoration(
+                      labelStyle: GoogleFonts.lexend(
+                        fontSize: 24,
+                        // fontWeight: FontWeight.w600,
+                        color: defaultPalette.extras[0],
+                      ),
+                      hintStyle: GoogleFonts.lexend(
+                        fontSize: 15,
+                        color: defaultPalette.extras[0].withOpacity(0.6),
+                      ),
+                      errorStyle: GoogleFonts.lexend(
+                        fontSize: 15,
+                        color: defaultPalette.extras[0].withOpacity(0.6),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                        borderRadius: BorderRadius.circular(8)
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                        borderRadius: BorderRadius.circular(8)
+                      )
+                    ),
+                    
+                  ),
+                )],
+              
               if(sheetText.type == SheetTextType.date)
               ...[
                 const SizedBox(width: 2),
@@ -6966,6 +6965,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         if (plainText.trim().toLowerCase().isEmpty) {
                           print('object');
                           controller.replaceText(0, 0, formattedDate, TextSelection.collapsed(offset:0));
+                        } else  if (plainText.trim().toLowerCase().length<5) {
+                          controller.replaceText(0, plainText.trim().toLowerCase().length, formattedDate, TextSelection.collapsed(offset:0));
                         }
                         Map<String, dynamic>? getAttrsAt(int offset) {
                           int current = 0;
@@ -8294,7 +8295,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         Expanded(
           child: Row(
             children: [
-              const Icon(
+               Icon(sheetText.locked?
+                 TablerIcons.lock:
                 TablerIcons.cursor_text,
                 size: 14,
               ),
@@ -8672,7 +8674,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       }
     }
     // print('findWidth: '+width.toString());
-    return width.clamp(151, double.infinity);
+    return width.clamp(mapValue(value: (sWidth *(1 - wH1DividerPosition - wH2DividerPosition)).clamp(200, double.infinity), inMin: 200, inMax: 2122, outMin: 240, outMax: 400), double.infinity);
   }
 
   /// Function to extract the maximum font size from a text editor's document
@@ -8725,31 +8727,37 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   bool textFieldTapDown(TapDownDetails details, String newId, IndexPath indexPath) {
     
     setState(() {
-      print(indexPath);
+      // print(newId);
+      // print(indexPath);
       print(getItemAtPath(indexPath));
-      SheetText? textItem; // Declare it outside
+      SheetText? textItem;
+      var textItemParent; 
 
       try {
         textItem = getItemAtPath(indexPath) as SheetText;
+        textItemParent = getItemAtPath(indexPath.parent??IndexPath(index:-19));
         if (textItem.id != newId) {
           print(newId);
           textItem = _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
         }
-        print('yo: '+newId);
+        // print('yo: '+newId);
       } on Exception catch (e) {
         // You can optionally handle the error here
-        print('yo: '+newId);
+        // print('yo: '+newId);
         textItem = _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
       } finally {
-        print('yo5: '+newId);
+        // print('yo5: '+newId);
         textItem ??= _sheetItemIterator(newId, spreadSheetList[currentPageIndex],shouldReturn: true) as SheetText;
         panelIndex.id = textItem.id; 
-        panelIndex.parentId = textItem.parentId;
+        panelIndex.parentId = textItemParent.id;
         panelIndex.parentIndexPath = textItem.indexPath.parent;
         panelIndex.itemIndexPath = textItem.indexPath;
+        if (textItem.parentId != textItemParent.id) {
+          textItem.parentId = textItemParent.id;
+        }
         _findItem();
 
-        print('yo99: '+panelIndex.toString());
+        // print('yo99: '+panelIndex.toString());
         if (panelIndex.parentId.startsWith("LI")) {
           _findSheetListItem();
         }
@@ -8763,23 +8771,23 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         // print(sheetDecorationVariables.length);
         whichPropertyTabIsClicked = 2;
         // propertyTabController.jumpToPage(1);
+        print('end fieldDown: ');
+        //  print('SUPP: ');
+        //   print('SUPPPP ');
+        
       
       }
 
       
     });
-
-    // print('clicked');
-    // print(panelIndex);
-    // print(panelIndex.parentId);
     return false;
   }
 
   bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int index,QuillController controller, {
     check = false,
-    // QuillEditorConfigurations? configs = null,
+    SheetText? textItem=null,
   }) {
-      if (check) {
+      if (check && textItem != null) {
         var type =SheetTextType.values[index];
         var placeholder = type==SheetTextType.number
               ? 'Enter Number'
@@ -8795,8 +8803,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               ? 'Enter Number'
               : 'Enter Text';
         setState(() {
-        item.textEditorConfigurations = item.textEditorConfigurations.copyWith(placeholder: placeholder);
-        print('vyuihyuihyuih '+placeholder);
+        textItem.textEditorConfigurations = QuillEditorConfigurations(
+          controller: controller,
+          enableScribble: textItem.textEditorConfigurations.enableScribble,
+          enableSelectionToolbar: textItem.textEditorConfigurations.enableSelectionToolbar,
+          autoFocus: textItem.textEditorConfigurations.autoFocus,
+          onTapOutside: textItem.textEditorConfigurations.onTapOutside,
+          contextMenuBuilder: textItem.textEditorConfigurations.contextMenuBuilder,
+          placeholder:placeholder,
+          customStyles:textItem.textEditorConfigurations.customStyles,
+          
+          // maxHeight: 50,
+          customStyleBuilder: textItem.textEditorConfigurations.customStyleBuilder,
+          builder: textItem.textEditorConfigurations.builder,
+          onTapDown: (details, p1) {
+            return textFieldTapDown(details, textItem.id, textItem.indexPath);
+          },
+
+        ); 
+        // print('vyuihyuihyuih '+placeholder);
             });
       }
                                                     
@@ -9128,6 +9153,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   
   double _getPropertiesButtonWidth(String s) {
     var widthWeHave = (sWidth * (wH2DividerPosition));
+    // print('clcwidth:');
+    // print(panelIndex);
     switch (s) {
       case 'page':
         if (panelIndex.id == '') {
@@ -9140,7 +9167,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         break;
       case 'text-field':
         if (panelIndex.id == '') {
-          if (panelIndex.parentId == '') {
+          if (panelIndex.parentId == '' && !(panelIndex.parentId.startsWith('LI')||panelIndex.parentId.startsWith('TB')) ) {
             return widthWeHave * (2 / 3) - 20;
           }
           return widthWeHave * (2 / 3);
@@ -9148,7 +9175,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         return widthWeHave * (2 / 5) + 2;
       case 'sheet-list':
         if (panelIndex.id == '') {
-          if (panelIndex.parentId == '') {
+          if (panelIndex.parentId == '' && !(panelIndex.parentId.startsWith('LI')||panelIndex.parentId.startsWith('TB'))) {
             return widthWeHave * (2 / 3) - 20;
           }
           return widthWeHave * (2 / 3) + 2;
@@ -9709,336 +9736,344 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     hoverColor: defaultPalette.extras[0],
                     onSelected: () {
                       setState(() {
+
+                        item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(
+                          index, 
+                          item.textEditorConfigurations.controller,
+                          check: true,
+                          textItem: item,
+                          );
                         item.type = SheetTextType.values[index];
-                        switch (item.type) {
-                          case SheetTextType.number:
-                            item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                            final controller = item.textEditorConfigurations.controller;
-                            String oldText = controller.document.toPlainText();
-                            if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
-                            final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
-                            oldText = numericMatch?.group(0) ?? 'yo';
-                            // print(controller.document.toDelta());
-                            // Enforce reset if old text is not a valid number
-                            if (double.tryParse(oldText) == null) {
-                              oldText = '0';
-                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                              // print(controller.document.toDelta());
-                            } else {
-                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                            }
+                        // item.type = SheetTextType.values[index];
+                        // switch (item.type) {
+                        //   case SheetTextType.number:
+                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
+                        //     final controller = item.textEditorConfigurations.controller;
+                        //     String oldText = controller.document.toPlainText();
+                        //     if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
+                        //     final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
+                        //     oldText = numericMatch?.group(0) ?? 'yo';
+                        //     // print(controller.document.toDelta());
+                        //     // Enforce reset if old text is not a valid number
+                        //     if (double.tryParse(oldText) == null) {
+                        //       oldText = '0';
+                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                        //       // print(controller.document.toDelta());
+                        //     } else {
+                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                        //     }
 
-                            item.textEditorConfigurations.controller.onReplaceText =
-                                (int index, int length, Object? data) {
-                              if (data is! String) return false;
+                        //     item.textEditorConfigurations.controller.onReplaceText =
+                        //         (int index, int length, Object? data) {
+                        //       if (data is! String) return false;
 
-                              final controller = item.textEditorConfigurations.controller;
-                              final oldText = controller.document.toPlainText();
-                              // print(controller.document.toDelta());
-                              // Simulate what the text would become after this replacement
-                              final newText = oldText.replaceRange(index, index + length, data);
+                        //       final controller = item.textEditorConfigurations.controller;
+                        //       final oldText = controller.document.toPlainText();
+                        //       // print(controller.document.toDelta());
+                        //       // Simulate what the text would become after this replacement
+                        //       final newText = oldText.replaceRange(index, index + length, data);
 
-                              // Allow empty string (so user can delete everything)
-                              if (newText.trim().isEmpty) return true;
+                        //       // Allow empty string (so user can delete everything)
+                        //       if (newText.trim().isEmpty) return true;
 
-                              // Try parsing as a number
-                              final parsed = double.tryParse(newText);
-                              final isValid = parsed != null;
+                        //       // Try parsing as a number
+                        //       final parsed = double.tryParse(newText);
+                        //       final isValid = parsed != null;
 
-                              if (isValid) {
-                                return true; // Allow valid number
-                              } else {
-                                // Reject and restore selection
-                                controller.updateSelection(
-                                  TextSelection.collapsed(offset: index),
-                                  ChangeSource.local,
-                                );
+                        //       if (isValid) {
+                        //         return true; // Allow valid number
+                        //       } else {
+                        //         // Reject and restore selection
+                        //         controller.updateSelection(
+                        //           TextSelection.collapsed(offset: index),
+                        //           ChangeSource.local,
+                        //         );
                                
-                                CustomToastBar(
-                                  autoDismiss:true,
-                                snackbarDuration: Duration(milliseconds: 3000),
-                                builder: (context) {
-                                  return Container(
-                                  padding: EdgeInsets.all(2),
-                                  margin: const EdgeInsets.only(top:2, left:2, right:2),
-                                  width: width+20,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                  color: defaultPalette.primary,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: defaultPalette.extras[0], width: 2)),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child:Text('  ${newText.replaceAll(RegExp(r'\n'), '')} is not a valid number',
-                                      maxLines:1,
-                                      overflow:TextOverflow.ellipsis,
-                                      style:  GoogleFonts.lexend(
-                                      color: defaultPalette.extras[0],
-                                      fontWeight: FontWeight.w400,
-                                      letterSpacing: -1,
-                                    ),),
-                                    )
-                                  );
-                                }
-                                ).show(context);
-                                return false; // Block invalid input
-                              }
-                            };
-                            break;
+                        //         CustomToastBar(
+                        //           autoDismiss:true,
+                        //         snackbarDuration: Duration(milliseconds: 3000),
+                        //         builder: (context) {
+                        //           return Container(
+                        //           padding: EdgeInsets.all(2),
+                        //           margin: const EdgeInsets.only(top:2, left:2, right:2),
+                        //           width: width+20,
+                        //           height: 50,
+                        //           decoration: BoxDecoration(
+                        //           color: defaultPalette.primary,
+                        //           borderRadius: BorderRadius.circular(20),
+                        //           border: Border.all(
+                        //             color: defaultPalette.extras[0], width: 2)),
+                        //           child: ClipRRect(
+                        //             borderRadius: BorderRadius.circular(20),
+                        //             child:Text('  ${newText.replaceAll(RegExp(r'\n'), '')} is not a valid number',
+                        //               maxLines:1,
+                        //               overflow:TextOverflow.ellipsis,
+                        //               style:  GoogleFonts.lexend(
+                        //               color: defaultPalette.extras[0],
+                        //               fontWeight: FontWeight.w400,
+                        //               letterSpacing: -1,
+                        //             ),),
+                        //             )
+                        //           );
+                        //         }
+                        //         ).show(context);
+                        //         return false; // Block invalid input
+                        //       }
+                        //     };
+                        //     break;
 
-                          case SheetTextType.integer:
-                            item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                            final controller = item.textEditorConfigurations.controller;
-                            String oldText = controller.document.toPlainText();
-                            if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
-                            final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
-                            oldText = numericMatch?.group(0) ?? 'yo';
-                            // Enforce reset if old text is not a valid number
-                            if (int.tryParse(oldText) == null) {
-                              if (double.tryParse(oldText) == null) {
-                              oldText = '0';
-                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                              } else {
-                                var d= double.tryParse(oldText);
-                                controller.replaceText(0, controller.document.length - 1, d!.round().toString(), const TextSelection.collapsed(offset: 1));
+                        //   case SheetTextType.integer:
+                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
+                        //     final controller = item.textEditorConfigurations.controller;
+                        //     String oldText = controller.document.toPlainText();
+                        //     if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
+                        //     final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
+                        //     oldText = numericMatch?.group(0) ?? 'yo';
+                        //     // Enforce reset if old text is not a valid number
+                        //     if (int.tryParse(oldText) == null) {
+                        //       if (double.tryParse(oldText) == null) {
+                        //       oldText = '0';
+                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                        //       } else {
+                        //         var d= double.tryParse(oldText);
+                        //         controller.replaceText(0, controller.document.length - 1, d!.round().toString(), const TextSelection.collapsed(offset: 1));
                             
-                              }
-                            } else {
-                              controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                            }
-                            item.textEditorConfigurations.controller.onReplaceText =
-                                (int index, int length, Object? data) {
-                              if (data is! String) return false;
+                        //       }
+                        //     } else {
+                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
+                        //     }
+                        //     item.textEditorConfigurations.controller.onReplaceText =
+                        //         (int index, int length, Object? data) {
+                        //       if (data is! String) return false;
 
-                              final controller = item.textEditorConfigurations.controller;
-                              final oldText = controller.document.toPlainText();
-                              final newText = oldText.replaceRange(index, index + length, data);
+                        //       final controller = item.textEditorConfigurations.controller;
+                        //       final oldText = controller.document.toPlainText();
+                        //       final newText = oldText.replaceRange(index, index + length, data);
 
-                              if (newText.trim().isEmpty) return true;
+                        //       if (newText.trim().isEmpty) return true;
 
-                              final parsed = int.tryParse(newText.replaceAll(',', ''));
-                              if (parsed != null) return true;
+                        //       final parsed = int.tryParse(newText.replaceAll(',', ''));
+                        //       if (parsed != null) return true;
 
-                              controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                              CustomToastBar(
-                                autoDismiss:true,
-                                snackbarDuration: Duration(milliseconds: 3000),
-                                builder: (context) {
-                                  return buildInvalidToast('$newText is not a valid integer');
-                                },
-                              ).show(context);
-                              return false;
-                            };
-                            break;
+                        //       controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
+                        //       CustomToastBar(
+                        //         autoDismiss:true,
+                        //         snackbarDuration: Duration(milliseconds: 3000),
+                        //         builder: (context) {
+                        //           return buildInvalidToast('$newText is not a valid integer');
+                        //         },
+                        //       ).show(context);
+                        //       return false;
+                        //     };
+                        //     break;
 
-                          case SheetTextType.bool:
-                            final controller = item.textEditorConfigurations.controller;
-                            String oldText = controller.document.toPlainText().trim().toLowerCase();
+                        //   case SheetTextType.bool:
+                        //     final controller = item.textEditorConfigurations.controller;
+                        //     String oldText = controller.document.toPlainText().trim().toLowerCase();
 
-                            const trueValues = ['true', '1', 'yes', 'positive', 'ha', 'yup','haa'];
-                            const falseValues = ['false', '0', 'no', 'negative', 'na', 'nope', 'nah'];
+                        //     const trueValues = ['true', '1', 'yes', 'positive', 'ha', 'yup','haa'];
+                        //     const falseValues = ['false', '0', 'no', 'negative', 'na', 'nope', 'nah'];
 
-                            String normalized = 'false'; // default fallback
-                            if (trueValues.contains(oldText)) {
-                              normalized = 'true';
-                            } else if (falseValues.contains(oldText)) {
-                              normalized = 'false';
-                            }
-                            if (oldText != normalized) {
-                              controller.onReplaceText = (int index, int length, Object? data) => true;
-                                controller.replaceText(
-                                  0,
-                                  controller.document.length - 1,
-                                  normalized,
-                                  const TextSelection.collapsed(offset: 1),
-                                );
-                            }
+                        //     String normalized = 'false'; // default fallback
+                        //     if (trueValues.contains(oldText)) {
+                        //       normalized = 'true';
+                        //     } else if (falseValues.contains(oldText)) {
+                        //       normalized = 'false';
+                        //     }
+                        //     if (oldText != normalized) {
+                        //       controller.onReplaceText = (int index, int length, Object? data) => true;
+                        //         controller.replaceText(
+                        //           0,
+                        //           controller.document.length - 1,
+                        //           normalized,
+                        //           const TextSelection.collapsed(offset: 1),
+                        //         );
+                        //     }
 
-                            item.textEditorConfigurations.controller.onReplaceText =
-                                (int index, int length, Object? data) {
-                              if (data is! String) return false;
-                              if(data =='true' || data == 'false') return true;
+                        //     item.textEditorConfigurations.controller.onReplaceText =
+                        //         (int index, int length, Object? data) {
+                        //       if (data is! String) return false;
+                        //       if(data =='true' || data == 'false') return true;
 
-                              final controller = item.textEditorConfigurations.controller;
-                              final oldText = controller.document.toPlainText().trim().toLowerCase();
-                              bool isCurrentlyTrue = trueValues.contains(oldText);
-                              bool isCurrentlyFalse = falseValues.contains(oldText);
+                        //       final controller = item.textEditorConfigurations.controller;
+                        //       final oldText = controller.document.toPlainText().trim().toLowerCase();
+                        //       bool isCurrentlyTrue = trueValues.contains(oldText);
+                        //       bool isCurrentlyFalse = falseValues.contains(oldText);
 
-                              final toggled = isCurrentlyTrue ? 'false' : 'true';
+                        //       final toggled = isCurrentlyTrue ? 'false' : 'true';
 
-                              // Replace full text with toggled value
-                              SchedulerBinding.instance.addPostFrameCallback((_) {
-                                controller.replaceText(
-                                  0,
-                                  controller.document.length - 1,
-                                  toggled,
-                                  TextSelection.collapsed(offset: toggled.length),
-                                );
-                              });
-                              data = '';
+                        //       // Replace full text with toggled value
+                        //       SchedulerBinding.instance.addPostFrameCallback((_) {
+                        //         controller.replaceText(
+                        //           0,
+                        //           controller.document.length - 1,
+                        //           toggled,
+                        //           TextSelection.collapsed(offset: toggled.length),
+                        //         );
+                        //       });
+                        //       data = '';
 
-                              return true;
-                            };
-                            break;
+                        //       return true;
+                        //     };
+                        //     break;
                           
-                          // case SheetTextType.time:
-                          //   final controller = item.textEditorConfigurations.controller;
-                          //   final plainText = controller.document.toPlainText();
-                          //   final match = RegExp(r'(\d{1,2})\D+(\d{1,2})').firstMatch(plainText);
-                          //   if (match == null) {
-                          //     controller.onReplaceText = (int index, int length, Object? data) => true;
-                          //     final now = TimeOfDay.now();
-                          //     final formatted = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                          //     final originalDelta = controller.document.toDelta();
-                          //     final attrs = originalDelta.isNotEmpty ? originalDelta.first.attributes : null;
-                          //     controller.replaceText(0, controller.document.length - 1, Delta()..insert(formatted, attrs), TextSelection.collapsed(offset: formatted.length));
-                          //   }
-                          //   item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) {
-                          //     // print('hey'+data.toString());
-                          //     if (data is! String) return false;
-                          //     if (data =='') {
-                          //       // print('backspace'+data.toString());
-                          //       return false;
-                          //     }
-                          //     final doc = controller.document;
-                          //     final plain = doc.toPlainText().trim();
-                          //     // print(plain+data.toString());
-                          //     final timeMatch = RegExp(r'(\d{2})\D+(\d{2})').firstMatch(plain+data.toString());
-                          //     if (timeMatch == null) return false;
-                          //     int hour = int.tryParse(timeMatch.group(1)!) ?? 0;
-                          //     int minute = int.tryParse(timeMatch.group(2)!) ?? 0;
-                          //     if (hour > 24) hour = 24;
-                          //     if (minute > 59) minute = 59;
-                          //     final newHour = hour.toString().padLeft(2, '0');
-                          //     final newMinute = minute.toString().padLeft(2, '0');
-                          //     final separator = plain.substring(timeMatch.start + 2, timeMatch.end - 2);
-                          //     final newTime = '$newHour$separator$newMinute';
-                          //     final attrs = doc.toDelta().slice(timeMatch.start, timeMatch.end).first.attributes ?? {};
-                          //     SchedulerBinding.instance.addPostFrameCallback((_) {
-                          //       controller.replaceText(
-                          //         timeMatch.start,
-                          //         timeMatch.end - timeMatch.start,
-                          //         Delta()..insert(newTime, attrs),
-                          //         TextSelection.collapsed(offset: timeMatch.start + newTime.length),
-                          //       );
-                          //     });
-                          //     return true;
-                          //   };
-                          //   break;
+                        //   // case SheetTextType.time:
+                        //   //   final controller = item.textEditorConfigurations.controller;
+                        //   //   final plainText = controller.document.toPlainText();
+                        //   //   final match = RegExp(r'(\d{1,2})\D+(\d{1,2})').firstMatch(plainText);
+                        //   //   if (match == null) {
+                        //   //     controller.onReplaceText = (int index, int length, Object? data) => true;
+                        //   //     final now = TimeOfDay.now();
+                        //   //     final formatted = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+                        //   //     final originalDelta = controller.document.toDelta();
+                        //   //     final attrs = originalDelta.isNotEmpty ? originalDelta.first.attributes : null;
+                        //   //     controller.replaceText(0, controller.document.length - 1, Delta()..insert(formatted, attrs), TextSelection.collapsed(offset: formatted.length));
+                        //   //   }
+                        //   //   item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) {
+                        //   //     // print('hey'+data.toString());
+                        //   //     if (data is! String) return false;
+                        //   //     if (data =='') {
+                        //   //       // print('backspace'+data.toString());
+                        //   //       return false;
+                        //   //     }
+                        //   //     final doc = controller.document;
+                        //   //     final plain = doc.toPlainText().trim();
+                        //   //     // print(plain+data.toString());
+                        //   //     final timeMatch = RegExp(r'(\d{2})\D+(\d{2})').firstMatch(plain+data.toString());
+                        //   //     if (timeMatch == null) return false;
+                        //   //     int hour = int.tryParse(timeMatch.group(1)!) ?? 0;
+                        //   //     int minute = int.tryParse(timeMatch.group(2)!) ?? 0;
+                        //   //     if (hour > 24) hour = 24;
+                        //   //     if (minute > 59) minute = 59;
+                        //   //     final newHour = hour.toString().padLeft(2, '0');
+                        //   //     final newMinute = minute.toString().padLeft(2, '0');
+                        //   //     final separator = plain.substring(timeMatch.start + 2, timeMatch.end - 2);
+                        //   //     final newTime = '$newHour$separator$newMinute';
+                        //   //     final attrs = doc.toDelta().slice(timeMatch.start, timeMatch.end).first.attributes ?? {};
+                        //   //     SchedulerBinding.instance.addPostFrameCallback((_) {
+                        //   //       controller.replaceText(
+                        //   //         timeMatch.start,
+                        //   //         timeMatch.end - timeMatch.start,
+                        //   //         Delta()..insert(newTime, attrs),
+                        //   //         TextSelection.collapsed(offset: timeMatch.start + newTime.length),
+                        //   //       );
+                        //   //     });
+                        //   //     return true;
+                        //   //   };
+                        //   //   break;
 
-                          case SheetTextType.phone:
-                            {
-                              final controller = item.textEditorConfigurations.controller;
-                              final doc = controller.document;
-                              final delta = doc.toDelta();
-                              final plainText = doc.toPlainText();
+                        //   case SheetTextType.phone:
+                        //     {
+                        //       final controller = item.textEditorConfigurations.controller;
+                        //       final doc = controller.document;
+                        //       final delta = doc.toDelta();
+                        //       final plainText = doc.toPlainText();
 
-                              Map<String, dynamic>? getAttrsAt(int offset) {
-                                int current = 0;
-                                for (final op in delta.toList()) {
-                                  final text = op.data is String ? op.data as String : '';
-                                  if (current + text.length > offset) return op.attributes;
-                                  current += text.length;
-                                }
-                                return null;
-                              }
+                        //       Map<String, dynamic>? getAttrsAt(int offset) {
+                        //         int current = 0;
+                        //         for (final op in delta.toList()) {
+                        //           final text = op.data is String ? op.data as String : '';
+                        //           if (current + text.length > offset) return op.attributes;
+                        //           current += text.length;
+                        //         }
+                        //         return null;
+                        //       }
 
-                              // Clean text
-                              final cleaned = plainText.trim();
-                              final digitsOnly = cleaned.replaceAll(RegExp(r'[^\d+]'), '');
+                        //       // Clean text
+                        //       final cleaned = plainText.trim();
+                        //       final digitsOnly = cleaned.replaceAll(RegExp(r'[^\d+]'), '');
 
-                              // Extract country code if present
-                              final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(digitsOnly);
-                              final countryCode = countryCodeMatch?.group(0) ?? '';
-                              final numberPart = digitsOnly.replaceFirst(RegExp(r'^\+\d{1,3}'), '');
+                        //       // Extract country code if present
+                        //       final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(digitsOnly);
+                        //       final countryCode = countryCodeMatch?.group(0) ?? '';
+                        //       final numberPart = digitsOnly.replaceFirst(RegExp(r'^\+\d{1,3}'), '');
 
-                              // Limit digits to 10
-                              final truncatedNumber = numberPart.replaceAll(RegExp(r'[^\d]'), '').substring(0, numberPart.length.clamp(0, 10));
-                              final formatted = [
-                                if (countryCode.isNotEmpty) countryCode,
-                                if (truncatedNumber.isNotEmpty) truncatedNumber,
-                              ].join(' ');
+                        //       // Limit digits to 10
+                        //       final truncatedNumber = numberPart.replaceAll(RegExp(r'[^\d]'), '').substring(0, numberPart.length.clamp(0, 10));
+                        //       final formatted = [
+                        //         if (countryCode.isNotEmpty) countryCode,
+                        //         if (truncatedNumber.isNotEmpty) truncatedNumber,
+                        //       ].join(' ');
 
-                              final attrs = getAttrsAt(0);
+                        //       final attrs = getAttrsAt(0);
 
-                              // Allow temporary replacement
-                              controller.onReplaceText = (int index, int length, Object? data) => true;
+                        //       // Allow temporary replacement
+                        //       controller.onReplaceText = (int index, int length, Object? data) => true;
 
-                              controller.replaceText(
-                                0,
-                                controller.document.length - 1,
-                                Delta()..insert(formatted, attrs),
-                                TextSelection.collapsed(offset: formatted.length),
-                              );
+                        //       controller.replaceText(
+                        //         0,
+                        //         controller.document.length - 1,
+                        //         Delta()..insert(formatted, attrs),
+                        //         TextSelection.collapsed(offset: formatted.length),
+                        //       );
 
-                              // Enforce rules for future edits
-                              controller.onReplaceText = (int index, int length, Object? data) {
-                                if (data is! String) return false;
+                        //       // Enforce rules for future edits
+                        //       controller.onReplaceText = (int index, int length, Object? data) {
+                        //         if (data is! String) return false;
 
-                                // Only allow digits, spaces, brackets, or plus
-                                if (!RegExp(r'^[\d\s\+\(\)]*$').hasMatch(data)) return false;
+                        //         // Only allow digits, spaces, brackets, or plus
+                        //         if (!RegExp(r'^[\d\s\+\(\)]*$').hasMatch(data)) return false;
 
-                                final currentText = controller.document.toPlainText();
-                                final updatedText = currentText.replaceRange(index, index + length, data);
+                        //         final currentText = controller.document.toPlainText();
+                        //         final updatedText = currentText.replaceRange(index, index + length, data);
 
-                                final digits = updatedText.replaceAll(RegExp(r'[^\d]'), '');
-                                final hasPlus = updatedText.startsWith('+');
-                                final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(updatedText);
-                                final codeLength = countryCodeMatch?.group(1)?.length ?? 0;
-                                final numberDigits = hasPlus ? digits.length - codeLength : digits.length;
+                        //         final digits = updatedText.replaceAll(RegExp(r'[^\d]'), '');
+                        //         final hasPlus = updatedText.startsWith('+');
+                        //         final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(updatedText);
+                        //         final codeLength = countryCodeMatch?.group(1)?.length ?? 0;
+                        //         final numberDigits = hasPlus ? digits.length - codeLength : digits.length;
 
-                                // Total digits (excluding country code) must not exceed 10
-                                return numberDigits <= 10;
-                              };
-                            }
-                            break;
+                        //         // Total digits (excluding country code) must not exceed 10
+                        //         return numberDigits <= 10;
+                        //       };
+                        //     }
+                        //     break;
 
-                          // case SheetTextType.email:
-                          //   item.textEditorConfigurations.controller.onReplaceText =
-                          //       (int index, int length, Object? data) {
-                          //     if (data is! String) return false;
-                          //     final controller = item.textEditorConfigurations.controller;
-                          //     final oldText = controller.document.toPlainText();
-                          //     final newText = oldText.replaceRange(index, index + length, data).trim();
-                          //     if (newText.isEmpty || RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(newText)) return true;
-                          //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                          //     CustomToastBar(
-                          //       autoDismiss:true,
-                          //       snackbarDuration: Duration(milliseconds: 3000),
-                          //       builder: (context) {
-                          //         return buildInvalidToast('$newText is not a valid email');
-                          //       },
-                          //     ).show(context);
-                          //     return false;
-                          //   };
-                          //   break;
-                          // case SheetTextType.url:
-                          //   item.textEditorConfigurations.controller.onReplaceText =
-                          //       (int index, int length, Object? data) {
-                          //     if (data is! String) return false;
-                          //     final controller = item.textEditorConfigurations.controller;
-                          //     final oldText = controller.document.toPlainText();
-                          //     final newText = oldText.replaceRange(index, index + length, data).trim();
-                          //     final isValidUrl = Uri.tryParse(newText)?.hasAbsolutePath ?? false;
-                          //     if (newText.isEmpty || isValidUrl) return true;
-                          //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                          //     CustomToastBar(
-                          //       autoDismiss:true,
-                          //       snackbarDuration: Duration(milliseconds: 3000),
-                          //       builder: (context) {
-                          //         return buildInvalidToast('$newText is not a valid URL');
-                          //       },
-                          //     ).show(context);
-                          //     return false;
-                          //   };
-                          //   break;
+                        //   // case SheetTextType.email:
+                        //   //   item.textEditorConfigurations.controller.onReplaceText =
+                        //   //       (int index, int length, Object? data) {
+                        //   //     if (data is! String) return false;
+                        //   //     final controller = item.textEditorConfigurations.controller;
+                        //   //     final oldText = controller.document.toPlainText();
+                        //   //     final newText = oldText.replaceRange(index, index + length, data).trim();
+                        //   //     if (newText.isEmpty || RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(newText)) return true;
+                        //   //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
+                        //   //     CustomToastBar(
+                        //   //       autoDismiss:true,
+                        //   //       snackbarDuration: Duration(milliseconds: 3000),
+                        //   //       builder: (context) {
+                        //   //         return buildInvalidToast('$newText is not a valid email');
+                        //   //       },
+                        //   //     ).show(context);
+                        //   //     return false;
+                        //   //   };
+                        //   //   break;
+                        //   // case SheetTextType.url:
+                        //   //   item.textEditorConfigurations.controller.onReplaceText =
+                        //   //       (int index, int length, Object? data) {
+                        //   //     if (data is! String) return false;
+                        //   //     final controller = item.textEditorConfigurations.controller;
+                        //   //     final oldText = controller.document.toPlainText();
+                        //   //     final newText = oldText.replaceRange(index, index + length, data).trim();
+                        //   //     final isValidUrl = Uri.tryParse(newText)?.hasAbsolutePath ?? false;
+                        //   //     if (newText.isEmpty || isValidUrl) return true;
+                        //   //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
+                        //   //     CustomToastBar(
+                        //   //       autoDismiss:true,
+                        //   //       snackbarDuration: Duration(milliseconds: 3000),
+                        //   //       builder: (context) {
+                        //   //         return buildInvalidToast('$newText is not a valid URL');
+                        //   //       },
+                        //   //     ).show(context);
+                        //   //     return false;
+                        //   //   };
+                        //   //   break;
 
-                          case SheetTextType.string:
-                          default:
-                            item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                            break;
-                        }
+                        //   case SheetTextType.string:
+                        //   default:
+                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
+                        //     break;
+                        // }
                       });
                     },
                     );
@@ -11860,6 +11895,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           requiredText.sheetTextType,
                                                           item.textEditorConfigurations.controller,
                                                           check: true,
+                                                          textItem: item,
                                                         );
                                                         item.name = value;
                                                       } else {
@@ -11871,6 +11907,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             requiredText.sheetTextType,
                                                             item.textEditorConfigurations.controller,
                                                             check: true,
+                                                            textItem: item,
 
                                                           );
                                                           item.name = value;
@@ -15211,7 +15248,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         sheetTableItem.cellData[i].add(
                                           SheetTableCell(
                                             id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(), 
-                                            parentId: parentId, 
+                                            parentId: sheetTableItem.id, 
                                             sheetItem: _addTextField(
                                               id: newId,
                                             parentId: sheetTableItem.id,
