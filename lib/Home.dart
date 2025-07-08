@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
+import 'package:billblaze/components/widgets/pickers/number_picker.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/bill/required_text.dart';
@@ -16,10 +17,12 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/env_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_multiple_loaders/flutter_multiple_loaders.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:hive/hive.dart';
@@ -97,8 +100,19 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   // bool isHomeTab = true;
-  Key titleMainKey = GlobalKey();
 
+  Key titleMainKey = GlobalKey();
+  var monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  int selectedYear = DateTime.now().year;
+  int selectedMonth = DateTime.now().month;
+  bool isDragging = false;
+  List<TextEditingController> dateTextControllers = [
+  ];
+
+  List<FocusNode>  dateFocusNodes= List.generate(2, (index) => FocusNode(),);
   @override
   void initState() {
     super.initState();
@@ -130,6 +144,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     }
     filteredLayoutBox = Boxes.getLayouts().values.toList();
     // titleFontFadeController.forward();
+    dateTextControllers = [
+    TextEditingController()..text = selectedMonth.toString(), TextEditingController()..text = selectedYear.toString()
+  ];
   }
 
   @override
@@ -1225,34 +1242,37 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               duration: Durations.medium2,
               top: topPadPosDistance +80,
               left: isLayoutTab ? 120 : (sWidth / 1.8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                  decoration: BoxDecoration(
-                    color: defaultPalette.tertiary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(height: dotSize,width:dotSize),
-                  ),
-                  SizedBox(width:4),
-                  Container(
-                  decoration: BoxDecoration(
-                    color: defaultPalette.extras[0],
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(height: dotSize,width:dotSize),
-                  ),
-                  SizedBox(width:4),
-                  Container(
-                  decoration: BoxDecoration(
-                    color: defaultPalette.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(height: dotSize, width:dotSize),
-                  ),
-                ]
-                
+              child: IgnorePointer(
+                ignoring:!isLayoutTab,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                    decoration: BoxDecoration(
+                      color: defaultPalette.tertiary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(height: dotSize,width:dotSize),
+                    ),
+                    SizedBox(width:4),
+                    Container(
+                    decoration: BoxDecoration(
+                      color: defaultPalette.extras[0],
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(height: dotSize,width:dotSize),
+                    ),
+                    SizedBox(width:4),
+                    Container(
+                    decoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(height: dotSize, width:dotSize),
+                    ),
+                  ]
+                  
+                ),
               ),
             ),
             // //
@@ -1263,15 +1283,18 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               height: (sHeight / 2.5),
               top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
               right: isLayoutTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
-              child: Text('&',
-                textAlign: TextAlign.right,
-                style: GoogleFonts.greatVibes(
-                  color: Color(0xFF000000).withOpacity(0.2),
-                  fontSize: (sHeight / 2.5).clamp(0, 300),
-                  letterSpacing: -5,
-                  fontWeight: FontWeight.w100,
-                  height: 0.6
-                )
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Text('&',
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.greatVibes(
+                    color: Color(0xFF000000).withOpacity(0.2),
+                    fontSize: (sHeight / 2.5).clamp(0, 300),
+                    letterSpacing: -5,
+                    fontWeight: FontWeight.w100,
+                    height: 0.6
+                  )
+                ),
               ),
             ),
             //layTEXT TITLE
@@ -1279,14 +1302,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               duration: Durations.medium2,
               left:sWidth / (sWidth / 120),
               top: isLayoutTab ?  (sHeight / 4) : 0,
-              child: Text('Layouts\nTemplates',
-                  textAlign: TextAlign.left,
-                  style: GoogleFonts.outfit(
-                      color: defaultPalette.extras[0],
-                      fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
-                      letterSpacing: -2,
-                      fontWeight: FontWeight.w600,
-                      height: 0.9)),
+              child: IgnorePointer(
+                ignoring: !isLayoutTab,
+                child: Text('Layouts\nTemplates',
+                    textAlign: TextAlign.left,
+                    style: GoogleFonts.outfit(
+                        color: defaultPalette.extras[0],
+                        fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
+                        letterSpacing: -2,
+                        fontWeight: FontWeight.w600,
+                        height: 0.9)),
+              ),
             ),
             
             //  gradient
@@ -3600,371 +3626,321 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               duration: Durations.medium2,
               left: 90,
               top: isBillTab ? 70 : sHeight / 4,
-              child: IgnorePointer(
-                ignoring: !isBillTab,
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    extractAnalyticalData();
-                  }), // Rebuild on tap
-                  child: Container(
-                    width: sWidth / 2.05 - 90,
-                    height: sHeight / 2.5,
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: defaultPalette.primary,
-                      borderRadius: BorderRadius.circular(8)
-                      ),
-                    child: Builder(builder: (context) {
-                    
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 8),
-                        // Text("🧾 Invoices: $invoiceCount", style: TextStyle(color: Colors.black)),
-                        // Text("🧮 Credit Notes: $creditNoteCount", style: TextStyle(color: Colors.black)),
-                        // Text("💰 Total Revenue: ₹${totalRevenue.toStringAsFixed(2)}", style: TextStyle(color: Colors.black)),
-                        // const SizedBox(height: 16),
-                        Text("📊 Revenue by Month:", style: TextStyle(fontWeight: FontWeight.bold)),
-                        for (final entry in monthRevenueMap.entries)
-                          Text("📅 ${entry.key}: ₹${entry.value.toStringAsFixed(2)}", style: TextStyle(color: Colors.black)),
-                      //   Expanded(
-                      //     child: LineChart(
-                      //       LineChartData(
-                      //         gridData: FlGridData(
-                      //           show: true,
-                      //           drawVerticalLine: true,
-                      //           horizontalInterval: 1000,
-                      //           verticalInterval: 1,
-                      //           getDrawingHorizontalLine: (value) {
-                      //             return FlLine(
-                      //               color: defaultPalette.tertiary,
-                      //               strokeWidth: 1,
-                      //             );
-                      //           },
-                      //           getDrawingVerticalLine: (value) {
-                      //             return FlLine(
-                      //               color: defaultPalette.tertiary,
-                      //               strokeWidth: 1,
-                      //             );
-                      //           },
-                      //         ),
-                      //         titlesData: FlTitlesData(
-                      //           show: true,
-                      //           rightTitles: AxisTitles(
-                      //             sideTitles: SideTitles(showTitles: false),
-                      //           ),
-                      //           topTitles: AxisTitles(
-                      //             sideTitles: SideTitles(showTitles: false),
-                      //           ),
-                      //           bottomTitles: AxisTitles(
-                      //             sideTitles: SideTitles(
-                      //               showTitles: true,
-                      //               // reservedSize: 30,
-                      //               interval: 1,
-                      //               // getTitlesWidget: bottomTitleWidgets,
-                      //             ),
-                      //           ),
-                      //           leftTitles: AxisTitles(
-                      //             sideTitles: SideTitles(
-                      //               showTitles:true,
-                      //               interval: 2000,
-                      //               getTitlesWidget: (value, meta) => Text(
-                      //                 meta.formattedValue,
-                      //                 style: GoogleFonts.lexend(fontSize: 12),),
-                      //               // reservedSize: 42,
-                      //             ),
-                      //           ),
-                      //         ),
-                      //         borderData: FlBorderData(
-                      //           show: true,
-                      //           border: Border.all(color: const Color(0xff37434d)),
-                      //         ),
-                      //         // minX: 0,
-                      //         // maxX: 11,
-                      //         // minY: 0,
-                      //         // maxY: 6,
-                      //         lineBarsData: [
-                      //           LineChartBarData(
-                      //             spots: [
-                      //               // for (final entry in monthRevenueMap.entries)
-                      //                 FlSpot(0, 0),
-                      //                 FlSpot(1, monthRevenueMap[1]!),
-                      //                 FlSpot(6, monthRevenueMap[6]!),
-                      //                 FlSpot(7, monthRevenueMap[7]!)
-                                    
-                      //             ],
-                      //             isCurved: false,
-                      //             gradient: LinearGradient(
-                      //               colors: [defaultPalette.extras[0], defaultPalette.secondary],
-                      //             ),
-                      //             barWidth: 5,
-                      //             isStrokeCapRound: true,
-                      //             dotData: const FlDotData(
-                      //               show: true,
-                      //             ),
-                      //             belowBarData: BarAreaData(
-                      //               show: true,
-                      //               gradient: LinearGradient(
-                      //                 colors: [defaultPalette.tertiary, defaultPalette.primary],
-                      //                 transform: GradientRotation(pi/2)
-                      //               ),
-                      //             ),
-                      //           ),
-                      //         ],
-                      //       )
-                      //     ),
-                      //   )
-                      // ,
-                        Expanded(child: 
-                        LineChart(
-                          LineChartData(
-                lineTouchData: LineTouchData(
-                  getTouchedSpotIndicator:
-                      (LineChartBarData barData, List<int> spotIndexes) {
-                    return spotIndexes.map((spotIndex) {
-                      final spot = barData.spots[spotIndex];
-                      if (spot.x == 0 || spot.x == 6) {
-                        return null;
+              child: ValueListenableBuilder(
+              valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
+              builder: (context, Box<LayoutModel> box, _) {
+                monthRevenueMap ={};
+                if (isDragging) {
+                  dateTextControllers = [
+                  TextEditingController()..text = monthNames[selectedMonth-1], 
+                  TextEditingController()..text = selectedYear.toString(),
+                  ];
+                }
+                final layouts = box.values.toList();
+
+                final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
+                final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
+
+                double totalRevenue = 0;
+
+                // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
+
+                for (final layout in layouts) {
+                  try {
+                    final totalPayableLabel = layout.labelList.firstWhere(
+                      (lbl) => lbl.name == 'totalPayable',
+                    );
+
+                    if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951) {
+                      final item = getItemAtPath(totalPayableLabel.indexPath, layout.spreadSheetList);
+                      if (item is SheetTextBox) {
+                        final List<Map<String, dynamic>> rawDelta = List<Map<String, dynamic>>.from(item.textEditorController);
+                        final delta = Delta.fromJson(rawDelta);
+                        final doc = Document.fromDelta(delta);
+                        final rawText = doc.toPlainText();
+                        final value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+
+                        totalRevenue += value;
+
+                        if (layout.createdAt.year == selectedYear) {
+                          final month = layout.createdAt.month.ceilToDouble(); // 1 to 12
+                          monthRevenueMap.update(month, (existing) => existing + value, ifAbsent: () => value);
+                        }
                       }
-                      return TouchedSpotIndicatorData(
-                        FlLine(
-                          color: defaultPalette.tertiary,
-                          strokeWidth: 4,
+                    }
+                  } catch (_) {
+                    // Skip this layout
+                  }
+                }
+                monthRevenueMap = Map.fromEntries(
+                  List.generate(12, (i) => i + 1)
+                      .map((month) => MapEntry(month.ceilToDouble(), monthRevenueMap[month] ?? 0)),
+                );
+
+                return Container(
+                  width: sWidth / 2.05 - 90,
+                  height: sHeight / 2.5,
+                  padding: EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: defaultPalette.primary,
+                    borderRadius: BorderRadius.circular(8)
+                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height:40,
+                        child:  Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                             SwitcherButton(
+                              offColor: defaultPalette.extras[0],
+                              onColor: defaultPalette.primary,
+                              onText: monthNames[selectedMonth-1],
+                              size: mapValueDimensionBased(100, 150, sWidth, sHeight),
+                             ),
+                            ...fontPropertyTile(1),
+                          ],
                         ),
-                        FlDotData(
-                          getDotPainter: (spot, percent, barData, index) {
-                            if (index.isEven) {
-                              return FlDotCirclePainter(
-                                radius: 8,
-                                color: Colors.white,
-                                strokeWidth: 5,
-                                strokeColor:
-                                    defaultPalette.tertiary,
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(child: 
+                      LineChart(
+                          LineChartData(
+                          backgroundColor: defaultPalette.secondary,
+                          lineTouchData: LineTouchData(
+                            touchSpotThreshold: 25,
+                            getTouchedSpotIndicator:
+                                (LineChartBarData barData, List<int> spotIndexes) {
+                              return spotIndexes.map((spotIndex) {
+                                final spot = barData.spots[spotIndex];
+                                
+                                return TouchedSpotIndicatorData(
+                                  FlLine(
+                                    color: defaultPalette.tertiary,
+                                    strokeWidth: 4,
+                                  ),
+                                  FlDotData(
+                                    getDotPainter: (spot, percent, barData, index) {
+                                      
+                                      return FlDotCirclePainter(
+                                        radius: 8,
+                                        color: defaultPalette.primary,
+                                        strokeWidth: 5,
+                                        strokeColor: defaultPalette.tertiary,
+                                      );
+                                    },
+                                  ),
+                              );
+                            }).toList();
+                          },
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                              return touchedBarSpots.map((barSpot) {
+                                final flSpot = barSpot;
+                                    
+                                
+                                    
+                                return LineTooltipItem(
+                                  '${monthNames[(barSpot.x-1).round()]} Revenue \n',
+                                 GoogleFonts.lexend(
+                                    color: defaultPalette.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: NumberFormat.decimalPattern('en_IN').format(flSpot.y.round()),
+                                      style:GoogleFonts.lexend(
+                                        color: defaultPalette.primary,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                     TextSpan(
+                                      text: '₹ ',
+                                      style:GoogleFonts.lexend(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                  textAlign: TextAlign.left
+                                );
+                              }).toList();
+                            },
+                          ),
+                          touchCallback:
+                              (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                            if (!event.isInterestedForInteractions ||
+                                lineTouch == null ||
+                                lineTouch.lineBarSpots == null) {
+                              setState(() {
+                                // touchedValue = -1;
+                              });
+                              return;
+                            }
+                          },
+                          ),
+                          extraLinesData: ExtraLinesData(
+                          ),
+                          lineBarsData: [
+                          LineChartBarData(
+                            isStepLineChart: true,
+                            spots: [
+                              FlSpot(0, 0),
+                              for( var entry in monthRevenueMap.entries)
+                                FlSpot(entry.key, entry.value),
+                              FlSpot(13, 0),
+                            ],
+                            isCurved: false,
+                            barWidth: 5,
+                            color: defaultPalette.secondary,
+                
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(colors: [
+                                defaultPalette.extras[0],defaultPalette.extras[0],
+                              ],
+                              stops: [0.5, 1],
+                              begin: Alignment(0, -1),
+                              end: Alignment(0, 1),
+                              ),
+                
+                              spotsLine: BarAreaSpotsLine(
+                                show: true,
+                                flLineStyle: FlLine(
+                                  color: defaultPalette.extras[0],
+                                  strokeWidth: 1,
+                                ),
+                                
+                              ),
+                            ),
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) {
+                                
+                                  return FlDotSquarePainter(
+                                    size: 8.5,
+                                    color: defaultPalette.primary,
+                                    strokeWidth: 3,
+                                    strokeColor: defaultPalette.extras[0],
+                                  );
+                                
+                              },
+                              checkToShowDot: (spot, barData) {
+                                return( spot.y >1 && spot.x!=0);
+                              },
+                            ),
+                          ),
+                          ],
+                          minY: 0,
+                          borderData: FlBorderData(
+                          show: true,
+                          border: Border(
+                            left: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 0),
+                            right: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 0),
+                            bottom: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 5),
+                            top: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 12),
+                            
+                          ),
+                          ),
+                          gridData: FlGridData(
+                          show: true,
+                          drawHorizontalLine: false,
+                          drawVerticalLine: false,
+                          // checkToShowHorizontalLine: (value) => value % 1 == 0,
+                          // checkToShowVerticalLine: (value) => value % 1 == 0,
+                          getDrawingHorizontalLine: (value) {
+                            if (value == 0) {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 2,
                               );
                             } else {
-                              return FlDotSquarePainter(
-                                size: 16,
-                                color: Colors.white,
-                                strokeWidth: 5,
-                                strokeColor:defaultPalette.tertiary,
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 0.5,
                               );
                             }
                           },
-                        ),
-                      );
-                    }).toList();
-                  },
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
-                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                      return touchedBarSpots.map((barSpot) {
-                        final flSpot = barSpot;
-                        if (flSpot.x == 0 || flSpot.x == 6) {
-                          return null;
-                        }
-
-                        TextAlign textAlign;
-                        switch (flSpot.x.toInt()) {
-                          case 1:
-                            textAlign = TextAlign.left;
-                            break;
-                          case 5:
-                            textAlign = TextAlign.right;
-                            break;
-                          default:
-                            textAlign = TextAlign.center;
-                        }
-
-                        return LineTooltipItem(
-                          'yo \n',
-                          TextStyle(
-                            color: defaultPalette.primary,
-                            fontWeight: FontWeight.bold,
+                          getDrawingVerticalLine: (value) {
+                            if (value == 0) {
+                              return const FlLine(
+                                color: Colors.redAccent,
+                                strokeWidth: 10,
+                              );
+                            } else {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 0.5,
+                              );
+                            }
+                          },
                           ),
-                          children: [
-                            TextSpan(
-                              text: flSpot.y.toString(),
-                              style: TextStyle(
-                                color: defaultPalette.primary,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          titlesData: FlTitlesData(
+                          show: true,
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                              getTitlesWidget:(value, meta) {
+                                if (meta.min == value || meta.max == value) {
+                                  return const SizedBox.shrink(); // Hide first and last labels
+                                }
+                                return Text(meta.formattedValue.toLowerCase()+'\₹',
+                                  style: GoogleFonts.lexend(
+                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                    letterSpacing: -1,
+                                  ),
+                                );
+                              },
                             ),
-                            const TextSpan(
-                              text: ' dough ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              // reservedSize: 40,
+                              interval: 1,
+                              getTitlesWidget:(value, meta) {
+                                if (value ==0 || value ==13) {
+                                  return SizedBox.shrink();
+                                }
+                                return Text(monthNames[(value-1).clamp(0, double.infinity).round()],
+                                  style: GoogleFonts.lexend(
+                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                    letterSpacing: -1,
+                                  ),
+                                );
+                              },
                             ),
-                          ],
-                          textAlign: textAlign,
-                        );
-                      }).toList();
-                    },
-                  ),
-                  touchCallback:
-                      (FlTouchEvent event, LineTouchResponse? lineTouch) {
-                    if (!event.isInterestedForInteractions ||
-                        lineTouch == null ||
-                        lineTouch.lineBarSpots == null) {
-                      setState(() {
-                        // touchedValue = -1;
-                      });
-                      return;
-                    }
-                    final value = lineTouch.lineBarSpots![0].x;
-
-                    if (value == 0 || value == 6) {
-                      setState(() {
-                        // touchedValue = -1;
-                      });
-                      return;
-                    }
-
-                    setState(() {
-                      // touchedValue = value;
-                    });
-                  },
-                ),
-                extraLinesData: ExtraLinesData(
-                  horizontalLines: [
-                    HorizontalLine(
-                      y: 1.8,
-                      color:defaultPalette.tertiary,
-                      strokeWidth: 3,
-                      dashArray: [20, 10],
-                    ),
-                  ],
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    isStepLineChart: true,
-                    spots: [
-                      FlSpot(0, 0),
-                      FlSpot(1, monthRevenueMap[1]!),
-                      FlSpot(6, monthRevenueMap[6]!),
-                      FlSpot(7, monthRevenueMap[7]!)
-                    ],
-                    isCurved: false,
-                    barWidth: 4,
-                    color: defaultPalette.tertiary,
-                    belowBarData: BarAreaData(
-                      show: true,
-                      spotsLine: BarAreaSpotsLine(
-                        show: true,
-                        flLineStyle: FlLine(
-                          color: defaultPalette.tertiary,
-                          strokeWidth: 2,
+                          ),
+                          ),
                         ),
-                        checkToShowSpotLine: (spot) {
-                          if (spot.x == 0 || spot.x == 6) {
-                            return false;
-                          }
-
-                          return true;
-                        },
-                      ),
-                    ),
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        if (index.isEven) {
-                          return FlDotCirclePainter(
-                            radius: 6,
-                            color: Colors.white,
-                            strokeWidth: 3,
-                            strokeColor: defaultPalette.tertiary,
-                          );
-                        } else {
-                          return FlDotSquarePainter(
-                            size: 12,
-                            color: Colors.white,
-                            strokeWidth: 3,
-                            strokeColor: defaultPalette.tertiary,
-                          );
-                        }
-                      },
-                      checkToShowDot: (spot, barData) {
-                        return spot.x != 0 && spot.x != 6;
-                      },
-                    ),
+                      )
+                      )
+                    ],
                   ),
-                ],
-                minY: 0,
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(
-                    color: defaultPalette.extras[0],
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawHorizontalLine: true,
-                  drawVerticalLine: true,
-                  checkToShowHorizontalLine: (value) => value % 1 == 0,
-                  checkToShowVerticalLine: (value) => value % 1 == 0,
-                  getDrawingHorizontalLine: (value) {
-                    if (value == 0) {
-                      return  FlLine(
-                        color: defaultPalette.tertiary,
-                        strokeWidth: 2,
-                      );
-                    } else {
-                      return  FlLine(
-                        color: defaultPalette.tertiary,
-                        strokeWidth: 0.5,
-                      );
-                    }
-                  },
-                  getDrawingVerticalLine: (value) {
-                    if (value == 0) {
-                      return const FlLine(
-                        color: Colors.redAccent,
-                        strokeWidth: 10,
-                      );
-                    } else {
-                      return  FlLine(
-                        color: defaultPalette.tertiary,
-                        strokeWidth: 0.5,
-                      );
-                    }
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 46,
-                      // getTitlesWidget: leftTitleWidgets,
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      // getTitlesWidget: bottomTitleWidgets,
-                    ),
-                  ),
-                ),
-              ),
-                ))
-                      ],
-                    );
-                  }),
-
-                  ),
-                ),
+                                  
+                );
+                }
               ),
             ),
-            
+          
           ],
         ),
       ),
@@ -4108,6 +4084,74 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               
   }
   
+  List<Widget> fontPropertyTile(int s) {
+    var sHeight = MediaQuery.of(context).size.height;
+    var sWidth = MediaQuery.of(context).size.width;
+  return [
+    SizedBox(
+      width: 2,
+    ),
+    SizedBox(
+      height: 25,
+      child: IntrinsicWidth(
+        child: TextFormField(
+          onTapOutside: (event) => dateFocusNodes[s].unfocus(),
+          focusNode: dateFocusNodes[s],
+          controller: dateTextControllers[s],
+          cursorColor: defaultPalette.tertiary,
+          selectionControls: NoMenuTextSelectionControls(),
+          enabled: true,
+          textAlign: TextAlign.end,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.all(0),
+            labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+            fillColor: defaultPalette.transparent,
+            border: InputBorder.none,
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+          ),
+          keyboardType: TextInputType.number,
+          style: GoogleFonts.mitr(
+              fontSize: mapValueDimensionBased(18, 25, sWidth, sHeight),
+              color: defaultPalette.extras[0],
+              letterSpacing: -1),
+          onFieldSubmitted: (value) {
+            setState(() {
+              print(value);
+              var newValue = (double.tryParse(value) ?? 0).clamp(
+                  s==0
+                  ? 1
+                  : 1900
+                  , s==0
+                  ? 12
+                  : DateTime.now().year.ceilToDouble()
+                  ).round();
+            print(newValue);
+           switch (s) {
+              case 0:
+                selectedMonth =newValue;
+                dateTextControllers = [
+                  TextEditingController()..text = selectedMonth.toString(), TextEditingController()..text = selectedYear.toString()
+                ];
+                break;
+              case 1:
+                selectedYear = newValue;
+                dateTextControllers = [
+          TextEditingController()..text = selectedMonth.toString(), TextEditingController()..text = selectedYear.toString()
+        ];
+                break;
+              
+              default:
+            }
+              
+            
+            });
+          },
+        ),
+      ),
+    ),
+  ];
+  }
 
 }
 
