@@ -372,6 +372,7 @@ class SwitcherButton extends StatefulWidget {
   SwitcherButton(
       {Key? key,
       this.size = 120.0,
+      double height = 120,
       this.onColor = Colors.white,
       this.offColor = Colors.black87,
       this.value = false,
@@ -379,7 +380,7 @@ class SwitcherButton extends StatefulWidget {
       this.onChange})
       : super(key: key) {
     _width = size;
-    _height = size / 6;
+    _height = height;
   }
 
   @override
@@ -473,8 +474,9 @@ class _SwitcherButtonState extends State<SwitcherButton>
       child: Stack(
         children: [
           SizedBox(
-              width: widget._width,
-              height: widget._height,),
+            width: widget._width,
+            height: widget._height,
+          ),
           Container(
             width: widget._width,
             height: widget._height,
@@ -484,17 +486,20 @@ class _SwitcherButtonState extends State<SwitcherButton>
             child: CustomPaint(
               size: Size.infinite,
               painter: ProfileCardPainter(
-                  offColor: widget.offColor,
-                  onColor: widget.onColor,
-                  leftRadius: _leftRadius,
-                  rightRadius: _rightRadius,
-                  value: value),
+                offColor: widget.offColor,
+                onColor: widget.onColor,
+                leftRadius: _leftRadius,
+                rightRadius: _rightRadius,
+                value: value,
+              ),
             ),
           ),
-          Positioned(
-            right: 5,
+          AnimatedPositioned(
+            duration: Durations.medium3,
+            right: value?20: 5,
             child: Text(widget.onText,
-            style: GoogleFonts.lexend(fontSize:mapValueDimensionBased(13, 19, sWidth, sHeight), color: defaultPalette.primary),
+            style: GoogleFonts.lexend(fontSize:mapValueDimensionBased(14,30, sWidth, sHeight), 
+            color:defaultPalette.primary),
             ),
           )
         ],
@@ -517,7 +522,7 @@ class _SwitcherButtonState extends State<SwitcherButton>
       _rightController.duration = Duration(milliseconds: 400);
 
       _rightRadiusAnimation =
-          Tween(begin: widget._height * .1, end: widget._width)
+          Tween(begin: widget._height * .0, end: widget._width)
               .animate(_rightController)
                 ..addStatusListener((status) {
                   if (status == AnimationStatus.completed) {
@@ -568,7 +573,7 @@ class _SwitcherButtonState extends State<SwitcherButton>
                     _rightController.reset();
                     _rightController.duration = Duration(milliseconds: 800);
                     _rightRadiusAnimation =
-                        Tween(begin: 0.0, end: widget._height * .1).animate(
+                        Tween(begin: 0.0, end: widget._height * .0).animate(
                             CurvedAnimation(
                                 parent: _rightController,
                                 curve: Curves.elasticOut))

@@ -2758,20 +2758,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ///////Side TOOL BAR
                                   child: Column(
                                     children: [
-                                      AnimatedContainer(
-                                        duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:50, left:4,right:3),
-                                        height: 20,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(5),
-                                          color:defaultPalette.tertiary
-                                        ),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
+                                      Padding(
+                                        padding: EdgeInsets.only(top:50, left:4,right:3),
+                                        
                                         child:Text(
                                           'text',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
+                                            color:defaultPalette.tertiary,
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,
@@ -2906,15 +2899,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       },
                                       ),
                                       
-                                      AnimatedContainer(
-                                        duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:4, left:4,right:3),
-                                        height:20,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(5),
-                                        color:defaultPalette.extras[1]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
+                                      Padding(
+                                        padding: EdgeInsets.only(top:4, left:4,right:3),
+                                        
                                         // child: Icon(
                                         //   TablerIcons.txt,
                                         // ),
@@ -2984,19 +2971,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       }, 
                                       ),
                                       
-                                      AnimatedContainer(
-                                        duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:4, left:4,right:3),
-                                        height:20,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(5),
-                                        color:defaultPalette.extras[3]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
+                                      Padding(
+                                        padding:EdgeInsets.only(top:4, left:4,right:3),
+                                       
                                         child: Text(
                                           ' table ',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
+                                            color: defaultPalette.extras[3], 
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,

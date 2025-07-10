@@ -99,6 +99,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   late AnimationController titleFontFadeController;
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
+  Map<double, double> dayRevenueMap = {};
   // bool isHomeTab = true;
 
   Key titleMainKey = GlobalKey();
@@ -145,7 +146,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     filteredLayoutBox = Boxes.getLayouts().values.toList();
     // titleFontFadeController.forward();
     dateTextControllers = [
-    TextEditingController()..text = selectedMonth.toString(), TextEditingController()..text = selectedYear.toString()
+    TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
   ];
   }
 
@@ -1197,7 +1198,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
-    double dotSize = sHeight/35;
+    double dotSize = sHeight/50;
     // print(sWidth);
     return AnimatedPositioned(
       duration: Durations.short2,
@@ -1240,7 +1241,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             ),
             AnimatedPositioned(
               duration: Durations.medium2,
-              top: topPadPosDistance +80,
+              top: mapValueDimensionBased( 70, 90, sWidth,sHeight),
               left: isLayoutTab ? 120 : (sWidth / 1.8),
               child: IgnorePointer(
                 ignoring:!isLayoutTab,
@@ -2976,34 +2977,34 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
             ),
             //billTEXT TITLE
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              left:sWidth / (sWidth / 120),
-              top: isBillTab ?  (2.25*sHeight / 4): sHeight / 4,
-              child: Text('Bills',
-                textAlign: TextAlign.left,
-                style: GoogleFonts.outfit(
-                  color: defaultPalette.extras[0],
-                  fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
-                  letterSpacing: -2,
-                  fontWeight: FontWeight.w600,
-                  height: 0.9
-                )
-              ),
-            ),
+            // AnimatedPositioned(
+            //   duration: Durations.medium2,
+            //   left:sWidth / (sWidth / 120),
+            //   top: isBillTab ?  (2.25*sHeight / 4): sHeight / 4,
+            //   child: Text('Bills',
+            //     textAlign: TextAlign.left,
+            //     style: GoogleFonts.outfit(
+            //       color: defaultPalette.extras[0],
+            //       fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
+            //       letterSpacing: -2,
+            //       fontWeight: FontWeight.w600,
+            //       height: 0.9
+            //     )
+            //   ),
+            // ),
             
             
             // //BillsList
             AnimatedPositioned(
               duration: Durations.extralong2,
-              top: isBillTab
-                  ? Platform.isWindows
-                      ? topPadPosDistance + 10
-                      : 5
-                  : sHeight,
-              right: 2,
-              height: sHeight / 1.1,
-              width: sWidth / 2.05,
+              top: isBillTab ? 70 : sHeight / 4,
+              // top: isBillTab
+              //     ?  topPadPosDistance + 10
+              //     : sHeight,
+              // left: 90,
+              right: 15,
+              height: (sHeight / 1.1)-70,
+              width: sWidth / 2.5,
               child: IgnorePointer(
                 ignoring: !isBillTab,
                 child: AnimatedOpacity(
@@ -3011,8 +3012,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   opacity: isBillTab ? 1 : 0,
                   curve: Curves.bounceInOut,
                   child: Container(
-                    margin: EdgeInsets.all(15),
-                    padding: EdgeInsets.all(mapValueDimensionBased( 5, 10, sWidth,sHeight)).copyWith(top: 15),
+                    padding: EdgeInsets.all(mapValueDimensionBased( 5, 8, sWidth,sHeight)),
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: defaultPalette.primary),
@@ -3021,18 +3021,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       children: [
                         //my bills title search bar list page toggle
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(width: 15,),
                             Expanded(
-                              child: Text(
-                                '   Bills',
+                              child:Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text('Bills',
+                                textAlign: TextAlign.left,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.start,
-                                style: GoogleFonts.lexend(
-                                  fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                style: GoogleFonts.outfit(
                                   color: defaultPalette.extras[0],
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: -0.2,
+                                  fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
+                                  letterSpacing: -2,
+                                  fontWeight: FontWeight.w600,
+                                  height: 0.9
+                                )
                                 ),
                               ),
                             ),
@@ -3054,6 +3059,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     }
                                   });
                                 },
+                                width:  (sWidth / 2.5)/3,
                                 hintText: "search bill...",
                                 editTextController: layoutSearchController,
                                 focusNode: layoutSearchFocusNode,
@@ -3085,11 +3091,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       borderRadius:
                                           BorderRadius
                                               .circular(
-                                                  50),
+                                                  mapValueDimensionBased( 50, 999, sWidth,sHeight)),
                                       indicatorBorderRadius:
                                           BorderRadius
                                               .circular(
-                                                  5),
+                                                  mapValueDimensionBased( 5, 32, sWidth,sHeight)),
                                       borderColor:
                                           defaultPalette
                                               .secondary,
@@ -3124,7 +3130,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             SizedBox(width: 5,),                    
                           ],
                         ),
-                        SizedBox(height: 10,),
+                  
                         //the bills tiles
                         Expanded(
                           child: Container(
@@ -3157,13 +3163,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             border: Border.all(),
                                             borderRadius:
                                                 BorderRadius.circular(15)),
-                                        width: 6,
+                                        width: 4,
                                       );
                                     },
                                   child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListView.builder(
-                                    padding: EdgeInsets.only(right:0),
+                                    padding: EdgeInsets.only(right:5),
                                   controller: controller,
                                   physics: physics,
                                   itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
@@ -3457,9 +3463,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             ));
                                           },
                                         child: Container(
-                                          height: 70,
+                                          height: 54,
                                           width: 30,
-                                          margin: EdgeInsets.only(bottom: 10,right: 8),
+                                          // margin: EdgeInsets.only(bottom: 10,right: 8),
                                           color: defaultPalette.transparent,
                                           child: Row(
                                             children: [
@@ -3486,9 +3492,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView),
                                               SizedBox(width:5),
                                               Column(
-                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  SizedBox(height:5),
                                                   //make a revised bill out of a bill button
                                                   Tooltip(
                                                     message: '  Create a revised ${(SheetType.values[layoutModel.type].name=='none'? 'document':SheetType.values[layoutModel.type].name)} of ${layoutModel.name}.  ',
@@ -3539,8 +3544,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           )
                                                         );
                                                       },
-                                                      buttonHeight: 30,
-                                                      buttonWidth: 30,
+                                                      buttonHeight: 20,
+                                                      buttonWidth: 20,
                                                       borderRadius: BorderRadius.circular(100),
                                                       animationDuration:
                                                           const Duration(milliseconds: 200),
@@ -3549,10 +3554,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         color: Colors.white,
                                                         border: Border.all(),
                                                       ),
-                                                      subfac: 3,depth: 3,
+                                                      subfac: 1,depth: 1,
                                                       topLayerChild: Icon(
                                                         TablerIcons.edit,
-                                                        size: 15,
+                                                        size: 12,
                                                       ),
                                                       baseDecoration: BoxDecoration(
                                                         color: defaultPalette.extras[0],
@@ -3573,8 +3578,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       
                                                       setState(() {});
                                                     },
-                                                    buttonHeight: 30,
-                                                    buttonWidth: 30,
+                                                    buttonHeight: 20,
+                                                    buttonWidth: 20,
                                                     borderRadius: BorderRadius.circular(10),
                                                     animationDuration:
                                                         const Duration(milliseconds: 200),
@@ -3585,9 +3590,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     ),
                                                     topLayerChild: Icon(
                                                       TablerIcons.trash,
-                                                      size: 20,
+                                                      size: 12,
                                                     ),
-                                                    subfac: 3,depth: 3,
+                                                    subfac: 1,depth: 1,
                                                     baseDecoration: BoxDecoration(
                                                       color: defaultPalette.extras[0],
                                                       border: Border.all(),
@@ -3600,7 +3605,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             ],
                                           ),
                                         ),
-                                                                            ),
+                                         ),
                                       );
                                     
                                     }
@@ -3614,6 +3619,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         
                       ),
                     ),
+                        
                   ],
                 ),
                 ),
@@ -3621,22 +3627,39 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            //  gradient
+            //  charts analytical
            AnimatedPositioned(
               duration: Durations.medium2,
+              // right: 15,
               left: 90,
               top: isBillTab ? 70 : sHeight / 4,
               child: ValueListenableBuilder(
               valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
               builder: (context, Box<LayoutModel> box, _) {
                 monthRevenueMap ={};
+                dayRevenueMap = {};
                 if (isDragging) {
                   dateTextControllers = [
                   TextEditingController()..text = monthNames[selectedMonth-1], 
                   TextEditingController()..text = selectedYear.toString(),
                   ];
                 }
-                final layouts = box.values.toList();
+                final allLayouts = box.values.toList();
+
+                // Collect all revised layout base names
+                final revisedNames = allLayouts
+                    .where((l) => l.name.endsWith('-revised'))
+                    .map((l) => l.name.replaceAll('-revised', ''))
+                    .toSet();
+
+                // Now filter the layouts
+                final layouts = allLayouts.where((layout) {
+                  final name = layout.name;
+                  if (name.endsWith('-old')) return false;
+                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                  return true;
+                }).toList();
+
 
                 final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
                 final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
@@ -3666,46 +3689,63 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           final month = layout.createdAt.month.ceilToDouble(); // 1 to 12
                           monthRevenueMap.update(month, (existing) => existing + value, ifAbsent: () => value);
                         }
+                        final date = layout.createdAt;
+                        if (date.year == selectedYear && date.month == selectedMonth) {
+                          final day = date.day.toDouble(); // 1 to 31
+                          dayRevenueMap.update(day, (existing) => existing + value, ifAbsent: () => value);
+                        }
                       }
                     }
                   } catch (_) {
                     // Skip this layout
                   }
                 }
+                //
                 monthRevenueMap = Map.fromEntries(
                   List.generate(12, (i) => i + 1)
                       .map((month) => MapEntry(month.ceilToDouble(), monthRevenueMap[month] ?? 0)),
                 );
+                final daysInMonth = DateUtils.getDaysInMonth(selectedYear, selectedMonth);
+                dayRevenueMap = Map.fromEntries(
+                  List.generate(31, (i) => i + 1)
+                      .map((day) => MapEntry(day.toDouble(), dayRevenueMap[day.toDouble()] ?? 0)),
+                );
 
+                // print(monthRevenueMap);
                 return Container(
-                  width: sWidth / 2.05 - 90,
-                  height: sHeight / 2.5,
+                  width: sWidth / 1.7 - 100,
+                  height: sHeight / 1.8,
                   padding: EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     color: defaultPalette.primary,
-                    borderRadius: BorderRadius.circular(8)
+                    borderRadius: BorderRadius.circular(20)
                     ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                        height:40,
-                        child:  Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        height: 25,
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                             SwitcherButton(
-                              offColor: defaultPalette.extras[0],
-                              onColor: defaultPalette.primary,
-                              onText: monthNames[selectedMonth-1],
-                              size: mapValueDimensionBased(100, 150, sWidth, sHeight),
-                             ),
-                            ...fontPropertyTile(1),
+                            SizedBox(width: 5,),
+                            Icon(TablerIcons.chart_bar),
+                            SizedBox(width: 5,),
+                            Expanded(
+                              child: Text('Revenue',style: GoogleFonts.lexend(
+                                fontSize: mapValueDimensionBased(20, 25, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -1),),
+                            ),
+                            ...datePropertyTile(1),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
+                      //yearly revenue
                       Expanded(child: 
                       LineChart(
                           LineChartData(
@@ -3741,18 +3781,20 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                               return touchedBarSpots.map((barSpot) {
                                 final flSpot = barSpot;
-                                    
+                                 if (barSpot.x ==0 || barSpot.x ==13 ) {
+                                   return null;
+                                 }   
                                 
                                     
                                 return LineTooltipItem(
-                                  '${monthNames[(barSpot.x-1).round()]} Revenue \n',
+                                  '${monthNames[(barSpot.x-1).clamp(0, 12).round()]} Revenue \n',
                                  GoogleFonts.lexend(
                                     color: defaultPalette.primary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   children: [
                                     TextSpan(
-                                      text: NumberFormat.decimalPattern('en_IN').format(flSpot.y.round()),
+                                      text: NumberFormat.decimalPattern('en_IN').format(monthRevenueMap[(barSpot.x).clamp(1, 12).round()]),
                                       style:GoogleFonts.lexend(
                                         color: defaultPalette.primary,
                                         fontWeight: FontWeight.w900,
@@ -3788,10 +3830,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           LineChartBarData(
                             isStepLineChart: true,
                             spots: [
-                              FlSpot(0, 0),
+                              const FlSpot(0, 0),
                               for( var entry in monthRevenueMap.entries)
                                 FlSpot(entry.key, entry.value),
-                              FlSpot(13, 0),
+                              const FlSpot(13, 0),
                             ],
                             isCurved: false,
                             barWidth: 5,
@@ -3835,6 +3877,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                           ],
                           minY: 0,
+                          maxY: max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),
                           borderData: FlBorderData(
                           show: true,
                           border: Border(
@@ -3857,8 +3900,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           show: true,
                           drawHorizontalLine: false,
                           drawVerticalLine: false,
-                          // checkToShowHorizontalLine: (value) => value % 1 == 0,
-                          // checkToShowVerticalLine: (value) => value % 1 == 0,
                           getDrawingHorizontalLine: (value) {
                             if (value == 0) {
                               return  FlLine(
@@ -3932,6 +3973,249 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                         ),
                       )
+                      
+                      ),
+                      //the month display and editor
+                      SizedBox(
+                        height: 25,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            ...datePropertyTile(0),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      //day revenue
+                      Expanded(child: 
+                      LineChart(
+                          LineChartData(
+                          backgroundColor: defaultPalette.secondary,
+                          lineTouchData: LineTouchData(
+                            touchSpotThreshold: 25,
+                            getTouchedSpotIndicator:
+                                (LineChartBarData barData, List<int> spotIndexes) {
+                              return spotIndexes.map((spotIndex) {
+                                final spot = barData.spots[spotIndex];
+                                
+                                return TouchedSpotIndicatorData(
+                                  FlLine(
+                                    color: defaultPalette.tertiary,
+                                    strokeWidth: 4,
+                                  ),
+                                  FlDotData(
+                                    getDotPainter: (spot, percent, barData, index) {
+                                      
+                                      return FlDotCirclePainter(
+                                        radius: 8,
+                                        color: defaultPalette.primary,
+                                        strokeWidth: 5,
+                                        strokeColor: defaultPalette.tertiary,
+                                      );
+                                    },
+                                  ),
+                              );
+                            }).toList();
+                          },
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                              return touchedBarSpots.map((barSpot) {
+                                final flSpot = barSpot;
+                                 if (barSpot.x ==0 || barSpot.x ==32 ) {
+                                   return null;
+                                 }   
+                                
+                                    
+                                return LineTooltipItem(
+                                  '${DateFormat.E().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))} Revenue \n',
+                                 GoogleFonts.lexend(
+                                    color: defaultPalette.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: NumberFormat.decimalPattern('en_IN').format(dayRevenueMap[(barSpot.x).clamp(1, 31).round()]),
+                                      style:GoogleFonts.lexend(
+                                        color: defaultPalette.primary,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                     TextSpan(
+                                      text: '₹ ',
+                                      style:GoogleFonts.lexend(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                  textAlign: TextAlign.left
+                                );
+                              }).toList();
+                            },
+                          ),
+                          touchCallback:
+                              (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                            if (!event.isInterestedForInteractions ||
+                                lineTouch == null ||
+                                lineTouch.lineBarSpots == null) {
+                              setState(() {
+                                // touchedValue = -1;
+                              });
+                              return;
+                            }
+                          },
+                          ),
+                          extraLinesData: ExtraLinesData(
+                          ),
+                          lineBarsData: [
+                          LineChartBarData(
+                            isStepLineChart: true,
+                            spots: [
+                              const FlSpot(0, 0),
+                              for( var entry in dayRevenueMap.entries)
+                                FlSpot(entry.key, entry.value),
+                              const FlSpot(32, 0),
+                            ],
+                            isCurved: false,
+                            barWidth: 5,
+                            color: defaultPalette.secondary,
+                
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(colors: [
+                                defaultPalette.extras[0],defaultPalette.extras[0],
+                              ],
+                              stops: [0.5, 1],
+                              begin: Alignment(0, -1),
+                              end: Alignment(0, 1),
+                              ),
+                
+                              spotsLine: BarAreaSpotsLine(
+                                show: true,
+                                flLineStyle: FlLine(
+                                  color: defaultPalette.extras[0],
+                                  strokeWidth: 1,
+                                ),
+                                
+                              ),
+                            ),
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) {
+                                
+                                  return FlDotSquarePainter(
+                                    size: 8.5,
+                                    color: defaultPalette.primary,
+                                    strokeWidth: 3,
+                                    strokeColor: defaultPalette.extras[0],
+                                  );
+                                
+                              },
+                              checkToShowDot: (spot, barData) {
+                                return( spot.y >1 && spot.x!=0);
+                              },
+                            ),
+                          ),
+                          ],
+                          minY: 0,
+                          maxY: max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),
+                          borderData: FlBorderData(
+                          show: true,
+                          border: Border(
+                            left: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 0),
+                            right: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 0),
+                            bottom: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 5),
+                            top: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 12),
+                            
+                          ),
+                          ),
+                          gridData: FlGridData(
+                          show: true,
+                          drawHorizontalLine: false,
+                          drawVerticalLine: false,
+                          getDrawingHorizontalLine: (value) {
+                            if (value == 0) {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 2,
+                              );
+                            } else {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 0.5,
+                              );
+                            }
+                          },
+                          getDrawingVerticalLine: (value) {
+                            if (value == 0) {
+                              return const FlLine(
+                                color: Colors.redAccent,
+                                strokeWidth: 10,
+                              );
+                            } else {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 0.5,
+                              );
+                            }
+                          },
+                          ),
+                          titlesData: FlTitlesData(
+                          show: true,
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                              getTitlesWidget:(value, meta) {
+                                if (meta.min == value || meta.max == value) {
+                                  return const SizedBox.shrink(); // Hide first and last labels
+                                }
+                                return Text(meta.formattedValue.toLowerCase()+'\₹',
+                                  style: GoogleFonts.lexend(
+                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                    letterSpacing: -1,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              // reservedSize: 40,
+                              interval: 1,
+                              getTitlesWidget:(value, meta) {
+                                if (value ==0 || value ==32) {
+                                  return SizedBox.shrink();
+                                }
+                                return Text((value).clamp(0, double.infinity).round().toString(),
+                                  style: GoogleFonts.lexend(
+                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                    letterSpacing: -1,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          ),
+                        ),
+                      )
+                      
                       )
                     ],
                   ),
@@ -3948,7 +4232,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }
 
   Widget _getCreatedAndModified(LayoutModel layoutModel, double sWidth, double sHeight, bool isNotLayoutTileView, {bool isBill=false}){
-    double fontSize =  12;
+    double fontSize =  10 ;
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3983,7 +4267,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(12),
                   // border: Border.all()
                 ),
-                padding: EdgeInsets.all(10),
+                // padding: EdgeInsets.all(isBill?0:10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -4084,15 +4368,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               
   }
   
-  List<Widget> fontPropertyTile(int s) {
+  List<Widget> datePropertyTile(int s) {
     var sHeight = MediaQuery.of(context).size.height;
     var sWidth = MediaQuery.of(context).size.width;
   return [
     SizedBox(
       width: 2,
     ),
+          
     SizedBox(
-      height: 25,
+      height: 15,
       child: IntrinsicWidth(
         child: TextFormField(
           onTapOutside: (event) => dateFocusNodes[s].unfocus(),
@@ -4100,7 +4385,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           controller: dateTextControllers[s],
           cursorColor: defaultPalette.tertiary,
           selectionControls: NoMenuTextSelectionControls(),
-          enabled: true,
+          enabled: s==1,
           textAlign: TextAlign.end,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.all(0),
@@ -4109,11 +4394,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             border: InputBorder.none,
             enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
             focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+            disabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
           ),
           keyboardType: TextInputType.number,
           style: GoogleFonts.mitr(
-              fontSize: mapValueDimensionBased(18, 25, sWidth, sHeight),
+              fontSize: mapValueDimensionBased(18, 20, sWidth, sHeight),
               color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w400,
               letterSpacing: -1),
           onFieldSubmitted: (value) {
             setState(() {
@@ -4131,13 +4418,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               case 0:
                 selectedMonth =newValue;
                 dateTextControllers = [
-                  TextEditingController()..text = selectedMonth.toString(), TextEditingController()..text = selectedYear.toString()
+                  TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
                 ];
                 break;
               case 1:
                 selectedYear = newValue;
                 dateTextControllers = [
-          TextEditingController()..text = selectedMonth.toString(), TextEditingController()..text = selectedYear.toString()
+          TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
         ];
                 break;
               
@@ -4150,6 +4437,93 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         ),
       ),
     ),
+    MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
+                  print(selectedYear);
+                  setState(() {
+                  switch (s) {
+                    case 0:
+                      selectedMonth =(selectedMonth-1).clamp(
+                        s==0
+                        ? 1
+                        : 1900
+                        , s==0
+                        ? 12
+                        : DateTime.now().year.ceilToDouble()
+                        ).round();
+                      dateTextControllers = [
+                        TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
+                      ];
+                      break;
+                    case 1:
+                      selectedYear = (selectedYear-1).clamp(
+                        s==0
+                        ? 1
+                        : 1900
+                        , s==0
+                        ? 12
+                        : DateTime.now().year.ceilToDouble()
+                        ).round();
+                      dateTextControllers = [
+                        TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
+                      ];
+                      break;
+                    
+                    default:
+                  }
+                  print(selectedYear);
+                });
+                },
+                child: Icon(TablerIcons.chevron_left, size: mapValueDimensionBased(15, 20, sWidth,sHeight),)
+              ),
+            ),
+    
+    MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
+                  print(selectedYear);
+                  setState(() {
+                  switch (s) {
+                    case 0:
+                      selectedMonth =(selectedMonth+1).clamp(
+                        s==0
+                        ? 1
+                        : 1900
+                        , s==0
+                        ? 12
+                        : DateTime.now().year.ceilToDouble()
+                        ).round();
+                      dateTextControllers = [
+                        TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
+                      ];
+                      break;
+                    case 1:
+                      selectedYear = (selectedYear+1).clamp(
+                        s==0
+                        ? 1
+                        : 1900
+                        , s==0
+                        ? 12
+                        : DateTime.now().year.ceilToDouble()
+                        ).round();
+                      dateTextControllers = [
+                        TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
+                      ];
+                      break;
+                    
+                    default:
+                  }
+                  print(selectedYear);
+                });
+                },
+                child: Icon(TablerIcons.chevron_right, size: mapValueDimensionBased(15, 20, sWidth,sHeight),)
+              ),
+            ),
+    
+    
   ];
   }
 
