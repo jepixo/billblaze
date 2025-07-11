@@ -1,24 +1,16 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
-import 'package:billblaze/components/widgets/pickers/number_picker.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
-import 'package:billblaze/models/bill/required_text.dart';
-import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/layout_model.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
-import 'package:billblaze/providers/auth_provider.dart';
-import 'package:billblaze/providers/env_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_multiple_loaders/flutter_multiple_loaders.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
@@ -1239,44 +1231,44 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         500)),
               ),
             ),
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              top: mapValueDimensionBased( 70, 90, sWidth,sHeight),
-              left: isLayoutTab ? 120 : (sWidth / 1.8),
-              child: IgnorePointer(
-                ignoring:!isLayoutTab,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                    decoration: BoxDecoration(
-                      color: defaultPalette.tertiary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: SizedBox(height: dotSize,width:dotSize),
-                    ),
-                    SizedBox(width:4),
-                    Container(
-                    decoration: BoxDecoration(
-                      color: defaultPalette.extras[0],
-                      shape: BoxShape.circle,
-                    ),
-                    child: SizedBox(height: dotSize,width:dotSize),
-                    ),
-                    SizedBox(width:4),
-                    Container(
-                    decoration: BoxDecoration(
-                      color: defaultPalette.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: SizedBox(height: dotSize, width:dotSize),
-                    ),
-                  ]
+            // AnimatedPositioned(
+            //   duration: Durations.medium2,
+            //   top: mapValueDimensionBased( 70, 90, sWidth,sHeight),
+            //   left: isLayoutTab ? 120 : (sWidth / 1.8),
+            //   child: IgnorePointer(
+            //     ignoring:!isLayoutTab,
+            //     child: Row(
+            //       mainAxisAlignment: MainAxisAlignment.end,
+            //       children: [
+            //         Container(
+            //         decoration: BoxDecoration(
+            //           color: defaultPalette.tertiary,
+            //           shape: BoxShape.circle,
+            //         ),
+            //         child: SizedBox(height: dotSize,width:dotSize),
+            //         ),
+            //         SizedBox(width:4),
+            //         Container(
+            //         decoration: BoxDecoration(
+            //           color: defaultPalette.extras[0],
+            //           shape: BoxShape.circle,
+            //         ),
+            //         child: SizedBox(height: dotSize,width:dotSize),
+            //         ),
+            //         SizedBox(width:4),
+            //         Container(
+            //         decoration: BoxDecoration(
+            //           color: defaultPalette.primary,
+            //           shape: BoxShape.circle,
+            //         ),
+            //         child: SizedBox(height: dotSize, width:dotSize),
+            //         ),
+            //       ]
                   
-                ),
-              ),
-            ),
-            // //
+            //     ),
+            //   ),
+            // ),
+            // // //
             //Layout&
             AnimatedPositioned(
               duration: Durations.medium2,
@@ -1646,17 +1638,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: AnimatedContainer(
                 duration: Durations.medium3,
                 curve: Curves.easeIn,
-                height:isLayoutTab?((sHeight/2.5))/2-mapValueDimensionBased( 10,10, sWidth,sHeight):0,
-                // width:  (sWidth/4),
+                height:isLayoutTab?(sHeight/2.5)-50:0,
                 width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
-
-                // width: (sWidth/5)+ mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 0, outMax: 45),
-                alignment: Alignment.topLeft,
                 padding: EdgeInsets.only(
-                  // top: mapValueDimensionBased(2, 8, sWidth,sHeight),
-                  // left:mapValueDimensionBased(5, 8, sWidth,sHeight),
-                  // right:mapValueDimensionBased(5, 8, sWidth,sHeight),
-                ),
+                          top: 5,
+                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                        ),
+                        
+                alignment: Alignment.topLeft,
                 transform: Matrix4.identity()
                         ..translate(isLayoutTab
                               ? 0.0
@@ -1666,35 +1655,26 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   color: defaultPalette.extras[0],
                   border: Border.all(),
                   borderRadius: BorderRadius.circular( 10)),
+                child: Text(
+                        'Cloud',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.start,
+                        style: GoogleFonts.lexend(
+                          fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
+                          // color: defaultPalette.extras[0],
+                          color: defaultPalette.primary,
+                          letterSpacing: -0.8,
+                          fontWeight: FontWeight.w500
+
+                        ),
+                      ),
                 ),
+                
               ),
             ),
-            // //blackLine
-            // AnimatedPositioned(
-            //   duration: Durations.long1,
-            //   left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30): sWidth,
-            //   top: (sHeight / 3) + 100 + mapValueDimensionBased(10, -10, sWidth, sHeight),
-            //   child: Container(
-            //     height:2,
-            //     width: (sWidth/15),
-            //     decoration:BoxDecoration(
-            //       borderRadius: BorderRadius.circular(999),color: defaultPalette.extras[0]),
-            //   )
-            // ),
-            // //greenLine
-            // AnimatedPositioned(
-            //   duration: Durations.long4,
-            //   left:isLayoutTab ? ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 80, outMax: 30):sWidth,
-            //   top:  (sHeight / 3)+100 +17,
-            //   child: Container(
-            //     height:2,
-            //     width: (sWidth/2),
-            //     decoration:BoxDecoration(
-            //       borderRadius: BorderRadius.circular(999),
-            //       color: defaultPalette.tertiary),
-            //   )),        
-            // // Cloud buttons
-            
+            //
+            // Cloud buttons
             Positioned(
               // duration: Durations.medium3,
               bottom: 1.6*(sHeight / 18),
@@ -2004,8 +1984,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.center,
                                             children: [
-                                              Icon(TablerIcons.cloud,size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
-                                              Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
+                                              Icon(TablerIcons.cloud,size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
+                                              Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
                                             ],
                                           )
                                         ),
@@ -2074,8 +2054,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.center,
                                             children: [
-                                              Icon(TablerIcons.cloud, size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
-                                              Icon(TablerIcons.upload, size: mapValueDimensionBased( 16, 55, sWidth,sHeight),),
+                                              Icon(TablerIcons.cloud, size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
+                                              Icon(TablerIcons.upload, size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
                                             ],
                                           ),
                                         ),
@@ -2105,7 +2085,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(9),
                   ),
                   child: AnimatedToggleSwitch<bool>.dual(
                     current: isTemplateView,
@@ -2140,14 +2120,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 defaultPalette
                                         .primary), // indicatorColor changes and animates its value with the selection
                     iconBuilder: (value) {
-                      return Icon(
-                          !value? TablerIcons
-                                  .layout
-                              : TablerIcons
-                                  .template,
-                          size: 12,
-                          color: defaultPalette
-                              .extras[0]);
+                      return Transform.rotate(
+                        angle: pi/2,
+                        child: Icon(
+                            !value? TablerIcons
+                                    .layout
+                                : TablerIcons
+                                    .template,
+                            size: mapValueDimensionBased( 12, 30, sWidth,sHeight),
+                            color: defaultPalette
+                                .extras[0]),
+                      );
                     },
                     textBuilder: (value) {
                       return Text(
@@ -2166,135 +2149,31 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       );
                     },
                     height:sWidth/30,
-                    spacing:(sHeight/5)-110,
+                    spacing:(sHeight/2.5)-150,
                   ),
                 ),
               ),
             ),
-                                          
+            //quote
             // AnimatedPositioned(
-            //   duration: Durations.medium3,
-            //   bottom: 1.6*(sHeight / 18),
-            //   left: ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
-            //   child: IgnorePointer(
-            //     ignoring: !isLayoutTab,
-            //     child: Stack(  
-            //       children: [
-            //         SizedBox(
-            //           height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
-            //           width: (sWidth/5),
-            //         ),
-            //         Positioned(
-            //           bottom: 0,
-            //           child: AnimatedContainer(
-            //             duration: Durations.medium3,
-            //              transform: Matrix4.identity()
-            //               // ..translate(isLayoutTab
-            //               //   ? 0.0
-            //               //   : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-            //               ..rotateZ( isLayoutTab? 0: math.pi / 2),
-            //             child: ElevatedLayerButton(
-            //                 onClick: () async {
-            //                   var data= extractBIAnalyticsData(Boxes.getLayouts());
-            //                   var box =Boxes.getLayouts();
-            //                   for (var lm in box.values) {
-            //                     print(lm);
-            //                     for (var i = 0; i < ((lm) as LayoutModel).spreadSheetList.length; i++) {
-            //                       var el =(lm as LayoutModel).spreadSheetList[i];
-            //                       print(el.id);
-            //                       for (var j = 0; j < el.sheetList.length; j++) {
-            //                         print(el.sheetList[j].toString());
-            //                       }
-            //                     }
-            //                   }
-            //                   print(data);
-            //                   
-
-            //                   await authenticateAndSyncLayoutModels(Boxes.getLayouts());                      
+            //   duration: Durations.medium2,
+            //   left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + 2*mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
+            //   bottom: isLayoutTab ?   1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
+            //   child: Text(
+            //       ' Pay up, \n buttercup!',
+            //       maxLines: 2,
+            //       overflow: TextOverflow.ellipsis,
+            //       // textAlign: TextAlign.end,
+            //       style: GoogleFonts.lexend(
+            //         fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+            //         color: defaultPalette.extras[0].withOpacity(0.4),
+            //         letterSpacing: -0.2,
+            //         height: 1
+            //       ),
+            //     ),
+            //   ),        
             
-            
-            //                   var gmap = await fetchAndReconstructLayoutModels();
-            //                   for (var lm in gmap.entries) {
-            //                     box.put(lm.key, (lm.value as LayoutModel).copyWith(
-            //                       pdf: box.get(lm.key)?.pdf
-            //                     ));
-            //                   }                            
-            //                   setState(() {
-            //                     filteredLayoutBox = box.values.toList();
-            //                   });
-            //                   },
-            //                   buttonHeight: ((sHeight/2.5)-40)/2,
-            //                   buttonWidth: (sWidth/7).clamp(100, double.infinity),
-            //                   borderRadius: BorderRadius.circular(10),
-            //                   animationDuration: const Duration(milliseconds: 200),
-            //                   animationCurve: Curves.ease,
-            //                   subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-            //                   depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-            //                   topDecoration: BoxDecoration(
-            //                     color: defaultPalette.primary,
-            //                     border: Border.all(),
-            //                   ),
-            //                   topLayerChild: Row(
-            //                       mainAxisAlignment: MainAxisAlignment.start,
-            //                       children: [
-            //                         // Icon(
-            //                         //   IconsaxPlusLinear.grid_3,
-            //                         //   size: 40,
-            //                         // ),
-            //                         Expanded(
-            //                           child: Container(
-            //                             alignment: Alignment(-1, -1),
-            //                             padding: EdgeInsets.only(
-            //                               top: 5,
-            //                               left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
-            //                             ),
-            //                             child: Text(
-            //                               'Templates \nView',
-            //                               maxLines: 2,
-            //                               overflow: TextOverflow.ellipsis,
-            //                               textAlign: TextAlign.start,
-            //                               style: GoogleFonts.lexend(
-            //                                 fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
-            //                                 color: defaultPalette.extras[0],
-            //                                 letterSpacing: -1,
-            //                                 fontWeight: FontWeight.w400
-            //                               ),
-            //                             ),
-            //                           ),
-            //                         ),
-            //                       ]),
-            //                 baseDecoration: BoxDecoration(
-            //                   color: Colors.transparent,
-            //                   // border: Border.all(),
-            //                 ),
-            //               ),
-            //           ),
-            //         ),
-            //       ],
-            //     )
-            //   ),
-            // ),
-
-            // //quote
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + 2*mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
-              bottom: isLayoutTab ?   1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
-              child: Text(
-                  ' Pay up, \n buttercup!',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  // textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
-                    fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
-                    color: defaultPalette.extras[0].withOpacity(0.4),
-                    letterSpacing: -0.2,
-                    height: 1
-                  ),
-                ),
-              ),        
-            
-            // //LayoutList
+            //LayoutList
             AnimatedPositioned(
               duration: Durations.extralong2,
               top: isLayoutTab
@@ -3033,7 +2912,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.outfit(
                                   color: defaultPalette.extras[0],
-                                  fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
+                                  fontSize: math.min( (sHeight / 8).clamp(0, 55), (sWidth/12).clamp(0, 55)),
                                   letterSpacing: -2,
                                   fontWeight: FontWeight.w600,
                                   height: 0.9
@@ -3135,7 +3014,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color:  Color(0xffc0c0c0).withOpacity(0.5),
+                              color:  defaultPalette.secondary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             margin: EdgeInsets.all(5),
@@ -3489,7 +3368,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               ),
                                               SizedBox(width: 10,),
                                               //billname and created modified
-                                              _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView),
+                                              _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView,isBill: true),
                                               SizedBox(width:5),
                                               Column(
                                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -3713,9 +3592,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                 // print(monthRevenueMap);
                 return Container(
-                  width: sWidth / 1.7 - 100,
+                  width: sWidth / 1.73 - 100,
                   height: sHeight / 1.8,
-                  padding: EdgeInsets.all(5),
+                  padding: EdgeInsets.all(5).copyWith(right: 10),
                   decoration: BoxDecoration(
                     color: defaultPalette.primary,
                     borderRadius: BorderRadius.circular(20)
@@ -3731,11 +3610,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(width: 5,),
-                            Icon(TablerIcons.chart_bar),
+                            Icon(TablerIcons.chart_bar, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
                             SizedBox(width: 5,),
                             Expanded(
                               child: Text('Revenue',style: GoogleFonts.lexend(
-                                fontSize: mapValueDimensionBased(20, 25, sWidth, sHeight),
+                                fontSize: mapValueDimensionBased(20, 23, sWidth, sHeight),
                                 color: defaultPalette.extras[0],
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: -1),),
@@ -3939,6 +3818,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                              interval: getSmartInterval( max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),),
                               getTitlesWidget:(value, meta) {
                                 if (meta.min == value || meta.max == value) {
                                   return const SizedBox.shrink(); // Hide first and last labels
@@ -4029,7 +3909,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 
                                     
                                 return LineTooltipItem(
-                                  '${DateFormat.E().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))} Revenue \n',
+                                  '${DateFormat.E().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))} ${getOrdinal(barSpot.x.toInt())} Revenue \n',
                                  GoogleFonts.lexend(
                                     color: defaultPalette.primary,
                                     fontWeight: FontWeight.bold,
@@ -4181,8 +4061,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                              interval: getSmartInterval( max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),),
                               getTitlesWidget:(value, meta) {
-                                if (meta.min == value || meta.max == value) {
+                                if (meta.min == value || (!isCleanRoundedNumber(meta.max) && meta.max == value)) {
                                   return const SizedBox.shrink(); // Hide first and last labels
                                 }
                                 return Text(meta.formattedValue.toLowerCase()+'\₹',
@@ -4232,7 +4113,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }
 
   Widget _getCreatedAndModified(LayoutModel layoutModel, double sWidth, double sHeight, bool isNotLayoutTileView, {bool isBill=false}){
-    double fontSize =  10 ;
+    double fontSize =isBill? 10 : 12;
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4267,11 +4148,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(12),
                   // border: Border.all()
                 ),
-                // padding: EdgeInsets.all(isBill?0:10),
+                padding: EdgeInsets.all(isBill? isNotLayoutTileView?3:0:0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
+                    SizedBox(height:isBill?8: 15,),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal, 
                       child: RichText(
@@ -4354,7 +4236,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             
                           ],
                         ),
-                      ),     
+                      ),   
+                    SizedBox(height:isBill?7: 10,),    
                   ],
                 ),
               ),
@@ -4526,6 +4409,46 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     
   ];
   }
+
+  String getOrdinal(int number) {
+  if (number >= 11 && number <= 13) return '${number}th';
+  switch (number % 10) {
+    case 1:
+      return '${number}st';
+    case 2:
+      return '${number}nd';
+    case 3:
+      return '${number}rd';
+    default:
+      return '${number}th';
+  }
+}
+  double getSmartInterval(double maxValue,) {
+  final cleanSteps = [
+    1, 2, 5, 10, 20, 25, 50,
+    100, 200, 250, 500,
+    1000, 2000, 2500, 5000,
+    10000, 20000, 25000, 50000,
+    100000, 200000, 500000,
+    1000000, 2000000
+  ];
+
+  final safeMax = max(maxValue.ceilToDouble(), 1);
+  
+  for (final step in cleanSteps) {
+    final count = (safeMax / step).ceil();
+    if (count <= 4) return step.toDouble();
+  }
+
+  // If nothing fits, just default to quarter of max (still rounded)
+  return (safeMax / 4).ceilToDouble();
+}
+  bool isCleanRoundedNumber(num value) {
+  if (value == 0) return false;
+  String str = value.toInt().toString();
+  return str.substring(1).split('').every((c) => c == '0');
+}
+
 
 }
 
