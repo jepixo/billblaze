@@ -417,6 +417,70 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.1"
+  display_metrics:
+    dependency: "direct main"
+    description:
+      name: display_metrics
+      sha256: bd2a1f408f6d88967c6657f8260b61c68ca3f8ddaab6f69bba63a9cc0f99a249
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
+  display_metrics_android:
+    dependency: transitive
+    description:
+      name: display_metrics_android
+      sha256: c6f563302d19ed0588901ac64fbdb0b075942bae0fe26b0a4d50353f252baa21
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  display_metrics_ios:
+    dependency: transitive
+    description:
+      name: display_metrics_ios
+      sha256: d7d4c9dc7e8a898e6730481760257fec24818e336a858b731e43ee165fab877f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  display_metrics_linux:
+    dependency: transitive
+    description:
+      name: display_metrics_linux
+      sha256: "4aeced5f8f57e3fd025ec0666fe735e233c6865e835b4dc4dce838e579181e66"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  display_metrics_macos:
+    dependency: transitive
+    description:
+      name: display_metrics_macos
+      sha256: "3680fbf6e822c6810d8cb6b630fef8853b945ddcc841910d99755d289506ea99"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  display_metrics_platform_interface:
+    dependency: transitive
+    description:
+      name: display_metrics_platform_interface
+      sha256: e38a74b20978b371a9446fc46af318b5ef264c80d2185358e59ef25a5ee7b666
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  display_metrics_web:
+    dependency: transitive
+    description:
+      name: display_metrics_web
+      sha256: ffa950aaf8b094c65f525598ebe44ac1c79e807960c8685e44d4a48a0d9846c5
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
+  display_metrics_windows:
+    dependency: transitive
+    description:
+      name: display_metrics_windows
+      sha256: "755221562a4be37a4752dbe84945c08460a07134ffff1099db63f8215a41a3e2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   equatable:
     dependency: transitive
     description:
@@ -699,14 +763,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_multiple_loaders:
-    dependency: "direct main"
-    description:
-      name: flutter_multiple_loaders
-      sha256: "17694b306e70bb7fc4ab381c7e99775d3ea2515e1b24592b56b2f17daabf95f4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.3"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -1771,5 +1827,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.7.2 <4.0.0"
+  dart: ">=3.7.0-0 <4.0.0"
   flutter: ">=3.27.0"

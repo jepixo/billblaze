@@ -226,6 +226,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   double _cardPosition = 0;
   double textFieldHeight = 40;
   double pdfPreviewPaddingScaleFactor = 1;
+  double pageUnit = 1;
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
   DateTime dateTimeNow = DateTime.now();
@@ -1663,33 +1664,34 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     double height;
 
     switch (format) {
-      case PdfPageFormat.a4:
-        width = 793.7007874;
-        height = 1122.519685;
-        break;
-      case PdfPageFormat.a3:
-        width = 1122.519685;
-        height = 1587.4015748;
-        break;
-      case PdfPageFormat.a5:
-        width = 559.37007874;
-        height = 793.7007874;
-        break;
-      case PdfPageFormat.a6:
-        width = 396.8503937;
-        height = 559.37007874;
-        break;
-      case PdfPageFormat.letter:
-        width = 816;
-        height = 1056;
-        break;
-      case PdfPageFormat.legal:
-        width = 816;
-        height = 1344;
-        break;
+      // case PdfPageFormat.a4:
+      //   width = 793.7007874;
+      //   height = 1122.519685;
+      //   break;
+      // case PdfPageFormat.a3:
+      //   width = 1122.519685;
+      //   height = 1587.4015748;
+      //   break;
+      // case PdfPageFormat.a5:
+      //   width = 559.37007874;
+      //   height = 793.7007874;
+      //   break;
+      // case PdfPageFormat.a6:
+      //   width = 396.8503937;
+      //   height = 559.37007874;
+      //   break;
+      // case PdfPageFormat.letter:
+      //   width = 816;
+      //   height = 1056;
+      //   break;
+      // case PdfPageFormat.legal:
+      //   width = 816;
+      //   height = 1344;
+      //   break;
+      
       default:
-        width = 1240; // 2480 / 2
-        height = 1754; // 3508 / 2
+        width = format.width*(1.333333333); // 2480 / 2
+        height = format.height*(1.333333333); // 3508 / 2
         break;
     }
 
@@ -1703,33 +1705,33 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     double height;
 
     switch (format) {
-      case PdfPageFormat.a4:
-        width = 793.7007874;
-        height = 1122.519685;
-        break;
-      case PdfPageFormat.a3:
-        width = 1122.519685;
-        height = 1587.4015748;
-        break;
-      case PdfPageFormat.a5:
-        width = 559.37007874;
-        height = 793.7007874;
-        break;
-      case PdfPageFormat.a6:
-        width = 396.8503937;
-        height = 559.37007874;
-        break;
-      case PdfPageFormat.letter:
-        width = 816;
-        height = 1056;
-        break;
-      case PdfPageFormat.legal:
-        width = 816;
-        height = 1344;
-        break;
+      // case PdfPageFormat.a4:
+      //   width = 793.7007874;
+      //   height = 1122.519685;
+      //   break;
+      // case PdfPageFormat.a3:
+      //   width = 1122.519685;
+      //   height = 1587.4015748;
+      //   break;
+      // case PdfPageFormat.a5:
+      //   width = 559.37007874;
+      //   height = 793.7007874;
+      //   break;
+      // case PdfPageFormat.a6:
+      //   width = 396.8503937;
+      //   height = 559.37007874;
+      //   break;
+      // case PdfPageFormat.letter:
+      //   width = 816;
+      //   height = 1056;
+      //   break;
+      // case PdfPageFormat.legal:
+      //   width = 816;
+      //   height = 1344;
+      //   break;
       default:
-        width = 1240; // 2480 / 2
-        height = 1754; // 3508 / 2
+        width = format.width*1.333333333; // 2480 / 2
+        height = format.height*1.333333333; // 3508 / 2
         break;
     }
 
@@ -2758,20 +2760,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ///////Side TOOL BAR
                                   child: Column(
                                     children: [
-                                      AnimatedContainer(
-                                        duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:50, left:4,right:3),
-                                        height: 20,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(5),
-                                          color:defaultPalette.tertiary
-                                        ),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
+                                      Padding(
+                                        padding: EdgeInsets.only(top:50, left:4,right:3),
+                                        
                                         child:Text(
                                           'text',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
+                                            color:defaultPalette.tertiary,
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,
@@ -2906,22 +2901,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       },
                                       ),
                                       
-                                      AnimatedContainer(
-                                        duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:4, left:4,right:3),
-                                        height:20,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(5),
-                                        color:defaultPalette.extras[1]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
+                                      Padding(
+                                        padding: EdgeInsets.only(top:4, left:4,right:3),
+                                        
                                         // child: Icon(
                                         //   TablerIcons.txt,
                                         // ),
                                         child: Text(
                                           ' list ',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.extras[0], 
+                                            color: defaultPalette.extras[2], 
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,
@@ -2984,19 +2973,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       }, 
                                       ),
                                       
-                                      AnimatedContainer(
-                                        duration: Durations.medium2,
-                                        margin: EdgeInsets.only(top:4, left:4,right:3),
-                                        height:20,
-                                        decoration:BoxDecoration(
-                                          borderRadius:BorderRadius.circular(5),
-                                        color:defaultPalette.extras[3]),
-                                        width: 50,
-                                        alignment: Alignment(0, 0),
+                                      Padding(
+                                        padding:EdgeInsets.only(top:4, left:4,right:3),
+                                       
                                         child: Text(
                                           ' table ',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.primary, 
+                                            color: defaultPalette.extras[3], 
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,
@@ -5417,7 +5400,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     if (format == PdfPageFormat.a5) return 'A5';
     if (format == PdfPageFormat.a6) return 'A6';
     if (format == PdfPageFormat.standard) return 'Standard';
-    return 'Unknown';
+    return 'cs';
   }
 
   PdfPageFormat getPageFormatFromString(String format) {
@@ -6419,7 +6402,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
       return null;
     }
-    print(sheetText.type);
+    // print(sheetText.type);
     var extractedDate = null;
     if (sheetText.type == SheetTextType.date) {
       extractedDate = extractDateFromDelta(sheetText.textEditorController.document);
@@ -14222,77 +14205,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             cardBuilder: (BuildContext context, int index) {
               int currentCardIndex = whichListPropertyTabIsClicked;
               var width = (sWidth * wH2DividerPosition - 25);
-              final isSizeBigForRow = (sWidth * wH2DividerPosition) > 200;
-
-              Widget roundButton(
-                void Function() onTap,
-                Widget icon,
-                String s, {
-                double borderRadius = 9999,
-                bool isSelected = false,
-                EdgeInsets padding = const EdgeInsets.all(3),
-                bool showText = true
-              }) {
-                return InkWell(
-                  hoverColor: defaultPalette.primary.withOpacity(0.5),
-                  splashColor: defaultPalette.primary.withOpacity(0.5),
-                  highlightColor: defaultPalette.primary.withOpacity(0.5),
-                  onTap: () {
-                    setState(() {
-                      onTap();
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        child: Material(
-                          color: isSelected
-                              ? defaultPalette.primary
-                              : defaultPalette.transparent,
-                          child: InkWell(
-                            hoverColor: defaultPalette.primary.withOpacity(0.5),
-                            splashColor:
-                                defaultPalette.primary.withOpacity(0.5),
-                            highlightColor:
-                                defaultPalette.primary.withOpacity(0.5),
-                            onTap: () {
-                              setState(() {
-                                onTap();
-                              });
-                            },
-                            child: Container(
-                                padding: padding,
-                                decoration: BoxDecoration(
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: defaultPalette.extras[0])
-                                      : Border.fromBorderSide(BorderSide.none),
-                                  borderRadius:
-                                      BorderRadius.circular(borderRadius),
-                                  // color: defaultPalette.secondary
-                                ),
-                                child: icon),
-                          ),
-                        ),
-                      ),
-                      // SizedBox(width: 2,),
-                      if (isSizeBigForRow && showText)
-                        Expanded(
-                          child: Text(
-                            s,
-                            maxLines: 1,
-                            style: GoogleFonts.lexend(
-                                fontSize: 13,
-                                letterSpacing: -1,
-                                color: defaultPalette.extras[0]),
-                          ),
-                        )
-                    ],
-                  ),
-                );
-              }
-
+              
               Widget roundButton2(
                 void Function() onTap,
                 Widget icon, {
@@ -14488,392 +14401,393 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       child: Padding(
                         padding: EdgeInsets.all(15).copyWith(left: 12, right: 14),
                         child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: ScrollConfiguration(
-                                behavior: ScrollBehavior()
-                                    .copyWith(scrollbars: false),
-                                child: DynMouseScroll(
-                                    durationMS: 500,
-                                    scrollSpeed: 1,
-                                    builder: (context, controller, physics) {
-                                      return SingleChildScrollView(
-                                          controller: controller,
-                                          physics: physics,
-                                          child: Column(
-                                            children: [
-                                              Container(
-                                                margin: EdgeInsets.only(top:2),
-                                                padding: EdgeInsets.all(5),
-                                                decoration: BoxDecoration(
-                                                color:defaultPalette.primary,
-                                                borderRadius: BorderRadius.circular(20),
-                                                border: Border.all(color: defaultPalette.extras[0], width: 2)
+                          borderRadius: BorderRadius.circular(20),
+                          child: ScrollConfiguration(
+                            behavior: ScrollBehavior()
+                                .copyWith(scrollbars: false),
+                            child: DynMouseScroll(
+                              durationMS: 500,
+                              scrollSpeed: 1,
+                              builder: (context, controller, physics) {
+                                return SingleChildScrollView(
+                                  controller: controller,
+                                  physics: physics,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        margin: EdgeInsets.only(top:2),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                        color:defaultPalette.primary,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
+                                        ),
+                                        child: Column(
+                                          children: [
+                                        titleTile('listProperties', TablerIcons.brackets_contain_start,fontSize: 18, iconSize:20),  
+                                        const SizedBox(
+                                            height:3
+                                          ),
+                                        Row(
+                                          children: [
+                                            const SizedBox( width:4 ),
+                                            Expanded(
+                                              child: Text('id: ${sheetListItem.id}',
+                                                textAlign: TextAlign.start,
+                                                maxLines:1,
+                                                style: TextStyle(
+                                                  height: 1,
+                                                  fontFamily: GoogleFonts.lexend().fontFamily,
+                                                  letterSpacing:-0.5,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  fontWeight: FontWeight.w400,        
+                                                  color: defaultPalette.extras[0],
+                                                  fontSize: 8)),
+                                            ),
+                                          ],
+                                        ),  
+                                        const SizedBox(
+                                              height:4
+                                            ),
+                                        //'hide'
+                                        // Container(
+                                        //   margin: EdgeInsets.all(2),
+                                        //   decoration: BoxDecoration(
+                                        //   borderRadius: BorderRadius.circular(10), 
+                                        //   color:defaultPalette.secondary,
+                                        //   border: Border.all(
+                                        //     width:0.2
+                                        //   ),),
+                                        //   child: AnimatedToggleSwitch<bool>.dual(
+                                        //     current: item.hide,
+                                        //     first: false,
+                                        //     second: true,
+                                        //     onChanged: (value) {
+                                        //       setState(() {
+                                        //         item.hide = value;    
+                                        //       });
+                                        //     },
+                                        //     animationCurve: Curves.easeInOutExpo,
+                                        //     animationDuration: Durations.medium4,
+                                        //     borderWidth:
+                                        //         2, // backgroundColor is set independently of the current selection
+                                        //     styleBuilder: (value) => ToggleStyle(
+                                        //         borderRadius: BorderRadius.circular(10),
+                                        //         indicatorBorderRadius: BorderRadius.circular(15),
+                                        //         borderColor: defaultPalette.secondary,
+                                        //         backgroundColor: defaultPalette.secondary,
+                                        //         indicatorBorder:
+                                        //             Border.all(
+                                        //               width: 1.2,
+                                        //               color: defaultPalette.extras[0]),
+                                        //         indicatorColor: defaultPalette
+                                        //             .primary), // indicatorColor changes and animates its value with the selection
+                                        //     iconBuilder: (value) {
+                                        //       return Icon(
+                                        //           value == false
+                                        //               ? Icons.remove_red_eye_outlined
+                                        //               : TablerIcons.eye_closed,
+                                        //           size: 18,
+                                        //           color: defaultPalette.extras[0]);
+                                        //     },
+                                        //     textBuilder: (value) {
+                                        //       return Text(
+                                        //         value == false ? 'visible' : 'hidden',
+                                        //         style: GoogleFonts.lexend(
+                                        //               letterSpacing: -1,
+                                        //               fontWeight: FontWeight.w500,
+                                        //               fontSize: 14,
+                                        //               color: defaultPalette.black),
+                                        //       );
+                                        //     },
+                                        //     height: 23,
+                                        //     spacing: (width) - 100,
+                                        //   ),
+                                        // ),
+                                        
+                                        ],
+                                        ),
+                                        ),
+                                        
+                                      // Text(
+                                      //   'id: ' + sheetListItem.id,
+                                      //   maxLines: 1,
+                                      //   style: GoogleFonts.lexend(
+                                      //       fontSize: 12,
+                                      //       height:2,
+                                      //       letterSpacing: -1,
+                                      //       fontWeight: FontWeight.w500),
+                                      // ),
+                                      // Text(
+                                      //   'parentId: '+ sheetListItem.parentId,
+                                      //   maxLines: 1,
+                                      //   style: GoogleFonts.lexend(
+                                      //       fontSize: 12,
+                                      //       height:2,
+                                      //       letterSpacing: -1,
+                                      //       fontWeight: FontWeight.w500),
+                                      // ),
+                                      const SizedBox(
+                                              height:4
+                                            ),
+                                      Container(
+                                        margin: EdgeInsets.only(top:2),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                        color:defaultPalette.primary,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            titleTile( 
+                                              'direction',
+                                              TablerIcons.directions),
+                                            
+                                            AnimatedToggleSwitch<Axis>.dual(
+                                              current:
+                                                  sheetListItem.direction,
+                                              first: Axis.vertical,
+                                              second: Axis.horizontal,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  sheetListItem
+                                                      .direction = value;
+                                                });
+                                              },
+                                              animationCurve:
+                                                  Curves.easeInOutExpo,
+                                              animationDuration:
+                                                  Durations.medium4,
+                                              borderWidth:
+                                                  2, // backgroundColor is set independently of the current selection
+                                              styleBuilder: (value) =>
+                                                  ToggleStyle(
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(
+                                                                  5),
+                                                      indicatorBorderRadius:
+                                                          BorderRadius
+                                                              .circular(
+                                                                  5),
+                                                      borderColor:
+                                                          defaultPalette
+                                                              .secondary,
+                                                      backgroundColor:
+                                                          defaultPalette
+                                                              .secondary,
+                                                      indicatorColor:
+                                                          defaultPalette
+                                                                  .extras[
+                                                              0]), // indicatorColor changes and animates its value with the selection
+                                              iconBuilder: (value) {
+                                                return Icon(
+                                                    value ==
+                                                            Axis
+                                                                .horizontal
+                                                        ? TablerIcons
+                                                            .grip_horizontal
+                                                        : TablerIcons
+                                                            .grip_vertical,
+                                                    size: 12,
+                                                    color: defaultPalette
+                                                        .primary);
+                                              },
+                                              textBuilder: (value) {
+                                                return Text(
+                                                  value == Axis.horizontal
+                                                      ? 'Horizontal'
+                                                      : 'Vertical',
+                                                  style:
+                                                      GoogleFonts.bungee(
+                                                          fontSize: 12),
+                                                );
+                                              },
+                                              height: 25,
+                                              spacing: (width) - 100,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      SizedBox(height:4),
+                                      Container(
+                                        margin: EdgeInsets.only(top:2),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                        color:defaultPalette.primary,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: titleTile( 
+                                                    'mainAxisAlignment',
+                                                    sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
                                                 ),
-                                                child: Column(
-                                                  children: [
-                                                titleTile('listProperties', TablerIcons.brackets_contain_start,fontSize: 18, iconSize:20),  
-                                                const SizedBox(
-                                                    height:3
+                                                Expanded(
+                                                  child: Text(
+                                                    '${sheetListItem.mainAxisAlignment.name}',
+                                                    maxLines: 1,
+                                                    textAlign: TextAlign.end,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.lexend(
+                                                        fontSize: 14,
+                                                        height:2,
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500),
                                                   ),
-                                                Row(
-                                                  children: [
-                                                    const SizedBox( width:4 ),
-                                                    Expanded(
-                                                      child: Text('id: ${sheetListItem.id}',
-                                                        textAlign: TextAlign.start,
-                                                        maxLines:1,
-                                                        style: TextStyle(
-                                                          height: 1,
-                                                          fontFamily: GoogleFonts.lexend().fontFamily,
-                                                          letterSpacing:-0.5,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          fontWeight: FontWeight.w400,        
-                                                          color: defaultPalette.extras[0],
-                                                          fontSize: 8)),
-                                                    ),
-                                                  ],
-                                                ),  
-                                                const SizedBox(
-                                                      height:4
-                                                    ),
-                                                //'hide'
-                                                // Container(
-                                                //   margin: EdgeInsets.all(2),
-                                                //   decoration: BoxDecoration(
-                                                //   borderRadius: BorderRadius.circular(10), 
-                                                //   color:defaultPalette.secondary,
-                                                //   border: Border.all(
-                                                //     width:0.2
-                                                //   ),),
-                                                //   child: AnimatedToggleSwitch<bool>.dual(
-                                                //     current: item.hide,
-                                                //     first: false,
-                                                //     second: true,
-                                                //     onChanged: (value) {
-                                                //       setState(() {
-                                                //         item.hide = value;    
-                                                //       });
-                                                //     },
-                                                //     animationCurve: Curves.easeInOutExpo,
-                                                //     animationDuration: Durations.medium4,
-                                                //     borderWidth:
-                                                //         2, // backgroundColor is set independently of the current selection
-                                                //     styleBuilder: (value) => ToggleStyle(
-                                                //         borderRadius: BorderRadius.circular(10),
-                                                //         indicatorBorderRadius: BorderRadius.circular(15),
-                                                //         borderColor: defaultPalette.secondary,
-                                                //         backgroundColor: defaultPalette.secondary,
-                                                //         indicatorBorder:
-                                                //             Border.all(
-                                                //               width: 1.2,
-                                                //               color: defaultPalette.extras[0]),
-                                                //         indicatorColor: defaultPalette
-                                                //             .primary), // indicatorColor changes and animates its value with the selection
-                                                //     iconBuilder: (value) {
-                                                //       return Icon(
-                                                //           value == false
-                                                //               ? Icons.remove_red_eye_outlined
-                                                //               : TablerIcons.eye_closed,
-                                                //           size: 18,
-                                                //           color: defaultPalette.extras[0]);
-                                                //     },
-                                                //     textBuilder: (value) {
-                                                //       return Text(
-                                                //         value == false ? 'visible' : 'hidden',
-                                                //         style: GoogleFonts.lexend(
-                                                //               letterSpacing: -1,
-                                                //               fontWeight: FontWeight.w500,
-                                                //               fontSize: 14,
-                                                //               color: defaultPalette.black),
-                                                //       );
-                                                //     },
-                                                //     height: 23,
-                                                //     spacing: (width) - 100,
-                                                //   ),
-                                                // ),
-                                                
-                                                ],
                                                 ),
-                                                ),
-                                                
-                                              // Text(
-                                              //   'id: ' + sheetListItem.id,
-                                              //   maxLines: 1,
-                                              //   style: GoogleFonts.lexend(
-                                              //       fontSize: 12,
-                                              //       height:2,
-                                              //       letterSpacing: -1,
-                                              //       fontWeight: FontWeight.w500),
-                                              // ),
-                                              // Text(
-                                              //   'parentId: '+ sheetListItem.parentId,
-                                              //   maxLines: 1,
-                                              //   style: GoogleFonts.lexend(
-                                              //       fontSize: 12,
-                                              //       height:2,
-                                              //       letterSpacing: -1,
-                                              //       fontWeight: FontWeight.w500),
-                                              // ),
-                                              const SizedBox(
-                                                      height:4
-                                                    ),
-                                              Container(
-                                                margin: EdgeInsets.only(top:2),
-                                                padding: EdgeInsets.all(5),
-                                                decoration: BoxDecoration(
-                                                color:defaultPalette.primary,
-                                                borderRadius: BorderRadius.circular(15),
-                                                border: Border.all(color: defaultPalette.extras[0], width: 2)
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    titleTile( 
-                                                      'direction',
-                                                      TablerIcons.directions),
-                                                    
-                                                    AnimatedToggleSwitch<Axis>.dual(
-                                                      current:
-                                                          sheetListItem.direction,
-                                                      first: Axis.vertical,
-                                                      second: Axis.horizontal,
-                                                      onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem
-                                                              .direction = value;
-                                                        });
-                                                      },
-                                                      animationCurve:
-                                                          Curves.easeInOutExpo,
-                                                      animationDuration:
-                                                          Durations.medium4,
-                                                      borderWidth:
-                                                          2, // backgroundColor is set independently of the current selection
-                                                      styleBuilder: (value) =>
-                                                          ToggleStyle(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5),
-                                                              indicatorBorderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5),
-                                                              borderColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              backgroundColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              indicatorColor:
-                                                                  defaultPalette
-                                                                          .extras[
-                                                                      0]), // indicatorColor changes and animates its value with the selection
-                                                      iconBuilder: (value) {
-                                                        return Icon(
-                                                            value ==
-                                                                    Axis
-                                                                        .horizontal
-                                                                ? TablerIcons
-                                                                    .grip_horizontal
-                                                                : TablerIcons
-                                                                    .grip_vertical,
-                                                            size: 12,
-                                                            color: defaultPalette
-                                                                .primary);
-                                                      },
-                                                      textBuilder: (value) {
-                                                        return Text(
-                                                          value == Axis.horizontal
-                                                              ? 'Horizontal'
-                                                              : 'Vertical',
-                                                          style:
-                                                              GoogleFonts.bungee(
-                                                                  fontSize: 12),
-                                                        );
-                                                      },
-                                                      height: 25,
-                                                      spacing: (width) - 100,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              
-                                              SizedBox(height:4),
-                                              Container(
-                                                margin: EdgeInsets.only(top:2),
-                                                padding: EdgeInsets.all(5),
-                                                decoration: BoxDecoration(
-                                                color:defaultPalette.primary,
-                                                borderRadius: BorderRadius.circular(15),
-                                                border: Border.all(color: defaultPalette.extras[0], width: 2)
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Expanded(
-                                                          child: titleTile( 
-                                                            'mainAxisAlignment',
-                                                            sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
-                                                        ),
-                                                        Expanded(
-                                                          child: Text(
-                                                            '${sheetListItem.mainAxisAlignment.name}',
-                                                            maxLines: 1,
-                                                            textAlign: TextAlign.end,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                                fontSize: 14,
-                                                                height:2,
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w500),
-                                                          ),
-                                                        ),
-                                                        SizedBox(width:4),
-                                                      ],
-                                                    ),
+                                                SizedBox(width:4),
+                                              ],
+                                            ),
 
-                                                    toggleSelectionRow(
-                                                      [
-                                                      Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_top:TablerIcons.layout_align_left, size:18),
-                                                      Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_center:TablerIcons.layout_align_middle, size:18),
-                                                      Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_bottom:TablerIcons.layout_align_right, size:18),
-                                                      Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_distribute_horizontal:TablerIcons.layout_distribute_vertical, size:18),
-                                                      Icon(sheetListItem.direction == Axis.vertical?TablerIcons.dots_vertical:TablerIcons.dots, size:18),
-                                                      Icon(sheetListItem.direction == Axis.vertical?TablerIcons.separator_horizontal:TablerIcons.separator_vertical, size:18),
-                                                      
-                                                    ], [
-                                                      MainAxisAlignment.start,
-                                                      MainAxisAlignment.center,
-                                                      MainAxisAlignment.end,
-                                                      MainAxisAlignment.spaceAround,
-                                                      MainAxisAlignment.spaceEvenly,
-                                                      MainAxisAlignment.spaceBetween
-                                                    ]),
-                                                                                               
-                                                    SizedBox(height:4),
-                                                    Row(
-                                                      children: [
-                                                        Expanded(
-                                                          child: titleTile( 
-                                                            'crossAxisAlignment',
-                                                            sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
-                                                        ),
-                                                        Expanded(
-                                                          child: Text(
-                                                            '${sheetListItem.crossAxisAlignment.name}',
-                                                            maxLines: 1,
-                                                            textAlign: TextAlign.end,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                                fontSize: 14,
-                                                                height:2,
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w500),
-                                                          ),
-                                                        ),
-                                                        SizedBox(width:4),
-                                                      ],
-                                                    ),
-                                                    toggleSelectionRow([
-                                                      Icon(TablerIcons.sign_left, size:18),
-                                                      Icon(TablerIcons.float_center, size:18),
-                                                      Icon(TablerIcons.sign_right, size:18), 
-                                                    ], [ 
-                                                      CrossAxisAlignment.start,
-                                                      CrossAxisAlignment.center,
-                                                      CrossAxisAlignment.end ]),
-                                                    
-                                                    SizedBox(height:4),
-                                                  ],
-                                                ),
-                                              ),
+                                            toggleSelectionRow(
+                                              [
+                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_top:TablerIcons.layout_align_left, size:18),
+                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_center:TablerIcons.layout_align_middle, size:18),
+                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_bottom:TablerIcons.layout_align_right, size:18),
+                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_distribute_horizontal:TablerIcons.layout_distribute_vertical, size:18),
+                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.dots_vertical:TablerIcons.dots, size:18),
+                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.separator_horizontal:TablerIcons.separator_vertical, size:18),
                                               
-                                              SizedBox(height:4),
-                                              Container(
-                                                margin: EdgeInsets.only(top:2),
-                                                padding: EdgeInsets.all(5),
-                                                decoration: BoxDecoration(
-                                                color:defaultPalette.primary,
-                                                borderRadius: BorderRadius.circular(15),
-                                                border: Border.all(color: defaultPalette.extras[0], width: 2)
+                                            ], [
+                                              MainAxisAlignment.start,
+                                              MainAxisAlignment.center,
+                                              MainAxisAlignment.end,
+                                              MainAxisAlignment.spaceAround,
+                                              MainAxisAlignment.spaceEvenly,
+                                              MainAxisAlignment.spaceBetween
+                                            ]),
+                                                                                        
+                                            SizedBox(height:4),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: titleTile( 
+                                                    'crossAxisAlignment',
+                                                    sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
                                                 ),
-                                                child: Column(
-                                                  children: [
-                                                    titleTile( ' mainAxisSize',
-                                                      TablerIcons.ruler_measure),
-                                                    AnimatedToggleSwitch<MainAxisSize>.dual(
-                                                      current:
-                                                          sheetListItem.mainAxisSize,
-                                                      first: MainAxisSize.min,
-                                                      second: MainAxisSize.max,
-                                                      onChanged: (value) {
-                                                        setState(() {
-                                                          sheetListItem
-                                                              .mainAxisSize = value;
-                                                        });
-                                                      },
-                                                      animationCurve:
-                                                          Curves.easeInOutExpo,
-                                                      animationDuration:
-                                                          Durations.medium4,
-                                                      borderWidth:
-                                                          2, // backgroundColor is set independently of the current selection
-                                                      styleBuilder: (value) =>
-                                                          ToggleStyle(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5),
-                                                              indicatorBorderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          5),
-                                                              borderColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              backgroundColor:
-                                                                  defaultPalette
-                                                                      .secondary,
-                                                              indicatorColor:
-                                                                  defaultPalette
-                                                                          .extras[
-                                                                      0]), // indicatorColor changes and animates its value with the selection
-                                                      iconBuilder: (value) {
-                                                        return Icon(
-                                                            value ==
-                                                                    MainAxisSize.min
-                                                                ? TablerIcons
-                                                                    .viewport_narrow
-                                                                : TablerIcons
-                                                                    .viewport_wide,
-                                                            size: 12,
-                                                            color: defaultPalette
-                                                                .primary);
-                                                      },
-                                                      textBuilder: (value) {
-                                                        return Text(
-                                                          value ==MainAxisSize.min
-                                                              ? 'min'
-                                                              : 'max',
-                                                          style:
-                                                              GoogleFonts.bungee(
-                                                                  fontSize: 12),
-                                                        );
-                                                      },
-                                                      height: 25,
-                                                      spacing: (width) - 100,
-                                                    
-                                                    
-                                                    ),
-                                                  ],
+                                                Expanded(
+                                                  child: Text(
+                                                    '${sheetListItem.crossAxisAlignment.name}',
+                                                    maxLines: 1,
+                                                    textAlign: TextAlign.end,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.lexend(
+                                                        fontSize: 14,
+                                                        height:2,
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500),
+                                                  ),
                                                 ),
-                                              ),
-                                              
-                                              // Text(sheetListItem.indexPath.toString()),
-                                            ],
-                                          ));
-                                    }))),
+                                                SizedBox(width:4),
+                                              ],
+                                            ),
+                                            toggleSelectionRow([
+                                              Icon(TablerIcons.sign_left, size:18),
+                                              Icon(TablerIcons.float_center, size:18),
+                                              Icon(TablerIcons.sign_right, size:18), 
+                                            ], [ 
+                                              CrossAxisAlignment.start,
+                                              CrossAxisAlignment.center,
+                                              CrossAxisAlignment.end ]),
+                                            
+                                            SizedBox(height:4),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      SizedBox(height:4),
+                                      Container(
+                                        margin: EdgeInsets.only(top:2),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                        color:defaultPalette.primary,
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            titleTile( ' mainAxisSize',
+                                              TablerIcons.ruler_measure),
+                                            AnimatedToggleSwitch<MainAxisSize>.dual(
+                                              current:
+                                                  sheetListItem.mainAxisSize,
+                                              first: MainAxisSize.min,
+                                              second: MainAxisSize.max,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  sheetListItem
+                                                      .mainAxisSize = value;
+                                                });
+                                              },
+                                              animationCurve:
+                                                  Curves.easeInOutExpo,
+                                              animationDuration:
+                                                  Durations.medium4,
+                                              borderWidth:
+                                                  2, // backgroundColor is set independently of the current selection
+                                              styleBuilder: (value) =>
+                                                  ToggleStyle(
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(
+                                                                  5),
+                                                      indicatorBorderRadius:
+                                                          BorderRadius
+                                                              .circular(
+                                                                  5),
+                                                      borderColor:
+                                                          defaultPalette
+                                                              .secondary,
+                                                      backgroundColor:
+                                                          defaultPalette
+                                                              .secondary,
+                                                      indicatorColor:
+                                                          defaultPalette
+                                                                  .extras[
+                                                              0]), // indicatorColor changes and animates its value with the selection
+                                              iconBuilder: (value) {
+                                                return Icon(
+                                                    value ==
+                                                            MainAxisSize.min
+                                                        ? TablerIcons
+                                                            .viewport_narrow
+                                                        : TablerIcons
+                                                            .viewport_wide,
+                                                    size: 12,
+                                                    color: defaultPalette
+                                                        .primary);
+                                              },
+                                              textBuilder: (value) {
+                                                return Text(
+                                                  value ==MainAxisSize.min
+                                                      ? 'min'
+                                                      : 'max',
+                                                  style:
+                                                      GoogleFonts.bungee(
+                                                          fontSize: 12),
+                                                );
+                                              },
+                                              height: 25,
+                                              spacing: (width) - 100,
+                                            
+                                            
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      
+                                      // Text(sheetListItem.indexPath.toString()),
+                                    ],
+                                  ));
+                            
+                              }))),
                       ),
                     )
                   ],
@@ -16471,9 +16385,314 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         cardBuilder: (BuildContext context, int index) {
           int currentCardIndex = ref.watch(propertyCardIndexProvider);
           int ind = pageCount <= 1 ? 0 : index;
+          List<TextEditingController> pageFormatControllers = [
+          TextEditingController()
+            ..text = (documentPropertiesList[currentPageIndex].pageFormatController.width * pageUnit)
+                .toStringAsFixed(2),
+          TextEditingController()
+            ..text = (documentPropertiesList[currentPageIndex].pageFormatController.height * pageUnit)
+                .toStringAsFixed(2),
+        ];
+
           TextEditingController pgHexController = TextEditingController(
               text: '#${colorToHex(documentPropertiesList[ind].pageColor)}');
           final widthBig = (sWidth * wH2DividerPosition);
+          
+          List<Widget> pagePropertyTile(int s) {
+                return [
+                  MouseRegion(
+                    cursor: SystemMouseCursors.resizeLeftRight,
+                    child: GestureDetector(
+                      onHorizontalDragCancel: () {
+                         fontFocusNodes[s].requestFocus();
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        var multiplier = HardwareKeyboard.instance.isControlPressed
+                            ? pageUnit==1?100:10
+                            : HardwareKeyboard.instance.isShiftPressed
+                                ?pageUnit==1?0.5: 0.1
+                                :pageUnit==1?10: 1;
+                        setState(() {
+                          double currentValue =
+                              double.tryParse(pageFormatControllers[s].text) ??
+                                  0.0;
+                          double newValue = (currentValue + details.delta.dx * multiplier)
+                              .clamp(
+                                s==0
+                                ? 0
+                                : double.negativeInfinity
+                               , double.infinity);
+
+                          double parsedValue = double.parse(newValue.toStringAsFixed(4))/pageUnit;
+                          switch (s) {
+                            case 0:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( parsedValue, documentPropertiesList[currentPageIndex].pageFormatController.height);
+                              
+                              break;
+                            case 1:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( documentPropertiesList[currentPageIndex].pageFormatController.width, parsedValue);
+                            case 2:
+
+                              break;   
+                            default:
+                          }
+                          
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            s == 0 
+                            ? TablerIcons.ruler_measure
+                            : s==1
+                            ? TablerIcons.ruler_measure_2
+                            : s==2
+                            ? TablerIcons.spacing_horizontal
+                            : TablerIcons.spacing_vertical,
+                            size: 16,
+                          ),
+                          Text(
+                            s == 0 
+                            ? ' width ' 
+                            : s==1
+                            ? ' height '
+                            : s==2
+                            ? ' word '
+                            : ' line ',
+                            style: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 10,
+                    child: SizedBox(
+                      height: 12,
+                      child: TextFormField(
+                        onTapOutside: (event) => fontFocusNodes[s].unfocus(),
+                        focusNode: fontFocusNodes[s],
+                        controller: pageFormatControllers[s],
+                        inputFormatters: [
+                          NumericInputFormatter(allowNegative: true),
+                        ],
+                        cursorColor: defaultPalette.tertiary,
+                        selectionControls: NoMenuTextSelectionControls(),
+                        textAlign: TextAlign.end,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(0),
+                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          fillColor: defaultPalette.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                        ),
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.mitr(
+                            fontSize: 13,
+                            color: defaultPalette.extras[0],
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -1),
+                        onFieldSubmitted: (value) {
+                          setState(() {
+                            print(value);
+                          var parsedValue = (double.tryParse(value)??0.0)/pageUnit;
+                          switch (s) {
+                            case 0:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( parsedValue, documentPropertiesList[currentPageIndex].pageFormatController.height);
+                              
+                              break;
+                            case 1:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( documentPropertiesList[currentPageIndex].pageFormatController.width, parsedValue);
+                              
+                              break;   
+                            default:
+                          }
+                            
+
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 4,
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          switch (pageUnit) {
+                            case 1:
+                              pageUnit = 1/72;
+                              break;
+                            case const (1/72):
+                              pageUnit = 0.03528;
+                              break;
+                            case 0.03528:
+                            pageUnit =  1;
+                              break;
+                              
+                            default:
+                          }
+                        });
+                      },
+                      child: Text(
+                        pageUnit ==1
+                      ? 'pt'
+                      : pageUnit == 1 / 72
+                      ? 'in'
+                      : pageUnit == 0.03528
+                      ? 'cm'
+                      : '',
+                      style:GoogleFonts.lexend(
+                        fontSize:13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing:-1,
+                      )
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 2,
+                  ),
+                ];
+                }
+          List<Widget> pageMarginTile(int s) {
+                return [
+                  MouseRegion(
+                    cursor: SystemMouseCursors.resizeLeftRight,
+                    child: GestureDetector(
+                      onHorizontalDragCancel: () {
+                        marginAllFocus.unfocus();
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        var multiplier = HardwareKeyboard.instance.isControlPressed
+                            ? 100
+                            : HardwareKeyboard.instance.isShiftPressed
+                                ? 0.5
+                                : 10;
+                        setState(() {
+                          double currentValue =
+                              double.tryParse(pageFormatControllers[s].text) ??
+                                  0.0;
+                          double newValue = (currentValue + details.delta.dx * multiplier)
+                              .clamp(
+                                s==0
+                                ? 0
+                                : double.negativeInfinity
+                               , double.infinity);
+
+                          double parsedValue = double.parse(newValue.toStringAsFixed(4));
+                          switch (s) {
+                            case 0:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( parsedValue, documentPropertiesList[currentPageIndex].pageFormatController.height);
+                              
+                              break;
+                            case 1:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( documentPropertiesList[currentPageIndex].pageFormatController.width, parsedValue);
+                            case 2:
+                              
+                              break;   
+                            default:
+                          }
+                          
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            s == 0 
+                            ? TablerIcons.ruler_measure
+                            : s==1
+                            ? TablerIcons.ruler_measure_2
+                            : s==2
+                            ? TablerIcons.spacing_horizontal
+                            : TablerIcons.spacing_vertical,
+                            size: 16,
+                          ),
+                          Text(
+                            s == 0 
+                            ? ' width ' 
+                            : s==1
+                            ? ' height '
+                            : s==2
+                            ? ' word '
+                            : ' line ',
+                            style: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w600,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 10,
+                    child: SizedBox(
+                      height: 12,
+                      child: TextFormField(
+                        onTapOutside: (event) => marginAllFocus.unfocus(),
+                        obscureText: documentPropertiesList[currentPageIndex].useIndividualMargins,
+                        focusNode: marginAllFocus,
+                        controller: documentPropertiesList[
+                                currentPageIndex]
+                            .marginAllController,
+                        inputFormatters: [
+                          NumericInputFormatter(allowNegative: true),
+                        ],
+                        cursorColor: defaultPalette.tertiary,
+                        selectionControls: NoMenuTextSelectionControls(),
+                        textAlign: TextAlign.end,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(0),
+                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          fillColor: defaultPalette.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                        ),
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.mitr(
+                            fontSize: 13,
+                            color: defaultPalette.extras[0],
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -1),
+                        onFieldSubmitted: (value) {
+                          setState(() {
+                            print(value);
+                          var parsedValue = double.tryParse(value)??0.0;
+                          switch (s) {
+                            case 0:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( parsedValue, documentPropertiesList[currentPageIndex].pageFormatController.height);
+                              
+                              break;
+                            case 1:
+                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( documentPropertiesList[currentPageIndex].pageFormatController.width, parsedValue);
+                              
+                              break;   
+                            default:
+                          }
+                            
+
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 2,
+                  ),
+                ];
+                }
+
           return Stack(
             children: [
               Positioned.fill(
@@ -16874,7 +17093,498 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ),
                                   ),
                             
-                                  SizedBox(height:4),
+                                  SizedBox(height:8),
+                                  
+                                  // Container(
+                                  //   decoration: BoxDecoration(
+                                  //     // border: Border.all(),
+                                  //     borderRadius: BorderRadius.circular(16),
+                                  //   ),
+                                  //   child: AnimatedToggleSwitch<pw.PageOrientation>.dual(
+                                  //     current: documentPropertiesList[currentPageIndex].orientationController,
+                                  //     first: pw.PageOrientation.portrait,
+                                  //     second: pw.PageOrientation.landscape,
+                                  //     onChanged: (value) {
+                                  //       setState(() {
+                                  //         documentPropertiesList[currentPageIndex].orientationController = value;
+                                  //       });
+                                  //     },
+                                  //     animationCurve:
+                                  //         Curves.easeInOutExpo,
+                                  //     animationDuration:
+                                  //         Durations.medium4,
+                                  //     borderWidth:
+                                  //         2, // backgroundColor is set independently of the current selection
+                                  //     styleBuilder: (value) =>
+                                  //         ToggleStyle(
+                                  //             borderRadius:
+                                  //                 BorderRadius
+                                  //                     .circular(15),
+                                  //             indicatorBorderRadius:
+                                  //                 BorderRadius.circular(0),
+                                  //             indicatorBorder: Border.all(),
+                                  //             borderColor: defaultPalette.secondary,
+                                  //             backgroundColor: defaultPalette.secondary,
+                                  //             indicatorColor: defaultPalette.extras[0]), // indicatorColor changes and animates its value with the selection
+                                  //     iconBuilder: (value) {
+                                  //       return Icon(
+                                  //           value == pw.PageOrientation.portrait? TablerIcons
+                                  //                   .layout
+                                  //               : TablerIcons
+                                  //                   .template,
+                                  //           size:15,
+                                  //           color: defaultPalette.primary);
+                                  //     },
+                                  //     textBuilder: (value) {
+                                  //       return Text(
+                                  //         value == pw.PageOrientation.portrait? 'port\nrait'
+                                  //             : 'land\nscape',
+                                  //         maxLines: 2,
+                                  //         overflow: TextOverflow.ellipsis,
+                                  //         style:
+                                  //             GoogleFonts.lexend(
+                                  //                 fontSize: 15,
+                                  //                 fontWeight: FontWeight.w600,
+                                  //                 color:  defaultPalette.extras[0],
+                                  //                 ),
+                                  //       );
+                                  //     },
+                                  //     height:45,
+                                  //     spacing:(sWidth * wH2DividerPosition - 45),
+                                  //   ),
+                                  // ),
+
+
+ //
+                                  //OPERATIONS BUTTONS
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 5,left:2),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // SizedBox(
+                                        //   width:
+                                        //       (sWidth * wH2DividerPosition - 45) /
+                                        //           2,
+                                        //   child: Row(
+                                        //     mainAxisAlignment:
+                                        //         MainAxisAlignment.spaceBetween,
+                                        //     children: [
+                                        //       //ADD PAGE BUTTON
+                                        //       PieMenu(
+                                        //         controller: opsAddPieController,
+                                        //         actions: [
+                                        //           getPieActionForAddMove(
+                                        //               'LEFT', true),
+                                        //           getPieActionForAddMove(
+                                        //               'RIGHT', true)
+                                        //         ],
+                                        //         onToggle: (menuOpen) {
+                                        //           if (!menuOpen) {
+                                        //             opsAddPieController.closeMenu();
+                                        //             opsMovePieController
+                                        //                 .closeMenu();
+                                        //             opsCopyPieController
+                                        //                 .closeMenu();
+                                        //             opsFormatPieController
+                                        //                 .closeMenu();
+                                        //           }
+                                        //         },
+                                        //         theme: PieTheme(
+                                        //             rightClickShowsMenu: true,
+                                        //             buttonSize:
+                                        //                 ((sWidth * wH2DividerPosition -
+                                        //                             65) /
+                                        //                         3)
+                                        //                     .clamp(40, 100),
+                                        //             spacing: 5,
+                                        //             radius:
+                                        //                 ((sWidth * wH2DividerPosition -
+                                        //                             65) /
+                                        //                         2)
+                                        //                     .clamp(50, 100),
+                                        //             customAngle: -20,
+                                        //             menuAlignment: Alignment.center,
+                                        //             pointerSize: 20,
+                                        //             menuDisplacement: Offset(0, 4),
+                                        //             tooltipPadding:
+                                        //                 EdgeInsets.all(5),
+                                        //             tooltipTextStyle:
+                                        //                 GoogleFonts.bungee(
+                                        //                     fontSize: 20),
+                                        //             buttonTheme: PieButtonTheme(
+                                        //                 backgroundColor:
+                                        //                     defaultPalette.tertiary,
+                                        //                 iconColor:
+                                        //                     defaultPalette.primary,
+                                        //                 decoration: BoxDecoration(
+                                        //                   border:
+                                        //                       Border.all(width: 1),
+                                        //                   borderRadius:
+                                        //                       BorderRadius.circular(
+                                        //                           200),
+                                        //                   color: defaultPalette
+                                        //                       .extras[0],
+                                        //                 ))),
+                                        //         child: Container(
+                                        //           margin: const EdgeInsets.only(
+                                        //               top: 8.0),
+                                        //           // padding: const EdgeInsets.all(1),
+                                        //           child: IconButton.filled(
+                                        //               style: IconButton.styleFrom(
+                                        //                 backgroundColor:
+                                        //                     defaultPalette.extras[
+                                        //                         0], // Background color
+                                        //                 foregroundColor: defaultPalette
+                                        //                     .primary, // Icon color
+                                        //                 // Elevation of the button
+                                        //                 padding: EdgeInsets.symmetric(
+                                        //                     vertical: 10.0,
+                                        //                     horizontal:
+                                        //                         2), // Padding around the icon
+                                        //                 shape:
+                                        //                     RoundedRectangleBorder(
+                                        //                   // Custom button shape
+                                        //                   borderRadius:
+                                        //                       BorderRadius.circular(
+                                        //                           5.0),
+                                        //                 ),
+                                        //               ),
+                                        //               constraints: BoxConstraints(
+                                        //                 minWidth: (sWidth *
+                                        //                             wH2DividerPosition -
+                                        //                         65) /
+                                        //                     6,
+                                        //                 minHeight: 42,
+                                        //               ), // Reduces the overall size further
+                                        //               visualDensity:
+                                        //                   VisualDensity.compact,
+                                        //               iconSize: 12,
+                                        //               onPressed: () {
+                                        //                 opsAddPieController
+                                        //                     .openMenu();
+                                        //               },
+                                        //               icon: Icon(TablerIcons.plus)),
+                                        //         ),
+                                        //       ),
+                                        //       //MOVE PAGE BUTTON
+                                        //       PieMenu(
+                                        //         controller: opsMovePieController,
+                                        //         actions: [
+                                        //           getPieActionForAddMove(
+                                        //               'LEFT', false),
+                                        //           getPieActionForAddMove(
+                                        //               'RIGHT', false),
+                                        //         ],
+                                        //         onToggle: (menuOpen) {
+                                        //           if (!menuOpen) {
+                                        //             opsAddPieController.closeMenu();
+                                        //             opsMovePieController
+                                        //                 .closeMenu();
+                                        //             opsCopyPieController
+                                        //                 .closeMenu();
+                                        //             opsFormatPieController
+                                        //                 .closeMenu();
+                                        //           }
+                                        //         },
+                                        //         theme: PieTheme(
+                                        //             rightClickShowsMenu: true,
+                                        //             buttonSize:
+                                        //                 ((sWidth * wH2DividerPosition -
+                                        //                             65) /
+                                        //                         3)
+                                        //                     .clamp(40, 100),
+                                        //             spacing: 10,
+                                        //             radius:
+                                        //                 ((sWidth * wH2DividerPosition -
+                                        //                             65) /
+                                        //                         2)
+                                        //                     .clamp(50, 100),
+                                        //             customAngle: -20,
+                                        //             menuAlignment: Alignment.center,
+                                        //             pointerSize: 20,
+                                        //             menuDisplacement: Offset(0, 4),
+                                        //             tooltipPadding:
+                                        //                 EdgeInsets.all(0),
+                                        //             tooltipTextStyle:
+                                        //                 GoogleFonts.bungee(
+                                        //                     fontSize: 20),
+                                        //             buttonTheme: PieButtonTheme(
+                                        //                 backgroundColor:
+                                        //                     defaultPalette.tertiary,
+                                        //                 iconColor:
+                                        //                     defaultPalette.primary,
+                                        //                 decoration: BoxDecoration(
+                                        //                   border:
+                                        //                       Border.all(width: 1),
+                                        //                   borderRadius:
+                                        //                       BorderRadius.circular(
+                                        //                           200),
+                                        //                   color: defaultPalette
+                                        //                       .extras[0],
+                                        //                 ))),
+                                        //         child: Container(
+                                        //           margin: const EdgeInsets.only(
+                                        //               top: 8.0),
+                                        //           // padding: const EdgeInsets.all(1),
+                                        //           child: IconButton.filled(
+                                        //               style: IconButton.styleFrom(
+                                        //                 backgroundColor:
+                                        //                     defaultPalette.extras[
+                                        //                         0], // Background color
+                                        //                 foregroundColor: defaultPalette
+                                        //                     .primary, // Icon color
+                                        //                 // Elevation of the button
+                                        //                 padding: EdgeInsets.symmetric(
+                                        //                     vertical:
+                                        //                         10.0), // Padding around the icon
+                                        //                 shape:
+                                        //                     RoundedRectangleBorder(
+                                        //                   // Custom button shape
+                                        //                   borderRadius:
+                                        //                       BorderRadius.circular(
+                                        //                           5.0),
+                                        //                 ),
+                                        //               ),
+                                        //               constraints: BoxConstraints(
+                                        //                 minWidth: (sWidth *
+                                        //                             wH2DividerPosition -
+                                        //                         65) /
+                                        //                     6.3,
+                                        //                 minHeight: 42,
+                                        //               ), // Reduces the overall size further
+                                        //               visualDensity:
+                                        //                   VisualDensity.compact,
+                                        //               iconSize: 15,
+                                        //               onPressed: () {
+                                        //                 opsMovePieController
+                                        //                     .openMenu();
+                                        //               },
+                                        //               icon: Icon(TablerIcons
+                                        //                   .arrows_move_vertical)),
+                                        //         ),
+                                        //       ),
+                                        //       //Duplicate PAGE BUTTON
+                                        //       PieMenu(
+                                        //         actions: [
+                                        //           getPieActionForDuplicate('LEFT'),
+                                        //           getPieActionForDuplicate('RIGHT')
+                                        //         ],
+                                        //         controller: opsCopyPieController,
+                                        //         onToggle: (menuOpen) {
+                                        //           if (!menuOpen) {
+                                        //             opsAddPieController.closeMenu();
+                                        //             opsMovePieController
+                                        //                 .closeMenu();
+                                        //             opsCopyPieController
+                                        //                 .closeMenu();
+                                        //             opsFormatPieController
+                                        //                 .closeMenu();
+                                        //           }
+                                        //         },
+                                        //         theme: PieTheme(
+                                        //             rightClickShowsMenu: true,
+                                        //             buttonSize:
+                                        //                 ((sWidth * wH2DividerPosition -
+                                        //                             65) /
+                                        //                         3)
+                                        //                     .clamp(40, 100),
+                                        //             spacing: 5,
+                                        //             radius:
+                                        //                 ((sWidth * wH2DividerPosition -
+                                        //                             65) /
+                                        //                         2)
+                                        //                     .clamp(50, 100),
+                                        //             customAngle: 20,
+                                        //             menuAlignment: Alignment.center,
+                                        //             pointerSize: 20,
+                                        //             menuDisplacement: Offset(0, 4),
+                                        //             tooltipPadding:
+                                        //                 EdgeInsets.all(5),
+                                        //             tooltipTextStyle:
+                                        //                 GoogleFonts.bungee(
+                                        //                     fontSize: 20),
+                                        //             buttonTheme: PieButtonTheme(
+                                        //                 backgroundColor:
+                                        //                     defaultPalette.tertiary,
+                                        //                 iconColor:
+                                        //                     defaultPalette.primary,
+                                        //                 decoration: BoxDecoration(
+                                        //                   border:
+                                        //                       Border.all(width: 1),
+                                        //                   borderRadius:
+                                        //                       BorderRadius.circular(
+                                        //                           200),
+                                        //                   color: defaultPalette
+                                        //                       .extras[0],
+                                        //                 ))),
+                                        //         child: Container(
+                                        //           margin: const EdgeInsets.only(
+                                        //               top: 8.0),
+                                        //           child: IconButton.filled(
+                                        //               style: IconButton.styleFrom(
+                                        //                 backgroundColor:
+                                        //                     defaultPalette
+                                        //                         .extras[0],
+                                        //                 foregroundColor:
+                                        //                     defaultPalette.primary,
+                                        //                 padding: const EdgeInsets
+                                        //                     .symmetric(
+                                        //                     vertical: 10.0),
+                                        //                 shape:
+                                        //                     RoundedRectangleBorder(
+                                        //                   borderRadius:
+                                        //                       BorderRadius.circular(
+                                        //                           5.0),
+                                        //                 ),
+                                        //               ),
+                                        //               constraints: BoxConstraints(
+                                        //                 minWidth: (sWidth *
+                                        //                             wH2DividerPosition -
+                                        //                         65) /
+                                        //                     5.5,
+                                        //                 minHeight: 42,
+                                        //               ), // Reduces the overall size further
+                                        //               visualDensity:
+                                        //                   VisualDensity.compact,
+                                        //               iconSize: 15,
+                                        //               onPressed: () {
+                                        //                 opsCopyPieController
+                                        //                     .openMenu();
+                                        //               },
+                                        //               icon: const Icon(TablerIcons
+                                        //                   .dots_vertical)),
+                                        //         ),
+                                        //       ),
+                                        //     ],
+                                        //   ),
+                                        // ),
+                                        Expanded(
+                                          child: PieMenu(
+                                            controller: currentPageIndex == index
+                                                ? opsFormatPieController
+                                                : null,
+                                            actions: [
+                                              getPieAction('A3'),
+                                              getPieAction('A4'),
+                                              getPieAction('A5'),
+                                              getPieAction('A6'),
+                                              getPieAction('Letter'),
+                                              getPieAction('Legal'),
+                                            ],
+                                            theme: PieTheme(
+                                                rightClickShowsMenu: true,
+                                                buttonSize:
+                                                    ((sWidth * wH2DividerPosition -
+                                                                65) /
+                                                            6)
+                                                        .clamp(40, 400),
+                                                spacing: 1,
+                                                radius:
+                                                    ((sWidth * wH2DividerPosition -
+                                                                65) /
+                                                            4)
+                                                        .clamp(50, 400),
+                                                customAngle: 0,
+                                                menuAlignment: Alignment.center,
+                                                menuDisplacement: Offset(
+                                                    (sWidth * wH2DividerPosition -
+                                                            38) /
+                                                        6,
+                                                    4),
+                                                tooltipPadding: EdgeInsets.all(0),
+                                                tooltipTextStyle:
+                                                    GoogleFonts.bungee(fontSize: 20),
+                                                buttonTheme: PieButtonTheme(
+                                                    backgroundColor:
+                                                        defaultPalette.primary,
+                                                    iconColor:
+                                                        defaultPalette.extras[0],
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(width: 3),
+                                                      borderRadius:
+                                                          BorderRadius.circular(200),
+                                                      color: defaultPalette.extras[0],
+                                                    ))),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 0.0),
+                                              child: IconButton.filled(
+                                                  style: IconButton.styleFrom(
+                                                    backgroundColor:
+                                                        defaultPalette.extras[0], // Background color
+                                                    foregroundColor: defaultPalette
+                                                        .primary, // Icon color
+                                                    // Elevation of the button
+                                                    padding: EdgeInsets.symmetric(
+                                                        vertical:  10.0), // Padding around the icon
+                                                    shape: RoundedRectangleBorder(
+                                                      // Custom button shape
+                                                      borderRadius:
+                                                          BorderRadius.circular(5.0),
+                                                    ),
+                                                  ),
+                                                  constraints: BoxConstraints(
+                                                    minWidth:
+                                                        (sWidth * wH2DividerPosition -
+                                                                30) /
+                                                            2,
+                                                    minHeight: 45,
+                                                  ), // Reduces the overall size further
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  iconSize: 20,
+                                                  onPressed: () {
+                                                    opsFormatPieController.openMenu();
+                                                  },
+                                                  icon: SizedBox(
+                                                    width:
+                                                        (sWidth * wH2DividerPosition -
+                                                                52) /
+                                                            2,
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        // Icon(TablerIcons.file_smile),
+                                                        Text(
+                                                          getPageFormatString(
+                                                              documentPropertiesList[
+                                                                      currentPageIndex]
+                                                                  .pageFormatController),
+                                                          style: GoogleFonts.bungee(
+                                                              color: defaultPalette
+                                                                  .primary),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  )),
+                                            ),
+                                          ),
+                                        ),
+                                      SizedBox(width:8),
+                                        Expanded(
+                                          flex: 3,
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                children:pagePropertyTile(0)
+                                              ),
+                                              Row(
+                                                children:pagePropertyTile(1)
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                     
+                                      ],
+                                    ),
+                                  ),
+
+                                  SizedBox(height:8),
+                                  // //
                                   //ORIENTATIONS BUTTONS
                                   Padding(
                                     padding: const EdgeInsets.only(right: 4.0),
@@ -16950,7 +17660,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                         topLayerChild: Row(
                                           children: [
-                                            const SizedBox(width: 10),
+                                            const SizedBox(width: 5),
                                             Icon(TablerIcons.sunset_2, size: 22, color: defaultPalette.extras[0]),
                                             Expanded(
                                               child: Text(
@@ -16990,420 +17700,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ),
                                   ),
                             
-                                  //
-                                  //OPERATIONS BUTTONS
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 5,left:2),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        SizedBox(
-                                          width:
-                                              (sWidth * wH2DividerPosition - 45) /
-                                                  2,
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              //ADD PAGE BUTTON
-                                              PieMenu(
-                                                controller: opsAddPieController,
-                                                actions: [
-                                                  getPieActionForAddMove(
-                                                      'LEFT', true),
-                                                  getPieActionForAddMove(
-                                                      'RIGHT', true)
-                                                ],
-                                                onToggle: (menuOpen) {
-                                                  if (!menuOpen) {
-                                                    opsAddPieController.closeMenu();
-                                                    opsMovePieController
-                                                        .closeMenu();
-                                                    opsCopyPieController
-                                                        .closeMenu();
-                                                    opsFormatPieController
-                                                        .closeMenu();
-                                                  }
-                                                },
-                                                theme: PieTheme(
-                                                    rightClickShowsMenu: true,
-                                                    buttonSize:
-                                                        ((sWidth * wH2DividerPosition -
-                                                                    65) /
-                                                                3)
-                                                            .clamp(40, 100),
-                                                    spacing: 5,
-                                                    radius:
-                                                        ((sWidth * wH2DividerPosition -
-                                                                    65) /
-                                                                2)
-                                                            .clamp(50, 100),
-                                                    customAngle: -20,
-                                                    menuAlignment: Alignment.center,
-                                                    pointerSize: 20,
-                                                    menuDisplacement: Offset(0, 4),
-                                                    tooltipPadding:
-                                                        EdgeInsets.all(5),
-                                                    tooltipTextStyle:
-                                                        GoogleFonts.bungee(
-                                                            fontSize: 20),
-                                                    buttonTheme: PieButtonTheme(
-                                                        backgroundColor:
-                                                            defaultPalette.tertiary,
-                                                        iconColor:
-                                                            defaultPalette.primary,
-                                                        decoration: BoxDecoration(
-                                                          border:
-                                                              Border.all(width: 1),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  200),
-                                                          color: defaultPalette
-                                                              .extras[0],
-                                                        ))),
-                                                child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      top: 8.0),
-                                                  // padding: const EdgeInsets.all(1),
-                                                  child: IconButton.filled(
-                                                      style: IconButton.styleFrom(
-                                                        backgroundColor:
-                                                            defaultPalette.extras[
-                                                                0], // Background color
-                                                        foregroundColor: defaultPalette
-                                                            .primary, // Icon color
-                                                        // Elevation of the button
-                                                        padding: EdgeInsets.symmetric(
-                                                            vertical: 10.0,
-                                                            horizontal:
-                                                                2), // Padding around the icon
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          // Custom button shape
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  5.0),
-                                                        ),
-                                                      ),
-                                                      constraints: BoxConstraints(
-                                                        minWidth: (sWidth *
-                                                                    wH2DividerPosition -
-                                                                65) /
-                                                            6,
-                                                        minHeight: 42,
-                                                      ), // Reduces the overall size further
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                      iconSize: 12,
-                                                      onPressed: () {
-                                                        opsAddPieController
-                                                            .openMenu();
-                                                      },
-                                                      icon: Icon(TablerIcons.plus)),
-                                                ),
-                                              ),
-                                              //MOVE PAGE BUTTON
-                                              PieMenu(
-                                                controller: opsMovePieController,
-                                                actions: [
-                                                  getPieActionForAddMove(
-                                                      'LEFT', false),
-                                                  getPieActionForAddMove(
-                                                      'RIGHT', false),
-                                                ],
-                                                onToggle: (menuOpen) {
-                                                  if (!menuOpen) {
-                                                    opsAddPieController.closeMenu();
-                                                    opsMovePieController
-                                                        .closeMenu();
-                                                    opsCopyPieController
-                                                        .closeMenu();
-                                                    opsFormatPieController
-                                                        .closeMenu();
-                                                  }
-                                                },
-                                                theme: PieTheme(
-                                                    rightClickShowsMenu: true,
-                                                    buttonSize:
-                                                        ((sWidth * wH2DividerPosition -
-                                                                    65) /
-                                                                3)
-                                                            .clamp(40, 100),
-                                                    spacing: 10,
-                                                    radius:
-                                                        ((sWidth * wH2DividerPosition -
-                                                                    65) /
-                                                                2)
-                                                            .clamp(50, 100),
-                                                    customAngle: -20,
-                                                    menuAlignment: Alignment.center,
-                                                    pointerSize: 20,
-                                                    menuDisplacement: Offset(0, 4),
-                                                    tooltipPadding:
-                                                        EdgeInsets.all(0),
-                                                    tooltipTextStyle:
-                                                        GoogleFonts.bungee(
-                                                            fontSize: 20),
-                                                    buttonTheme: PieButtonTheme(
-                                                        backgroundColor:
-                                                            defaultPalette.tertiary,
-                                                        iconColor:
-                                                            defaultPalette.primary,
-                                                        decoration: BoxDecoration(
-                                                          border:
-                                                              Border.all(width: 1),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  200),
-                                                          color: defaultPalette
-                                                              .extras[0],
-                                                        ))),
-                                                child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      top: 8.0),
-                                                  // padding: const EdgeInsets.all(1),
-                                                  child: IconButton.filled(
-                                                      style: IconButton.styleFrom(
-                                                        backgroundColor:
-                                                            defaultPalette.extras[
-                                                                0], // Background color
-                                                        foregroundColor: defaultPalette
-                                                            .primary, // Icon color
-                                                        // Elevation of the button
-                                                        padding: EdgeInsets.symmetric(
-                                                            vertical:
-                                                                10.0), // Padding around the icon
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          // Custom button shape
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  5.0),
-                                                        ),
-                                                      ),
-                                                      constraints: BoxConstraints(
-                                                        minWidth: (sWidth *
-                                                                    wH2DividerPosition -
-                                                                65) /
-                                                            6.3,
-                                                        minHeight: 42,
-                                                      ), // Reduces the overall size further
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                      iconSize: 15,
-                                                      onPressed: () {
-                                                        opsMovePieController
-                                                            .openMenu();
-                                                      },
-                                                      icon: Icon(TablerIcons
-                                                          .arrows_move_vertical)),
-                                                ),
-                                              ),
-                                              //Duplicate PAGE BUTTON
-                                              PieMenu(
-                                                actions: [
-                                                  getPieActionForDuplicate('LEFT'),
-                                                  getPieActionForDuplicate('RIGHT')
-                                                ],
-                                                controller: opsCopyPieController,
-                                                onToggle: (menuOpen) {
-                                                  if (!menuOpen) {
-                                                    opsAddPieController.closeMenu();
-                                                    opsMovePieController
-                                                        .closeMenu();
-                                                    opsCopyPieController
-                                                        .closeMenu();
-                                                    opsFormatPieController
-                                                        .closeMenu();
-                                                  }
-                                                },
-                                                theme: PieTheme(
-                                                    rightClickShowsMenu: true,
-                                                    buttonSize:
-                                                        ((sWidth * wH2DividerPosition -
-                                                                    65) /
-                                                                3)
-                                                            .clamp(40, 100),
-                                                    spacing: 5,
-                                                    radius:
-                                                        ((sWidth * wH2DividerPosition -
-                                                                    65) /
-                                                                2)
-                                                            .clamp(50, 100),
-                                                    customAngle: 20,
-                                                    menuAlignment: Alignment.center,
-                                                    pointerSize: 20,
-                                                    menuDisplacement: Offset(0, 4),
-                                                    tooltipPadding:
-                                                        EdgeInsets.all(5),
-                                                    tooltipTextStyle:
-                                                        GoogleFonts.bungee(
-                                                            fontSize: 20),
-                                                    buttonTheme: PieButtonTheme(
-                                                        backgroundColor:
-                                                            defaultPalette.tertiary,
-                                                        iconColor:
-                                                            defaultPalette.primary,
-                                                        decoration: BoxDecoration(
-                                                          border:
-                                                              Border.all(width: 1),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  200),
-                                                          color: defaultPalette
-                                                              .extras[0],
-                                                        ))),
-                                                child: Container(
-                                                  margin: const EdgeInsets.only(
-                                                      top: 8.0),
-                                                  child: IconButton.filled(
-                                                      style: IconButton.styleFrom(
-                                                        backgroundColor:
-                                                            defaultPalette
-                                                                .extras[0],
-                                                        foregroundColor:
-                                                            defaultPalette.primary,
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                            vertical: 10.0),
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  5.0),
-                                                        ),
-                                                      ),
-                                                      constraints: BoxConstraints(
-                                                        minWidth: (sWidth *
-                                                                    wH2DividerPosition -
-                                                                65) /
-                                                            5.5,
-                                                        minHeight: 42,
-                                                      ), // Reduces the overall size further
-                                                      visualDensity:
-                                                          VisualDensity.compact,
-                                                      iconSize: 15,
-                                                      onPressed: () {
-                                                        opsCopyPieController
-                                                            .openMenu();
-                                                      },
-                                                      icon: const Icon(TablerIcons
-                                                          .dots_vertical)),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        PieMenu(
-                                          controller: currentPageIndex == index
-                                              ? opsFormatPieController
-                                              : null,
-                                          actions: [
-                                            getPieAction('A3'),
-                                            getPieAction('A4'),
-                                            getPieAction('A5'),
-                                            getPieAction('A6'),
-                                            getPieAction('Letter'),
-                                            getPieAction('Legal'),
-                                          ],
-                                          theme: PieTheme(
-                                              rightClickShowsMenu: true,
-                                              buttonSize:
-                                                  ((sWidth * wH2DividerPosition -
-                                                              65) /
-                                                          6)
-                                                      .clamp(40, 400),
-                                              spacing: 1,
-                                              radius:
-                                                  ((sWidth * wH2DividerPosition -
-                                                              65) /
-                                                          4)
-                                                      .clamp(50, 400),
-                                              customAngle: -180,
-                                              menuAlignment: Alignment.center,
-                                              menuDisplacement: Offset(
-                                                  -(sWidth * wH2DividerPosition -
-                                                          38) /
-                                                      6,
-                                                  4),
-                                              tooltipPadding: EdgeInsets.all(0),
-                                              tooltipTextStyle:
-                                                  GoogleFonts.bungee(fontSize: 20),
-                                              buttonTheme: PieButtonTheme(
-                                                  backgroundColor:
-                                                      defaultPalette.primary,
-                                                  iconColor:
-                                                      defaultPalette.extras[0],
-                                                  decoration: BoxDecoration(
-                                                    border: Border.all(width: 3),
-                                                    borderRadius:
-                                                        BorderRadius.circular(200),
-                                                    color: defaultPalette.extras[0],
-                                                  ))),
-                                          child: Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 8.0),
-                                            child: IconButton.filled(
-                                                style: IconButton.styleFrom(
-                                                  backgroundColor:
-                                                      defaultPalette.extras[
-                                                          0], // Background color
-                                                  foregroundColor: defaultPalette
-                                                      .primary, // Icon color
-                                                  // Elevation of the button
-                                                  padding: EdgeInsets.symmetric(
-                                                      vertical:
-                                                          10.0), // Padding around the icon
-                                                  shape: RoundedRectangleBorder(
-                                                    // Custom button shape
-                                                    borderRadius:
-                                                        BorderRadius.circular(5.0),
-                                                  ),
-                                                ),
-                                                constraints: BoxConstraints(
-                                                  minWidth:
-                                                      (sWidth * wH2DividerPosition -
-                                                              30) /
-                                                          2,
-                                                  minHeight: 42,
-                                                ), // Reduces the overall size further
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                                iconSize: 20,
-                                                onPressed: () {
-                                                  opsFormatPieController.openMenu();
-                                                },
-                                                icon: SizedBox(
-                                                  width:
-                                                      (sWidth * wH2DividerPosition -
-                                                              52) /
-                                                          2,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceAround,
-                                                    children: [
-                                                      Icon(TablerIcons.file_smile),
-                                                      Text(
-                                                        getPageFormatString(
-                                                            documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .pageFormatController),
-                                                        style: GoogleFonts.bungee(
-                                                            color: defaultPalette
-                                                                .primary),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                )),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                            
-                                  //STYLES TITLE
+                                 
+                                  // STYLES TITLE
                                   Container(
                                     width: sWidth * wH2DividerPosition - 35,
                                     height: 15,
@@ -17418,220 +17716,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       style: GoogleFonts.bungee(fontSize: 10),
                                     ),
                                   ),
-                            
-                                  //list COLOR PICKER Main
-                                  ...[
-                                    SizedBox(
-                                    width: 2,
-                                    height: 6,
-                                  ),
-                                    //title and hex code of plain color title
-                                    Container(
-                                      height: 20,
-                                      padding: EdgeInsets.only(left: 0),
-                                      margin: EdgeInsets.only(left: 0, right: 3),
-                                      decoration: BoxDecoration(
-                                          // border: Border.all(
-                                          //   width:0.6,
-                                          //   color: defaultPalette.extras[0].withOpacity(0.5),
-                                          // ),
-                                          color: defaultPalette.primary,
-                                          borderRadius: BorderRadius.circular(6)),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Icon(TablerIcons.palette,
-                                              size: 18, color: defaultPalette.extras[0]),
-                                          
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Text(
-                                              ' color ',
-                                              maxLines:1,
-                                              overflow:TextOverflow.ellipsis,
-                                              style: GoogleFonts.bungee(
-                                                  fontSize: 12,
-                                                  // letterSpacing: -1,
-                                                  color: defaultPalette.extras[0]),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: SizedBox(
-                                              height: 18,
-                                              child: TextField(
-                                                controller: pgHexController,
-                                                onSubmitted: (value) {
-                                                  setState(() {
-                                                documentPropertiesList[ind]
-                                                    .pageColor = hexToColor(value);
-                                                });
-                                                },
-                                                inputFormatters: [
-                                                  HexColorInputFormatter()
-                                                ],
-                                                textAlignVertical: TextAlignVertical.top,
-                                                textAlign: TextAlign.end,
-                                                cursorColor: defaultPalette.tertiary,
-                                                decoration: InputDecoration(
-                                                  contentPadding: const EdgeInsets.only(left: 0),
-                                                  labelStyle:
-                                                      GoogleFonts.lexend(color: defaultPalette.black),
-                                                  hoverColor: defaultPalette.transparent,
-                                                  filled: true,
-                                                  fillColor: defaultPalette.transparent,
-                                                  border: InputBorder.none,
-                                                  enabledBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                  ),
-                                                  focusedBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                    borderRadius: BorderRadius.circular(5.0),
-                                                  ),
-                                                ),
-                                                style: GoogleFonts.bungee(
-                                                    letterSpacing: -0.3,
-                                                    fontWeight: FontWeight.w200,
-                                                    
-                                                    fontSize: 12,
-                                                    color: defaultPalette.black),
-                                              ),
-                                            ),
-                                          ),
-                                          DecoratedBox(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.fromBorderSide(
-                                                BorderSide(
-                                                  width: 0.5
-                                                ),
-                                              ),
-                                              color: documentPropertiesList[ind]
-                                                  .pageColor,
-                                            ),
-                                            child: SizedBox(
-                                              width: 15,
-                                              height: 15,
-                                            ),
-                                          ),
-                                          
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(9999),
-                                            child: Material(
-                                              color: defaultPalette.transparent,
-                                              child: InkWell(
-                                                focusColor: defaultPalette.primary,
-                                                hoverColor: defaultPalette.primary,
-                                                highlightColor: defaultPalette.primary,
-                                                onTap: () {
-                                                  EyeDropper.enableEyeDropper(context, (value) {
-                                                    setState(() {
-                                                    if (value !=null) {
-                                                      documentPropertiesList[ind]
-                                                          .pageColor = value;
-                                                    }
-                                                   });
-                                                  },);
-                                                },
-                                                child: const Icon(
-                                                  TablerIcons.color_picker,
-                                                  size: 19,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: 2,
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                         
-                                    SizedBox(
-                                    width: 2,
-                                    height: 4,
-                                    ),
-                            
-                                    Container(
-                                      width: widthBig,
-                                      padding: EdgeInsets.only(left: 0, right: 3),
-                                      margin: EdgeInsets.only(right:3,left:0),
-                                      // decoration: BoxDecoration(
-                                      //     border: Border.all(width:0.8, color:defaultPalette.extras[0].withOpacity(0.4)),
-                                      //     color: defaultPalette.primary,
-                                      //     borderRadius: BorderRadius.circular(5)),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Text(
-                                              ' ${(ColorTools.nameThatColor(
-                                                documentPropertiesList[ind].pageColor,
-                                              )).toLowerCase()}',
-                                              style: GoogleFonts.bungee(
-                                                  fontSize: 10,
-                                                  color: defaultPalette.extras[0]),
-                                            ),
-                                          ),
-                            
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              // if ((sWidth * wH2DividerPosition) > 220)
-                                                Expanded(
-                                                  child: HSVPicker(
-                                                    color: HSVColor.fromColor(
-                                                      documentPropertiesList[ind].pageColor,
-                                                    ),
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        documentPropertiesList[ind]
-                                                        .pageColor =  value.toColor().withAlpha(
-                                                                (documentPropertiesList[ind].pageColor).alpha);
-                                                      });
-                                                    },
-                                                  ),
-                                                ),
-                                              Expanded(
-                                                child: IntrinsicHeight(
-                                                  child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.start,
-                                                    // crossAxisAlignment: CrossAxisAlignment.end,
-                                                    children: [
-                                                      //list COLOR WHEEL COLOR
-                                                      WheelPicker(
-                                                        color: HSVColor.fromColor(documentPropertiesList[ind].pageColor,),
-                                                        onChanged: (HSVColor value) {
-                                                          setState(() {
-                                                            documentPropertiesList[ind]
-                                                              .pageColor =  value.toColor().withAlpha((documentPropertiesList[ind]
-                                                                                                            .pageColor).alpha);
-                                                          });
-                                                          
-                                                        },
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          //list alpha picker
-                                          AlphaPicker(
-                                            alpha: (documentPropertiesList[ind]
-                                                      .pageColor).alpha,
-                                            onChanged: (int value) {
-                                              setState(() {
-                                                documentPropertiesList[ind]
-                                                  .pageColor = (documentPropertiesList[ind]
-                                                        .pageColor).withAlpha(value);
-                                              });
-                                              
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),],
                                   
                                   const SizedBox(
                                     height: 10,
@@ -17644,6 +17728,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       SizedBox(
                                         height: textFieldHeight / 2,
                                         child: Row(
+                                          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Icon(TablerIcons.box_margin,
                                               size: 18, color: defaultPalette.extras[0]),
@@ -17652,9 +17737,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             ),  
                                             Expanded(
                                               child: Text(
-                                                'Margin',
-                                                style: GoogleFonts.bungee(
-                                                    fontSize: 13),
+                                                'margin',
+                                                style: GoogleFonts.lexend(
+                                                  fontSize: 15,
+                                                  letterSpacing: -1,
+                                                  fontWeight: FontWeight.w600,
+                                                  ),
                                               ),
                                             ),
                             
@@ -17720,9 +17808,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   ),
                                                 ),
                                                 keyboardType: TextInputType.number,
-                                                style: GoogleFonts.bungee(
-                                                    // fontStyle: FontStyle.italic,
-                                                    fontSize: 12,
+                                                style: GoogleFonts.lexend(
+                                                  fontSize: 13,
+                                                  letterSpacing: -1,
+                                                  fontWeight: FontWeight.w600,
                                                     color: defaultPalette.black),
                                                 onChanged: (value) {
                                                   setState(() {
@@ -17753,71 +17842,70 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                             
-                                            const SizedBox(
-                                              width: 2,
-                                            ),
+                                            // const SizedBox(
+                                            //   width: 2,
+                                            // ),
                                              ////INDIVIDUAL MARGINS BUTTON
-                                            IconButton(
-                                                padding: const EdgeInsets.all(0),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    documentPropertiesList[
+                                            MouseRegion(
+                                              cursor:SystemMouseCursors.click,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                    setState(() {
+                                                      documentPropertiesList[
+                                                                  currentPageIndex]
+                                                              .useIndividualMargins =
+                                                          !documentPropertiesList[
+                                                                  currentPageIndex]
+                                                              .useIndividualMargins;
+                                                      if (documentPropertiesList[
+                                                                  currentPageIndex]
+                                                              .useIndividualMargins ==
+                                                          false) {
+                                                        documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginTopController
+                                                                .text =
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginAllController
+                                                                .text;
+                                                        documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginBottomController
+                                                                .text =
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginAllController
+                                                                .text;
+                                                        documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginLeftController
+                                                                .text =
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginAllController
+                                                                .text;
+                                                        documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginRightController
+                                                                .text =
+                                                            documentPropertiesList[
+                                                                    currentPageIndex]
+                                                                .marginAllController
+                                                                .text;
+                                                      }
+                                                    });
+                                                  },
+                                                child: Icon(documentPropertiesList[
                                                                 currentPageIndex]
-                                                            .useIndividualMargins =
-                                                        !documentPropertiesList[
-                                                                currentPageIndex]
-                                                            .useIndividualMargins;
-                                                    if (documentPropertiesList[
-                                                                currentPageIndex]
-                                                            .useIndividualMargins ==
-                                                        false) {
-                                                      documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginTopController
-                                                              .text =
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginAllController
-                                                              .text;
-                                                      documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginBottomController
-                                                              .text =
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginAllController
-                                                              .text;
-                                                      documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginLeftController
-                                                              .text =
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginAllController
-                                                              .text;
-                                                      documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginRightController
-                                                              .text =
-                                                          documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .marginAllController
-                                                              .text;
-                                                    }
-                                                  });
-                                                },
-                                                icon: documentPropertiesList[
-                                                            currentPageIndex]
-                                                        .useIndividualMargins
-                                                    ? const Icon(
-                                                        IconsaxPlusBold.maximize_1,
-                                                        size: 20,
-                                                      )
-                                                    : const Icon(
-                                                        IconsaxPlusLinear
-                                                            .maximize_2,
-                                                        size: 20,
-                                                      ))
+                                                            .useIndividualMargins
+                                                        ?
+                                                            IconsaxPlusBold.maximize_1:IconsaxPlusLinear
+                                                                .maximize_2,
+                                                            size: 20,
+                                                          ),
+                                              ),
+                                            )
                                             // Text(
                                             //     'Use Individual Margins'),
                                           ],
@@ -17845,10 +17933,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         Expanded(
                                                           flex: 1,
                                                           child: Text(
-                                                            'Top',
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    fontSize: 11),
+                                                            'top',
+                                                            style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 13),
                                                           ),
                                                         ),
                             
@@ -17977,10 +18066,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         Expanded(
                                                           flex: 3,
                                                           child: Text(
-                                                            'Bottom',
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    fontSize: 11),
+                                                            'bottom',
+                                                             style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 13),
                                                           ),
                                                         ),
                             
@@ -18115,10 +18205,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       children: [
                                                         Expanded(
                                                           child: Text(
-                                                            'Left',
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    fontSize: 11),
+                                                            'left',
+                                                             style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 13),
                                                           ),
                                                         ),
                             
@@ -18248,10 +18339,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         Expanded(
                                                           flex: 1,
                                                           child: Text(
-                                                            'Right',
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    fontSize: 11),
+                                                            'right',
+                                                             style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 13),
                                                           ),
                                                         ),
                             
@@ -18371,13 +18463,229 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ],
                                             ),
                                             const SizedBox(
-                                              height: 0,
+                                              height: 5,
                                             )
                                           ],
                                         ),
                                       // Divider(),
                                     ],
                                   ),
+                                  
+                                  //list COLOR PICKER Main
+                                  ...[
+                                    SizedBox(
+                                    width: 2,
+                                    height: 6,
+                                  ),
+                                    //title and hex code of plain color title
+                                    Container(
+                                      height: 20,
+                                      padding: EdgeInsets.only(left: 0),
+                                      margin: EdgeInsets.only(left: 0, right: 3),
+                                      decoration: BoxDecoration(
+                                          // border: Border.all(
+                                          //   width:0.6,
+                                          //   color: defaultPalette.extras[0].withOpacity(0.5),
+                                          // ),
+                                          color: defaultPalette.primary,
+                                          borderRadius: BorderRadius.circular(6)),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.fromBorderSide(
+                                                BorderSide(
+                                                  width: 0.5
+                                                ),
+                                              ),
+                                              color: documentPropertiesList[ind]
+                                                  .pageColor,
+                                            ),
+                                            child: SizedBox(
+                                              width: 15,
+                                              height: 15,
+                                            ),
+                                          ),
+                                          if(sWidth*wH2DividerPosition>220)
+                                          SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Text(
+                                              ' color ',
+                                              maxLines:1,
+                                              overflow:TextOverflow.ellipsis,
+                                              style: GoogleFonts.lexend(
+                                                  fontSize: 15,
+                                                  letterSpacing: -1,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: defaultPalette.extras[0]),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 18,
+                                              child: TextField(
+                                                controller: pgHexController,
+                                                onSubmitted: (value) {
+                                                  setState(() {
+                                                documentPropertiesList[ind]
+                                                    .pageColor = hexToColor(value);
+                                                });
+                                                },
+                                                inputFormatters: [
+                                                  HexColorInputFormatter()
+                                                ],
+                                                textAlignVertical: TextAlignVertical.top,
+                                                textAlign: TextAlign.end,
+                                                cursorColor: defaultPalette.tertiary,
+                                                decoration: InputDecoration(
+                                                  contentPadding: const EdgeInsets.only(left: 0),
+                                                  labelStyle:
+                                                      GoogleFonts.lexend(color: defaultPalette.black),
+                                                  hoverColor: defaultPalette.transparent,
+                                                  filled: true,
+                                                  fillColor: defaultPalette.transparent,
+                                                  border: InputBorder.none,
+                                                  enabledBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                  focusedBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide.none,
+                                                    borderRadius: BorderRadius.circular(5.0),
+                                                  ),
+                                                ),
+                                                style: GoogleFonts.lexend(
+                                                  fontSize: 13,
+                                                  letterSpacing: -0.5,
+                                                  fontWeight: FontWeight.w600,
+                                                    color: defaultPalette.extras[0]),
+                                              ),
+                                            ),
+                                          ),
+                                          
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(9999),
+                                            child: Material(
+                                              color: defaultPalette.transparent,
+                                              child: InkWell(
+                                                focusColor: defaultPalette.primary,
+                                                hoverColor: defaultPalette.primary,
+                                                highlightColor: defaultPalette.primary,
+                                                onTap: () {
+                                                  EyeDropper.enableEyeDropper(context, (value) {
+                                                    setState(() {
+                                                    if (value !=null) {
+                                                      documentPropertiesList[ind]
+                                                          .pageColor = value;
+                                                    }
+                                                   });
+                                                  },);
+                                                },
+                                                child: const Icon(
+                                                  TablerIcons.color_picker,
+                                                  size: 19,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // SizedBox(
+                                          //   width: 2,
+                                          // )
+                                        ],
+                                      ),
+                                    ),
+                                         
+                                    SizedBox(
+                                    width: 2,
+                                    height: 4,
+                                    ),
+                            
+                                    Container(
+                                      width: widthBig,
+                                      padding: EdgeInsets.only(left: 0, right: 3),
+                                      margin: EdgeInsets.only(right:3,left:0),
+                                      // decoration: BoxDecoration(
+                                      //     border: Border.all(width:0.8, color:defaultPalette.extras[0].withOpacity(0.4)),
+                                      //     color: defaultPalette.primary,
+                                      //     borderRadius: BorderRadius.circular(5)),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              // if ((sWidth * wH2DividerPosition) > 220)
+                                              Expanded(
+                                                  child: HSVPicker(
+                                                    color: HSVColor.fromColor(
+                                                      documentPropertiesList[ind].pageColor,
+                                                    ),
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        documentPropertiesList[ind]
+                                                        .pageColor =  value.toColor().withAlpha(
+                                                                (documentPropertiesList[ind].pageColor).alpha);
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                              SizedBox(width: 5),
+                                              Expanded(
+                                                child: IntrinsicHeight(
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      //list COLOR WHEEL COLOR
+                                                      WheelPicker(
+                                                        color: HSVColor.fromColor(documentPropertiesList[ind].pageColor,),
+                                                        onChanged: (HSVColor value) {
+                                                          setState(() {
+                                                            documentPropertiesList[ind]
+                                                              .pageColor =  value.toColor().withAlpha((documentPropertiesList[ind]
+                                                                                                            .pageColor).alpha);
+                                                          });
+                                                          
+                                                        },
+                                                      ),
+                                                      Text(
+                                                        ' ${(ColorTools.nameThatColor(
+                                                          documentPropertiesList[ind].pageColor,
+                                                        )).toLowerCase()}',
+                                                        maxLines:1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.lexend(
+                                                            fontSize: 15,
+                                                            letterSpacing: -1,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: defaultPalette.extras[0]),
+                                                      ),
+                            
+                                          
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          //list alpha picker
+                                          AlphaPicker(
+                                            alpha: (documentPropertiesList[ind]
+                                                      .pageColor).alpha,
+                                            onChanged: (int value) {
+                                              setState(() {
+                                                documentPropertiesList[ind]
+                                                  .pageColor = (documentPropertiesList[ind]
+                                                        .pageColor).withAlpha(value);
+                                              });
+                                              
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),],
+                                  
+                                  
                                   
                                   
                                   const SizedBox(
