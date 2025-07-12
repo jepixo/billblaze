@@ -1562,79 +1562,97 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       );
     }
 
-  Widget _buildSheetTableWidget(SheetTable sheetTable){
-  // var tblbginx = int.tryParse(sheetTable.sheetTablebgDecoration.id.substring(sheetTable.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
-  var tableHeight = 0.0;
-  var tableWidth = 0.0;
-  sheetTable.rowData.forEach((element) => tableHeight += element.size,);
-  sheetTable.columnData.forEach((element) => tableWidth += element.size,);
+Widget _buildSheetTableWidget(SheetTable sheetTable) {
+  double tableHeight = 0.0;
+  double tableWidth = 0.0;
+
+  for (final row in sheetTable.rowData) {
+    if (!row.hide) tableHeight += row.size;
+  }
+
+  for (final col in sheetTable.columnData) {
+    if (!col.hide) tableWidth += col.size;
+  }
+
   return buildDecoratedContainer(
     sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration,
     SizedBox(
-      width: sheetTable.expand? null:tableWidth,
-      height:tableHeight,
+      width: sheetTable.expand ? null : tableWidth,
+      height: tableHeight,
       child: LayoutBuilder(
-  builder: (context, constraints) {
-    if (sheetTable.expand) {
-      double availableWidth = constraints.maxWidth;
-      
-      // STEP 1: Calculate current total width
-      double totalWidth = sheetTable.columnData.fold(0.0, (sum, col) => sum + col.size);
-      
-      // STEP 2: Check for overflow
-      double overflow = totalWidth - availableWidth;
-      
-      // STEP 3: Shrink columns from the end, preserving minSize
-      if (overflow > 0) {
-        for (int i = sheetTable.columnData.length - 1; i >= 0 && overflow > 0; i--) {
-          final col = sheetTable.columnData[i];
-          double shrinkable = col.size - (col.minSize ?? 30); // default min size = 30
-          if (shrinkable > 0) {
-            double shrink = shrinkable >= overflow ? overflow : shrinkable;
-            col.size -= shrink;
-            overflow -= shrink;
-          }
-        }
-      }
-      
-      // STEP 4: Expand last column to fill remaining space
-      double fixedWidth = 0.0;
-      for (int i = 0; i < sheetTable.columnData.length - 1; i++) {
-        fixedWidth += sheetTable.columnData[i].size;
-      }
-      
-      double remainingWidth = availableWidth - fixedWidth;
-      sheetTable.columnData.last.size = remainingWidth.clamp(sheetTable.columnData.last.minSize ?? 30.0, availableWidth);
-    }
+        builder: (context, constraints) {
+          List<SheetTableColumn> localColumnData =
+              sheetTable.columnData.map((c) => c.copy()).toList();
 
-    return CustomMultiChildLayout(
-      delegate: SheetTableWidgetLayoutDelegate(
-        cells: sheetTable.cellData,
-        columnData: sheetTable.columnData,
-        rowData: sheetTable.rowData,
+          if (sheetTable.expand) {
+            double availableWidth = constraints.maxWidth;
+
+            double totalWidth = localColumnData
+                .where((col) => !col.hide)
+                .fold(0.0, (sum, col) => sum + col.size);
+
+            double overflow = totalWidth - availableWidth;
+
+            if (overflow > 0) {
+              for (int i = localColumnData.length - 1;
+                  i >= 0 && overflow > 0;
+                  i--) {
+                final col = localColumnData[i];
+                if (col.hide) continue;
+
+                final minSize = col.minSize ?? 30.0;
+                final shrinkable = col.size - minSize;
+
+                if (shrinkable > 0) {
+                  final shrink = shrinkable >= overflow ? overflow : shrinkable;
+                  col.size -= shrink;
+                  overflow -= shrink;
+                }
+              }
+            }
+
+            double fixedWidth = 0.0;
+            for (int i = 0; i < localColumnData.length; i++) {
+              if (localColumnData[i].hide) continue;
+              if (i == localColumnData.lastIndexWhere((c) => !c.hide)) break;
+              fixedWidth += localColumnData[i].size;
+            }
+
+            final lastVisibleIndex =
+                localColumnData.lastIndexWhere((col) => !col.hide);
+            if (lastVisibleIndex != -1) {
+              final col = localColumnData[lastVisibleIndex];
+              final remainingWidth = availableWidth - fixedWidth;
+              col.size = remainingWidth.clamp(col.minSize ?? 30.0, availableWidth);
+            }
+          }
+
+          return CustomMultiChildLayout(
+            delegate: SheetTableWidgetLayoutDelegate(
+              cells: sheetTable.cellData,
+              columnData: localColumnData, // 🔥 using local version here
+              rowData: sheetTable.rowData,
+            ),
+            children: [
+              for (var rowEntry in sheetTable.cellData)
+                for (var cell in rowEntry)
+                  if (cell.isVisible)
+                    LayoutId(
+                      id: cell.id,
+                      child: _buildSheetTableTextWidget(
+                        cell.sheetItem as SheetText,
+                        disable: true,
+                      ),
+                    ),
+            ],
+          );
+        },
       ),
-      children: [
-        for (var rowEntry in sheetTable.cellData)
-          for (var cell in rowEntry)
-            if (cell.isVisible)
-              LayoutId(
-                id: cell.id,
-                child: _buildSheetTableTextWidget(
-                  cell.sheetItem as SheetText,
-                  disable: true,
-                ),
-              ),
-              ],
-            );
-          },
-        ),
-          
-      )
-          
-    , false
+    ),
+    false,
   );
-                    
 }
+
 
   Widget _buildSheetTableTextWidget(SheetText sheetText, {bool disable = true}) {
     // var tmpinx = int.tryParse(sheetText.textDecoration.id.substring(sheetText.textDecoration.id.indexOf('/') + 1))??-111;
@@ -7914,6 +7932,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     var tableWidth = 0.0;
     sheetTable.rowData.forEach((element) => tableHeight += element.size,);
     sheetTable.columnData.forEach((element) => tableWidth += element.size+16,);
+    
 
     Widget alphabetHeader(String s, int ind){
       return MouseRegion(
@@ -7950,7 +7969,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               ),
               // borderRadius: BorderRadius.circular(0).copyWith(topRight: Radius.circular(vicinity.column == (sheetTable as SheetTable).columnData.length-1?12:0))
           ),
-          child: Text('${s}',
+          child: sheetTable.columnData[ind-1].hide?
+          Icon(TablerIcons.eye_closed, size: 13, color: defaultPalette.extras[0],):
+          Text('${s}',
           style: GoogleFonts.lexend(
             letterSpacing: -1,
             fontSize: 12
@@ -7997,7 +8018,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   bottom: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
                   right: BorderSide.none),
               ),
-              child: Text('${ind}',
+              child: sheetTable.rowData[ind-1].hide?
+              Icon(TablerIcons.eye_closed, size: 13, color: defaultPalette.extras[0],):
+              Text('${ind}',
               style: GoogleFonts.lexend(
                 letterSpacing: -1,
                 fontSize: 13
@@ -14843,14 +14866,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             },
             onSwipeCancelled: (activity) {},
             cardBuilder: (context, index) {
-              // var tblinx = int.tryParse(sheetTableItem.sheetTableDecoration.id.substring(sheetTableItem.sheetTableDecoration.id.indexOf('/') + 1))??-69;
-              // var tblbginx = int.tryParse(sheetTableItem.sheetTablebgDecoration.id.substring(sheetTableItem.sheetTablebgDecoration.id.indexOf('/') + 1))??-69;
-              // var rowinx = int.tryParse(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-33;
-              // var colinx = int.tryParse(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-33;
               var width = (sWidth * wH2DividerPosition - 30);
               var sheetTableDecoration = sheetDecorationMap[sheetTableItem.sheetTableDecoration.id];
-              // var rowDecoration = sheetDecorationMap[sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration];
-              // var columnDecoration = sheetDecorationMap[sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration];
               var sheetTablebgDecoration = sheetDecorationMap[sheetTableItem.sheetTablebgDecoration.id];
               String selectedDecorationTitle = 
               whichTableDecorationIsClicked == 0
@@ -15244,88 +15261,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           ),
                           child: Column(
                             children: [
-                              const SizedBox(
-                                height:4
-                              ),  
-                              //decoration button for row or column
-                              // ElevatedLayerButton(
-                              //   onClick:(){
-                              //     whichTableDecorationIsClicked = axis==0? 2:3;
-                              //     tablePropertyCardsController.setCardIndex(2);
-                              //     whichTablePropertyTabIsClicked =2;
-                              //     _findSheetTableItem(sheetTableItem, updateVariables: false);
-                              //   },
-                              //   buttonHeight: 50,
-                              //   buttonWidth: (width-48.2),
-                              //   borderRadius: BorderRadius.circular(15),
-                              //   animationDuration: const Duration( milliseconds: 100),
-                              //   animationCurve: Curves.ease,
-                              //   topDecoration: BoxDecoration(
-                              //     color: Colors.white,
-                              //     border: Border.all(),
-                              //   ),
-                              //   topLayerChild: Row(
-                              //     children: [
-                              //       Container(
-                              //         margin: EdgeInsets.all(4),
-                              //         width:35,height:45,
-                              //         decoration: BoxDecoration(
-                              //           borderRadius: BorderRadius.circular(15),
-                              //           border: Border.all()),
-                              //         child: ClipRRect(
-                              //           borderRadius: BorderRadius.circular(15),
-                              //           child: buildDecoratedContainer(
-                              //             (axis ==0? rowDecoration: columnDecoration) as SuperDecoration, 
-                              //             SizedBox(
-                              //               width:width,
-                              //               height:35,
-                              //             ),
-                              //             true),
-                              //         ),
-                              //       ),
-                              //       Expanded(
-                              //         child: Column(
-                              //            crossAxisAlignment: CrossAxisAlignment.start,
-                              //             children: [
-                              //               const SizedBox(
-                              //                 height:2
-                              //               ),
-                              //               titleTile(
-                              //               (axis==0?'row':'col')+' decor ', 
-                              //               TablerIcons.sparkles,
-                              //               fontSize: 12,
-                              //               iconSize:14
-                              //               ), 
-                              //             Text(
-                              //               ' ${sheetTableDecoration.name}',
-                              //               maxLines: 1,
-                              //               textAlign: TextAlign.center,
-                              //               overflow: TextOverflow.ellipsis,
-                              //               style: GoogleFonts.lexend(
-                              //                 color: defaultPalette.extras[0],
-                              //                 fontSize: 15,
-                              //                 letterSpacing: -1,
-                              //                 fontWeight: FontWeight.w500),
-                              //             ),
-                              //           ],
-                              //         ),
-                              //       ),
-                                    
-                              //     ],
-                              //   ),
-                              //   subfac: 2,
-                              //   depth:2,
-                              //   baseDecoration: BoxDecoration(
-                              //     color: defaultPalette.extras[3],
-                              //     // border: Border.all(),
-                              //   ),
-                              // ),
-                              
-                              const SizedBox(
-                                height:3
-                              ),
                                const SizedBox(
-                                  height:5
+                                  height:10
                                 ),
                                 ...axis==0?
                                 [
@@ -15339,6 +15276,63 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 Row(children:tablePropertyTile(6,' min', TablerIcons.point_filled)),
                                 Row(children:tablePropertyTile(7,' max', TablerIcons.circle)),
                                 ],
+                                Container(
+                                        margin: EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10), 
+                                        color:defaultPalette.secondary,
+                                        // border: Border.all(
+                                        //   width:0.2
+                                        // ),
+                                        ),
+                                        child: AnimatedToggleSwitch<bool>.dual(
+                                          current:axis==0?sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].hide: sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].hide,
+                                          first: false,
+                                          second: true,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              if(axis==0) sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].hide = value;
+                                              else sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].hide = value;
+                                              
+                                            
+                                            });
+                                          },
+                                          animationCurve: Curves.easeInOutExpo,
+                                          animationDuration: Durations.medium4,
+                                          borderWidth: 2, // backgroundColor is set independently of the current selection
+                                          styleBuilder: (value) => ToggleStyle(
+                                              borderRadius: BorderRadius.circular(10),
+                                              indicatorBorderRadius: BorderRadius.circular(15),
+                                              borderColor: defaultPalette.extras[0],
+                                              backgroundColor: defaultPalette.extras[0],
+                                              indicatorBorder:
+                                                  Border.all(
+                                                    width: 1.2,
+                                                    color: defaultPalette.extras[0]),
+                                              indicatorColor: defaultPalette
+                                                  .primary), // indicatorColor changes and animates its value with the selection
+                                          iconBuilder: (value) {
+                                            return Icon(
+                                                value == false
+                                                    ? Icons.remove_red_eye_outlined
+                                                    : TablerIcons.eye_closed,
+                                                size: 15,
+                                                color: defaultPalette.extras[0]);
+                                          },
+                                          textBuilder: (value) {
+                                            return Text(
+                                              value == false ? 'visible' : 'hidden',
+                                              style: GoogleFonts.lexend(
+                                              letterSpacing: -1,
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 12,
+                                              color: defaultPalette.primary),
+                                            );
+                                          },
+                                          height: 20,
+                                          spacing: (width) - 100,
+                                        ),
+                                      ),
                                 const SizedBox(
                                   height:3
                                 ),
@@ -16386,13 +16380,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           int currentCardIndex = ref.watch(propertyCardIndexProvider);
           int ind = pageCount <= 1 ? 0 : index;
           List<TextEditingController> pageFormatControllers = [
-          TextEditingController()
-            ..text = (documentPropertiesList[currentPageIndex].pageFormatController.width * pageUnit)
-                .toStringAsFixed(2),
-          TextEditingController()
-            ..text = (documentPropertiesList[currentPageIndex].pageFormatController.height * pageUnit)
-                .toStringAsFixed(2),
-        ];
+            TextEditingController()
+              ..text = (documentPropertiesList[currentPageIndex].pageFormatController.width * pageUnit)
+                  .toStringAsFixed(2),
+            TextEditingController()
+              ..text = (documentPropertiesList[currentPageIndex].pageFormatController.height * pageUnit)
+                  .toStringAsFixed(2),
+          ];
+          List<TextEditingController> pageMarginControllers = [
+            documentPropertiesList[currentPageIndex].marginAllController,
+            documentPropertiesList[currentPageIndex].marginTopController,
+            documentPropertiesList[currentPageIndex].marginBottomController,
+            documentPropertiesList[currentPageIndex].marginLeftController,
+            documentPropertiesList[currentPageIndex].marginRightController,
+          ];
 
           TextEditingController pgHexController = TextEditingController(
               text: '#${colorToHex(documentPropertiesList[ind].pageColor)}');
@@ -16418,9 +16419,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   0.0;
                           double newValue = (currentValue + details.delta.dx * multiplier)
                               .clamp(
-                                s==0
-                                ? 0
-                                : double.negativeInfinity
+                               0
                                , double.infinity);
 
                           double parsedValue = double.parse(newValue.toStringAsFixed(4))/pageUnit;
@@ -16573,33 +16572,46 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       },
                       onHorizontalDragUpdate: (details) {
                         var multiplier = HardwareKeyboard.instance.isControlPressed
-                            ? 100
+                            ? 10
                             : HardwareKeyboard.instance.isShiftPressed
                                 ? 0.5
-                                : 10;
+                                : 1;
                         setState(() {
                           double currentValue =
-                              double.tryParse(pageFormatControllers[s].text) ??
+                              double.tryParse(pageMarginControllers[s].text) ??
                                   0.0;
                           double newValue = (currentValue + details.delta.dx * multiplier)
                               .clamp(
-                                s==0
-                                ? 0
-                                : double.negativeInfinity
+                                0
                                , double.infinity);
 
                           double parsedValue = double.parse(newValue.toStringAsFixed(4));
                           switch (s) {
                             case 0:
-                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( parsedValue, documentPropertiesList[currentPageIndex].pageFormatController.height);
-                              
+                              documentPropertiesList[currentPageIndex]
+                                  .marginAllController
+                                  .text = newValue.toStringAsFixed(4);
+                              documentPropertiesList[currentPageIndex]
+                                  .marginTopController
+                                  .text = newValue.toStringAsFixed(4);
+                              documentPropertiesList[
+                                      currentPageIndex]
+                                  .marginBottomController
+                                  .text = newValue.toStringAsFixed(4);
+                              documentPropertiesList[
+                                      currentPageIndex]
+                                  .marginLeftController
+                                  .text = newValue.toStringAsFixed(4);
+                              documentPropertiesList[
+                                      currentPageIndex]
+                                  .marginRightController
+                                  .text = newValue.toStringAsFixed(4);
                               break;
                             case 1:
-                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( documentPropertiesList[currentPageIndex].pageFormatController.width, parsedValue);
-                            case 2:
-                              
+                              pageMarginControllers[s].text = newValue.toStringAsFixed(4);
                               break;   
                             default:
+                              pageMarginControllers[s].text = newValue.toStringAsFixed(4);
                           }
                           
                         });
@@ -16608,24 +16620,28 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         children: [
                           Icon(
                             s == 0 
-                            ? TablerIcons.ruler_measure
+                            ? TablerIcons.box_margin
                             : s==1
-                            ? TablerIcons.ruler_measure_2
+                            ? TablerIcons.box_align_bottom
                             : s==2
-                            ? TablerIcons.spacing_horizontal
-                            : TablerIcons.spacing_vertical,
+                            ? TablerIcons.box_align_top
+                            : s==2
+                            ? TablerIcons.box_align_right
+                            : TablerIcons.box_align_left,
                             size: 16,
                           ),
                           Text(
                             s == 0 
-                            ? ' width ' 
+                            ? ' margin ' 
                             : s==1
-                            ? ' height '
+                            ? ' top '
                             : s==2
-                            ? ' word '
-                            : ' line ',
+                            ? ' bottom '
+                            : s==3
+                            ? ' left '
+                            : ' right ',
                             style: GoogleFonts.lexend(
-                                fontSize: 14,
+                                fontSize: 15,
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w600,
                                 color: defaultPalette.extras[0]),
@@ -16640,11 +16656,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       height: 12,
                       child: TextFormField(
                         onTapOutside: (event) => marginAllFocus.unfocus(),
-                        obscureText: documentPropertiesList[currentPageIndex].useIndividualMargins,
+                        obscureText: s==0? documentPropertiesList[currentPageIndex].useIndividualMargins: false,
                         focusNode: marginAllFocus,
-                        controller: documentPropertiesList[
-                                currentPageIndex]
-                            .marginAllController,
+                        controller: pageMarginControllers[s],
                         inputFormatters: [
                           NumericInputFormatter(allowNegative: true),
                         ],
@@ -16671,14 +16685,28 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           var parsedValue = double.tryParse(value)??0.0;
                           switch (s) {
                             case 0:
-                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( parsedValue, documentPropertiesList[currentPageIndex].pageFormatController.height);
+                              documentPropertiesList[currentPageIndex]
+                            .marginAllController.text = value;
+                            documentPropertiesList[currentPageIndex]
+                                .marginTopController
+                                .text = value;
+                            documentPropertiesList[currentPageIndex]
+                                .marginBottomController
+                                .text = value;
+                            documentPropertiesList[ currentPageIndex]
+                                .marginLeftController
+                                .text = value;
+                            documentPropertiesList[currentPageIndex]
+                                .marginRightController
+                                .text = value;
                               
                               break;
                             case 1:
-                              documentPropertiesList[currentPageIndex].pageFormatController = PdfPageFormat( documentPropertiesList[currentPageIndex].pageFormatController.width, parsedValue);
+                              pageMarginControllers[s].text = value;
                               
                               break;   
                             default:
+                              pageMarginControllers[s].text = value;
                           }
                             
 
@@ -16736,8 +16764,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               // PROPERTIES Tab Parent
               Positioned.fill(
                 top: 0,
-                // height: (sHeight),
-                // width: sWidth * wH2DividerPosition,
                 child: Container(
                   padding: EdgeInsets.only(top: 0, left: 0, right: 0, bottom: 0),
                   decoration: BoxDecoration(
@@ -17153,9 +17179,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   //     spacing:(sWidth * wH2DividerPosition - 45),
                                   //   ),
                                   // ),
-
-
- //
+                                  
+                                  //
                                   //OPERATIONS BUTTONS
                                   Padding(
                                     padding: const EdgeInsets.only(right: 5,left:2),
@@ -17728,123 +17753,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       SizedBox(
                                         height: textFieldHeight / 2,
                                         child: Row(
-                                          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Icon(TablerIcons.box_margin,
-                                              size: 18, color: defaultPalette.extras[0]),
-                                            const SizedBox(
-                                              width: 2,
-                                            ),  
-                                            Expanded(
-                                              child: Text(
-                                                'margin',
-                                                style: GoogleFonts.lexend(
-                                                  fontSize: 15,
-                                                  letterSpacing: -1,
-                                                  fontWeight: FontWeight.w600,
-                                                  ),
-                                              ),
-                                            ),
-                            
-                                            const SizedBox(
-                                              width: 5,
-                                            ),
-                                            //Margin ONE Field
-                                            Expanded(
-                                              child: TextFormField(
-                                                onTapOutside: (event) {
-                                                  marginAllFocus.unfocus();
-                                                },
-                                                obscureText: documentPropertiesList[
-                                                        currentPageIndex]
-                                                    .useIndividualMargins,
-                                                focusNode: marginAllFocus,
-                                                controller: documentPropertiesList[
-                                                        currentPageIndex]
-                                                    .marginAllController,
-                                                inputFormatters: [
-                                                  NumericInputFormatter(
-                                                      )
-                                                ],
-                                                textAlignVertical:
-                                                    TextAlignVertical.top,
-                                                textAlign: TextAlign.center,
-                                                decoration: InputDecoration(
-                                                  contentPadding:
-                                                      const EdgeInsets.all(0),
-                                                  floatingLabelAlignment:
-                                                      FloatingLabelAlignment.center,
-                                                  labelStyle: GoogleFonts.lexend(
-                                                      color: defaultPalette.black),
-                                                  filled: true,
-                                                  fillColor:
-                                                      !documentPropertiesList[
-                                                                  currentPageIndex]
-                                                              .useIndividualMargins
-                                                          ? defaultPalette.primary
-                                                          : defaultPalette.primary
-                                                              .withOpacity(0.5),
-                                                  border: InputBorder.none,
-                                                  enabledBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5.0), // Same as border
-                                                  ),
-                                                  disabledBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5.0), // Same as border
-                                                  ),
-                                                  focusedBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                        width: 1.5,
-                                                        color: defaultPalette
-                                                            .tertiary),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5.0), // Same as border
-                                                  ),
-                                                ),
-                                                keyboardType: TextInputType.number,
-                                                style: GoogleFonts.lexend(
-                                                  fontSize: 13,
-                                                  letterSpacing: -1,
-                                                  fontWeight: FontWeight.w600,
-                                                    color: defaultPalette.black),
-                                                onChanged: (value) {
-                                                  setState(() {
-                            
-                                                  documentPropertiesList[
-                                                          currentPageIndex]
-                                                      .marginTopController
-                                                      .text = value;
-                                                  documentPropertiesList[
-                                                          currentPageIndex]
-                                                      .marginBottomController
-                                                      .text = value;
-                                                  documentPropertiesList[
-                                                          currentPageIndex]
-                                                      .marginLeftController
-                                                      .text = value;
-                                                  documentPropertiesList[
-                                                          currentPageIndex]
-                                                      .marginRightController
-                                                      .text = value;
-                                                  // _updatePdfPreview(
-                                                  //     '');
-                                                  });
-                                                },
-                                                enabled: !documentPropertiesList[
-                                                        currentPageIndex]
-                                                    .useIndividualMargins,
-                                              ),
-                                            ),
-                            
-                                            // const SizedBox(
-                                            //   width: 2,
-                                            // ),
+                                            ...pageMarginTile(0),
+                                           
                                              ////INDIVIDUAL MARGINS BUTTON
                                             MouseRegion(
                                               cursor:SystemMouseCursors.click,
@@ -17906,8 +17817,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           ),
                                               ),
                                             )
-                                            // Text(
-                                            //     'Use Individual Margins'),
                                           ],
                                         ),
                                       ),
@@ -17916,558 +17825,37 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           .useIndividualMargins)
                                         Column(
                                           children: [
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
                                             //TOP AND BOTTOM Margin TiTle
-                            
-                                            Row(
-                                              children: [
-                                                //Top Margin text
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: SizedBox(
-                                                    height: textFieldHeight / 2,
-                                                    child: Row(
-                                                      children: [
-                                                        Expanded(
-                                                          flex: 1,
-                                                          child: Text(
-                                                            'top',
-                                                            style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 13),
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                        //TOP Margin ONE Field
-                                                        Expanded(
-                                                          flex: 1,
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) {
-                                                              marginTopFocus
-                                                                  .unfocus();
-                                                            },
-                                                            focusNode:
-                                                                marginTopFocus,
-                                                            controller: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginTopController,
-                                                            inputFormatters: [
-                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                              NumericInputFormatter(
-                                                                  maxValue: (documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .pageFormatController
-                                                                              .height /
-                                                                          1.11 -
-                                                                      double.parse(documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginBottomController
-                                                                          .text))),
-                                                            ],
-                                                            cursorColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            textAlign:
-                                                                TextAlign.center,
-                                                            textAlignVertical:
-                                                                TextAlignVertical
-                                                                    .top,
-                                                            decoration:
-                                                                InputDecoration(
-                                                              contentPadding:
-                                                                  const EdgeInsets
-                                                                      .all(0),
-                                                              filled: true,
-                                                              fillColor:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              border:
-                                                                  OutlineInputBorder(
-                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Replace with your desired radius
-                                                              ),
-                                                              enabledBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                              focusedBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 3,
-                                                                    color: defaultPalette
-                                                                        .tertiary),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                            ),
-                                                            keyboardType:
-                                                                TextInputType
-                                                                    .number,
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    // fontStyle: FontStyle.italic,
-                                                                    fontSize: 12,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                            onChanged: (value) {
-                                                              // setState(() {
-                                                              if (value.isEmpty) {
-                                                                documentPropertiesList[
-                                                                        currentPageIndex]
-                                                                    .marginTopController
-                                                                    .text = '0';
-                                                              }
-                                                              setState(() {});
-                                                              // _updatePdfPreview(
-                                                              //     '');
-                                                              // });
-                                                            },
-                                                            enabled: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .useIndividualMargins,
-                                                          ),
-                                                        ),
-                            
-                                                        ],
-                                                    ),
-                                                  ),
-                                                ),
-                            
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                //Bottom Margin text
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: SizedBox(
-                                                    height: textFieldHeight / 2,
-                                                    child: Row(
-                                                      children: [
-                                                        Expanded(
-                                                          flex: 3,
-                                                          child: Text(
-                                                            'bottom',
-                                                             style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 13),
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                        //Bottom Margin ONE Field
-                                                        Expanded(
-                                                          flex: 2,
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) {
-                                                              marginBottomFocus
-                                                                  .unfocus();
-                                                            },
-                                                            focusNode:
-                                                                marginBottomFocus,
-                                                            controller: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginBottomController,
-                                                            inputFormatters: [
-                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                              NumericInputFormatter(
-                                                                  maxValue: (documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .pageFormatController
-                                                                              .height /
-                                                                          1.11 -
-                                                                      double.parse(documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginTopController
-                                                                          .text))),
-                                                            ],
-                                                            cursorColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            textAlign:
-                                                                TextAlign.center,
-                                                            textAlignVertical:
-                                                                TextAlignVertical
-                                                                    .top,
-                                                            decoration:
-                                                                InputDecoration(
-                                                              contentPadding:
-                                                                  const EdgeInsets
-                                                                      .all(0),
-                                                              filled: true,
-                                                              fillColor:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              border:
-                                                                  OutlineInputBorder(
-                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Replace with your desired radius
-                                                              ),
-                                                              enabledBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                              focusedBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 3,
-                                                                    color: defaultPalette
-                                                                        .tertiary),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                            ),
-                                                            keyboardType:
-                                                                TextInputType
-                                                                    .number,
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    // fontStyle: FontStyle.italic,
-                                                                    fontSize: 12,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                            onChanged: (value) {
-                                                              // setState(() {
-                                                              if (value.isEmpty) {
-                                                                documentPropertiesList[
-                                                                        currentPageIndex]
-                                                                    .marginBottomController
-                                                                    .text = '0';
-                                                              }
-                                                              setState(() {});
-                                                              // _updatePdfPreview(
-                                                              //     '');
-                                                              // });
-                                                            },
-                                                            enabled: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .useIndividualMargins,
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            // LEFT AND RIGHT Margin Title
-                                            Row(
-                                              children: [
-                                                //Left Margin text
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: SizedBox(
-                                                    height: textFieldHeight / 2,
-                                                    child: Row(
-                                                      children: [
-                                                        Expanded(
-                                                          child: Text(
-                                                            'left',
-                                                             style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 13),
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                        //Left Margin ONE Field
-                                                        Expanded(
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) {
-                                                              marginBottomFocus
-                                                                  .unfocus();
-                                                            },
-                                                            focusNode:
-                                                                marginLeftFocus,
-                                                            controller: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginLeftController,
-                                                            inputFormatters: [
-                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                              NumericInputFormatter(
-                                                                  maxValue: (documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .pageFormatController
-                                                                              .height /
-                                                                          1.11 -
-                                                                      double.parse(documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginRightController
-                                                                          .text))),
-                                                            ],
-                                                            cursorColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            textAlign:
-                                                                TextAlign.center,
-                                                            textAlignVertical:
-                                                                TextAlignVertical
-                                                                    .top,
-                                                            decoration:
-                                                                InputDecoration(
-                                                              contentPadding:
-                                                                  const EdgeInsets
-                                                                      .all(0),
-                                                              filled: true,
-                                                              fillColor:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              border:
-                                                                  OutlineInputBorder(
-                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Replace with your desired radius
-                                                              ),
-                                                              enabledBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                              focusedBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 3,
-                                                                    color: defaultPalette
-                                                                        .tertiary),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                            ),
-                                                            keyboardType:
-                                                                TextInputType
-                                                                    .number,
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    // fontStyle: FontStyle.italic,
-                                                                    fontSize: 12,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                            onChanged: (value) {
-                                                              // setState(() {
-                                                              if (value.isEmpty) {
-                                                                documentPropertiesList[
-                                                                        currentPageIndex]
-                                                                    .marginLeftController
-                                                                    .text = '0';
-                                                              }
-                                                              setState(() {});
-                                                              // _updatePdfPreview(
-                                                              //     '');
-                                                              // });
-                                                            },
-                                                            enabled: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .useIndividualMargins,
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  width: 5,
-                                                ),
-                                                //Right Margin text
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: SizedBox(
-                                                    height: textFieldHeight / 2,
-                                                    child: Row(
-                                                      children: [
-                                                        Expanded(
-                                                          flex: 1,
-                                                          child: Text(
-                                                            'right',
-                                                             style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 13),
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                        //Right Margin ONE Field
-                                                        Expanded(
-                                                          child: TextFormField(
-                                                            onTapOutside: (event) {
-                                                              marginBottomFocus
-                                                                  .unfocus();
-                                                            },
-                                                            focusNode:
-                                                                marginRightFocus,
-                                                            controller: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .marginRightController,
-                                                            inputFormatters: [
-                                                              // FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                                              NumericInputFormatter(
-                                                                  maxValue: (documentPropertiesList[
-                                                                                  currentPageIndex]
-                                                                              .pageFormatController
-                                                                              .height /
-                                                                          1.11 -
-                                                                      double.parse(documentPropertiesList[
-                                                                              currentPageIndex]
-                                                                          .marginLeftController
-                                                                          .text))),
-                                                            ],
-                                                            cursorColor:
-                                                                defaultPalette
-                                                                    .secondary,
-                                                            textAlign:
-                                                                TextAlign.center,
-                                                            textAlignVertical:
-                                                                TextAlignVertical
-                                                                    .top,
-                                                            decoration:
-                                                                InputDecoration(
-                                                              contentPadding:
-                                                                  const EdgeInsets
-                                                                      .all(0),
-                                                              filled: true,
-                                                              fillColor:
-                                                                  defaultPalette
-                                                                      .primary,
-                                                              border:
-                                                                  OutlineInputBorder(
-                                                                // borderSide: BorderSide(width: 5, color: defaultPalette.black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Replace with your desired radius
-                                                              ),
-                                                              enabledBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 1.2,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                              focusedBorder:
-                                                                  OutlineInputBorder(
-                                                                borderSide: BorderSide(
-                                                                    width: 3,
-                                                                    color: defaultPalette
-                                                                        .tertiary),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5.0), // Same as border
-                                                              ),
-                                                            ),
-                                                            keyboardType:
-                                                                TextInputType
-                                                                    .number,
-                                                            style:
-                                                                GoogleFonts.bungee(
-                                                                    // fontStyle: FontStyle.italic,
-                                                                    fontSize: 12,
-                                                                    color:
-                                                                        defaultPalette
-                                                                            .black),
-                                                            onChanged: (value) {
-                                                              // setState(() {
-                                                              if (value.isEmpty) {
-                                                                documentPropertiesList[
-                                                                        currentPageIndex]
-                                                                    .marginRightController
-                                                                    .text = '0';
-                                                              }
-                                                              setState(() {});
-                                                              // _updatePdfPreview(
-                                                              //     '');
-                                                              // });
-                                                            },
-                                                            enabled: documentPropertiesList[
-                                                                    currentPageIndex]
-                                                                .useIndividualMargins,
-                                                          ),
-                                                        ),
-                            
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
                                             const SizedBox(
                                               height: 5,
-                                            )
+                                            ),
+                                            SizedBox(
+                                              height:sWidth*wH2DividerPosition>220? 25:45,
+                                              child: Flex(
+                                                direction: sWidth*wH2DividerPosition<220? Axis.vertical: Axis.horizontal ,
+                                                children: [
+                                                  Expanded(child: Row(children: pageMarginTile(1))),
+                                                  Expanded(child: Row(children: pageMarginTile(2))),
+                                                  
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height:sWidth*wH2DividerPosition>220? 25:45,
+                                              child: Flex(
+                                                direction: sWidth*wH2DividerPosition<220? Axis.vertical: Axis.horizontal ,
+                                                children: [
+                                                  Expanded(child: Row(children: pageMarginTile(3))),
+                                                  Expanded(child: Row(children: pageMarginTile(4))),
+                                                  
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              height: 10,
+                                            ),
                                           ],
                                         ),
-                                      // Divider(),
                                     ],
                                   ),
                                   
@@ -18483,10 +17871,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       padding: EdgeInsets.only(left: 0),
                                       margin: EdgeInsets.only(left: 0, right: 3),
                                       decoration: BoxDecoration(
-                                          // border: Border.all(
-                                          //   width:0.6,
-                                          //   color: defaultPalette.extras[0].withOpacity(0.5),
-                                          // ),
                                           color: defaultPalette.primary,
                                           borderRadius: BorderRadius.circular(6)),
                                       child: Row(
@@ -18684,9 +18068,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ],
                                       ),
                                     ),],
-                                  
-                                  
-                                  
                                   
                                   const SizedBox(
                                     height: 30,
@@ -25908,26 +25289,28 @@ class SheetTableWidgetLayoutDelegate extends MultiChildLayoutDelegate {
           // Calculate top offset
           double top = 0.0;
           for (int i = 0; i < row; i++) {
-            top += rowData[i].size;
+            if (!rowData[i].hide) top += rowData[i].size;
           }
 
-          // Calculate left offset
           double left = 0.0;
           for (int i = 0; i < col; i++) {
-            left += columnData[i].size;
+            if (!columnData[i].hide) left += columnData[i].size;
           }
 
-          // Calculate width (colSpan)
           final double width = columnData
-              .skip(col)
-              .take(cell.colSpan)
-              .fold(0.0, (a, b) => a + b.size);
+            .asMap()
+            .entries
+            .where((entry) =>
+                entry.key >= col && entry.key < col + cell.colSpan && !entry.value.hide)
+            .fold(0.0, (sum, entry) => sum + entry.value.size);
 
-          // Calculate height (rowSpan)
           final double height = rowData
-              .skip(row)
-              .take(cell.rowSpan)
-              .fold(0.0, (a, b) => a + b.size);
+            .asMap()
+            .entries
+            .where((entry) =>
+                entry.key >= row && entry.key < row + cell.rowSpan && !entry.value.hide)
+            .fold(0.0, (sum, entry) => sum + entry.value.size);
+
 
           layoutChild(
             layoutId,

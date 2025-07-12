@@ -3042,13 +3042,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             border: Border.all(),
                                             borderRadius:
                                                 BorderRadius.circular(15)),
-                                        width: 4,
+                                        width: isLayoutTileView? 4: 6,
                                       );
                                     },
                                   child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListView.builder(
-                                    padding: EdgeInsets.only(right:5),
+                                    padding: EdgeInsets.only(right:isLayoutTileView?6:3),
                                   controller: controller,
                                   physics: physics,
                                   itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
