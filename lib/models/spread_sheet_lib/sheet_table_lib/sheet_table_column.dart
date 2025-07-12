@@ -109,4 +109,16 @@ class SheetTableColumn extends SheetItem {
       indexPath: indexPath,
       );
   }
+  SheetTableColumn copy() {
+    return SheetTableColumn(
+      id: id,
+      parentId: parentId,
+      indexPath: indexPath,
+      size: size,
+      minSize: minSize,
+      maxSize: maxSize,
+      hide: hide,
+      columnDecoration: columnDecoration,
+    );
+  }
 }
