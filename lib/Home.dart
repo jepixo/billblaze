@@ -101,6 +101,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   ];
   int selectedYear = DateTime.now().year;
   int selectedMonth = DateTime.now().month;
+  int touchedIndex = -1;
   bool isDragging = false;
   List<TextEditingController> dateTextControllers = [
   ];
@@ -2082,74 +2083,77 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               child: Transform.rotate(
                 alignment: Alignment(-1, -1),
                 angle: -pi/2,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: AnimatedToggleSwitch<bool>.dual(
-                    current: isTemplateView,
-                    first: true,
-                    second: false,
-                    onChanged: (value) {
-                      setState(() {
-                        isTemplateView = value;
-                      });
-                    },
-                    animationCurve:
-                        Curves.easeInOutExpo,
-                    animationDuration:
-                        Durations.medium4,
-                    borderWidth:
-                        2, // backgroundColor is set independently of the current selection
-                    styleBuilder: (value) =>
-                        ToggleStyle(
-                            borderRadius:
-                                BorderRadius
-                                    .circular(8),
-                            indicatorBorderRadius:
-                                BorderRadius.circular(8),
-                            indicatorBorder: Border.all(),
-                            borderColor:value ?
-                                defaultPalette
-                                    .tertiary : defaultPalette.extras[0],
-                            backgroundColor: value ?
-                                defaultPalette
-                                    .tertiary : defaultPalette.extras[0],
-                            indicatorColor:
-                                defaultPalette
-                                        .primary), // indicatorColor changes and animates its value with the selection
-                    iconBuilder: (value) {
-                      return Transform.rotate(
-                        angle: pi/2,
-                        child: Icon(
-                            !value? TablerIcons
-                                    .layout
-                                : TablerIcons
-                                    .template,
-                            size: mapValueDimensionBased( 12, 30, sWidth,sHeight),
-                            color: defaultPalette
-                                .extras[0]),
-                      );
-                    },
-                    textBuilder: (value) {
-                      return Text(
-                        value ? 'template'
-                            : 'layout',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            GoogleFonts.lexend(
-                                fontSize: mapValueDimensionBased( 10, 30, sWidth,sHeight),
-                                fontWeight: FontWeight.w500,
-                                color: !value ?
-                                defaultPalette
-                                    .primary : defaultPalette.extras[0],
-                                ),
-                      );
-                    },
-                    height:sWidth/30,
-                    spacing:(sHeight/2.5)-150,
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: AnimatedToggleSwitch<bool>.dual(
+                      current: isTemplateView,
+                      first: true,
+                      second: false,
+                      onChanged: (value) {
+                        setState(() {
+                          isTemplateView = value;
+                        });
+                      },
+                      animationCurve:
+                          Curves.easeInOutExpo,
+                      animationDuration:
+                          Durations.medium4,
+                      borderWidth:
+                          2, // backgroundColor is set independently of the current selection
+                      styleBuilder: (value) =>
+                          ToggleStyle(
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(8),
+                              indicatorBorderRadius:
+                                  BorderRadius.circular(8),
+                              indicatorBorder: Border.all(),
+                              borderColor:value ?
+                                  defaultPalette
+                                      .tertiary : defaultPalette.extras[0],
+                              backgroundColor: value ?
+                                  defaultPalette
+                                      .tertiary : defaultPalette.extras[0],
+                              indicatorColor:
+                                  defaultPalette
+                                          .primary), // indicatorColor changes and animates its value with the selection
+                      iconBuilder: (value) {
+                        return Transform.rotate(
+                          angle: pi/2,
+                          child: Icon(
+                              !value? TablerIcons
+                                      .layout
+                                  : TablerIcons
+                                      .template,
+                              size: mapValueDimensionBased( 12, 30, sWidth,sHeight),
+                              color: defaultPalette
+                                  .extras[0]),
+                        );
+                      },
+                      textBuilder: (value) {
+                        return Text(
+                          value ? 'template'
+                              : 'layout',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              GoogleFonts.lexend(
+                                  fontSize: mapValueDimensionBased( 10, 30, sWidth,sHeight),
+                                  fontWeight: FontWeight.w500,
+                                  color: !value ?
+                                  defaultPalette
+                                      .primary : defaultPalette.extras[0],
+                                  ),
+                        );
+                      },
+                      height:sWidth/30,
+                      spacing:(sHeight/2.5)-150,
+                    ),
                   ),
                 ),
               ),
@@ -2807,32 +2811,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         500)),
               ),
             ),
-            //Bills colored dots
-            // AnimatedPositioned(
-            //   duration: Durations.medium2,
-            //   top: topPadPosDistance +80,
-            //   left: isBillTab ? 120 : (sWidth / 1.8),
-            //   child: Row(
-            //     mainAxisAlignment: MainAxisAlignment.end,
-            //     children: [
-            //       SizedBox(width:4),
-            //       Container(
-            //       decoration: BoxDecoration(
-            //         color: defaultPalette.extras[0],
-            //         shape: BoxShape.circle,
-            //       ),
-            //       child: SizedBox(height: dotSize,width:dotSize),
-            //       ),
-            //       SizedBox(width:4),
-            //       Container(
-            //       decoration: BoxDecoration(
-            //         color: defaultPalette.primary,
-            //         shape: BoxShape.circle,
-            //       ),
-            //       child: SizedBox(height: dotSize, width:dotSize),
-            //       ),
-            //     ]
-                
+              
             //   ),
             // ),
             // //
@@ -2855,23 +2834,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 )
               ),
             ),
-            //billTEXT TITLE
-            // AnimatedPositioned(
-            //   duration: Durations.medium2,
-            //   left:sWidth / (sWidth / 120),
-            //   top: isBillTab ?  (2.25*sHeight / 4): sHeight / 4,
-            //   child: Text('Bills',
-            //     textAlign: TextAlign.left,
-            //     style: GoogleFonts.outfit(
-            //       color: defaultPalette.extras[0],
-            //       fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
-            //       letterSpacing: -2,
-            //       fontWeight: FontWeight.w600,
-            //       height: 0.9
-            //     )
-            //   ),
-            // ),
-            
             
             // //BillsList
             AnimatedPositioned(
@@ -3506,12 +3468,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            //  charts analytical
+            //  charts revenue analytical
            AnimatedPositioned(
               duration: Durations.medium2,
               // right: 15,
               left: 90,
-              top: isBillTab ? 70 : sHeight / 4,
+              top: isBillTab ? 60 : sHeight / 4,
               child: ValueListenableBuilder(
               valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
               builder: (context, Box<LayoutModel> box, _) {
@@ -3603,6 +3565,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // title Revenue
                       SizedBox(
                         height: 25,
                         child: Row(
@@ -3610,7 +3573,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(width: 5,),
-                            Icon(TablerIcons.chart_bar, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
+                            Icon(TablerIcons.chart_dots_3, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
                             SizedBox(width: 5,),
                             Expanded(
                               child: Text('Revenue',style: GoogleFonts.lexend(
@@ -4105,6 +4068,695 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 }
               ),
             ),
+             //  charts tbd analytical
+           AnimatedPositioned(
+              duration: Durations.medium2,
+              // right: 15,
+              left: 90,
+              top: isBillTab ? 70 + sHeight / 1.8: sHeight / 4,
+              child: ValueListenableBuilder(
+              valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
+              builder: (context, Box<LayoutModel> box, _) {
+                final allLayouts = box.values.toList();
+
+                // Collect all revised layout base names
+                final revisedNames = allLayouts
+                    .where((l) => l.name.endsWith('-revised'))
+                    .map((l) => l.name.replaceAll('-revised', ''))
+                    .toSet();
+
+                // Now filter the layouts
+                final layouts = allLayouts.where((layout) {
+                  final name = layout.name;
+                  if (name.endsWith('-old')) return false;
+                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                  return true;
+                }).toList();
+
+
+                final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
+                final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
+                final debitNoteCount = layouts.where((l) => l.type == SheetType.debitNote.index).length;
+                final billOfSupplyCount = layouts.where((l) => l.type == SheetType.billOfSupply.index).length;
+
+                double totalRevenue = 0;
+
+
+                
+
+                // print(monthRevenueMap);
+                return Container(
+                  width: (sWidth / 1.73 - 100) / 2,
+                  height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                  padding: EdgeInsets.all(5).copyWith(right: 10),
+                  decoration: BoxDecoration(
+                    color: defaultPalette.primary,
+                    borderRadius: BorderRadius.circular(20)
+                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // title Revenue
+                      SizedBox(
+                        height: 25,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 5,),
+                            Icon(TablerIcons.chart_dots_3, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
+                            SizedBox(width: 5,),
+                            Expanded(
+                              child: Text('Revenue',style: GoogleFonts.lexend(
+                                fontSize: mapValueDimensionBased(20, 23, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -1),),
+                            ),
+                            ...datePropertyTile(1),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      //yearly revenue
+                      Expanded(child: 
+                      LineChart(
+                          LineChartData(
+                          backgroundColor: defaultPalette.secondary,
+                          lineTouchData: LineTouchData(
+                            touchSpotThreshold: 25,
+                            getTouchedSpotIndicator:
+                                (LineChartBarData barData, List<int> spotIndexes) {
+                              return spotIndexes.map((spotIndex) {
+                                final spot = barData.spots[spotIndex];
+                                
+                                return TouchedSpotIndicatorData(
+                                  FlLine(
+                                    color: defaultPalette.tertiary,
+                                    strokeWidth: 4,
+                                  ),
+                                  FlDotData(
+                                    getDotPainter: (spot, percent, barData, index) {
+                                      
+                                      return FlDotCirclePainter(
+                                        radius: 8,
+                                        color: defaultPalette.primary,
+                                        strokeWidth: 5,
+                                        strokeColor: defaultPalette.tertiary,
+                                      );
+                                    },
+                                  ),
+                              );
+                            }).toList();
+                          },
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                              return touchedBarSpots.map((barSpot) {
+                                final flSpot = barSpot;
+                                 if (barSpot.x ==0 || barSpot.x ==13 ) {
+                                   return null;
+                                 }   
+                                
+                                    
+                                return LineTooltipItem(
+                                  '${monthNames[(barSpot.x-1).clamp(0, 12).round()]} Revenue \n',
+                                 GoogleFonts.lexend(
+                                    color: defaultPalette.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: NumberFormat.decimalPattern('en_IN').format(monthRevenueMap[(barSpot.x).clamp(1, 12).round()]),
+                                      style:GoogleFonts.lexend(
+                                        color: defaultPalette.primary,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                     TextSpan(
+                                      text: '₹ ',
+                                      style:GoogleFonts.lexend(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                  textAlign: TextAlign.left
+                                );
+                              }).toList();
+                            },
+                          ),
+                          touchCallback:
+                              (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                            if (!event.isInterestedForInteractions ||
+                                lineTouch == null ||
+                                lineTouch.lineBarSpots == null) {
+                              setState(() {
+                                // touchedValue = -1;
+                              });
+                              return;
+                            }
+                          },
+                          ),
+                          extraLinesData: ExtraLinesData(
+                          ),
+                          lineBarsData: [
+                          LineChartBarData(
+                            isStepLineChart: true,
+                            spots: [
+                              const FlSpot(0, 0),
+                              for( var entry in monthRevenueMap.entries)
+                                FlSpot(entry.key, entry.value),
+                              const FlSpot(13, 0),
+                            ],
+                            isCurved: false,
+                            barWidth: 5,
+                            color: defaultPalette.secondary,
+                
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(colors: [
+                                defaultPalette.extras[0],defaultPalette.extras[0],
+                              ],
+                              stops: [0.5, 1],
+                              begin: Alignment(0, -1),
+                              end: Alignment(0, 1),
+                              ),
+                
+                              spotsLine: BarAreaSpotsLine(
+                                show: true,
+                                flLineStyle: FlLine(
+                                  color: defaultPalette.extras[0],
+                                  strokeWidth: 1,
+                                ),
+                                
+                              ),
+                            ),
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) {
+                                
+                                  return FlDotSquarePainter(
+                                    size: 8.5,
+                                    color: defaultPalette.primary,
+                                    strokeWidth: 3,
+                                    strokeColor: defaultPalette.extras[0],
+                                  );
+                                
+                              },
+                              checkToShowDot: (spot, barData) {
+                                return( spot.y >1 && spot.x!=0);
+                              },
+                            ),
+                          ),
+                          ],
+                          minY: 0,
+                          maxY: max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),
+                          borderData: FlBorderData(
+                          show: true,
+                          border: Border(
+                            left: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 0),
+                            right: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 0),
+                            bottom: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 5),
+                            top: BorderSide(
+                              color: defaultPalette.secondary,
+                            width: 12),
+                            
+                          ),
+                          ),
+                          gridData: FlGridData(
+                          show: true,
+                          drawHorizontalLine: false,
+                          drawVerticalLine: false,
+                          getDrawingHorizontalLine: (value) {
+                            if (value == 0) {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 2,
+                              );
+                            } else {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 0.5,
+                              );
+                            }
+                          },
+                          getDrawingVerticalLine: (value) {
+                            if (value == 0) {
+                              return const FlLine(
+                                color: Colors.redAccent,
+                                strokeWidth: 10,
+                              );
+                            } else {
+                              return  FlLine(
+                                color: defaultPalette.tertiary,
+                                strokeWidth: 0.5,
+                              );
+                            }
+                          },
+                          ),
+                          titlesData: FlTitlesData(
+                          show: true,
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                              interval: getSmartInterval( max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),),
+                              getTitlesWidget:(value, meta) {
+                                if (meta.min == value || meta.max == value) {
+                                  return const SizedBox.shrink(); // Hide first and last labels
+                                }
+                                return Text(meta.formattedValue.toLowerCase()+'\₹',
+                                  style: GoogleFonts.lexend(
+                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                    letterSpacing: -1,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              // reservedSize: 40,
+                              interval: 1,
+                              getTitlesWidget:(value, meta) {
+                                if (value ==0 || value ==13) {
+                                  return SizedBox.shrink();
+                                }
+                                return Text(monthNames[(value-1).clamp(0, double.infinity).round()],
+                                  style: GoogleFonts.lexend(
+                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                    letterSpacing: -1,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          ),
+                        ),
+                      )
+                      
+                      ),
+                      
+                    ],
+                  ),
+                                  
+                );
+                }
+              ),
+            ),
+            //  charts quantity analytical
+           AnimatedPositioned(
+              duration: Durations.medium2,
+              // right: 15,
+              left: 90 +(sWidth / 1.73 - 100)/2 + 10,
+              top: isBillTab ? 70 + sHeight / 1.8: sHeight / 4,
+              child: ValueListenableBuilder(
+              valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
+              builder: (context, Box<LayoutModel> box, _) {
+                final allLayouts = box.values.toList();
+
+                // Collect all revised layout base names
+                final revisedNames = allLayouts
+                    .where((l) => l.name.endsWith('-revised'))
+                    .map((l) => l.name.replaceAll('-revised', ''))
+                    .toSet();
+
+                // Now filter the layouts
+                final layouts = allLayouts.where((layout) {
+                  final name = layout.name;
+                  if (name.endsWith('-old')) return false;
+                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                  return true;
+                }).toList();
+
+
+                final Map<SheetType, int> yearlyCounts = {
+                  SheetType.taxInvoice: 0,
+                  SheetType.creditNote: 0,
+                  SheetType.debitNote: 0,
+                  SheetType.billOfSupply: 0,
+                };
+
+                Map<SheetType, int> monthlyCounts = {
+                  SheetType.taxInvoice: 0,
+                  SheetType.creditNote: 0,
+                  SheetType.debitNote: 0,
+                  SheetType.billOfSupply: 0,
+                  SheetType.proformaInvoice: 0,
+                };
+
+                for (final layout in layouts) {
+                  final type = SheetType.values[layout.type];
+
+                  if (layout.createdAt.year == selectedYear) {
+                    yearlyCounts[type] = (yearlyCounts[type] ?? 0) + 1;
+                    
+                    if (layout.createdAt.month == selectedMonth) {
+                      monthlyCounts[type] = (monthlyCounts[type]?? 0) + 1;
+                    }
+                  }
+                }
+                // Sort the monthlyCounts by index
+                monthlyCounts = Map.fromEntries(
+                  monthlyCounts.entries.toList()
+                    ..sort((a, b) => a.key.index.compareTo(b.key.index))
+                );
+
+
+                
+
+                // print(monthRevenueMap);
+                return Container(
+                  width: (sWidth / 1.73 - 100) / 2 -10, // -10 because of the gap between the two charts
+                  height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                  padding: EdgeInsets.all(5).copyWith(right: 5),
+                  decoration: BoxDecoration(
+                    color: defaultPalette.primary,
+                    borderRadius: BorderRadius.circular(20)
+                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(width: 5,),
+                          Icon(TablerIcons.tallymarks, size: mapValueDimensionBased(10, 30, sWidth, sHeight),),
+                          SizedBox(width: 5,),
+                          Expanded(
+                            child: Text('Quantity',style: GoogleFonts.lexend(
+                              fontSize: mapValueDimensionBased(14, 23, sWidth, sHeight),
+                              color: defaultPalette.extras[0],
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -1),),
+                          ),
+                          Expanded(child: Text(
+                            '$selectedMonth/${selectedYear.toString().substring(2, 4)}',
+                            textAlign: TextAlign.end,
+                            style: GoogleFonts.lexend(
+                              fontSize: mapValueDimensionBased(10, 15, sWidth, sHeight),
+                              color: defaultPalette.extras[0],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          )),
+                          SizedBox(width: 5,),
+                          // ...datePropertyTile(2),
+                        ],
+                      ),
+                      //type revenue
+                      Expanded(child: 
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 20,
+                            child: Padding(
+                            padding: const EdgeInsets.only(top: 6.0, bottom: 5, left: 0),
+                            child: LineChart(
+                            LineChartData(
+                            backgroundColor: defaultPalette.secondary,
+                            lineTouchData: LineTouchData(
+                              touchSpotThreshold: 25,
+                              getTouchedSpotIndicator:
+                                  (LineChartBarData barData, List<int> spotIndexes) {
+                                return spotIndexes.map((spotIndex) {
+                                  final spot = barData.spots[spotIndex];
+                                  
+                                  return TouchedSpotIndicatorData(
+                                    FlLine(
+                                      color: defaultPalette.tertiary,
+                                      strokeWidth: 4,
+                                    ),
+                                    FlDotData(
+                                      getDotPainter: (spot, percent, barData, index) {
+                                        
+                                        return FlDotCirclePainter(
+                                          radius: 8,
+                                          color: defaultPalette.primary,
+                                          strokeWidth: 5,
+                                          strokeColor: defaultPalette.tertiary,
+                                        );
+                                      },
+                                    ),
+                                );
+                              }).toList();
+                            },
+                            touchTooltipData: LineTouchTooltipData(
+                              getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                              getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                                return touchedBarSpots.map((barSpot) {
+                                  final flSpot = barSpot;
+                                   if (barSpot.x ==0 || barSpot.x ==monthlyCounts.length+1 ) {
+                                     return null;
+                                   }   
+                                  
+                                      
+                                  return LineTooltipItem(
+                                    '${DateFormat.MMMM().format(DateTime(selectedYear, selectedMonth))}\n${monthlyCounts.keys.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()].name}: ',
+                                   GoogleFonts.lexend(
+                                      color: defaultPalette.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: NumberFormat.decimalPattern('en_IN').format(monthlyCounts.values.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()]),
+                                        style:GoogleFonts.lexend(
+                                          color: defaultPalette.primary,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                       
+                                    ],
+                                    textAlign: TextAlign.left
+                                  );
+                                }).toList();
+                              },
+                            ),
+                            touchCallback:
+                                (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                              if (!event.isInterestedForInteractions ||
+                                  lineTouch == null ||
+                                  lineTouch.lineBarSpots == null) {
+                                setState(() {
+                                  // touchedValue = -1;
+                                });
+                                return;
+                              }
+                            },
+                            ),
+                            extraLinesData: ExtraLinesData(
+                            ),
+                            lineBarsData: [
+                            LineChartBarData(
+                              isStepLineChart: true,
+                              spots: [
+                                const FlSpot(0, 0),
+                                for (final entry in monthlyCounts.entries.toList()
+                                    ..sort((a, b) => a.key.index.compareTo(b.key.index)))
+                                  FlSpot(entry.key.index.toDouble(), entry.value.toDouble()),
+                                FlSpot(monthlyCounts.length+1, 0),
+                              ],
+                              isCurved: false,
+                              barWidth: 2,
+                              color: defaultPalette.extras[0],
+                                            
+                              belowBarData: BarAreaData(
+                                show: true,
+                                gradient: LinearGradient(colors: [
+                                  defaultPalette.secondary,defaultPalette.secondary,
+                                ],
+                                stops: [0.5, 1],
+                                begin: Alignment(0, -1),
+                                end: Alignment(0, 1),
+                                ),
+                                            
+                                spotsLine: BarAreaSpotsLine(
+                                  show: false,
+                                  flLineStyle: FlLine(
+                                    color: defaultPalette.extras[0],
+                                    strokeWidth: 1,
+                                  ),
+                                  
+                                ),
+                              ),
+                              dotData: FlDotData(
+                                show: true,
+                                getDotPainter: (spot, percent, barData, index) {
+                                  
+                                    return FlDotCirclePainter(
+                                      radius: 4.5,
+                                      color: defaultPalette.primary,
+                                      strokeWidth: 2,
+                                      strokeColor: defaultPalette.extras[0],
+                                    );
+                                  
+                                },
+                                checkToShowDot: (spot, barData) {
+                                  return( spot.x!=0 && spot.x!=monthlyCounts.length+1 );
+                                },
+                              ),
+                            ),
+                            ],
+                            minY: 0,
+                            maxY: max(monthlyCounts.values.isNotEmpty ? monthlyCounts.values.reduce(max).toDouble(): 0, 1),
+                            borderData: FlBorderData(
+                            show: true,
+                            border: Border(
+                              left: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 0),
+                              right: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 0),
+                              bottom: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 5),
+                              top: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 12),
+                              
+                            ),
+                            ),
+                            gridData: FlGridData(
+                            show: true,
+                            drawHorizontalLine: false,
+                            drawVerticalLine: false,
+                            getDrawingHorizontalLine: (value) {
+                              if (value == 0) {
+                                return  FlLine(
+                                  color: defaultPalette.tertiary,
+                                  strokeWidth: 2,
+                                );
+                              } else {
+                                return  FlLine(
+                                  color: defaultPalette.tertiary,
+                                  strokeWidth: 0.5,
+                                );
+                              }
+                            },
+                            getDrawingVerticalLine: (value) {
+                              if (value == 0) {
+                                return const FlLine(
+                                  color: Colors.redAccent,
+                                  strokeWidth: 10,
+                                );
+                              } else {
+                                return  FlLine(
+                                  color: defaultPalette.tertiary,
+                                  strokeWidth: 0.5,
+                                );
+                              }
+                            },
+                            ),
+                            titlesData: FlTitlesData(
+                            show: true,
+                            topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: mapValueDimensionBased(12, 38, sWidth, sHeight),
+                                interval: getSmartInterval( max(monthlyCounts.values.isNotEmpty ? monthlyCounts.values.reduce(max).toDouble(): 0, 1),),
+                                getTitlesWidget:(value, meta) {
+                                  if (meta.min == value || meta.max == value) {
+                                    return const SizedBox.shrink(); // Hide first and last labels
+                                  }
+                                  return Text(value.toString()+'  ',
+                                    style: GoogleFonts.lexend(
+                                      fontSize:mapValueDimensionBased(8, 15, sWidth, sHeight),
+                                      letterSpacing: -1,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: false,
+                                // reservedSize: 40,
+                                interval: 1,
+                                getTitlesWidget:(value, meta) {
+                                  if (value ==0 || value ==monthlyCounts.length+1) {
+                                    return SizedBox.shrink();
+                                  }
+                                  return Text(monthlyCounts.keys.toList()[(value-1).clamp(0, double.infinity).round()].name,
+                                    style: GoogleFonts.lexend(
+                                      fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                      letterSpacing: -1,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            ),
+                            ),
+                          ),
+                          )),
+                          Expanded(
+                            flex: 25,
+                            child: PieChart(
+                              PieChartData(
+                                pieTouchData: PieTouchData(
+                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                    setState(() {
+                                      if (!event.isInterestedForInteractions ||
+                                          pieTouchResponse == null ||
+                                          pieTouchResponse.touchedSection == null) {
+                                        touchedIndex = -1;
+                                        return;
+                                      }
+                                      touchedIndex = pieTouchResponse
+                                          .touchedSection!.touchedSectionIndex;
+                                      // print('Touched index: $touchedIndex');
+                                    });
+                                  },
+                                ),
+                                borderData: FlBorderData(
+                                  show: false,
+                                ),
+                                sectionsSpace: 1,
+                                centerSpaceRadius: mapValueDimensionBased(10, 50, sWidth, sHeight),
+                                sections: showingSections(
+                                  billCounts: yearlyCounts,
+                                  touchedIndex: touchedIndex,
+                                  sWidth: sWidth,
+                                  sHeight: sHeight,
+                                  ),
+                              ),
+                              swapAnimationDuration: Durations.short3,
+                            ),
+                          )
+                        ],
+                      ),
+            
+                      ),
+                      
+                    ],
+                  ),
+                                  
+                );
+                }
+              ),
+            ),
           
           ],
         ),
@@ -4424,8 +5076,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }
 }
   double getSmartInterval(double maxValue,) {
-  final cleanSteps = [
-    1, 2, 5, 10, 20, 25, 50,
+  final cleanSteps = [ 
+    0.5,1, 2, 5, 10, 20, 25, 50,
     100, 200, 250, 500,
     1000, 2000, 2500, 5000,
     10000, 20000, 25000, 50000,
@@ -4447,6 +5099,72 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   if (value == 0) return false;
   String str = value.toInt().toString();
   return str.substring(1).split('').every((c) => c == '0');
+}
+
+  List<PieChartSectionData> showingSections({
+  required Map<SheetType, int> billCounts,
+  required int touchedIndex,
+  double sWidth = 800,
+  double sHeight = 600,
+}) {
+  final totalBills = billCounts.values.fold(0, (sum, count) => sum + count);
+  if (totalBills == 0) return [];
+
+  final visibleEntries = billCounts.entries
+      .where((entry) => entry.value > 0)
+      .toList();
+
+  return List.generate(visibleEntries.length, (i) {
+    final entry = visibleEntries[i];
+    final type = entry.key;
+    final count = entry.value;
+    final isTouched = i == touchedIndex;
+    final fontSize = isTouched ? mapValueDimensionBased(25, 40, sWidth, sHeight) : mapValueDimensionBased(13, 30, sWidth, sHeight);
+    final radius = isTouched ? mapValueDimensionBased(40, 80, sWidth, sHeight) : mapValueDimensionBased(30, 60, sWidth, sHeight);
+    const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
+
+    String badgeLabel = type.name
+        .replaceAllMapped(RegExp(r'([A-Z])'), (m) => '\n${m[0]}')
+        ; // e.g. 'billOfSupply' -> 'bill\nof\nsupply'
+
+    return PieChartSectionData(
+      color: defaultPalette.extras[0], // You can assign different colors by type too
+      value: count.toDouble() / totalBills * 100,
+      title: count.toString(),
+      radius: radius,
+      titleStyle: GoogleFonts.lexend(
+        fontSize: fontSize,
+        fontWeight: FontWeight.bold,
+        color: defaultPalette.primary,
+        shadows: shadows,
+      ),
+      badgeWidget: Container(
+        decoration: BoxDecoration(
+          color: defaultPalette.primary,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: defaultPalette.extras[0], width: 0.2),
+          boxShadow: [
+            BoxShadow(
+              color: defaultPalette.extras[0].withOpacity(0.5),
+              blurRadius: 4,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.all(3),
+        child: Text(
+          badgeLabel,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lexend(
+            fontSize: fontSize *mapValueDimensionBased(0.4, 0.5, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+          ),
+        ),
+      ),
+      badgePositionPercentageOffset: 1.2,
+      titlePositionPercentageOffset: 0.3,
+    );
+  });
 }
 
 

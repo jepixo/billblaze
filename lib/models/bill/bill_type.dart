@@ -17,7 +17,7 @@ enum SheetType {
 List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
    List<RequiredText> defaultList;
   switch (type) {
-    case SheetType.taxInvoice:
+    case SheetType.taxInvoice || SheetType.proformaInvoice:
       defaultList =  [
         //23
         RequiredText(name: 'title', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
