@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:billblaze/colors.dart';
+import 'package:billblaze/components/color_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -112,48 +113,63 @@ class _EyeDropperState extends State<EyeDropper> {
         Visibility(
           visible: _enableEyeDropper,
           child: Positioned(
-            left: getOverlayPosition().dx-10,
+            left: getOverlayPosition().dx,
             top: getOverlayPosition().dy+30,
             child: Listener(
               onPointerMove: onPointerMove,
               onPointerUp: onPointerUp,
-              child: Material(
-                elevation: 5,
-                color: defaultPalette.transparent,
-                borderRadius: BorderRadius.circular(15),
-                child: ClipRRect(
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: defaultPalette.primary,
                   borderRadius: BorderRadius.circular(15),
-                  child: EyeDropperGridOverlay(
-                    colors: getSamplingGridColors(_offsetNotifier.value),
-                  ),
+                  // border: Border.all(
+                  //   color: defaultPalette.extras[0],
+                  //   width: 0,
+                  // ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: defaultPalette.extras[0].withOpacity(0.5),
+                      blurRadius: 50,
+                      spreadRadius: 20,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Material(
+                      elevation: 3,
+                      color: defaultPalette.transparent,
+                      borderRadius: BorderRadius.circular(15),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: EyeDropperGridOverlay(
+                          colors: getSamplingGridColors(_offsetNotifier.value),
+                        ),
+                      ),
+                    ),
+                     Container(
+                      width: 100,
+                      padding: const EdgeInsets.all(5),
+                      child: Text(
+                        _colorNotifier.value == null
+                          ? ''
+                          : '#'+colorToHex(_colorNotifier.value!),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lexend(
+                              fontSize: 15,
+                              letterSpacing: -1,
+                              fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ),
-        Visibility(
-          visible: _enableEyeDropper,
-          child: Positioned(
-            left: _offsetNotifier.value.dx-36,
-            top: _offsetNotifier.value.dy + 45,
-            child: Container(
-              width: 80,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
-              color: defaultPalette.tertiary,),
-              padding: const EdgeInsets.all(5),
-              child: Text(
-                _colorNotifier.value == null
-                    ? ''
-                    : colorToHex(_colorNotifier.value!),
-                    maxLines: 1,
-                      style: GoogleFonts.lexend(
-                          fontSize: 15,
-                          letterSpacing: -1,
-                          fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
-        ),
+        
       ],
     );
   }

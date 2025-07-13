@@ -1562,97 +1562,96 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       );
     }
 
-Widget _buildSheetTableWidget(SheetTable sheetTable) {
-  double tableHeight = 0.0;
-  double tableWidth = 0.0;
+  Widget _buildSheetTableWidget(SheetTable sheetTable) {
+    double tableHeight = 0.0;
+    double tableWidth = 0.0;
 
-  for (final row in sheetTable.rowData) {
-    if (!row.hide) tableHeight += row.size;
-  }
+    for (final row in sheetTable.rowData) {
+      if (!row.hide) tableHeight += row.size;
+    }
 
-  for (final col in sheetTable.columnData) {
-    if (!col.hide) tableWidth += col.size;
-  }
+    for (final col in sheetTable.columnData) {
+      if (!col.hide) tableWidth += col.size;
+    }
 
-  return buildDecoratedContainer(
-    sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration,
-    SizedBox(
-      width: sheetTable.expand ? null : tableWidth,
-      height: tableHeight,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          List<SheetTableColumn> localColumnData =
-              sheetTable.columnData.map((c) => c.copy()).toList();
+    return buildDecoratedContainer(
+      sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration,
+      SizedBox(
+        width: sheetTable.expand ? null : tableWidth,
+        height: tableHeight,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            List<SheetTableColumn> localColumnData =
+                sheetTable.columnData.map((c) => c.copy()).toList();
 
-          if (sheetTable.expand) {
-            double availableWidth = constraints.maxWidth;
+            if (sheetTable.expand) {
+              double availableWidth = constraints.maxWidth;
 
-            double totalWidth = localColumnData
-                .where((col) => !col.hide)
-                .fold(0.0, (sum, col) => sum + col.size);
+              double totalWidth = localColumnData
+                  .where((col) => !col.hide)
+                  .fold(0.0, (sum, col) => sum + col.size);
 
-            double overflow = totalWidth - availableWidth;
+              double overflow = totalWidth - availableWidth;
 
-            if (overflow > 0) {
-              for (int i = localColumnData.length - 1;
-                  i >= 0 && overflow > 0;
-                  i--) {
-                final col = localColumnData[i];
-                if (col.hide) continue;
+              if (overflow > 0) {
+                for (int i = localColumnData.length - 1;
+                    i >= 0 && overflow > 0;
+                    i--) {
+                  final col = localColumnData[i];
+                  if (col.hide) continue;
 
-                final minSize = col.minSize ?? 30.0;
-                final shrinkable = col.size - minSize;
+                  final minSize = col.minSize ?? 30.0;
+                  final shrinkable = col.size - minSize;
 
-                if (shrinkable > 0) {
-                  final shrink = shrinkable >= overflow ? overflow : shrinkable;
-                  col.size -= shrink;
-                  overflow -= shrink;
+                  if (shrinkable > 0) {
+                    final shrink = shrinkable >= overflow ? overflow : shrinkable;
+                    col.size -= shrink;
+                    overflow -= shrink;
+                  }
                 }
+              }
+
+              double fixedWidth = 0.0;
+              for (int i = 0; i < localColumnData.length; i++) {
+                if (localColumnData[i].hide) continue;
+                if (i == localColumnData.lastIndexWhere((c) => !c.hide)) break;
+                fixedWidth += localColumnData[i].size;
+              }
+
+              final lastVisibleIndex =
+                  localColumnData.lastIndexWhere((col) => !col.hide);
+              if (lastVisibleIndex != -1) {
+                final col = localColumnData[lastVisibleIndex];
+                final remainingWidth = availableWidth - fixedWidth;
+                col.size = remainingWidth.clamp(col.minSize ?? 30.0, availableWidth);
               }
             }
 
-            double fixedWidth = 0.0;
-            for (int i = 0; i < localColumnData.length; i++) {
-              if (localColumnData[i].hide) continue;
-              if (i == localColumnData.lastIndexWhere((c) => !c.hide)) break;
-              fixedWidth += localColumnData[i].size;
-            }
-
-            final lastVisibleIndex =
-                localColumnData.lastIndexWhere((col) => !col.hide);
-            if (lastVisibleIndex != -1) {
-              final col = localColumnData[lastVisibleIndex];
-              final remainingWidth = availableWidth - fixedWidth;
-              col.size = remainingWidth.clamp(col.minSize ?? 30.0, availableWidth);
-            }
-          }
-
-          return CustomMultiChildLayout(
-            delegate: SheetTableWidgetLayoutDelegate(
-              cells: sheetTable.cellData,
-              columnData: localColumnData, // 🔥 using local version here
-              rowData: sheetTable.rowData,
-            ),
-            children: [
-              for (var rowEntry in sheetTable.cellData)
-                for (var cell in rowEntry)
-                  if (cell.isVisible)
-                    LayoutId(
-                      id: cell.id,
-                      child: _buildSheetTableTextWidget(
-                        cell.sheetItem as SheetText,
-                        disable: true,
+            return CustomMultiChildLayout(
+              delegate: SheetTableWidgetLayoutDelegate(
+                cells: sheetTable.cellData,
+                columnData: localColumnData, // 🔥 using local version here
+                rowData: sheetTable.rowData,
+              ),
+              children: [
+                for (var rowEntry in sheetTable.cellData)
+                  for (var cell in rowEntry)
+                    if (cell.isVisible)
+                      LayoutId(
+                        id: cell.id,
+                        child: _buildSheetTableTextWidget(
+                          cell.sheetItem as SheetText,
+                          disable: true,
+                        ),
                       ),
-                    ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
-    ),
-    false,
-  );
-}
-
+      false,
+    );
+  }
 
   Widget _buildSheetTableTextWidget(SheetText sheetText, {bool disable = true}) {
     // var tmpinx = int.tryParse(sheetText.textDecoration.id.substring(sheetText.textDecoration.id.indexOf('/') + 1))??-111;
@@ -2928,7 +2927,7 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
                                         child: Text(
                                           ' list ',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.extras[2], 
+                                            color: defaultPalette.tertiary, 
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,
@@ -2997,7 +2996,7 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
                                         child: Text(
                                           ' table ',
                                           style: GoogleFonts.lexend(
-                                            color: defaultPalette.extras[3], 
+                                            color: defaultPalette.tertiary, 
                                             fontSize: 12,
                                             letterSpacing: -0.5,
                                             fontWeight: FontWeight.w600,
@@ -24934,6 +24933,8 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
   }
 
   List<String> getInvoiceColumns(SheetType type) {
+    final hiddenProfitCols = ['Cost Price', 'Profit', 'Profit %'];
+
     switch (type) {
       case SheetType.taxInvoice:
         return [
@@ -24948,7 +24949,8 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
           'CGST Amt',
           'SGST %',
           'SGST Amt',
-          'Total'
+          'Total',
+          ...hiddenProfitCols, // 👈 Append hidden columns
         ];
       case SheetType.billOfSupply:
         return [
@@ -24958,7 +24960,8 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
           'Unit',
           'Rate',
           'Discount',
-          'Total'
+          'Total',
+          ...hiddenProfitCols,
         ];
       case SheetType.creditNote:
       case SheetType.debitNote:
@@ -24973,7 +24976,8 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
           'CGST',
           'SGST',
           'IGST',
-          'Total Difference'
+          'Total Difference',
+          ...hiddenProfitCols,
         ];
       case SheetType.proformaInvoice:
         return [
@@ -24982,14 +24986,16 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
           'Unit',
           'Rate',
           'Amount',
-          'Remarks'
+          'Remarks',
+          ...hiddenProfitCols,
         ];
       default:
         return [
           'Item',
           'Qty',
           'Rate',
-          'Total'
+          'Total',
+          ...hiddenProfitCols,
         ];
     }
   }
@@ -25001,12 +25007,14 @@ Widget _buildSheetTableWidget(SheetTable sheetTable) {
     String columnDecoration,
   ) {
     return List.generate(headers.length, (i) {
+      final isHiddenProfitColumn = i >= headers.length - 3; // Last 3 are hidden
       return SheetTableColumn(
         id: 'CL-${const Uuid().v4()}',
         parentId: parentId,
         size: 100,
         columnDecoration: columnDecoration,
         indexPath: IndexPath(parent: indexPath, index: i),
+        hide: isHiddenProfitColumn, // 👈 hide only profit-related columns
       );
     });
   }
