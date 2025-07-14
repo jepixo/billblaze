@@ -17,7 +17,7 @@ enum SheetType {
 List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
    List<RequiredText> defaultList;
   switch (type) {
-    case SheetType.taxInvoice || SheetType.proformaInvoice:
+    case SheetType.taxInvoice:
       defaultList =  [
         //23
         RequiredText(name: 'title', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
@@ -114,7 +114,21 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false)
         //signature
       ];
-  
+    case SheetType.proformaInvoice:
+      defaultList = [
+        RequiredText(name: 'title', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'proformaNumber', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'proformaDate', sheetTextType: SheetTextType.date.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'sellerName', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'sellerAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'recipientName', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'recipientAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'totalPayable', sheetTextType: SheetTextType.number.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'paymentTerms', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+        RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false)
+        // simpler and cleaner, excludes tax fields
+      ];
+      break;
 
     default:
       return [];
