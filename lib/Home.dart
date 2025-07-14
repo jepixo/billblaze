@@ -52,6 +52,10 @@ final homeScreenTabIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
 
+final processMessageProvider = StateProvider<String>((ref) {
+  return  'Initializing...';
+});
+
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
@@ -93,6 +97,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
+ 
   // bool isHomeTab = true;
 
   Key titleMainKey = GlobalKey();
@@ -107,8 +112,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   bool isDragging = false;
   List<TextEditingController> dateTextControllers = [
   ];
-
   List<FocusNode>  dateFocusNodes= List.generate(2, (index) => FocusNode(),);
+
   @override
   void initState() {
     super.initState();
@@ -394,6 +399,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     double topPadGraphDistance = sHeight / 4.2;
     double titleFontSize = sHeight / 10;
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
+    String processMessage = ref.watch(processMessageProvider);
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     bool isBillTab = homeScreenTabIndex ==2;
@@ -1079,6 +1085,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     var sHeight = MediaQuery.of(context).size.height;
     var sWidth = MediaQuery.of(context).size.width;
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
+    String processMessage = ref.watch(processMessageProvider);
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     double dotSize = sHeight/50;
@@ -1265,11 +1272,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                         decoration: BoxDecoration(
-                          color: defaultPalette.extras[0],
+                          color: defaultPalette.tertiary,
                           border: Border.all(),
                           borderRadius: BorderRadius.circular(
                             isLayoutTab
-                                ? 10
+                                ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
                                 : 900 
                             )
                           ),
@@ -1281,7 +1288,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           textAlign: TextAlign.start,
                           style: GoogleFonts.lexend(
                             fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                            color: defaultPalette.primary,
+                            color: defaultPalette.extras[0],
                             letterSpacing: -0.8,
                             fontWeight: FontWeight.w500
                           ),
@@ -1316,7 +1323,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
                             buttonWidth: (sWidth/10),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
                             animationDuration: const Duration(milliseconds: 200),
                             animationCurve: Curves.ease,
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -1403,7 +1410,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           borderRadius:
                               BorderRadius.circular(
                                 isLayoutTab
-                                    ? 10
+                                    ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
                                     : 900)),
                         
                         child: Text(
@@ -1474,7 +1481,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
                             buttonWidth: (sWidth/10),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
                             animationDuration: const Duration(milliseconds: 200),
                             animationCurve: Curves.ease,
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -1535,7 +1542,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           top: 5,
                           left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
                         ),
-                        
                 alignment: Alignment.topLeft,
                 transform: Matrix4.identity()
                         ..translate(isLayoutTab
@@ -1543,9 +1549,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                 decoration: BoxDecoration(
-                  color: defaultPalette.extras[0],
+                  color: defaultPalette.tertiary,
                   border: Border.all(),
-                  borderRadius: BorderRadius.circular( 10)),
+                  borderRadius: BorderRadius.circular( mapValueDimensionBased( 12, 40, sWidth,sHeight))),
                 child: Text(
                         'Cloud',
                         maxLines: 2,
@@ -1553,8 +1559,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         textAlign: TextAlign.start,
                         style: GoogleFonts.lexend(
                           fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                          // color: defaultPalette.extras[0],
-                          color: defaultPalette.primary,
+                          color: defaultPalette.extras[0],
+                          // color: defaultPalette.primary,
                           letterSpacing: -0.8,
                           fontWeight: FontWeight.w500
 
@@ -1855,7 +1861,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 },
                                 buttonHeight: ((sHeight/2.5)-40)/2,
                                 buttonWidth: (sWidth/20),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
                                 animationDuration: const Duration(milliseconds: 200),
                                 animationCurve: Curves.ease,
                                 subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -1900,32 +1906,46 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                    OverlayEntry? overlay;
                                     overlay =  OverlayEntry(builder: (context) => Scaffold(
                                     backgroundColor: defaultPalette.tertiary,
-                                    body: Center(
-                                      // child: LoadingAnimationWidget.newtonCradle(
-                                      //   color: Colors.white,
-                                      //   size: 150,
-                                      // ),
-                                      child: SizedBox(
-                                        height: 150,
-                                        child: LoadingIndicator(
-                                            indicatorType: Indicator.pacman, /// Required, The loading type of the widget
-                                            colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
-                                            strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
-                                            backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
-                                            pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                    body: Stack(
+                                      children: [
+                                        Center(
+                                          child: SizedBox(
+                                            height: 150,
+                                            child: LoadingIndicator(
+                                                indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                                colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
+                                                strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                                backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                                pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                            ),
+                                          )
                                         ),
-                                      )
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 0,
+                                          right: 0,
+                                          child: Text(
+                                            ref.watch(processMessageProvider),
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                                              color: defaultPalette.extras[0],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),),);
                                     Overlay.of(context).insert(
                                       overlay
                                     );
-                                 await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref).then((value) {
+                                 await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref, overlay).then((value) {
                                    overlay?.remove();
                                  },);
                                 },
                                 buttonHeight: ((sHeight/2.5)-40)/2,
                                 buttonWidth: (sWidth/20),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(mapValueDimensionBased(12, 40, sWidth,sHeight)),
                                 animationDuration: const Duration(milliseconds: 200),
                                 animationCurve: Curves.ease,
                                 subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -4162,7 +4182,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 return Container(
                   width: (sWidth / 1.73 - 100) / 2,
                   height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
-                  padding: EdgeInsets.all(5).copyWith(right: 3),
+                  padding: EdgeInsets.all(5).copyWith(right: 8, bottom: 8,left: mapValueDimensionBased(8, 10, sWidth, sHeight)),
                   decoration: BoxDecoration(
                     color: defaultPalette.primary,
                     borderRadius: BorderRadius.circular(20)
@@ -4196,42 +4216,21 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           durationMS: 500,
                           scrollSpeed: 1,
                           builder: (context, controller, physics) {
-                            return ScrollbarUltima(
-                              alwaysShowThumb: true,
-                              controller: controller,
-                              scrollbarPosition:
-                                  ScrollbarPosition.right,
-                              backgroundColor: defaultPalette.primary,
-                              isDraggable: true,
-                              maxDynamicThumbLength: 90,
-                              minDynamicThumbLength: 50,
-                              thumbBuilder:
-                                  (context, animation, widgetStates) {
-                                return Container(
-                                  margin: EdgeInsets.only(right: 0, top: 8,bottom: 8),
-                                  decoration: BoxDecoration(
-                                      color: defaultPalette.secondary,
-                                      // border: Border.all(),
-                                      borderRadius:
-                                          BorderRadius.circular(15)),
-                                  width: 4,
-                                );
-                              },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(15),
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
                               child: SingleChildScrollView(
                                 controller: controller,
                                 physics: physics,
-                                padding: EdgeInsets.only(
-                                  right: 7,
-                                ),
+                                // padding: EdgeInsets.only(
+                                //   right: 10,
+                                // ),
                                 child: Column(
                                   children: [
-                                    Row(
+                                  Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
-                                      SizedBox(width: 5,),
+                                      SizedBox(width: 2,),
                                       ...[Icon(TablerIcons.moneybag, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
                                       SizedBox(width: 5,),],
                                       Expanded(
@@ -4242,7 +4241,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           fontWeight: FontWeight.w500,
                                           letterSpacing: -1),),
                                       ),
-                                     Expanded(
+                                      Expanded(
                                       child: Text(NumberFormat.decimalPattern('en_IN').format(totalRevenue),
                                       maxLines: 1,
                                       textAlign: TextAlign.end,
@@ -4253,14 +4252,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         letterSpacing: -1),),
                                         
                                     ),
-                                    SizedBox(width: 5,),
+                                    SizedBox(width:6,),
                                     ],
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
-                                      SizedBox(width: 5,),
+                                      SizedBox(width: 2,),
                                       ...[Icon(TablerIcons.file_stack, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
                                       SizedBox(width: 5,),],
                                       Expanded(
@@ -4282,55 +4281,49 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         letterSpacing: -1),),
                                         
                                     ),
-                                      SizedBox(width: 5,),
+                                      SizedBox(width: 6,),
                                     ],
                                     ),
                                     SizedBox(height: 10,),
-                                    summaryTile(
-                                      'Tax Invoices',
+                                    summaryTile('Tax Invoices',
                                       typeStats[SheetType.taxInvoice]!,
                                       TablerIcons.file_invoice,
                                       sWidth,
                                       sHeight,
                                     ), 
-                                    summaryTile(
-                                      'Credit Notes',
+                                    summaryTile('Credit Notes',
                                       typeStats[SheetType.creditNote]!,
                                       TablerIcons.credit_card_pay,
                                       sWidth,
                                       sHeight,
                                     ),
-                                    summaryTile(
-                                      'Debit Notes',
+                                    summaryTile('Debit Notes',
                                       typeStats[SheetType.debitNote]!,
                                       TablerIcons.credit_card_refund,
                                       sWidth,
                                       sHeight,
                                     ),
-                                    summaryTile(
-                                      'Bills of Supply',
+                                    summaryTile('Bills of Supply',
                                       typeStats[SheetType.billOfSupply]!,
                                       TablerIcons.receipt_2,
                                       sWidth,
                                       sHeight,
                                     ),
-                                    summaryTile(
-                                      'Proforma Invoices',
+                                    summaryTile('Proforma Invoices',
                                       typeStats[SheetType.proformaInvoice]!,
                                       TablerIcons.receipt_filled,
                                       sWidth,
                                       sHeight,
                                     ),
                                     
-                                    SizedBox(height: 10,),
+                                    SizedBox(height: 5,),
                               
                                   ],
                                 ),
                               ),
-                            ),
-                      );
-                    }
-                  ),
+                            );
+                            }
+                          ),
                         ),
                       ),
                       
@@ -4476,6 +4469,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               }).toList();
                             },
                             touchTooltipData: LineTouchTooltipData(
+                              maxContentWidth: mapValueDimensionBased(120, 200, sWidth, sHeight),
                               getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
                               getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                                 return touchedBarSpots.map((barSpot) {
@@ -4490,14 +4484,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                    GoogleFonts.lexend(
                                       color: defaultPalette.extras[0],
                                       fontWeight: FontWeight.bold,
-                                      fontSize:  mapValueDimensionBased(15, 35, sWidth, sHeight),
+                                      fontSize:  mapValueDimensionBased(15, 20, sWidth, sHeight),
                                     ),
                                     children: [
                                       TextSpan(
                                         text: '${monthlyCounts.keys.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()].name}: \n',
                                         style:GoogleFonts.lexend(
                                           color: defaultPalette.primary,
-                                          fontSize:  mapValueDimensionBased(10, 35, sWidth, sHeight),
+                                          fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
                                         ),
                                       ),
                                       TextSpan(
@@ -4505,7 +4499,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         style:GoogleFonts.lexend(
                                           color: defaultPalette.primary,
                                           fontWeight: FontWeight.w900,
-                                          fontSize:  mapValueDimensionBased(10, 35, sWidth, sHeight),
+                                          fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
                                         ),
                                       ),
                                        
@@ -5137,7 +5131,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Widget summaryTile (String s, Map<String, double> stats, IconData icon, double sWidth, double sHeight, {textAlign = TextAlign.start}) {
     return Container(
       padding: EdgeInsets.all(mapValueDimensionBased(5, 10, sWidth, sHeight)),
-      margin: EdgeInsets.only(bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), left: mapValueDimensionBased(2, 10, sWidth, sHeight)),
+      margin: EdgeInsets.only(bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), right:2),
       decoration: BoxDecoration(
         color: defaultPalette.secondary,
         borderRadius: BorderRadius.circular(12),
@@ -5166,7 +5160,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           Row(
             children: [
               Expanded(
-              child: Text('count: ',
+              child: Text('count  ',
               textAlign: textAlign,
               style: GoogleFonts.lexend(
                 fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
@@ -5190,7 +5184,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           Row(
             children: [
               Expanded(
-              child: Text('revenue: ',
+              child: Text('revenue  ',
               textAlign: textAlign,
               style: GoogleFonts.lexend(
                 fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),

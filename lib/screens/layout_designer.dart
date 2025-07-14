@@ -124,20 +124,20 @@ class PanelIndex {
 
 }
 
-class SelectedIndex {
+class SelectedIndexPaths {
   // int pageIndex;
   String id;
-  List<int> selectedIndexes;
-  SelectedIndex({
+  Map<String,IndexPath> selectedIndexes;
+  SelectedIndexPaths({
     // required this.pageIndex,
     required this.id,
     required this.selectedIndexes,
   });
-  SelectedIndex copyWith({
+  SelectedIndexPaths copyWith({
     String? id,
-    List<int>? selectedIndexes,
+    Map<String,IndexPath>? selectedIndexes,
   }) {
-    return SelectedIndex(
+    return SelectedIndexPaths(
       id: id ?? this.id,
       selectedIndexes: selectedIndexes ?? this.selectedIndexes,
     );
@@ -230,7 +230,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
   DateTime dateTimeNow = DateTime.now();
-  List<SelectedIndex> selectedIndex = [];
   PanelIndex panelIndex = PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
   List<SheetList?> sheetListClipboard =[null,null];
   PageController pageViewIndicatorController = PageController();
@@ -1793,7 +1792,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     lm?.save(); // Boxes.getLayouts().update(LayoutModel(docPropsList: newdoc, spreadSheetList: newsheetlist.toSheetListBox(), id: id));
     Boxes.saveSuperDecoration(newDecoration.toSuperDecorationBox());
     setState(() {
-      selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
+      // selectedIndex.add(SelectedIndex(id: id, selectedIndexes: []));
     });
   }
 
@@ -1857,7 +1856,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     // Update the selectedIndex list at the specified index
     setState(() {
       // print('pageCount in addPage after: $pageCount');
-      selectedIndex.insert(index, SelectedIndex(id: id, selectedIndexes: []));
+      // selectedIndex.insert(index, SelectedIndex(id: id, selectedIndexes: []));
       // print('id: $id');
       // print(selectedIndex);
       panelIndex.id='';
@@ -11779,10 +11778,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           decoration: BoxDecoration(
                           ),
                           margin: EdgeInsets.only(
-                              top: 15,
-                              bottom: index == whichTextPropertyTabIsClicked? 15: 18,
-                              left: 10,
-                              right: 13),
+                            top: 15,
+                            bottom: index == whichTextPropertyTabIsClicked? 15: 18,
+                            left: 10,
+                            right: 13),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: ScrollConfiguration(
@@ -12113,68 +12112,69 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     children: [
                                   //FORMAT Title
                                   Container(
-                                        width: width,
-                                        padding: EdgeInsets.all(6).copyWith(left:8),
-                                        margin: EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          color: defaultPalette.secondary,
-                                          borderRadius: BorderRadius.circular(15),
-                                          border: Border.all(
-                                            width: 2,
-                                            color: defaultPalette.extras[0])
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('FOR \nMAT ',
-                                                textAlign: TextAlign.start,
-                                                style: TextStyle(
-                                                    height: 1,
-                                                    fontFamily:
-                                                        GoogleFonts.lexend()
-                                                            .fontFamily,
-                                                    letterSpacing:-1,
-                                                    fontWeight: FontWeight.w800,        
-                                                    color: defaultPalette
-                                                        .extras[0],
-                                                    fontSize: 10)),
-                                            Text('BO \nLD ',
-                                                textAlign: TextAlign.start,
-                                                style: TextStyle(
-                                                    height: 1,
-                                                    fontFamily:
-                                                        GoogleFonts.bungee()
-                                                            .fontFamily,
-                                                    color: defaultPalette
-                                                        .extras[0],
-                                                    fontSize: 10)),
-                                            Text('ITA \nLIC ',
-                                                textAlign: TextAlign.start,
-                                                style: TextStyle(
-                                                    height: 1,
-                                                    fontStyle: FontStyle.italic,
-                                                    fontFamily:
-                                                        GoogleFonts.lexend()
-                                                            .fontFamily,
-                                                    color: defaultPalette
-                                                        .extras[0],
-                                                    fontSize: 10)), 
-                                            Text('UNDER \nLINE ',
-                                                textAlign: TextAlign.start,
-                                                style: TextStyle(
-                                                    height: 1,
-                                                    decoration: TextDecoration.underline,
-                                                    letterSpacing:-1,
-                                                    fontFamily:
-                                                        GoogleFonts.lexend()
-                                                            .fontFamily,
-                                                    fontWeight: FontWeight.w900,         
-                                                    color: defaultPalette
-                                                        .extras[0],
-                                                    fontSize: 10)),                       
-                                          ],
-                                        ),
-                                      ),
+                                    width: width,
+                                    padding: EdgeInsets.all(6).copyWith(left:8),
+                                    margin: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: defaultPalette.secondary,
+                                      borderRadius: BorderRadius.circular(15),
+                                      border: Border.all(
+                                        width: 2,
+                                        color: defaultPalette.extras[0])
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('FOR \nMAT ',
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                                height: 1,
+                                                fontFamily:
+                                                    GoogleFonts.lexend()
+                                                        .fontFamily,
+                                                letterSpacing:-1,
+                                                fontWeight: FontWeight.w800,        
+                                                color: defaultPalette
+                                                    .extras[0],
+                                                fontSize: 10)),
+                                        Text('BO \nLD ',
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                                height: 1,
+                                                fontFamily:
+                                                    GoogleFonts.bungee()
+                                                        .fontFamily,
+                                                color: defaultPalette
+                                                    .extras[0],
+                                                fontSize: 10)),
+                                        Text('ITA \nLIC ',
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                                height: 1,
+                                                fontStyle: FontStyle.italic,
+                                                fontFamily:
+                                                    GoogleFonts.lexend()
+                                                        .fontFamily,
+                                                color: defaultPalette
+                                                    .extras[0],
+                                                fontSize: 10)), 
+                                        Text('UNDER \nLINE ',
+                                            textAlign: TextAlign.start,
+                                            style: TextStyle(
+                                                height: 1,
+                                                decoration: TextDecoration.underline,
+                                                letterSpacing:-1,
+                                                fontFamily:
+                                                    GoogleFonts.lexend()
+                                                        .fontFamily,
+                                                fontWeight: FontWeight.w900,         
+                                                color: defaultPalette
+                                                    .extras[0],
+                                                fontSize: 10)),                       
+                                      ],
+                                    ),
+                                  ),
+                                  
                                   SizedBox(
                                     height:8
                                   ),
@@ -12597,6 +12597,117 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     SizedBox(width:2)
                                     ],
                                   ),
+                                  // BLOCKQUOTE, CODEBLOCK, UL, OL
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      // BlockQuote
+                                      buildElevatedLayerButton(
+                                        buttonHeight: 40,
+                                        buttonWidth: iconWidth,
+                                        toggleOnTap: true,
+                                        isTapped: getIsToggled(
+                                            item.textEditorController
+                                                .getSelectionStyle()
+                                                .attributes,
+                                            Attribute.blockQuote),
+                                        onClick: () {
+                                          final currentValue = item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes
+                                              .containsKey(Attribute.blockQuote.key);
+                                          item.textEditorController.formatSelection(
+                                            currentValue ? Attribute.clone(Attribute.blockQuote, null) : Attribute.blockQuote,
+                                          );
+                                        },
+                                        topLayerChild: const Icon(
+                                          TablerIcons.quote,
+                                          color: Colors.black,
+                                          size: 20,
+                                        ),
+                                      ),
+
+                                      // CodeBlock
+                                      buildElevatedLayerButton(
+                                        buttonHeight: 40,
+                                        buttonWidth: iconWidth,
+                                        toggleOnTap: true,
+                                        isTapped: getIsToggled(
+                                            item.textEditorController
+                                                .getSelectionStyle()
+                                                .attributes,
+                                            Attribute.codeBlock),
+                                        onClick: () {
+                                          final currentValue = item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes
+                                              .containsKey(Attribute.codeBlock.key);
+                                          item.textEditorController.formatSelection(
+                                            currentValue ? Attribute.clone(Attribute.codeBlock, null) : Attribute.codeBlock,
+                                          );
+                                        },
+                                        topLayerChild: const Icon(
+                                          TablerIcons.code,
+                                          color: Colors.black,
+                                          size: 20,
+                                        ),
+                                      ),
+
+                                      // Unordered List (Bullet)
+                                      buildElevatedLayerButton(
+                                        buttonHeight: 40,
+                                        buttonWidth: iconWidth,
+                                        toggleOnTap: true,
+                                        isTapped: getIsToggled(
+                                          item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes,
+                                          Attribute.ul),
+                                        onClick: () {
+                                          final currentValue = item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes
+                                              .containsKey(Attribute.ul.key);
+                                          item.textEditorController.formatSelection(
+                                            currentValue ? Attribute.clone(Attribute.ul, null) : Attribute.ul,
+                                          );
+                                        },
+                                        topLayerChild: const Icon(
+                                          TablerIcons.list,
+                                          color: Colors.black,
+                                          size: 20,
+                                        ),
+                                      ),
+
+                                      // Ordered List (Numbered)
+                                      buildElevatedLayerButton(
+                                        buttonHeight: 40,
+                                        buttonWidth: iconWidth,
+                                        toggleOnTap: true,
+                                        isTapped: getIsToggled(
+                                          item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes,
+                                          Attribute.ol),
+                                        onClick: () {
+                                          final currentValue = item.textEditorController
+                                              .getSelectionStyle()
+                                              .attributes
+                                              .containsKey(Attribute.ol.key);
+                                          item.textEditorController.formatSelection(
+                                            currentValue ? Attribute.clone(Attribute.ol, null) : Attribute.ol,
+                                          );
+                                        },
+                                        topLayerChild: const Icon(
+                                          TablerIcons.list_numbers,
+                                          color: Colors.black,
+                                          size: 20,
+                                        ),
+                                      ),
+
+                                      SizedBox(width: 2),
+                                    ],
+                                  ),
                                   //SUB AND SUPERSCRIPT
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -12802,6 +12913,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         SizedBox(width:2)
                                       ],
                                     ),
+                                  
                                   SizedBox(
                                     height:5
                                   ),
@@ -19477,22 +19589,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             padding: EdgeInsets.only(right:7),
                                             itemCount: filteredDecorations.length,
                                             itemBuilder: (context, index) {
-                                              final e = filteredDecorations[filteredDecorations.keys.toList()[index]]; // 'e' now comes from filteredDecorations[index]
-                                          
-                                              // You need to correctly determine 'inx' if it's used to access sheetDecorationList
-                                              // If 'inx' is meant to be the index within 'filteredDecorations', then it's 'index'.
-                                              // If 'inx' refers to the original index in 'sheetDecorationList', you'll need a way to map 'e.id' back to that original index.
-                                              // For this example, I'll assume 'inx' should correspond to the current 'index' if
-                                              // sheetDecorationList and filteredDecorations are closely related in terms of ordering
-                                              // or if 'inx' refers to the position in the filtered list.
-                                              // If 'inx' is the global index in `sheetDecorationList` that the currently active SuperDecoration refers to,
-                                              // you'll need to pass that global index to this widget or find it dynamically.
-                                              // For now, I'll use the 'index' from ListView.builder as 'inx'.
-                                              // However, looking at your 'add' button, 'inx' is `sheetDecorationList[inx]`, which implies `inx` is a global index.
-                                              // You must ensure `inx` is correctly determined. If `inx` is a state variable representing the currently selected SuperDecoration's index,
-                                              // you would use that.
-                                              // Assuming 'inx' is a state variable for the active SuperDecoration's index.
-                                          
+                                              final entries = filteredDecorations.entries.toList();
+                                              if (index >= entries.length) return SizedBox.shrink();
+                                              final e = entries[index].value;
+
+                                              if (e ==null) {
+                                                print('Decoration is null at index $index');
+                                                return SizedBox.shrink();
+                                              }
+                                              
                                               return Container(
                                                 width: width,
                                                 margin: EdgeInsets.only(bottom: index ==filteredDecorations.length-1?35: 4),
@@ -19507,6 +19612,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 child: Column(
                                                   children: [
                                                     // The preview in the cards and details in searching decoration
+                                                    
                                                     Container(
                                                       padding: EdgeInsets.all(3),
                                                       decoration: BoxDecoration(
@@ -19522,14 +19628,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             height: 75,
                                                             width: 55,
                                                             child: buildDecoratedContainer(
-                                                              e! is! ItemDecoration ? e as SuperDecoration : SuperDecoration(id: 'yo', itemDecorationList: [e.id]),
-                                                              // The SizedBox here seems misplaced as a parameter to buildDecoratedContainer
-                                                              // It should likely be an additional widget in the row/column, or part of the buildDecoratedContainer implementation.
-                                                              // Assuming it's part of the `buildDecoratedContainer`'s arguments, but it looks like a typo.
-                                                              // I'm adjusting to what seems like the likely intended usage: buildDecoratedContainer(Decoration, bool, maxDepth)
-                                                              // If SizedBox is indeed a parameter, please clarify buildDecoratedContainer's signature.
+                                                              e is! ItemDecoration ? e as SuperDecoration : SuperDecoration(id: 'yo', itemDecorationList: [e.id]),
                                                               SizedBox(),
-                                                              true, // Assuming this boolean parameter is always true here.
+                                                              true, 
                                                               maxDepth: 2,
                                                             ),
                                                           ),
@@ -19639,7 +19740,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         UtilityWidgets.maybeTooltip(
                                                           message: 'delete this decoration permanently.',
                                                           child: roundButton(
-                                                            () {},
+                                                            () {
+                                                                sheetDecorationMap.remove(e.id);
+                                                                filteredDecorations.remove(e.id);
+                                                                Boxes.getDecorations().delete(e.id);
+                                                            },
                                                             Icon(TablerIcons.trash, size: 14),
                                                             'delete',
                                                             padding: EdgeInsets.all(2),
@@ -20276,7 +20381,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             .removeAt(
                                                                 decorationIndex);
                                                         decorationIndex =-1;
+                                                        print(itemDecorationPath);//todo: when you delete a decoration, you should also handle the path or more so the name controller
                                                         updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
+                                                        itemDecorationNameController.text = (sheetDecorationMap[inx] as SuperDecoration).name;
                                                       }
 
                                                     });

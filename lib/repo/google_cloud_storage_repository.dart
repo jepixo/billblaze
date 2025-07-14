@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:billblaze/auth/user_auth.dart';
+import 'package:billblaze/home.dart';
 import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/providers/auth_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -14,18 +16,24 @@ import 'package:googleapis_auth/auth_io.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
-Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetRef ref) async {
+Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetRef ref, OverlayEntry? overlay) async {
   final googleSignIn = ref.read(gapSignInProvider);
   try {
+    ref.read(processMessageProvider.notifier).state = "Signing in to Google...";
+    overlay?.markNeedsBuild();
     final authManager = ref.read(authTokenManagerProvider.notifier);
     gap.GoogleSignInCredentials? creds;
     // 🔁 Check and refresh token if needed
     if (!authManager.state.isValid) {
       print("🔐 Token expired or missing. Signing in again...");
+      ref.read(processMessageProvider.notifier).state = "🔐 Token expired or missing. Signing in again...";
+      overlay?.markNeedsBuild();
       creds = await googleSignIn.signInOnline();
       if (creds == null) {
         print("❌ Google Sign-In failed or was canceled.");
-        return;
+        ref.read(processMessageProvider.notifier).state = "❌ Google Sign-In failed or was canceled.";
+        overlay?.markNeedsBuild();
+        return false;
       }
       authManager.state = AuthTokenManager(
         credentials: creds,
@@ -56,12 +64,16 @@ Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
     if (fileList.files != null && fileList.files!.isNotEmpty) {
       sheetId = fileList.files!.first.id!;
       print("📄 Found existing sheet with ID: $sheetId");
+      ref.read(processMessageProvider.notifier).state = "📄 Found existing storage with ID: $sheetId";
+      overlay?.markNeedsBuild();
     } else {
       final newFile = await driveApi.files.create(drive.File()
         ..name = "LayoutModelBox"
         ..mimeType = "application/vnd.google-apps.spreadsheet");
       sheetId = newFile.id!;
       print("✅ Created new sheet with ID: $sheetId");
+      ref.read(processMessageProvider.notifier).state = "✅ Created new storage with ID: $sheetId";
+      overlay?.markNeedsBuild();
     }
     // 2️⃣ Clear sheet
     await sheetsApi.spreadsheets.values.clear(
@@ -93,8 +105,12 @@ Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
         try {
           await driveApi.files.delete(oldDocId);
           print("🗑️ Deleted existing doc for ${layout.id} (ID: $oldDocId)");
+          ref.read(processMessageProvider.notifier).state = "🗑️ Deleted existing spreadsheet for ${layout.name}";
+          overlay?.markNeedsBuild();
         } catch (e) {
           print("⚠️ Couldn't delete old doc for ${layout.id}: $e");
+          ref.read(processMessageProvider.notifier).state = "⚠️ Couldn't delete old spreadsheet for ${layout.name}: $e";
+          overlay?.markNeedsBuild();
         }
       }
       // 🆕 Create new doc
@@ -108,10 +124,14 @@ Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
       );
       if (docResponse.statusCode != 200) {
         print("❌ Failed to create doc for layout ${layout.id}");
+        ref.read(processMessageProvider.notifier).state = "❌ Failed to create spreadsheet for ${layout.name}";
+        overlay?.markNeedsBuild();
         continue;
       }
       docId = jsonDecode(docResponse.body)['documentId'];
       print("🆕 Created new doc with ID: $docId");
+      ref.read(processMessageProvider.notifier).state = "🆕 Created new spreadsheet for ${layout.name}";
+      overlay?.markNeedsBuild();
       // ✍️ Insert spreadsheetList JSON
       await http.post(
         Uri.parse('https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
@@ -151,10 +171,16 @@ Future<void> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
       valueInputOption: "RAW",
     );
     print("✅ Synced all LayoutModels to Google Sheet and Docs.");
+    ref.read(processMessageProvider.notifier).state = "✅ Synced all Layouts&Bills to Google Drive.";
+    overlay?.markNeedsBuild();
     authClient.close();
   } catch (e) {
     print("❌ Error during authentication or data sync: $e");
+    ref.read(processMessageProvider.notifier).state = "❌ Error during authentication or data sync: $e";
+    overlay?.markNeedsBuild();
+    return false;
   }
+  return true; // Indicate success
 }
 //
 //
