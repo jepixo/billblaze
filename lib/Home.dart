@@ -52,6 +52,10 @@ final homeScreenTabIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
 
+final processMessageProvider = StateProvider<String>((ref) {
+  return  'Initializing...';
+});
+
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
@@ -84,6 +88,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   FocusNode layoutSearchFocusNode = FocusNode();
   late List<LayoutModel> filteredLayoutBox;
   double _cardPosition = 0;
+  double totalRevenue = 0;
   late AppinioSwiperController recentsCardController;
   late AnimationController squiggleFadeAnimationController;
   late AnimationController sliderFadeAnimationController;
@@ -92,6 +97,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
+ 
   // bool isHomeTab = true;
 
   Key titleMainKey = GlobalKey();
@@ -101,12 +107,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   ];
   int selectedYear = DateTime.now().year;
   int selectedMonth = DateTime.now().month;
+  Map<SheetType, Map<String, double>> typeStats = {};
   int touchedIndex = -1;
   bool isDragging = false;
   List<TextEditingController> dateTextControllers = [
   ];
-
   List<FocusNode>  dateFocusNodes= List.generate(2, (index) => FocusNode(),);
+
   @override
   void initState() {
     super.initState();
@@ -382,65 +389,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     });
   }
 
-  void extractAnalyticalData() {
-    monthRevenueMap ={};
-  final layouts = Boxes.getLayouts().values.toList();
-
-  final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
-  final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
-
-  double totalRevenue = 0;
-
-  // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
-
-  for (final layout in layouts) {
-    try {
-      final totalPayableLabel = layout.labelList.firstWhere(
-        (lbl) => lbl.name == 'totalPayable',
-      );
-
-      if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951) {
-        final item = getItemAtPath(totalPayableLabel.indexPath, layout.spreadSheetList);
-        if (item is SheetTextBox) {
-          final List<Map<String, dynamic>> rawDelta = List<Map<String, dynamic>>.from(item.textEditorController);
-          final delta = Delta.fromJson(rawDelta);
-          final doc = Document.fromDelta(delta);
-          final rawText = doc.toPlainText();
-          final value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
-
-          totalRevenue += value;
-
-          final month = layout.createdAt.month.ceilToDouble(); // 👈 1 to 12
-
-          monthRevenueMap.update(month, (existing) => existing + value, ifAbsent: () => value);
-        }
-      }
-    } catch (_) {
-      // Skip this layout
-    }
-  }
-
-  // ✅ Sort by calendar month (1–12)
-  final sortedMonthRevenue = Map.fromEntries(
-    List.generate(12, (i) => i + 1)
-        .map((month) => MapEntry(month, monthRevenueMap[month] ?? 0)),
-  );
-
-  // 👇 For Debug or Console Output
-  const monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-
-  for (final entry in sortedMonthRevenue.entries) {
-    print("${monthNames[entry.key - 1]}: ₹${entry.value.toStringAsFixed(2)}");
-  }
-
-  print("🧾 Total Invoices: $invoiceCount");
-  print("🧮 Credit Notes: $creditNoteCount");
-  print("💰 Total Revenue: ₹${totalRevenue.toStringAsFixed(2)}");
-}
-
   @override
   Widget build(BuildContext context) {
     double sWidth = MediaQuery.of(context).size.width;
@@ -451,6 +399,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     double topPadGraphDistance = sHeight / 4.2;
     double titleFontSize = sHeight / 10;
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
+    String processMessage = ref.watch(processMessageProvider);
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     bool isBillTab = homeScreenTabIndex ==2;
@@ -462,8 +411,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           body: Stack(
             children: [
               AnimatedStack(
-              scaleHeight: 80,
-              scaleWidth: 80,
+              scaleHeight: 40,
+              scaleWidth: 40,
               slideAnimationDuration: Duration(milliseconds: 600),
               fabBackgroundColor: Colors.transparent,
               backgroundColor: Colors.transparent,
@@ -714,7 +663,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           List<int> spotIndexes) {
                                     return spotIndexes.map((spotIndex) {
                                       final spot = barData.spots[spotIndex];
-                                      if (spot.x == 0 || spot.x == 6) {
+                                      if (true) {
                                         return null;
                                       }
                                       return TouchedSpotIndicatorData(
@@ -748,60 +697,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     }).toList();
                                   },
                                   touchTooltipData: LineTouchTooltipData(
-                                    // getTooltipColor: (touchedSpot) =>
-                                    //     widget.tooltipBgColor,
-                                    getTooltipItems:
-                                        (List<LineBarSpot> touchedBarSpots) {
-                                      return touchedBarSpots.map((barSpot) {
-                                        final flSpot = barSpot;
-                                        if (flSpot.x == 0 || flSpot.x == 6) {
-                                          return null;
-                                        }
-              
-                                        TextAlign textAlign;
-                                        switch (flSpot.x.toInt()) {
-                                          case 1:
-                                            textAlign = TextAlign.left;
-                                            break;
-                                          case 5:
-                                            textAlign = TextAlign.right;
-                                            break;
-                                          default:
-                                            textAlign = TextAlign.center;
-                                        }
-              
-                                        return LineTooltipItem(
-                                          'som \n',
-                                          TextStyle(
-                                            // color: widget.tooltipTextColor,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text: flSpot.y.toString(),
-                                              style: TextStyle(
-                                                // color: widget.tooltipTextColor,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                            const TextSpan(
-                                              text: ' k ',
-                                              style: TextStyle(
-                                                fontStyle: FontStyle.italic,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                            const TextSpan(
-                                              text: 'calories',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.normal,
-                                              ),
-                                            ),
-                                          ],
-                                          textAlign: textAlign,
-                                        );
-                                      }).toList();
-                                    },
+                                    getTooltipItems: (List<LineBarSpot> touchedBarSpots) => List.filled(touchedBarSpots.length, null),
                                   ),
                                 ),
                                 minX: isHomeTab
@@ -1189,6 +1085,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     var sHeight = MediaQuery.of(context).size.height;
     var sWidth = MediaQuery.of(context).size.width;
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
+    String processMessage = ref.watch(processMessageProvider);
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     double dotSize = sHeight/50;
@@ -1375,11 +1272,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                         decoration: BoxDecoration(
-                          color: defaultPalette.extras[0],
+                          color: defaultPalette.tertiary,
                           border: Border.all(),
                           borderRadius: BorderRadius.circular(
                             isLayoutTab
-                                ? 10
+                                ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
                                 : 900 
                             )
                           ),
@@ -1391,7 +1288,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           textAlign: TextAlign.start,
                           style: GoogleFonts.lexend(
                             fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                            color: defaultPalette.primary,
+                            color: defaultPalette.extras[0],
                             letterSpacing: -0.8,
                             fontWeight: FontWeight.w500
                           ),
@@ -1426,7 +1323,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
                             buttonWidth: (sWidth/10),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
                             animationDuration: const Duration(milliseconds: 200),
                             animationCurve: Curves.ease,
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -1513,7 +1410,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           borderRadius:
                               BorderRadius.circular(
                                 isLayoutTab
-                                    ? 10
+                                    ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
                                     : 900)),
                         
                         child: Text(
@@ -1584,7 +1481,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             },
                             buttonHeight: ((sHeight/2.5)-40)/2,
                             buttonWidth: (sWidth/10),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
                             animationDuration: const Duration(milliseconds: 200),
                             animationCurve: Curves.ease,
                             subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -1645,7 +1542,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           top: 5,
                           left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
                         ),
-                        
                 alignment: Alignment.topLeft,
                 transform: Matrix4.identity()
                         ..translate(isLayoutTab
@@ -1653,9 +1549,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                 decoration: BoxDecoration(
-                  color: defaultPalette.extras[0],
+                  color: defaultPalette.tertiary,
                   border: Border.all(),
-                  borderRadius: BorderRadius.circular( 10)),
+                  borderRadius: BorderRadius.circular( mapValueDimensionBased( 12, 40, sWidth,sHeight))),
                 child: Text(
                         'Cloud',
                         maxLines: 2,
@@ -1663,8 +1559,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         textAlign: TextAlign.start,
                         style: GoogleFonts.lexend(
                           fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                          // color: defaultPalette.extras[0],
-                          color: defaultPalette.primary,
+                          color: defaultPalette.extras[0],
+                          // color: defaultPalette.primary,
                           letterSpacing: -0.8,
                           fontWeight: FontWeight.w500
 
@@ -1965,7 +1861,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 },
                                 buttonHeight: ((sHeight/2.5)-40)/2,
                                 buttonWidth: (sWidth/20),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
                                 animationDuration: const Duration(milliseconds: 200),
                                 animationCurve: Curves.ease,
                                 subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -2010,32 +1906,46 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                    OverlayEntry? overlay;
                                     overlay =  OverlayEntry(builder: (context) => Scaffold(
                                     backgroundColor: defaultPalette.tertiary,
-                                    body: Center(
-                                      // child: LoadingAnimationWidget.newtonCradle(
-                                      //   color: Colors.white,
-                                      //   size: 150,
-                                      // ),
-                                      child: SizedBox(
-                                        height: 150,
-                                        child: LoadingIndicator(
-                                            indicatorType: Indicator.pacman, /// Required, The loading type of the widget
-                                            colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
-                                            strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
-                                            backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
-                                            pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                    body: Stack(
+                                      children: [
+                                        Center(
+                                          child: SizedBox(
+                                            height: 150,
+                                            child: LoadingIndicator(
+                                                indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                                colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
+                                                strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                                backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                                pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                            ),
+                                          )
                                         ),
-                                      )
+                                        Positioned(
+                                          bottom: 10,
+                                          left: 0,
+                                          right: 0,
+                                          child: Text(
+                                            ref.watch(processMessageProvider),
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                                              color: defaultPalette.extras[0],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),),);
                                     Overlay.of(context).insert(
                                       overlay
                                     );
-                                 await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref).then((value) {
+                                 await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref, overlay).then((value) {
                                    overlay?.remove();
                                  },);
                                 },
                                 buttonHeight: ((sHeight/2.5)-40)/2,
                                 buttonWidth: (sWidth/20),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(mapValueDimensionBased(12, 40, sWidth,sHeight)),
                                 animationDuration: const Duration(milliseconds: 200),
                                 animationCurve: Curves.ease,
                                 subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
@@ -2838,13 +2748,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             // //BillsList
             AnimatedPositioned(
               duration: Durations.extralong2,
-              top: isBillTab ? 70 : sHeight / 4,
+              top: isBillTab ? 60 : sHeight / 4,
               // top: isBillTab
               //     ?  topPadPosDistance + 10
               //     : sHeight,
               // left: 90,
               right: 15,
-              height: (sHeight / 1.1)-70,
+              height: (sHeight / 1.1)-60,
               width: sWidth / 2.5,
               child: IgnorePointer(
                 ignoring: !isBillTab,
@@ -3505,7 +3415,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
                 final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
 
-                double totalRevenue = 0;
+                totalRevenue = 0;
 
                 // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
 
@@ -3522,7 +3432,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         final delta = Delta.fromJson(rawDelta);
                         final doc = Document.fromDelta(delta);
                         final rawText = doc.toPlainText();
-                        final value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+                        double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+
+                        // If it's a credit note, negate the value
+                        if (layout.type == SheetType.creditNote.index) {
+                          value *= -1;
+                        }
+                        if (layout.type == SheetType.proformaInvoice.index) {
+                          value *= 0;
+                        }
 
                         totalRevenue += value;
 
@@ -3541,14 +3459,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     // Skip this layout
                   }
                 }
-                //
+
+                // Ensure all months and days are initialized
                 monthRevenueMap = Map.fromEntries(
                   List.generate(12, (i) => i + 1)
-                      .map((month) => MapEntry(month.ceilToDouble(), monthRevenueMap[month] ?? 0)),
+                      .map((month) => MapEntry(month.ceilToDouble(), monthRevenueMap[month.toDouble()] ?? 0)),
                 );
+
                 final daysInMonth = DateUtils.getDaysInMonth(selectedYear, selectedMonth);
                 dayRevenueMap = Map.fromEntries(
-                  List.generate(31, (i) => i + 1)
+                  List.generate(daysInMonth, (i) => i + 1)
                       .map((day) => MapEntry(day.toDouble(), dayRevenueMap[day.toDouble()] ?? 0)),
                 );
 
@@ -3596,9 +3516,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             touchSpotThreshold: 25,
                             getTouchedSpotIndicator:
                                 (LineChartBarData barData, List<int> spotIndexes) {
+                                  final isMainChart = barData.barWidth == 5;
                               return spotIndexes.map((spotIndex) {
                                 final spot = barData.spots[spotIndex];
-                                
+                                if (!isMainChart) {
+                                  return TouchedSpotIndicatorData(
+                                    FlLine(strokeWidth: 0, color: Colors.transparent),
+                                    FlDotData(show: false),
+                                  );
+                                }
                                 return TouchedSpotIndicatorData(
                                   FlLine(
                                     color: defaultPalette.tertiary,
@@ -3619,22 +3545,28 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             }).toList();
                           },
                           touchTooltipData: LineTouchTooltipData(
-                            getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                            getTooltipColor: (touchedSpot) => defaultPalette.extras[0],
                             getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                               return touchedBarSpots.map((barSpot) {
                                 final flSpot = barSpot;
-                                 if (barSpot.x ==0 || barSpot.x ==13 ) {
+                                 if (barSpot.x ==0 || barSpot.x ==13 || barSpot.barIndex ==1) {
                                    return null;
                                  }   
-                                
-                                    
+                                 
                                 return LineTooltipItem(
-                                  '${monthNames[(barSpot.x-1).clamp(0, 12).round()]} Revenue \n',
+                                  '${monthNames[(barSpot.x-1).clamp(0, 12).round()]}',
                                  GoogleFonts.lexend(
-                                    color: defaultPalette.primary,
+                                    color: defaultPalette.tertiary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   children: [
+                                    TextSpan(
+                                      text: ' Revenue: \n',
+                                      style:GoogleFonts.lexend(
+                                        color: defaultPalette.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                     TextSpan(
                                       text: NumberFormat.decimalPattern('en_IN').format(monthRevenueMap[(barSpot.x).clamp(1, 12).round()]),
                                       style:GoogleFonts.lexend(
@@ -3646,6 +3578,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       text: '₹ ',
                                       style:GoogleFonts.lexend(
                                         fontWeight: FontWeight.w900,
+                                        color: defaultPalette.primary,
                                       ),
                                     ),
                                   ],
@@ -3666,8 +3599,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             }
                           },
                           ),
-                          extraLinesData: ExtraLinesData(
-                          ),
                           lineBarsData: [
                           LineChartBarData(
                             isStepLineChart: true,
@@ -3680,7 +3611,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             isCurved: false,
                             barWidth: 5,
                             color: defaultPalette.secondary,
-                
                             belowBarData: BarAreaData(
                               show: true,
                               gradient: LinearGradient(colors: [
@@ -3690,7 +3620,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               begin: Alignment(0, -1),
                               end: Alignment(0, 1),
                               ),
-                
+                              applyCutOffY: true,
+                              cutOffY: 0,
                               spotsLine: BarAreaSpotsLine(
                                 show: true,
                                 flLineStyle: FlLine(
@@ -3717,8 +3648,58 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               },
                             ),
                           ),
+                          LineChartBarData(
+                            isStepLineChart: true,
+                            spots: [
+                              const FlSpot(0, 0),
+                              for( var entry in monthRevenueMap.entries)
+                               entry.value<0? FlSpot(entry.key, (entry.value)):FlSpot(entry.key, 0),
+                              const FlSpot(13, 0),
+                            ],
+                            isCurved: false,
+                            barWidth: 2,
+                            color: defaultPalette.secondary,
+                
+                            belowBarData: BarAreaData(
+                              show: true,
+                              applyCutOffY: true,
+                              cutOffY: 0,
+                              gradient: LinearGradient(colors: [
+                                defaultPalette.extras[0],defaultPalette.extras[0],
+                              ],
+                              stops: [0.5, 1],
+                              begin: Alignment(0, 0),
+                              end: Alignment(0, 3),
+                              ),
+                
+                              spotsLine: BarAreaSpotsLine(
+                                show: true,
+                                flLineStyle: FlLine(
+                                  color: defaultPalette.extras[0],
+                                  strokeWidth: mapValueDimensionBased(25, 80, sWidth, sHeight, useWidth: true),
+                                ),
+                                
+                              ),
+                            ),
+                            dotData: FlDotData(
+                              show:monthRevenueMap.values.reduce(min)<-1,
+                              getDotPainter: (spot, percent, barData, index) {
+                                
+                                  return FlDotSquarePainter(
+                                    size: 8.5,
+                                    color: defaultPalette.primary,
+                                    strokeWidth: 3,
+                                    strokeColor: defaultPalette.extras[0],
+                                  );
+                                
+                              },
+                              checkToShowDot: (spot, barData) {
+                                return( spot.y.round() !=0 && spot.x!=0 && (spot.y <0));
+                              },
+                            ),
+                          ),
                           ],
-                          minY: 0,
+                          minY: monthRevenueMap.values.fold(0.0, (min, val) => val < (min??0) ? val : min),
                           maxY: max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),
                           borderData: FlBorderData(
                           show: true,
@@ -3783,7 +3764,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
                               interval: getSmartInterval( max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),),
                               getTitlesWidget:(value, meta) {
-                                if (meta.min == value || meta.max == value) {
+                                if (meta.min == value || meta.max == value||value == 0) {
                                   return const SizedBox.shrink(); // Hide first and last labels
                                 }
                                 return Text(meta.formattedValue.toLowerCase()+'\₹',
@@ -3839,9 +3820,19 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             touchSpotThreshold: 25,
                             getTouchedSpotIndicator:
                                 (LineChartBarData barData, List<int> spotIndexes) {
+                                  
+                                final isMainChart = barData.barWidth == 5;
+ 
+
                               return spotIndexes.map((spotIndex) {
                                 final spot = barData.spots[spotIndex];
-                                
+                                if (!isMainChart) {
+                                  return TouchedSpotIndicatorData(
+                                    FlLine(strokeWidth: 0, color: Colors.transparent),
+                                    FlDotData(show: false),
+                                  );
+                                }
+
                                 return TouchedSpotIndicatorData(
                                   FlLine(
                                     color: defaultPalette.tertiary,
@@ -3862,22 +3853,31 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             }).toList();
                           },
                           touchTooltipData: LineTouchTooltipData(
+                            maxContentWidth: 220,
                             getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
                             getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                               return touchedBarSpots.map((barSpot) {
                                 final flSpot = barSpot;
-                                 if (barSpot.x ==0 || barSpot.x ==32 ) {
+
+                                 if (barSpot.x ==0 || barSpot.x ==32 ||  DateTime(selectedYear, selectedMonth, barSpot.x.toInt()).month != selectedMonth || barSpot.barIndex ==1) {
                                    return null;
                                  }   
                                 
                                     
                                 return LineTooltipItem(
-                                  '${DateFormat.E().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))} ${getOrdinal(barSpot.x.toInt())} Revenue \n',
+                                  '${DateFormat.MMMMEEEEd().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))}${getOrdinal(barSpot.x.toInt())}\n',
                                  GoogleFonts.lexend(
-                                    color: defaultPalette.primary,
+                                    color: defaultPalette.extras[0],
                                     fontWeight: FontWeight.bold,
                                   ),
                                   children: [
+                                    TextSpan(
+                                      text: 'Revenue: \n',
+                                      style:GoogleFonts.lexend(
+                                        color: defaultPalette.primary,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
                                     TextSpan(
                                       text: NumberFormat.decimalPattern('en_IN').format(dayRevenueMap[(barSpot.x).clamp(1, 31).round()]),
                                       style:GoogleFonts.lexend(
@@ -3889,6 +3889,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       text: '₹ ',
                                       style:GoogleFonts.lexend(
                                         fontWeight: FontWeight.w900,
+                                        color: defaultPalette.primary,
                                       ),
                                     ),
                                   ],
@@ -3917,7 +3918,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             spots: [
                               const FlSpot(0, 0),
                               for( var entry in dayRevenueMap.entries)
-                                FlSpot(entry.key, entry.value),
+                                FlSpot(entry.key, (entry.value)),
                               const FlSpot(32, 0),
                             ],
                             isCurved: false,
@@ -3926,11 +3927,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 
                             belowBarData: BarAreaData(
                               show: true,
+                              applyCutOffY: true,
+                              cutOffY: 0,
                               gradient: LinearGradient(colors: [
                                 defaultPalette.extras[0],defaultPalette.extras[0],
                               ],
                               stops: [0.5, 1],
-                              begin: Alignment(0, -1),
+                              begin: Alignment(0, -5),
                               end: Alignment(0, 1),
                               ),
                 
@@ -3960,8 +3963,61 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               },
                             ),
                           ),
+                          
+                          LineChartBarData(
+                            isStepLineChart: true,
+                            spots: [
+                              const FlSpot(0, 0),
+                              for( var entry in dayRevenueMap.entries)
+                               entry.value<0? FlSpot(entry.key, (entry.value)):FlSpot(entry.key, 0),
+                              const FlSpot(32, 0),
+                            ],
+                            isCurved: false,
+                            barWidth: 2,
+                            color: defaultPalette.secondary,
+                
+                            belowBarData: BarAreaData(
+                              show: true,
+                              applyCutOffY: true,
+                              cutOffY: 0,
+                              gradient: LinearGradient(colors: [
+                                defaultPalette.extras[0],defaultPalette.extras[0],
+                              ],
+                              stops: [0.5, 1],
+                              begin: Alignment(0, 0),
+                              end: Alignment(0, 3),
+                              ),
+                
+                              spotsLine: BarAreaSpotsLine(
+                                show: true,
+                                flLineStyle: FlLine(
+                                  color: defaultPalette.extras[0],
+                                  strokeWidth: mapValueDimensionBased(6, 30, sWidth, sHeight, useWidth: true),
+                                ),
+                                
+                              ),
+                            ),
+                            dotData: FlDotData(
+                              show:dayRevenueMap.values.fold(0.0, (min, val) => val < (min ?? 0)? val : min)<0,
+                              getDotPainter: (spot, percent, barData, index) {
+                                
+                                  return FlDotSquarePainter(
+                                    size: 8.5,
+                                    color: defaultPalette.primary,
+                                    strokeWidth: 3,
+                                    strokeColor: defaultPalette.extras[0],
+                                  );
+                                
+                              },
+                              checkToShowDot: (spot, barData) {
+                                return( spot.y.round() !=0 && spot.x!=0);
+                              },
+                            ),
+                          ),
+                          
                           ],
-                          minY: 0,
+                          
+                          minY: dayRevenueMap.values.fold(0.0, (min, val) => val < (min ?? 0)? val : min),
                           maxY: max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),
                           borderData: FlBorderData(
                           show: true,
@@ -3974,7 +4030,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             width: 0),
                             bottom: BorderSide(
                               color: defaultPalette.secondary,
-                            width: 5),
+                            width: dayRevenueMap.values.reduce(min)<0?12:5),
                             top: BorderSide(
                               color: defaultPalette.secondary,
                             width: 12),
@@ -4024,10 +4080,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
-                              interval: getSmartInterval( max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),),
+                              interval: getSmartInterval(max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),minValue:dayRevenueMap.values.reduce(min) ),
                               getTitlesWidget:(value, meta) {
-                                if (meta.min == value || (!isCleanRoundedNumber(meta.max) && meta.max == value)) {
-                                  return const SizedBox.shrink(); // Hide first and last labels
+                                if (meta.min == value || (!isCleanRoundedNumber(meta.max) && meta.max == value ||value == 0)) {
+                                  return const SizedBox.shrink();
                                 }
                                 return Text(meta.formattedValue.toLowerCase()+'\₹',
                                   style: GoogleFonts.lexend(
@@ -4068,7 +4124,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 }
               ),
             ),
-             //  charts tbd analytical
+            //  summary analytical
            AnimatedPositioned(
               duration: Durations.medium2,
               // right: 15,
@@ -4092,23 +4148,41 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   if (revisedNames.contains(name)) return false; // exclude if revised version exists
                   return true;
                 }).toList();
+                typeStats ={};
+                for (final layout in layouts) {
+                  final type = SheetType.values[layout.type];
+                  double totalPayable = 0;
+
+                  try {
+                    final label = layout.labelList.firstWhere((l) => l.name == 'totalPayable');
+                    if (label.indexPath.index != -951) {
+                      final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
+                      if (item is SheetTextBox) {
+                        final delta = Delta.fromJson(List<Map<String, dynamic>>.from(item.textEditorController));
+                        final doc = Document.fromDelta(delta);
+                        final rawText = doc.toPlainText();
+                        totalPayable = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0;
+
+                        if (type == SheetType.creditNote) {
+                          totalPayable = -totalPayable;
+                        }
+                      }
+                    }
+                  } catch (_) {
+                    // silently skip errors
+                  }
+
+                  typeStats[type] = {
+                    'count': (typeStats[type]?['count'] ?? 0) + 1,
+                    'payable': (typeStats[type]?['payable'] ?? 0.0) + totalPayable,
+                  };
+                }
 
 
-                final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
-                final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
-                final debitNoteCount = layouts.where((l) => l.type == SheetType.debitNote.index).length;
-                final billOfSupplyCount = layouts.where((l) => l.type == SheetType.billOfSupply.index).length;
-
-                double totalRevenue = 0;
-
-
-                
-
-                // print(monthRevenueMap);
                 return Container(
                   width: (sWidth / 1.73 - 100) / 2,
                   height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
-                  padding: EdgeInsets.all(5).copyWith(right: 10),
+                  padding: EdgeInsets.all(5).copyWith(right: 8, bottom: 8,left: mapValueDimensionBased(8, 10, sWidth, sHeight)),
                   decoration: BoxDecoration(
                     color: defaultPalette.primary,
                     borderRadius: BorderRadius.circular(20)
@@ -4118,257 +4192,139 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // title Revenue
-                      SizedBox(
-                        height: 25,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(width: 5,),
-                            Icon(TablerIcons.chart_dots_3, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
-                            SizedBox(width: 5,),
-                            Expanded(
-                              child: Text('Revenue',style: GoogleFonts.lexend(
-                                fontSize: mapValueDimensionBased(20, 23, sWidth, sHeight),
-                                color: defaultPalette.extras[0],
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -1),),
-                            ),
-                            ...datePropertyTile(1),
-                          ],
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(width: 5,),
+                          Icon(TablerIcons.chart_arcs, size: mapValueDimensionBased(16, 30, sWidth, sHeight),),
+                          SizedBox(width: 5,),
+                          Expanded(
+                            child: Text('Summary',style: GoogleFonts.lexend(
+                              fontSize: mapValueDimensionBased(15, 25, sWidth, sHeight),
+                              color: defaultPalette.extras[0],
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -1),),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      //yearly revenue
-                      Expanded(child: 
-                      LineChart(
-                          LineChartData(
-                          backgroundColor: defaultPalette.secondary,
-                          lineTouchData: LineTouchData(
-                            touchSpotThreshold: 25,
-                            getTouchedSpotIndicator:
-                                (LineChartBarData barData, List<int> spotIndexes) {
-                              return spotIndexes.map((spotIndex) {
-                                final spot = barData.spots[spotIndex];
-                                
-                                return TouchedSpotIndicatorData(
-                                  FlLine(
-                                    color: defaultPalette.tertiary,
-                                    strokeWidth: 4,
-                                  ),
-                                  FlDotData(
-                                    getDotPainter: (spot, percent, barData, index) {
-                                      
-                                      return FlDotCirclePainter(
-                                        radius: 8,
-                                        color: defaultPalette.primary,
-                                        strokeWidth: 5,
-                                        strokeColor: defaultPalette.tertiary,
-                                      );
-                                    },
-                                  ),
-                              );
-                            }).toList();
-                          },
-                          touchTooltipData: LineTouchTooltipData(
-                            getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
-                            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                              return touchedBarSpots.map((barSpot) {
-                                final flSpot = barSpot;
-                                 if (barSpot.x ==0 || barSpot.x ==13 ) {
-                                   return null;
-                                 }   
-                                
-                                    
-                                return LineTooltipItem(
-                                  '${monthNames[(barSpot.x-1).clamp(0, 12).round()]} Revenue \n',
-                                 GoogleFonts.lexend(
-                                    color: defaultPalette.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                      SizedBox(height: 10,),
+                      Expanded(
+                        child: ScrollConfiguration(
+                        behavior: ScrollBehavior().copyWith(scrollbars: false),
+                        child: DynMouseScroll(
+                          durationMS: 500,
+                          scrollSpeed: 1,
+                          builder: (context, controller, physics) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: SingleChildScrollView(
+                                controller: controller,
+                                physics: physics,
+                                // padding: EdgeInsets.only(
+                                //   right: 10,
+                                // ),
+                                child: Column(
                                   children: [
-                                    TextSpan(
-                                      text: NumberFormat.decimalPattern('en_IN').format(monthRevenueMap[(barSpot.x).clamp(1, 12).round()]),
-                                      style:GoogleFonts.lexend(
-                                        color: defaultPalette.primary,
-                                        fontWeight: FontWeight.w900,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      SizedBox(width: 2,),
+                                      ...[Icon(TablerIcons.moneybag, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                                      SizedBox(width: 5,),],
+                                      Expanded(
+                                        child: Text('Total Revenue',
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                          color: defaultPalette.extras[0],
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -1),),
                                       ),
+                                      Expanded(
+                                      child: Text(NumberFormat.decimalPattern('en_IN').format(totalRevenue),
+                                      maxLines: 1,
+                                      textAlign: TextAlign.end,
+                                      style: GoogleFonts.lexend(
+                                        fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: -1),),
+                                        
                                     ),
-                                     TextSpan(
-                                      text: '₹ ',
-                                      style:GoogleFonts.lexend(
-                                        fontWeight: FontWeight.w900,
+                                    SizedBox(width:6,),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      SizedBox(width: 2,),
+                                      ...[Icon(TablerIcons.file_stack, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                                      SizedBox(width: 5,),],
+                                      Expanded(
+                                        child: Text('Total Bills',
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                          color: defaultPalette.extras[0],
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -1),),
                                       ),
+                                      Expanded(
+                                      child: Text(layouts.where((l) => SheetType.values[l.type] != SheetType.none).length.toString(),
+                                      maxLines: 1,
+                                      textAlign: TextAlign.end,
+                                      style: GoogleFonts.lexend(
+                                        fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: -1),),
+                                        
                                     ),
+                                      SizedBox(width: 6,),
+                                    ],
+                                    ),
+                                    SizedBox(height: 10,),
+                                    summaryTile('Tax Invoices',
+                                      typeStats[SheetType.taxInvoice]!,
+                                      TablerIcons.file_invoice,
+                                      sWidth,
+                                      sHeight,
+                                    ), 
+                                    summaryTile('Credit Notes',
+                                      typeStats[SheetType.creditNote]!,
+                                      TablerIcons.credit_card_pay,
+                                      sWidth,
+                                      sHeight,
+                                    ),
+                                    summaryTile('Debit Notes',
+                                      typeStats[SheetType.debitNote]!,
+                                      TablerIcons.credit_card_refund,
+                                      sWidth,
+                                      sHeight,
+                                    ),
+                                    summaryTile('Bills of Supply',
+                                      typeStats[SheetType.billOfSupply]!,
+                                      TablerIcons.receipt_2,
+                                      sWidth,
+                                      sHeight,
+                                    ),
+                                    summaryTile('Proforma Invoices',
+                                      typeStats[SheetType.proformaInvoice]!,
+                                      TablerIcons.receipt_filled,
+                                      sWidth,
+                                      sHeight,
+                                    ),
+                                    
+                                    SizedBox(height: 5,),
+                              
                                   ],
-                                  textAlign: TextAlign.left
-                                );
-                              }).toList();
-                            },
-                          ),
-                          touchCallback:
-                              (FlTouchEvent event, LineTouchResponse? lineTouch) {
-                            if (!event.isInterestedForInteractions ||
-                                lineTouch == null ||
-                                lineTouch.lineBarSpots == null) {
-                              setState(() {
-                                // touchedValue = -1;
-                              });
-                              return;
-                            }
-                          },
-                          ),
-                          extraLinesData: ExtraLinesData(
-                          ),
-                          lineBarsData: [
-                          LineChartBarData(
-                            isStepLineChart: true,
-                            spots: [
-                              const FlSpot(0, 0),
-                              for( var entry in monthRevenueMap.entries)
-                                FlSpot(entry.key, entry.value),
-                              const FlSpot(13, 0),
-                            ],
-                            isCurved: false,
-                            barWidth: 5,
-                            color: defaultPalette.secondary,
-                
-                            belowBarData: BarAreaData(
-                              show: true,
-                              gradient: LinearGradient(colors: [
-                                defaultPalette.extras[0],defaultPalette.extras[0],
-                              ],
-                              stops: [0.5, 1],
-                              begin: Alignment(0, -1),
-                              end: Alignment(0, 1),
-                              ),
-                
-                              spotsLine: BarAreaSpotsLine(
-                                show: true,
-                                flLineStyle: FlLine(
-                                  color: defaultPalette.extras[0],
-                                  strokeWidth: 1,
                                 ),
-                                
                               ),
-                            ),
-                            dotData: FlDotData(
-                              show: true,
-                              getDotPainter: (spot, percent, barData, index) {
-                                
-                                  return FlDotSquarePainter(
-                                    size: 8.5,
-                                    color: defaultPalette.primary,
-                                    strokeWidth: 3,
-                                    strokeColor: defaultPalette.extras[0],
-                                  );
-                                
-                              },
-                              checkToShowDot: (spot, barData) {
-                                return( spot.y >1 && spot.x!=0);
-                              },
-                            ),
-                          ),
-                          ],
-                          minY: 0,
-                          maxY: max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),
-                          borderData: FlBorderData(
-                          show: true,
-                          border: Border(
-                            left: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 0),
-                            right: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 0),
-                            bottom: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 5),
-                            top: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 12),
-                            
-                          ),
-                          ),
-                          gridData: FlGridData(
-                          show: true,
-                          drawHorizontalLine: false,
-                          drawVerticalLine: false,
-                          getDrawingHorizontalLine: (value) {
-                            if (value == 0) {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 2,
-                              );
-                            } else {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 0.5,
-                              );
+                            );
                             }
-                          },
-                          getDrawingVerticalLine: (value) {
-                            if (value == 0) {
-                              return const FlLine(
-                                color: Colors.redAccent,
-                                strokeWidth: 10,
-                              );
-                            } else {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 0.5,
-                              );
-                            }
-                          },
-                          ),
-                          titlesData: FlTitlesData(
-                          show: true,
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
-                              interval: getSmartInterval( max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),),
-                              getTitlesWidget:(value, meta) {
-                                if (meta.min == value || meta.max == value) {
-                                  return const SizedBox.shrink(); // Hide first and last labels
-                                }
-                                return Text(meta.formattedValue.toLowerCase()+'\₹',
-                                  style: GoogleFonts.lexend(
-                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
-                                    letterSpacing: -1,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              // reservedSize: 40,
-                              interval: 1,
-                              getTitlesWidget:(value, meta) {
-                                if (value ==0 || value ==13) {
-                                  return SizedBox.shrink();
-                                }
-                                return Text(monthNames[(value-1).clamp(0, double.infinity).round()],
-                                  style: GoogleFonts.lexend(
-                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
-                                    letterSpacing: -1,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
                           ),
                         ),
-                      )
-                      
                       ),
                       
                     ],
@@ -4436,10 +4392,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     ..sort((a, b) => a.key.index.compareTo(b.key.index))
                 );
 
-
-                
-
-                // print(monthRevenueMap);
                 return Container(
                   width: (sWidth / 1.73 - 100) / 2 -10, // -10 because of the gap between the two charts
                   height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
@@ -4457,7 +4409,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           SizedBox(width: 5,),
-                          Icon(TablerIcons.tallymarks, size: mapValueDimensionBased(10, 30, sWidth, sHeight),),
+                          Icon(TablerIcons.tallymarks, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
                           SizedBox(width: 5,),
                           Expanded(
                             child: Text('Quantity',style: GoogleFonts.lexend(
@@ -4486,7 +4438,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           Expanded(
                             flex: 20,
                             child: Padding(
-                            padding: const EdgeInsets.only(top: 6.0, bottom: 5, left: 0),
+                            padding: const EdgeInsets.only(top: 6.0, bottom: 5, left: 5),
                             child: LineChart(
                             LineChartData(
                             backgroundColor: defaultPalette.secondary,
@@ -4517,6 +4469,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               }).toList();
                             },
                             touchTooltipData: LineTouchTooltipData(
+                              maxContentWidth: mapValueDimensionBased(120, 200, sWidth, sHeight),
                               getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
                               getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                                 return touchedBarSpots.map((barSpot) {
@@ -4527,17 +4480,26 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   
                                       
                                   return LineTooltipItem(
-                                    '${DateFormat.MMMM().format(DateTime(selectedYear, selectedMonth))}\n${monthlyCounts.keys.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()].name}: ',
+                                    '${DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))}\n',
                                    GoogleFonts.lexend(
-                                      color: defaultPalette.primary,
+                                      color: defaultPalette.extras[0],
                                       fontWeight: FontWeight.bold,
+                                      fontSize:  mapValueDimensionBased(15, 20, sWidth, sHeight),
                                     ),
                                     children: [
+                                      TextSpan(
+                                        text: '${monthlyCounts.keys.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()].name}: \n',
+                                        style:GoogleFonts.lexend(
+                                          color: defaultPalette.primary,
+                                          fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
+                                        ),
+                                      ),
                                       TextSpan(
                                         text: NumberFormat.decimalPattern('en_IN').format(monthlyCounts.values.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()]),
                                         style:GoogleFonts.lexend(
                                           color: defaultPalette.primary,
                                           fontWeight: FontWeight.w900,
+                                          fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
                                         ),
                                       ),
                                        
@@ -4712,7 +4674,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                           )),
                           Expanded(
-                            flex: 25,
+                            flex: 30,
                             child: PieChart(
                               PieChartData(
                                 pieTouchData: PieTouchData(
@@ -4734,7 +4696,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   show: false,
                                 ),
                                 sectionsSpace: 1,
-                                centerSpaceRadius: mapValueDimensionBased(10, 50, sWidth, sHeight),
+                                centerSpaceRadius: mapValueDimensionBasedLockOnDesync(10, 50, sWidth, sHeight,),
                                 sections: showingSections(
                                   billCounts: yearlyCounts,
                                   touchedIndex: touchedIndex,
@@ -5063,38 +5025,39 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }
 
   String getOrdinal(int number) {
-  if (number >= 11 && number <= 13) return '${number}th';
+  if (number >= 11 && number <= 13) return 'th';
   switch (number % 10) {
     case 1:
-      return '${number}st';
+      return 'st';
     case 2:
-      return '${number}nd';
+      return 'nd';
     case 3:
-      return '${number}rd';
+      return 'rd';
     default:
-      return '${number}th';
+      return 'th';
   }
 }
-  double getSmartInterval(double maxValue,) {
-  final cleanSteps = [ 
-    0.5,1, 2, 5, 10, 20, 25, 50,
-    100, 200, 250, 500,
-    1000, 2000, 2500, 5000,
-    10000, 20000, 25000, 50000,
-    100000, 200000, 500000,
-    1000000, 2000000
-  ];
+  double getSmartInterval( double maxValue, {double minValue =0}) {
+    final cleanSteps = [ 
+      0.5, 1, 2, 5, 10, 20, 25, 50,
+      100, 200, 250, 500,
+      1000, 2000, 2500, 5000,
+      10000, 20000, 25000, 50000,
+      100000, 200000, 500000,
+      1000000, 2000000,
+    ];
 
-  final safeMax = max(maxValue.ceilToDouble(), 1);
-  
-  for (final step in cleanSteps) {
-    final count = (safeMax / step).ceil();
-    if (count <= 4) return step.toDouble();
+    final range = (maxValue - minValue).abs();
+    final safeRange = math.max(range, 1);
+
+    for (final step in cleanSteps) {
+      final count = (safeRange / step).ceil();
+      if (count <= 4) return step.toDouble();
+    }
+
+    // If nothing fits, return a coarse default
+    return (safeRange / 4).ceilToDouble();
   }
-
-  // If nothing fits, just default to quarter of max (still rounded)
-  return (safeMax / 4).ceilToDouble();
-}
   bool isCleanRoundedNumber(num value) {
   if (value == 0) return false;
   String str = value.toInt().toString();
@@ -5119,13 +5082,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     final type = entry.key;
     final count = entry.value;
     final isTouched = i == touchedIndex;
-    final fontSize = isTouched ? mapValueDimensionBased(25, 40, sWidth, sHeight) : mapValueDimensionBased(13, 30, sWidth, sHeight);
-    final radius = isTouched ? mapValueDimensionBased(40, 80, sWidth, sHeight) : mapValueDimensionBased(30, 60, sWidth, sHeight);
+    final fontSize = isTouched ? mapValueDimensionBasedLockOnDesync(25, 40, sWidth, sHeight) : mapValueDimensionBasedLockOnDesync(13, 30, sWidth, sHeight);
+    final radius = isTouched ? mapValueDimensionBasedLockOnDesync(40, 180, sWidth, sHeight) : mapValueDimensionBasedLockOnDesync(25, 90, sWidth, sHeight);
     const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
 
-    String badgeLabel = type.name
-        .replaceAllMapped(RegExp(r'([A-Z])'), (m) => '\n${m[0]}')
-        ; // e.g. 'billOfSupply' -> 'bill\nof\nsupply'
+    String badgeLabel = type.name.replaceFirstMapped(RegExp(r'[A-Z]'), (m) => '\n${m[0]}');// e.g. 'billOfSupply' -> 'bill\nof\nsupply'
 
     return PieChartSectionData(
       color: defaultPalette.extras[0], // You can assign different colors by type too
@@ -5133,7 +5094,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       title: count.toString(),
       radius: radius,
       titleStyle: GoogleFonts.lexend(
-        fontSize: fontSize,
+        fontSize: fontSize*mapValueDimensionBasedLockOnDesync(isTouched?0.5:0.8, isTouched?0.7:1, sWidth, sHeight),
         fontWeight: FontWeight.bold,
         color: defaultPalette.primary,
         shadows: shadows,
@@ -5156,17 +5117,98 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           badgeLabel,
           textAlign: TextAlign.center,
           style: GoogleFonts.lexend(
-            fontSize: fontSize *mapValueDimensionBased(0.4, 0.5, sWidth, sHeight),
+            fontSize: fontSize *mapValueDimensionBasedLockOnDesync(0.4, 0.5, sWidth, sHeight),
             color: defaultPalette.extras[0],
           ),
         ),
       ),
-      badgePositionPercentageOffset: 1.2,
+      badgePositionPercentageOffset: mapValueDimensionBasedLockOnDesync(isTouched?1.2:1.2, isTouched?0.8: 1, sWidth, sHeight,),
       titlePositionPercentageOffset: 0.3,
     );
   });
 }
 
+  Widget summaryTile (String s, Map<String, double> stats, IconData icon, double sWidth, double sHeight, {textAlign = TextAlign.start}) {
+    return Container(
+      padding: EdgeInsets.all(mapValueDimensionBased(5, 10, sWidth, sHeight)),
+      margin: EdgeInsets.only(bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), right:2),
+      decoration: BoxDecoration(
+        color: defaultPalette.secondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: defaultPalette.extras[0], width: 0.2),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ...[Icon(icon, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+              SizedBox(width: 5,),],
+              Expanded(
+                child: Text(s,
+                textAlign: textAlign,
+                style: GoogleFonts.lexend(
+                  fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                  color: defaultPalette.extras[0],
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -1),),
+              ),
+             
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+              child: Text('count  ',
+              textAlign: textAlign,
+              style: GoogleFonts.lexend(
+                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -1),),
+              ),
+              Expanded(
+              child: Text(NumberFormat.decimalPattern('en_IN').format(stats['count']),
+              maxLines: 1,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.lexend(
+                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -1),),
+                  
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+              child: Text('revenue  ',
+              textAlign: textAlign,
+              style: GoogleFonts.lexend(
+                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -1),),
+              ),
+              Expanded(
+              child: Text(NumberFormat.decimalPattern('en_IN').format(stats['payable']) + '₹',
+              maxLines: 1,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.lexend(
+                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -1),),
+                  
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
 
 }
 
@@ -5200,4 +5242,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     :1187, 
     outMin: outMin, outMax: outMax);
   }
+
+  double mapValueDimensionBasedLockOnDesync(
+  double outMin,
+  double outMax,
+  double sWidth,
+  double sHeight, {
+  double baseWidth = 800,
+  double baseHeight = 500,
+  double maxWidth = 2194,
+  double maxHeight = 1187,
+}) {
+  // Calculate individual progress
+  final widthProgress = ((sWidth - baseWidth) / (maxWidth - baseWidth)).clamp(0.0, 1.0);
+  final heightProgress = ((sHeight - baseHeight) / (maxHeight - baseHeight)).clamp(0.0, 1.0);
+
+  final widthChanged = sWidth != baseWidth;
+  final heightChanged = sHeight != baseHeight;
+
+  final bothIncreased = sWidth > baseWidth && sHeight > baseHeight;
+  final bothDecreased = sWidth < baseWidth && sHeight < baseHeight;
+
+  if (bothIncreased || bothDecreased) {
+    // Sync: interpolate based on the smaller of the two progress values
+    final syncProgress = math.min(widthProgress, heightProgress);
+    return outMin + (outMax - outMin) * syncProgress;
+  }
+
+  // Desync: freeze at the value where sync broke (based on last common progress)
+  final frozenProgress = math.min(widthProgress, heightProgress);
+  return outMin + (outMax - outMin) * frozenProgress;
+}
+
 
