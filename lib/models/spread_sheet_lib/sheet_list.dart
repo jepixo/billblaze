@@ -55,7 +55,7 @@ class SheetListBox extends SheetItem {
         mainAxisAlignment: MainAxisAlignment.values[mainAxisAlignment],
         crossAxisAlignment: CrossAxisAlignment.values[crossAxisAlignment],
         mainAxisSize: MainAxisSize.values[mainAxisSize],
-        listDecoration: Boxes.getSuperDecoration(decorationId).toSuperDecoration(),
+        listDecoration: decorationId,
         indexPath: indexPath,
         size: Size(size?[0]??0, size?[1]??0),
         );
@@ -128,7 +128,7 @@ class SheetList extends SheetItem {
   List<SheetItem> sheetList;
   Axis direction;
   Size size;
-  SuperDecoration listDecoration;
+  String listDecoration;
   MainAxisAlignment mainAxisAlignment;
   CrossAxisAlignment crossAxisAlignment;
   MainAxisSize mainAxisSize;
@@ -153,7 +153,7 @@ class SheetList extends SheetItem {
         direction: direction == Axis.vertical ? true : false,
         id: super.id,
         parentId: super.parentId,
-        decorationId: listDecoration.id,
+        decorationId: listDecoration,
         crossAxisAlignment: crossAxisAlignment.index,
         mainAxisAlignment: mainAxisAlignment.index,
         mainAxisSize: mainAxisSize.index,
@@ -260,7 +260,7 @@ class SheetList extends SheetItem {
       MainAxisAlignment? mainAxisAlignment,
       CrossAxisAlignment? crossAxisAlignment,
       MainAxisSize? mainAxisSize,
-      SuperDecoration? listDecoration,
+      String? listDecoration,
       IndexPath? indexPath,
       }) {
     return SheetList(

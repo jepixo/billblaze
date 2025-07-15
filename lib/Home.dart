@@ -1600,39 +1600,152 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   OverlayEntry? overlay;
                                     overlay =  OverlayEntry(builder: (context) => Scaffold(
                                     backgroundColor: defaultPalette.tertiary,
-                                    body: Center(
-                                      // child: LoadingAnimationWidget.newtonCradle(
-                                      //   color: Colors.white,
-                                      //   size: 150,
-                                      // ),
-                                      child: SizedBox(
-                                        height: 150,
-                                        // child: ParticleVortexLoader(
-                                        //     options: LoaderOptions(
-                                        //       durationMs: 2500,
-                                        //       color: defaultPalette.extras[0].withOpacity(0.8),
-                                        //       backgroundColor: defaultPalette.tertiary ,
-                                        //       secondaryColor: defaultPalette.secondary,
-                                        //       tertiaryColor: defaultPalette.primary,
-                                        //       size: LoaderSize.extraLarge,
-                                        //       strokeWidth: 25
-                                        //     ), 
-                                        //     size: 8,
-                                        // ),
-                                        child: LoadingIndicator(
-                                            indicatorType: Indicator.pacman, /// Required, The loading type of the widget
-                                            colors: [defaultPalette.extras[0],defaultPalette.extras[0],defaultPalette.extras[0]],       /// Optional, The color collections
-                                            strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
-                                            backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
-                                            pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                    body: Stack(
+                                      children: [
+                                        Center(
+                                          child: SizedBox(
+                                            height: 150,
+                                            child: LoadingIndicator(
+                                                indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                                colors: [defaultPalette.extras[0],defaultPalette.extras[0],defaultPalette.extras[0]],       /// Optional, The color collections
+                                                strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                                backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                                pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                            ),
+                                          )
                                         ),
-                                      )
+                                         Positioned(
+                                          bottom: 10,
+                                          left: 0,
+                                          right: 0,
+                                          child: Text(
+                                            ref.watch(processMessageProvider),
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                                              color: defaultPalette.extras[0],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                        if (Platform.isWindows)
+                                          GestureDetector(
+                                            behavior: HitTestBehavior.translucent,
+                                            onPanStart: (details) {
+                                              appWindow.startDragging();
+                                            },
+                                            onDoubleTap: () {
+                                              appWindow.maximizeOrRestore();
+                                            },
+                                            child: SizedBox(
+                                              height: 30,
+                                              child: Consumer(builder: (context, ref, c) {
+                                                return Stack(
+                                                  children: [
+                                                    AnimatedPositioned(
+                                                      right: 0,
+                                                      top: 0,
+                                                      duration: Durations.short4,
+                                                      child: SingleChildScrollView(
+                                                        scrollDirection: Axis.horizontal,
+                                                        child: AnimatedContainer(
+                                                          duration: Durations.short4,
+                                                          padding: const EdgeInsets.only(
+                                                              right: 6, bottom: 0),
+                                                          margin: const EdgeInsets.only(top: 5),
+                                                          decoration: const BoxDecoration(
+                                                              color: Colors.transparent,
+                                                              borderRadius: BorderRadius.only(
+                                                                topLeft: Radius.circular(12),
+                                                                bottomLeft: Radius.circular(12),
+                                                              )),
+                                                          child: Row(
+                                                            children: [
+                                                              //minimize button
+                                                              ElevatedLayerButton(
+                                                                // isTapped: false,
+                                                                // toggleOnTap: true,
+                                                                depth: 2.5, subfac: 2.5,
+                                                                onClick: () {
+                                                                  Future.delayed(Duration.zero)
+                                                                      .then((y) {
+                                                                    appWindow.minimize();
+                                                                  });
+                                                                },
+                                                                buttonHeight: 22,
+                                                                buttonWidth: 22,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(5),
+                                                                animationDuration:
+                                                                    const Duration(milliseconds: 10),
+                                                                animationCurve: Curves.ease,
+                                                                topDecoration: BoxDecoration(
+                                                                  color: Colors.white,
+                                                                  border: Border.all(),
+                                                                ),
+                                                                topLayerChild: const Icon(
+                                                                  TablerIcons.rectangle,
+                                                                  size: 15,
+                                                                  // color: Colors.blue,
+                                                                ),
+                                                                baseDecoration: BoxDecoration(
+                                                                  color: Colors.green,
+                                                                  border: Border.all(),
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: 7,),
+                                                              //
+                                                              //maximize button
+                                                              ElevatedLayerButton(
+                                                                // isTapped: false,
+                                                                // toggleOnTap: true,
+                                                                depth: 2.5, subfac:2.5,
+                                                                onClick: () {
+                                                                  Future.delayed(Durations.short1)
+                                                                      .then((y) {
+                                                                    appWindow.maximizeOrRestore();
+                                                                  });
+                                                                },
+                                                                buttonHeight: 22,
+                                                                buttonWidth: 22,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(5),
+                                                                animationDuration:
+                                                                    const Duration(milliseconds: 1),
+                                                                animationCurve: Curves.ease,
+                                                                topDecoration: BoxDecoration(
+                                                                  color: Colors.white,
+                                                                  border: Border.all(),
+                                                                ),
+                                                                topLayerChild: const Icon(
+                                                                  TablerIcons.triangle,
+                                                                  size: 14,
+                                                                  // color: Colors.amber,
+                                                                ),
+                                                                baseDecoration: BoxDecoration(
+                                                                  color: Colors.green,
+                                                                  border: Border.all(),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          //
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              }),
+                                            ),
+                                          ),
+              
+                                      ],
                                     ),),);
                                     Overlay.of(context).insert(
                                       overlay
                                     );
                                   var box =Boxes.getLayouts();
-                                  final gmap = await fetchAndReconstructLayoutModels(ref);
+                                  final gmap = await fetchAndReconstructLayoutModels(ref, overlay);
                                   overlay.remove();
 
                                   for (var lmEntry in gmap.entries) {
@@ -1934,6 +2047,117 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             ),
                                           ),
                                         ),
+                                        if (Platform.isWindows)
+                                          GestureDetector(
+                                            behavior: HitTestBehavior.translucent,
+                                            onPanStart: (details) {
+                                              appWindow.startDragging();
+                                            },
+                                            onDoubleTap: () {
+                                              appWindow.maximizeOrRestore();
+                                            },
+                                            child: SizedBox(
+                                              height: 30,
+                                              child: Consumer(builder: (context, ref, c) {
+                                                return Stack(
+                                                  children: [
+                                                    AnimatedPositioned(
+                                                      right: 0,
+                                                      top: 0,
+                                                      duration: Durations.short4,
+                                                      child: SingleChildScrollView(
+                                                        scrollDirection: Axis.horizontal,
+                                                        child: AnimatedContainer(
+                                                          duration: Durations.short4,
+                                                          padding: const EdgeInsets.only(
+                                                              right: 6, bottom: 0),
+                                                          margin: const EdgeInsets.only(top: 5),
+                                                          decoration: const BoxDecoration(
+                                                              color: Colors.transparent,
+                                                              borderRadius: BorderRadius.only(
+                                                                topLeft: Radius.circular(12),
+                                                                bottomLeft: Radius.circular(12),
+                                                              )),
+                                                          child: Row(
+                                                            children: [
+                                                              //minimize button
+                                                              ElevatedLayerButton(
+                                                                // isTapped: false,
+                                                                // toggleOnTap: true,
+                                                                depth: 2.5, subfac: 2.5,
+                                                                onClick: () {
+                                                                  Future.delayed(Duration.zero)
+                                                                      .then((y) {
+                                                                    appWindow.minimize();
+                                                                  });
+                                                                },
+                                                                buttonHeight: 22,
+                                                                buttonWidth: 22,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(5),
+                                                                animationDuration:
+                                                                    const Duration(milliseconds: 10),
+                                                                animationCurve: Curves.ease,
+                                                                topDecoration: BoxDecoration(
+                                                                  color: Colors.white,
+                                                                  border: Border.all(),
+                                                                ),
+                                                                topLayerChild: const Icon(
+                                                                  TablerIcons.rectangle,
+                                                                  size: 15,
+                                                                  // color: Colors.blue,
+                                                                ),
+                                                                baseDecoration: BoxDecoration(
+                                                                  color: Colors.green,
+                                                                  border: Border.all(),
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: 7,),
+                                                              //
+                                                              //maximize button
+                                                              ElevatedLayerButton(
+                                                                // isTapped: false,
+                                                                // toggleOnTap: true,
+                                                                depth: 2.5, subfac:2.5,
+                                                                onClick: () {
+                                                                  Future.delayed(Durations.short1)
+                                                                      .then((y) {
+                                                                    appWindow.maximizeOrRestore();
+                                                                  });
+                                                                },
+                                                                buttonHeight: 22,
+                                                                buttonWidth: 22,
+                                                                borderRadius:
+                                                                    BorderRadius.circular(5),
+                                                                animationDuration:
+                                                                    const Duration(milliseconds: 1),
+                                                                animationCurve: Curves.ease,
+                                                                topDecoration: BoxDecoration(
+                                                                  color: Colors.white,
+                                                                  border: Border.all(),
+                                                                ),
+                                                                topLayerChild: const Icon(
+                                                                  TablerIcons.triangle,
+                                                                  size: 14,
+                                                                  // color: Colors.amber,
+                                                                ),
+                                                                baseDecoration: BoxDecoration(
+                                                                  color: Colors.green,
+                                                                  border: Border.all(),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          //
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              }),
+                                            ),
+                                          ),
+              
                                       ],
                                     ),),);
                                     Overlay.of(context).insert(

@@ -4,11 +4,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:math';
+import 'dart:ui';
 import 'package:animate_do/animate_do.dart';
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
+import 'package:billblaze/components/widgets/gradient_text.dart';
 import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/home.dart';
@@ -292,13 +294,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   bool hasRenderedOnce = false;
   // bool addToTheLeft = false;
   // bool addToTheRight = false;
-  bool isListMarginExpanded = false;
-  bool isListPaddingExpanded = false;
-  bool isListBorderRadiusExpanded = false;
-  bool isListBorderExpanded = true;
-  bool isListColorExpanded = true;
-  bool isListShadowExpanded = true;
-  bool isListDecorationImageExpanded = true;
+  // bool isListMarginExpanded = false;
+  // bool isListPaddingExpanded = false;
+  // bool isListBorderRadiusExpanded = false;
+  // bool isListBorderExpanded = true;
+  // bool isListColorExpanded = true;
+  // bool isListShadowExpanded = true;
+  // bool isListDecorationImageExpanded = true;
   bool isListDecorationPropertiesToggled = false;
   bool isListDecorationLibraryToggled = false;
   bool showDecorationLayers = true;
@@ -315,7 +317,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     textDecoration: SuperDecoration(id: 'yo'),
     indexPath: IndexPath(index:-1)
     );
-  SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration: SuperDecoration(id: 'yo'), sheetList: [],indexPath: IndexPath(index:-1));
+  SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration:'yo', sheetList: [],indexPath: IndexPath(index:-1));
   late SheetTable sheetTableItem;
   var dragBackupValue;
   OverlayEntry? _overlay;
@@ -1310,7 +1312,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     );
   }
 
-  SuperDecoration newSuperDecoration() {
+  SuperDecoration newSuperDecoration({bool placeholder = true}) {
+    if (placeholder) {
+      return SuperDecoration(id: 'yo');
+    }
     var newDecoId = 'dSPR-${Uuid().v4()}';
     print(newDecoId);
     sheetDecorationMap.addAll({newDecoId:SuperDecoration(id: newDecoId)});
@@ -1439,7 +1444,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           _findSheetListItem();
         },
         child: buildDecoratedContainer(
-            sheetDecorationMap[sheetList.listDecoration.id] as SuperDecoration,
+            sheetDecorationMap[sheetList.listDecoration] as SuperDecoration?,
             IntrinsicHeight(
               child: sheetList.direction == Axis.vertical
                   //For Columns in the pdf side of things
@@ -1457,7 +1462,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             // print('in buildSheetListWidget item is: $item');
                             // var tmpinx = int.tryParse(sheetTextItem.textDecoration.id.substring(sheetTextItem.textDecoration.id.indexOf('/') + 1))??-155;
           
-                            SuperDecoration textDecor = sheetDecorationMap[sheetTextItem.textDecoration.id] as SuperDecoration;
+                            SuperDecoration? textDecor = sheetDecorationMap[sheetTextItem.textDecoration.id] as SuperDecoration?;
       
                             Alignment containerAlignment = Alignment.topLeft;
         
@@ -1529,7 +1534,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             // print('in buildSheetListWidget item is: $item');
                             // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-171;
           
-                            SuperDecoration textDecor = sheetDecorationMap[item.textDecoration.id] as SuperDecoration;
+                            SuperDecoration? textDecor = sheetDecorationMap[item.textDecoration.id] as SuperDecoration?;
       
                             return IgnorePointer(
                               key: ValueKey(item),
@@ -1574,7 +1579,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
 
     return buildDecoratedContainer(
-      sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration,
+      sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration?,
       SizedBox(
         width: sheetTable.expand ? null : tableWidth,
         height: tableHeight,
@@ -1655,7 +1660,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   Widget _buildSheetTableTextWidget(SheetText sheetText, {bool disable = true}) {
     // var tmpinx = int.tryParse(sheetText.textDecoration.id.substring(sheetText.textDecoration.id.indexOf('/') + 1))??-111;
         
-    SuperDecoration decor = sheetDecorationMap[sheetText.textDecoration.id] as SuperDecoration;
+    SuperDecoration? decor = sheetDecorationMap[sheetText.textDecoration.id] as SuperDecoration?;
     
     return ClipRRect(
       borderRadius:BorderRadius.circular(0),
@@ -1781,7 +1786,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         id: id,
         parentId: lm!.id,
         sheetList: [],
-        listDecoration: newDecoration,
+        listDecoration: newDecoration.id,
         indexPath: IndexPath(index: spreadSheetList.length)
         );
 
@@ -1840,7 +1845,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         id: id,
         parentId: lm?.id??'yo',
         sheetList: [],
-        listDecoration: newDecoration,
+        listDecoration: newDecoration.id,
         indexPath: IndexPath(index:-1)
         );
 
@@ -1935,8 +1940,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 .v4()}', // Assign a new unique ID
           parentId: spreadSheetList[sourceIndex].parentId,
           sheetList: List.from(spreadSheetList[sourceIndex].sheetList),
-          listDecoration: SuperDecoration.fromJson(
-              spreadSheetList[sourceIndex].listDecoration.toJson()),
+          listDecoration: 
+              spreadSheetList[sourceIndex].listDecoration,
           indexPath: spreadSheetList[sourceIndex].indexPath
               );
 
@@ -2244,10 +2249,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         if(whichPropertyTabIsClicked != 2){
           whichPropertyTabIsClicked = 2;
         }
+        
+      
       // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
-      textDecorationNameController.text = sheetDecorationMap[item.textDecoration.id]!.name;
-      decorationIndex = -1;
-      updateSheetDecorationvariables(sheetDecorationMap[item.textDecoration.id] as SuperDecoration);
+      if (item.textDecoration.id == 'yo' || sheetDecorationMap[item.textDecoration.id] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
+        textDecorationNameController.text = '[Unassigned]';
+        decorationIndex = -1;
+        updateSheetDecorationvariables(sheetDecorationMap[item.textDecoration.id] as SuperDecoration?);
+      } else {
+        textDecorationNameController.text = sheetDecorationMap[item.textDecoration.id]!.name;
+        decorationIndex = -1;
+        updateSheetDecorationvariables(sheetDecorationMap[item.textDecoration.id] as SuperDecoration?);
+      }
 
       // if (// inputBlockExpansionList.length != item.inputBlocks.length) {
       //   // inputBlockExpansionList = List.generate(item.inputBlocks.length, (e)=>false);
@@ -2275,15 +2288,21 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             // print(sheetListItem.parentId);
       setState(() {
         // var tmpinx = int.tryParse(sheetListItem.listDecoration.id.substring(sheetListItem.listDecoration.id.indexOf('/') + 1))??-111;
-        listDecorationNameController.text = sheetListItem.listDecoration.name;
+        if (sheetListItem.listDecoration == 'yo' || sheetDecorationMap[sheetListItem.listDecoration] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
+        listDecorationNameController.text = '[Unassigned]';
         decorationIndex = -1;
-        updateSheetDecorationvariables(sheetDecorationMap[sheetListItem.listDecoration.id] as SuperDecoration);
+        updateSheetDecorationvariables(sheetDecorationMap[sheetListItem.listDecoration] as SuperDecoration?);
+        } else {
+        listDecorationNameController.text = sheetDecorationMap[sheetListItem.listDecoration]!.name;
+        decorationIndex = -1;
+        updateSheetDecorationvariables(sheetDecorationMap[sheetListItem.listDecoration] as SuperDecoration);
+        }
         // print('sheetDecorationVariables initiated.');
         // print(sheetListItem.listDecoration.id);
         // print(sheetListItem.listDecoration.itemDecorationList);
         // print(sheetDecorationVariables);
         // print(sheetDecorationVariables[0].isExpanded);
-        listDecorationPath = [sheetListItem.listDecoration.id];
+        listDecorationPath = [sheetListItem.listDecoration];
       });    
       } else {
        
@@ -2346,9 +2365,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             break;
           default:
         }
-        // print('sheetDecorationVariables initiated.');
-        // print(sheetTableItem.sheetTableDecoration.id);
-        // print(' '+ sheetDecorationVariables.length.toString());
         
         if (item.parentId == sheetTableItem.id) {
           var (row, col) = parseCellId(item.name);
@@ -2361,9 +2377,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       });
   }
 
-  void updateSheetDecorationvariables(SuperDecoration superDecoration){
+  void updateSheetDecorationvariables(SuperDecoration? superDecoration){
     setState((){
-      
+      if (superDecoration == null) {
+        sheetDecorationVariables = [];
+        return;
+      }
       sheetDecorationVariables = superDecoration.itemDecorationList.map((ex) {
         // var tmpinx = int.tryParse(ex.substring(ex.indexOf('/') + 1))??-42;
         return SheetDecorationVariables(
@@ -2387,6 +2406,23 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         listImageAlignFocusNodes : [FocusNode(), FocusNode()],
         listImagePropertyFocusNodes : [FocusNode(), FocusNode()],
         listShadowLayerSelectedIndex : 0,
+        colorHexFocusNodes2 : List.generate( 2,(index) => FocusNode(),),
+        borderFocusNodes2 : List.generate( 3,(index) => FocusNode(),),
+        borderRadiusFocusNodes2 : List.generate( 5,(index) => FocusNode(),),
+        listBorderFocusNodes2 : List.generate( 5,(index) => FocusNode(),),
+        listShadowFocusNodes2 :sheetDecorationMap[ex]!.id =='yo'
+        ?[ List.generate( 5,(index) => FocusNode(),)]
+        : List.generate(sheetDecorationMap[ex] is ItemDecoration
+          ? (sheetDecorationMap[ex] as ItemDecoration).decoration.boxShadow?.length??1
+          : 1,
+        (i) {
+          return List.generate( 5,(index) => FocusNode(),);
+        },
+        ),
+        listImageAlignFocusNodes2 : [FocusNode(), FocusNode()],
+        listImagePropertyFocusNodes2 : [FocusNode(), FocusNode()],
+        listShadowLayerSelectedIndex2 : 0,
+
         );
       },).toList();
     
@@ -2778,7 +2814,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     children: [
                                       Padding(
                                         padding: EdgeInsets.only(top:50, left:4,right:3),
-                                        
                                         child:Text(
                                           'text',
                                           style: GoogleFonts.lexend(
@@ -2955,7 +2990,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               direction: Axis.horizontal,
                                               indexPath: newIndexPath, 
                                               sheetList: [], 
-                                              listDecoration: newDecoration),
+                                              listDecoration: newDecoration.id),
                                           );
                                           // _reassignSheetListIndexPath((spreadSheetList[currentPageIndex]));
                                         });
@@ -2982,7 +3017,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               direction: Axis.horizontal,
                                               indexPath: newIndexPath, 
                                               sheetList: [], 
-                                              listDecoration: newDecoration),
+                                              listDecoration: newDecoration.id),
                                           );
                                           // _reassignSheetListIndexPath((spreadSheetList[currentPageIndex]));
                                         });
@@ -3012,7 +3047,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       onTap: () {
                                           setState(() {
                                             String newId = 'TB-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration();
+                                            var newDecoration = newSuperDecoration(placeholder: false);
                                             var newIndexPath = IndexPath(
                                                   parent: spreadSheetList[currentPageIndex].indexPath,
                                                   index: spreadSheetList[currentPageIndex].length);
@@ -3025,7 +3060,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 rowData: defaultSheetTableRowData(newId, newDecoration.id,newIndexPath),
                                                 pinnedColumns: 1,
                                                 pinnedRows: 1,
-                                                sheetTableDecoration: newSuperDecoration(),
+                                                sheetTableDecoration: newSuperDecoration(placeholder: false),
                                                 indexPath: newIndexPath
                                                 )
                                             );
@@ -3041,7 +3076,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       onTap: () {
                                           setState(() {
                                             String newId = 'TB-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration();
+                                            var newDecoration = newSuperDecoration(placeholder: false);
                                             var newIndexPath = IndexPath(
                                                   parent: spreadSheetList[currentPageIndex].indexPath,
                                                   index: spreadSheetList[currentPageIndex].length);
@@ -3091,8 +3126,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ]
                                   )
                                   
-                                 
-                                
                                 ),
                                 //emulating the pdf preview //Desktop WEB
                                 Expanded(
@@ -5013,17 +5046,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   child: FadeInLeft(child: _getProperTiesCards()),
                                 ),
                                 
-                                //the place to render the preview for decoration before displaying
-                                // Positioned(
-                                //   left: -1000, // Move off-screen
-                                //   top: -1000,
-                                //   height: sHeight/5,
-                                //   width: sHeight/5,
-                                //   child: RepaintBoundary(
-                                //     key: previewBoxKey,
-                                //     child:  buildDecoratedContainer(sheetListItem.listDecoration, SizedBox(width:30,height:30), true),
-                                //   ),
-                                // ),
                               ],
                             ),
                           ),
@@ -5834,7 +5856,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               mainAxisAlignment: (e.value as SheetList).mainAxisAlignment,
                               mainAxisSize: (e.value as SheetList).mainAxisSize,
                               size: (e.value as SheetList).size,
-                              listDecoration: SuperDecoration.fromJson((e.value as SheetList).listDecoration.toJson()),
+                              listDecoration: (e.value as SheetList).listDecoration,
                               sheetList: deepCopySheetList(
                                 (e.value as SheetList).sheetList,
                                 parentIdOverride: newId, // 👈 Recursive update to children
@@ -6041,7 +6063,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           Axis.horizontal,
                         id: newId,
                         parentId: sheetList.id,
-                        listDecoration: newSuperDecoration(),
+                        listDecoration: newSuperDecoration().id,
                         sheetList: [
                         ],
                         indexPath: IndexPath(
@@ -6071,7 +6093,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Axis.horizontal,
                           id: newId,
                           parentId: sheetList.id,
-                          listDecoration:  newSuperDecoration(),
+                          listDecoration:  newSuperDecoration().id,
                           sheetList: [],
                         indexPath: IndexPath(
                           parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
@@ -6086,7 +6108,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Axis.horizontal,
                           id: newId,
                           parentId: sheetList.id,
-                          listDecoration:  newSuperDecoration(),
+                          listDecoration:  newSuperDecoration().id,
                           sheetList: [],
                         indexPath: IndexPath(
                           parent:_sheetListIterator(sheetListItem.parentId, spreadSheetList[currentPageIndex]).indexPath,
@@ -6117,7 +6139,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Axis.horizontal,
                           id: newId,
                           parentId: sheetList.id,
-                          listDecoration: newSuperDecoration(),
+                          listDecoration: newSuperDecoration().id,
                           sheetList: [],
                           indexPath: IndexPath(
                             parent:sheetList.indexPath,
@@ -6130,7 +6152,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Axis.horizontal,
                           id: newId,
                           parentId: sheetList.id,
-                          listDecoration: newSuperDecoration(),
+                          listDecoration: newSuperDecoration().id,
                           sheetList: [],
                           indexPath: IndexPath(
                             parent: sheetList.indexPath,
@@ -6156,7 +6178,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Axis.horizontal,
                           id: newId,
                           parentId: sheetList.id,
-                          listDecoration: newSuperDecoration(),
+                          listDecoration: newSuperDecoration().id,
                           sheetList: [],
                           indexPath: IndexPath(
                             parent: sheetList.indexPath,
@@ -7519,7 +7541,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     direction: Axis.vertical,
                     id: newId,
                     parentId: sheetList.id,
-                    listDecoration: newSuperDecoration(),
+                    listDecoration: newSuperDecoration().id,
                     sheetList: [],
                     indexPath: IndexPath(
                       parent: sheetList.indexPath,
@@ -7568,7 +7590,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     Axis.horizontal,
                   id: newId,
                   parentId: sheetList.id,
-                  listDecoration: newSuperDecoration(),
+                  listDecoration: newSuperDecoration().id,
                   sheetList: [
                   ],
                   indexPath: IndexPath(
@@ -7599,7 +7621,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       Axis.horizontal,
                     id: newId,
                     parentId: sheetList.id,
-                    listDecoration: newSuperDecoration(),
+                    listDecoration: newSuperDecoration().id,
                     sheetList: [],
                     indexPath: IndexPath(
                       parent: sheetList.indexPath,
@@ -7612,7 +7634,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         Axis.vertical,
                       id: newId,
                       parentId: sheetList.id,
-                      listDecoration: newSuperDecoration(),
+                      listDecoration: newSuperDecoration().id,
                       sheetList: [
                       ],
                       indexPath: IndexPath(
@@ -7641,7 +7663,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     Axis.vertical,
                   id: newId,
                   parentId: sheetList.id,
-                  listDecoration:  newSuperDecoration(),
+                  listDecoration:  newSuperDecoration().id,
                   sheetList: [
                   ],
                   indexPath: IndexPath(
@@ -7672,7 +7694,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       Axis.vertical,
                     id: newId,
                     parentId: sheetList.id,
-                    listDecoration: newSuperDecoration(),
+                    listDecoration: newSuperDecoration().id,
                     sheetList: [],
                     indexPath: IndexPath(
                       parent: sheetList.indexPath,
@@ -7685,7 +7707,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         Axis.vertical,
                       id: newId,
                       parentId: sheetList.id,
-                      listDecoration: newSuperDecoration(),
+                      listDecoration: newSuperDecoration().id,
                       sheetList: [
                       ],indexPath: IndexPath(
                       parent: sheetList.indexPath,
@@ -7869,7 +7891,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       direction:s==0? Axis.horizontal: Axis.vertical,
       id: newId,
       parentId: listItem.parentId,
-      listDecoration: newSuperDecoration(),
+      listDecoration: newSuperDecoration().id,
       sheetList: [
         (listItem as SheetList).copyWith(
           parentId: newId,
@@ -7909,7 +7931,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       direction:s==0? Axis.horizontal: Axis.vertical,
       id: newId,
       parentId: textItem.parentId,
-      listDecoration: newSuperDecoration(),
+      listDecoration: newSuperDecoration().id,
       sheetList: [
         textItem..indexPath = newTextIndexPath
       ],
@@ -8058,6 +8080,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           final entries = <ContextMenuEntry>[
             MenuItem(
               label: 'delete',
+              icon: TablerIcons.trash,
               hoverColor: defaultPalette.primary.withOpacity(0.8),
               style: GoogleFonts.lexend(
                 letterSpacing: -1,
@@ -8771,7 +8794,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         // var tmpinx = int.tryParse(textItem.textDecoration.id.substring(textItem.textDecoration.id.indexOf('/') + 1))??-155;
         // print((sheetDecorationList[tmpinx] as SuperDecoration).itemDecorationList);
         decorationIndex =-1;
-        updateSheetDecorationvariables(sheetDecorationMap[textItem.textDecoration.id] as SuperDecoration);
+        updateSheetDecorationvariables(sheetDecorationMap[textItem.textDecoration.id] as SuperDecoration?);
         // print(sheetDecorationVariables.length);
         whichPropertyTabIsClicked = 2;
         // propertyTabController.jumpToPage(1);
@@ -10590,7 +10613,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               return SheetList(
                                                 id: sheetList.id,
                                                 parentId: '',
-                                                listDecoration: SuperDecoration(id: ''),
+                                                listDecoration: '',
                                                 indexPath: IndexPath(index: -22),
                                                 // title: sheetList.title,
                                                 sheetList: matchingTexts,
@@ -15955,7 +15978,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         child: ClipRRect(
                                                           borderRadius: BorderRadius.circular(15),
                                                           child: buildDecoratedContainer(
-                                                            sheetTableDecoration as SuperDecoration, 
+                                                            sheetTableDecoration as SuperDecoration?, 
                                                             SizedBox(
                                                               width:width,
                                                               height:35,
@@ -15977,7 +16000,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             iconSize:14
                                                             ), 
                                                             Text(
-                                                              ' ${sheetTableDecoration.name}',
+                                                              ' ${sheetTableDecoration?.name?? 'No Decoration'}',
                                                               maxLines: 1,
                                                               textAlign: TextAlign.start,
                                                               overflow: TextOverflow.ellipsis,
@@ -16032,7 +16055,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     child: ClipRRect(
                                                       borderRadius: BorderRadius.circular(15),
                                                       child: buildDecoratedContainer(
-                                                        sheetTablebgDecoration as SuperDecoration, 
+                                                        sheetTablebgDecoration as SuperDecoration?, 
                                                         SizedBox(
                                                           width:width,
                                                           height:35,
@@ -16054,7 +16077,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         iconSize:14
                                                         ), 
                                                           Text(
-                                                            sheetTablebgDecoration.name,
+                                                            sheetTablebgDecoration?.name ?? 'No Decoration',
                                                             maxLines: 1,
                                                             textAlign: TextAlign.center,
                                                             overflow: TextOverflow.ellipsis,
@@ -18201,7 +18224,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   }
 
   Widget buildDecoratedContainer(
-    SuperDecoration superDecoration,
+    SuperDecoration? superDecoration,
     Widget child,
     bool isPreview, {
     List<String> visitedIds = const [],
@@ -18211,7 +18234,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     
     // Add current ID to visited list if not already present
     List<String> newVisitedIds = List.from(visitedIds);
-
+    if ( superDecoration ==null) {
+      return child;
+    } else if (superDecoration.id == 'yo') {
+      print('SuperDecoration with id "yo" detected, returning child without decoration.');
+      return child; // Return the child directly if it's a placeholder
+    }
     // Check for cycle and update visited list only if not already in it
     if (visitedIds.contains(superDecoration.id)) {
       // print('Cycle detected');
@@ -18226,7 +18254,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
 
     Widget current = child;
-        
+       
     // Get the decorations stack (direct descendants)
     List<SheetDecoration> stack = decorationListIterator(superDecoration.itemDecorationList);
 
@@ -18277,15 +18305,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<Widget> buildSuperDecorationSwiperInterface(List<String> itemDecorationPath, TextEditingController itemDecorationNameController){
     final width = (sWidth*wH2DividerPosition)-35;
     final isSizeBigForRow = (sWidth * wH2DividerPosition) > 200;
-    var inx = itemDecorationPath.last;
-    var itinx = '';
-    print(sheetTableVariables.rowLayerIndex);
-    if(decorationIndex !=-1){
-      // itinx = int.tryParse((sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
-      itinx = (sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex];                              
-    }
-    
-   // print('inxindex: '+inx.toString()+'||itinx: '+itinx.toString()+'\\decorationIndex: '+decorationIndex.toString());
     Widget roundButton(
       void Function() onTap,
       Widget icon,
@@ -18354,7 +18373,199 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         ),
       );
     }
-
+    var inx = itemDecorationPath.last;
+    if (sheetDecorationMap[inx] == null) {
+      inx = 'yo';
+      return [
+        
+        Positioned.fill(
+          top: 12,
+          right: 9,
+          left: 6,
+          bottom: 11,
+          child: Container(
+            padding: EdgeInsets.all(0).copyWith(bottom:0, left:3, right:3),
+            decoration: BoxDecoration(
+              color: defaultPalette.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child:ClipRRect(
+              borderRadius:BorderRadius.circular(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                        height: 68,
+                        margin: EdgeInsets.only(top: 5,),
+                        padding: EdgeInsets.all(10).copyWith(left: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Decoration',
+                            maxLines:1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lexend(
+                              color: defaultPalette.extras[0],
+                              fontWeight:FontWeight.w600,
+                              letterSpacing: -1,
+                              fontSize: 22,
+                              height: 1.2,
+                              )
+                            ),
+                            Text('Library', 
+                            maxLines:1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lexend(
+                              color: defaultPalette.extras[0], 
+                              fontWeight:FontWeight.w600,
+                              letterSpacing: -1,
+                              fontSize: 20,
+                              height: 0.9,
+                              )
+                            )
+                          ],
+                        ),
+                        ),
+                      ),
+                      Tooltip(
+                        message: 'add New SuperDecoration.',
+                        child: MouseRegion(
+                          cursor:SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                            setState(() {
+                              decorationIndex = -1;
+                              isListDecorationLibraryToggled = false;
+                              isListDecorationPropertiesToggled = false;
+                              switch (whichPropertyTabIsClicked) {
+                                case 2:
+                                  item.textDecoration = newSuperDecoration(placeholder: false);
+                                  _findItem();
+                                  break;
+                                case 3:
+                                  sheetListItem.listDecoration = newSuperDecoration(placeholder: false).id;
+                                  _findSheetListItem();
+                                  break;
+                                default:
+                              }
+                            });
+                            },
+                            child: Icon(TablerIcons.north_star)
+                          )
+                        ),
+                      ),
+                      SizedBox(width:10),
+                    ],
+                  ),
+                  Text('   add a new one or select from the library.',
+                    maxLines:1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.lexend(
+                    color: defaultPalette.extras[0], 
+                    fontWeight:FontWeight.w500,
+                    letterSpacing: -0.5,
+                    fontSize: 11,
+                    height: 1.2,
+                    )
+                  ),
+                  //search bar for decoration library when id is 'yo'.
+                  Container(
+                  height: 25,
+                  margin: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: defaultPalette.extras[0],
+                    border: Border.all(color: defaultPalette.extras[0],),
+                    borderRadius: BorderRadius.circular(10)
+                  ),
+                  child: TextFormField(
+                      style: GoogleFonts.lexend(
+                          color: defaultPalette.primary,
+                          letterSpacing:-1,
+                          fontSize: 15),
+                      cursorColor: defaultPalette.tertiary,
+                      controller: decorationSearchController,
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.all(0),
+                        hintText: 'searchDecors...',
+                        focusColor: defaultPalette.primary,
+                        hintStyle: GoogleFonts.lexend(
+                          color: defaultPalette.primary,
+                          letterSpacing:-0.8,
+                          fontWeight: FontWeight.w300,
+                          fontSize: 14),
+                        prefixIcon: Icon(TablerIcons.search, size:15,
+                            color: defaultPalette.primary),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide.none, 
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: (query) {
+                        setState(() {
+                          // Filter the list of SheetDecoration by their names
+                          filteredDecorations = Map.fromEntries(
+                            sheetDecorationMap.entries.where(
+                              (entry) => entry.value.name.toLowerCase().contains(query.toLowerCase()),
+                            ),
+                          );
+                            // Debugging output
+                        });
+                      },
+                            
+                    ),
+                  ),
+          
+                  ScrollConfiguration(
+                  behavior:
+                      ScrollBehavior().copyWith(scrollbars: false),
+                  child: DynMouseScroll(
+                      durationMS: 500,
+                      scrollSpeed: 1,
+                      builder: (context, controller, physics) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left:1.0),
+                          child: ClipRRect(
+                            borderRadius:BorderRadius.only(
+                              bottomRight: Radius.circular(30),
+                              bottomLeft: Radius.circular(30),
+                            ),
+                            child: buildSheetDecorationLibrary(
+                              (p0, p1, p2, padding, showText) => roundButton(p0, p1, p2, padding: padding,showText: showText),
+                              inx,
+                              controller,
+                              physics,
+                              width,
+                              itemDecorationPath,
+                              itemDecorationNameController,
+                              sHeight-283,
+                              onlySuper: true,
+                              onlyLibrary:true,
+                            ),
+                          ),
+                        );
+                    }
+                  ))
+                ],
+              ),
+            ),
+          ),
+        ),
+        
+      ];
+    }
+    var itinx = '';
+    print(sheetTableVariables.rowLayerIndex);
+    if(decorationIndex !=-1){
+      // itinx = int.tryParse((sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
+      itinx = (sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex];                              
+    }
+    
+   // print('inxindex: '+inx.toString()+'||itinx: '+itinx.toString()+'\\decorationIndex: '+decorationIndex.toString());
+    
     
     return [
                       
@@ -18779,7 +18990,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       right: 3),
                                   child:buildDecoratedContainer(
                                           decorationIndex == -1
-                                              ? (sheetDecorationMap[inx] as SuperDecoration)
+                                              ? (sheetDecorationMap[inx] as SuperDecoration?)
                                               : SuperDecoration(
                                                   id: 'yo',
                                                   itemDecorationList: [
@@ -18995,11 +19206,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   onTap: () {
                                                     setState(() {
                                                       print(itemDecorationPath);
-                                                      itemDecorationPath.removeRange(itemDecorationPath.indexOf(ex) + 1, itemDecorationPath.length);
-                                                      decorationIndex =-1;
-                                                      var tmpinx = int.tryParse(ex.substring(ex.indexOf('/') + 1))??-12;
-                                                      itemDecorationNameController.text = sheetDecorationMap[tmpinx]!.name;
-                                                      updateSheetDecorationvariables(sheetDecorationMap[tmpinx] as SuperDecoration);
+                                                      if (itemDecorationPath.last != ex) {
+                                                        itemDecorationPath.removeRange(itemDecorationPath.indexOf(ex) + 1, itemDecorationPath.length);
+                                                        decorationIndex =-1;
+                                                        var tmpinx = ex;
+                                                        itemDecorationNameController.text = sheetDecorationMap[tmpinx]!.name;
+                                                        updateSheetDecorationvariables(sheetDecorationMap[tmpinx] as SuperDecoration);
+                                                      }
                                                     });
                                                   },
                                                 child:itemDecorationPath.indexOf(ex)==0
@@ -19530,369 +19743,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             
                                   //THE LIBRARY FOR DECORATION          
                                   if(isListDecorationLibraryToggled)
-                                  Padding(
-                                    padding: const EdgeInsets.all(4.0).copyWith(right: 2),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                              mainAxisAlignment: MainAxisAlignment.start,
-                                              children: [
-                                                
-                                              UtilityWidgets.maybeTooltip(
-                                                message: 'addNewSuperDecoration.',
-                                                child: roundButton(
-                                                  () { 
-                                                    var currentItemDecoration = (sheetDecorationMap[inx] as SuperDecoration); 
-                                                      
-                                                  setState(() {
-                                                    if (currentItemDecoration.itemDecorationList.length < 70) {
-                                                      (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.add(newSuperDecoration().id);
-                                                    } else {
-                                                      print('Guys come on, turn this into a super now');
-                                                    }
-                                                  });
-                                                  },
-                                                  Icon(TablerIcons.plus,size: 14,), 'add',padding: EdgeInsets.all(2), showText: false),
-                                              ),
-                                                
-                                              ],
-                                            ), 
-                                        // SizedBox(height:4),
-                                          // Assuming filteredDecorations is a List<dynamic> or List<ItemDecoration>
-
-                                      SizedBox(
-                                        height: sHeight - 350,
-                                        child: ScrollbarUltima(
-                                          alwaysShowThumb: true,
-                                          controller: controller,
-                                          scrollbarPosition:
-                                              ScrollbarPosition.right,
-                                          backgroundColor: defaultPalette.primary,
-                                          isDraggable: true,
-                                          maxDynamicThumbLength: 90,
-                                          minDynamicThumbLength: 50,
-                                          thumbBuilder:
-                                              (context, animation, widgetStates) {
-                                            return Container(
-                                              decoration: BoxDecoration(
-                                                  border: Border.all(),
-                                                  color: defaultPalette.primary,
-                                                  borderRadius:
-                                                      BorderRadius.circular(2)),
-                                              width: 5,
-                                            );
-                                          },
-                                          child: ListView.builder(
-                                            controller: controller,
-                                            physics: physics,
-                                            padding: EdgeInsets.only(right:7),
-                                            itemCount: filteredDecorations.length,
-                                            itemBuilder: (context, index) {
-                                              final entries = filteredDecorations.entries.toList();
-                                              if (index >= entries.length) return SizedBox.shrink();
-                                              final e = entries[index].value;
-
-                                              if (e ==null) {
-                                                print('Decoration is null at index $index');
-                                                return SizedBox.shrink();
-                                              }
-                                              
-                                              return Container(
-                                                width: width,
-                                                margin: EdgeInsets.only(bottom: index ==filteredDecorations.length-1?35: 4),
-                                                padding: EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  color: defaultPalette.secondary,
-                                                  border: Border.all(
-                                                    color: defaultPalette.extras[0],
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(5),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    // The preview in the cards and details in searching decoration
-                                                    
-                                                    Container(
-                                                      padding: EdgeInsets.all(3),
-                                                      decoration: BoxDecoration(
-                                                        color: defaultPalette.primary,
-                                                        border: Border.all(
-                                                          color: defaultPalette.extras[0],
-                                                        ),
-                                                        borderRadius: BorderRadius.circular(5),
-                                                      ),
-                                                      child: Row(
-                                                        children: [
-                                                          SizedBox(
-                                                            height: 75,
-                                                            width: 55,
-                                                            child: buildDecoratedContainer(
-                                                              e is! ItemDecoration ? e as SuperDecoration : SuperDecoration(id: 'yo', itemDecorationList: [e.id]),
-                                                              SizedBox(),
-                                                              true, 
-                                                              maxDepth: 2,
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 3),
-                                                          Expanded(
-                                                            child: Column(
-                                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                                              children: [
-                                                                Text(
-                                                                  e.name,
-                                                                  style: GoogleFonts.lexend(
-                                                                    color: defaultPalette.extras[0],
-                                                                    letterSpacing: -1,
-                                                                    fontSize: 15,
-                                                                  ),
-                                                                  maxLines: 2,
-                                                                ),
-                                                                Text(
-                                                                  e.id,
-                                                                  style: GoogleFonts.lexend(
-                                                                    color: defaultPalette.extras[0],
-                                                                    letterSpacing: -0.5,
-                                                                    fontSize: 8,
-                                                                  ),
-                                                                  maxLines: 1,
-                                                                  textAlign: TextAlign.end,
-                                                                ),
-                                                                SizedBox(height: 5),
-                                                                // The runTimeType badge for Decoration in Search
-                                                                Container(
-                                                                  decoration: BoxDecoration(
-                                                                    color: defaultPalette.secondary,
-                                                                    border: Border.all(width: 0.6),
-                                                                    borderRadius: BorderRadius.circular(5),
-                                                                  ),
-                                                                  child: SingleChildScrollView(
-                                                                    scrollDirection: Axis.horizontal,
-                                                                    child: Row(
-                                                                      mainAxisSize: MainAxisSize.min,
-                                                                      children: [
-                                                                        SizedBox(width: 3),
-                                                                        DecoratedBox(
-                                                                          decoration: BoxDecoration(
-                                                                            borderRadius: BorderRadius.circular(9999),
-                                                                            color: (e is ItemDecoration) ? defaultPalette.tertiary : defaultPalette.extras[2],
-                                                                          ),
-                                                                          child: SizedBox(
-                                                                            height: 10,
-                                                                            width: 10,
-                                                                          ),
-                                                                        ),
-                                                                        SizedBox(width: 3),
-                                                                        Text(
-                                                                          e.runtimeType.toString(),
-                                                                          style: GoogleFonts.lexend(
-                                                                            color: defaultPalette.extras[0],
-                                                                            letterSpacing: -1,
-                                                                            fontSize: 10,
-                                                                          ),
-                                                                          maxLines: 1,
-                                                                        ),
-                                                                        SizedBox(width: 3),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    SizedBox(height: 3),
-                                                    // The buttons in the cards and functions in searching decoration
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.start,
-                                                      children: [
-                                                        UtilityWidgets.maybeTooltip(
-                                                          message: 'add this as a layer to the current SuperDecoration.',
-                                                          child: roundButton(
-                                                            () {
-                                                              var currentItemDecoration = (sheetDecorationMap[inx] as SuperDecoration);
-                                          
-                                                              if (currentItemDecoration.itemDecorationList.length < 70) {
-                                                                
-                                                                  var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
-                                                                  updatedList.add(e.id);
-                                          
-                                                                  var updatedDecoration = currentItemDecoration.copyWith(
-                                                                    itemDecorationList: updatedList,
-                                                                  );
-                                                                  sheetDecorationMap[inx] = updatedDecoration;
-                                                                  updateSheetDecorationvariables(sheetDecorationMap[inx] as SuperDecoration); // Pass the original, or the updated?
-                                                                  print('New decoration added');
-                                                                  print(updatedDecoration.itemDecorationList);
-                                                                
-                                                              } else {
-                                                                print('Guys come on, turn this into a super now');
-                                                              }
-                                                            },
-                                                            Icon(TablerIcons.plus, size: 14),
-                                                            'add',
-                                                            padding: EdgeInsets.all(2),
-                                                            showText: false,
-                                                          ),
-                                                        ),
-                                                        UtilityWidgets.maybeTooltip(
-                                                          message: 'delete this decoration permanently.',
-                                                          child: roundButton(
-                                                            () {
-                                                                sheetDecorationMap.remove(e.id);
-                                                                filteredDecorations.remove(e.id);
-                                                                Boxes.getDecorations().delete(e.id);
-                                                            },
-                                                            Icon(TablerIcons.trash, size: 14),
-                                                            'delete',
-                                                            padding: EdgeInsets.all(2),
-                                                            showText: false,
-                                                          ),
-                                                        ),
-                                                        if (e is SuperDecoration && itemDecorationPath.length == 1) // Ensure 'itemDecorationPath' is accessible
-                                                          UtilityWidgets.maybeTooltip(
-                                                            message: 'switch the current SuperDecoration with this one.',
-                                                            child: roundButton(
-                                                              () {
-                                                                var tmpinx = e.id;
-                                                                switch (whichPropertyTabIsClicked) {
-                                                                  case 2:
-                                                                    item.textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                    updateSheetDecorationvariables(e);
-                                                                    decorationIndex = -1;
-                                                                    itemDecorationPath
-                                                                      ..clear()
-                                                                      ..add(e.id);
-                                                                    break;
-                                                                  case 3:
-                                                                    sheetListItem.listDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                    updateSheetDecorationvariables(e);
-                                                                    decorationIndex = -1;
-                                                                    itemDecorationPath
-                                                                      ..clear()
-                                                                      ..add(e.id);
-                                                                    break;
-                                                                  case 4:
-                                                                    if (whichTableDecorationIsClicked == 0) {
-                                                                      updateSheetDecorationvariables(e);
-                                                                      decorationIndex = -1;
-                                                                      itemDecorationPath
-                                                                        ..clear()
-                                                                        ..add(e.id);
-                                          
-                                                                      for (var i = 0; i < sheetTableItem.cellData.length; i++) {
-                                                                        var row = sheetTableItem.cellData[i];
-                                                                        for (var j = 0; j < row.length; j++) {
-                                                                          var cell = row[j];
-                                                                          if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.columnData[j].columnDecoration) {
-                                                                            print('cell');
-                                                                            sheetTableItem.columnData[j].columnDecoration = sheetDecorationMap[tmpinx]!.id;
-                                                                          }
-                                                                          if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.rowData[i].rowDecoration) {
-                                                                            print('bell');
-                                                                            sheetTableItem.rowData[i].rowDecoration = sheetDecorationMap[tmpinx]!.id;
-                                                                          }
-                                                                          print('sell');
-                                                                          print((cell.sheetItem as SheetText).textDecoration.id);
-                                                                          print(sheetTableItem.sheetTableDecoration.id);
-                                                                          print('sell');
-                                                                          if (cell.sheetItem is SheetText &&
-                                                                              ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id)) {
-                                                                            print(cell.sheetItem);
-                                                                            print('dell');
-                                                                            (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                          }
-                                                                        }
-                                                                      }
-                                                                      sheetTableItem.sheetTableDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                    } else if (whichTableDecorationIsClicked == 1) {
-                                                                      sheetTableItem.sheetTablebgDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                      updateSheetDecorationvariables(e);
-                                                                      decorationIndex = -1;
-                                                                      itemDecorationPath
-                                                                        ..clear()
-                                                                        ..add(e.id);
-                                                                    } else if (whichTableDecorationIsClicked == 2) {
-                                                                      updateSheetDecorationvariables(e);
-                                                                      decorationIndex = -1;
-                                                                      itemDecorationPath
-                                                                        ..clear()
-                                                                        ..add(e.id);
-                                                                      for (var cell in sheetTableItem.cellData[sheetTableVariables.rowLayerIndex]) {
-                                                                        if (cell.sheetItem is SheetText &&
-                                                                            ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id ||
-                                                                                (cell.sheetItem as SheetText).textDecoration.id ==
-                                                                                    sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration)) {
-                                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                        }
-                                                                      }
-                                                                      sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration = sheetDecorationMap[tmpinx]!.id;
-                                                                    } else if (whichTableDecorationIsClicked == 3) {
-                                                                      updateSheetDecorationvariables(e);
-                                                                      decorationIndex = -1;
-                                                                      itemDecorationPath
-                                                                        ..clear()
-                                                                        ..add(e.id);
-                                                                      for (var row in sheetTableItem.cellData) {
-                                                                        var cell = row[sheetTableVariables.columnLayerIndex];
-                                                                        print(cell);
-                                                                        if (cell.sheetItem is SheetText &&
-                                                                            ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id ||
-                                                                                (cell.sheetItem as SheetText).textDecoration.id ==
-                                                                                    sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration)) {
-                                                                          print(cell.sheetItem);
-                                                                          (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
-                                                                        }
-                                                                      }
-                                                                      sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration = sheetDecorationMap[tmpinx]!.id;
-                                                                    }
-                                                                    break;
-                                                                }
-                                                                itemDecorationNameController.text = e.name;
-                                                              },
-                                                              Icon(TablerIcons.replace, size: 14),
-                                                              'switchTo',
-                                                              padding: EdgeInsets.all(2),
-                                                              showText: false,
-                                                            ),
-                                                          ),
-                                                        if (e is SuperDecoration)
-                                                          UtilityWidgets.maybeTooltip(
-                                                            message: '''add it's child layers to the current SuperDecoration.''',
-                                                            child: roundButton(
-                                                              () {
-                                                                if ((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length < 70) {
-                                                                  if ((sheetDecorationMap[inx]) is SuperDecoration) {
-                                                                    (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.addAll(e.itemDecorationList);
-                                                                  } else {
-                                                                    print('Error: Decoration is not a SuperDecoration');
-                                                                  }
-                                                                } else {
-                                                                  print('Guys come on, turn this into a super now');
-                                                                }
-                                                              },
-                                                              Icon(TablerIcons.library_plus, size: 14),
-                                                              'switchTo',
-                                                              padding: EdgeInsets.all(2),
-                                                              showText: false,
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      )
-                                                                            
-                                      ],
-                                    ),
-                                  ),
-                                  
+                                  buildSheetDecorationLibrary(
+                                    (p0, p1, p2, padding, showText) => roundButton(p0, p1, p2, padding: padding,showText: showText),
+                                    inx,
+                                    controller,
+                                    physics,
+                                    width,
+                                    itemDecorationPath,
+                                    itemDecorationNameController,
+                                    sHeight-350,
+                                  )
                                   ],
                               ),
                             );
@@ -20381,7 +20241,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             .removeAt(
                                                                 decorationIndex);
                                                         decorationIndex =-1;
-                                                        print(itemDecorationPath);//todo: when you delete a decoration, you should also handle the path or more so the name controller
+                                                        print(itemDecorationPath);
                                                         updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
                                                         itemDecorationNameController.text = (sheetDecorationMap[inx] as SuperDecoration).name;
                                                       }
@@ -20484,7 +20344,437 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                            
       ];
   }
+  
+  Widget buildSheetDecorationLibrary(
+    Widget Function(void Function(), Widget, String, EdgeInsets padding, bool showText) roundButton,
+    String inx, 
+    ScrollController controller,
+    ScrollPhysics physics,
+    double width,
+    List<String> itemDecorationPath, TextEditingController itemDecorationNameController,
+    double height,
+    {
+      bool onlySuper=false,
+      bool onlyLibrary=false,
+    }
+    
+    ){
+    return Padding(
+      padding: const EdgeInsets.all(4.0).copyWith(right: !onlyLibrary?2: 1),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          if(!onlyLibrary)
+          ...[
+            MouseRegion(
+            cursor:SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap:(){
+                 var currentItemDecoration = (sheetDecorationMap[inx] as SuperDecoration); 
+                  setState(() {
+                    if (currentItemDecoration.itemDecorationList.length < 70) {
+                      (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.add(newSuperDecoration(placeholder: false).id);
+                    } else {
+                      print('Guys come on, turn this into a super now');
+                    }
+                  });
+              },
+              child: Container(
+                
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    
+                  Icon(TablerIcons.plus, size:15),
+                  SizedBox(width:5),
+                  Expanded(
+                    child: Text('newSuperDecoration',
+                    maxLines:1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.lexend(
+                      color: defaultPalette.extras[0], 
+                      fontWeight:FontWeight.w500,
+                      letterSpacing: -0.5,
+                      fontSize: 12,
+                      height: 1.2,
+                      )
+                    ),
+                  )
+                  ],
+                ),
+              ),
+            ),
+          ), 
+          SizedBox(height:5),],
+          SizedBox(
+            height: height,
+            child: ScrollbarUltima(
+              alwaysShowThumb: true,
+              controller: controller,
+              scrollbarPosition:
+                  ScrollbarPosition.right,
+              backgroundColor: defaultPalette.primary,
+              isDraggable: true,
+              maxDynamicThumbLength: 90,
+              minDynamicThumbLength: 50,
+              thumbBuilder:
+                  (context, animation, widgetStates) {
+                return Container(
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                        width: !onlyLibrary? 1: 0.2,
+                      ),
+                      color: !onlyLibrary?defaultPalette.primary:defaultPalette.secondary,
+                      borderRadius:
+                          BorderRadius.circular(2)),
+                  width: 5,
+                );
+              },
+              child: ListView.builder(
+                controller: controller,
+                physics: physics,
+                padding: EdgeInsets.only(right:!onlyLibrary?7:8),
+                itemCount: filteredDecorations.length,
+                itemBuilder: (context, index) {
+                  final entries = filteredDecorations.entries.toList();
+                  if (index >= entries.length) return SizedBox.shrink();
+                  final e = entries[index].value;
 
+                  if (e ==null) {
+                    print('Decoration is null at index $index');
+                    return SizedBox.shrink();
+                  }
+
+                  if (onlySuper && e is ItemDecoration){
+                    return SizedBox.shrink();
+                  }
+                  
+                  return Container(
+                    width: width,
+                    margin: EdgeInsets.only(bottom: index ==filteredDecorations.length-1?35: 4),
+                    padding: !onlyLibrary?EdgeInsets.all(3):null,
+                    decoration:!onlyLibrary? BoxDecoration(
+                      color: defaultPalette.primary,
+                      border: Border.all(
+                        color: defaultPalette.extras[0],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ):null,
+                    child: Column(
+                      children: [
+                        // The preview in the cards and details in searching decoration
+                        
+                        MouseRegion(
+                          cursor:!onlyLibrary?MouseCursor.defer: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap:!onlyLibrary?null:()=>setState(() {
+                            decorationIndex = -1;
+                            isListDecorationLibraryToggled = false;
+                            isListDecorationPropertiesToggled = false;
+                            switch (whichPropertyTabIsClicked) {
+                                case 2:
+                                  item.textDecoration = sheetDecorationMap[e.id] as SuperDecoration;
+                                  _findItem();
+                                  break;
+                                case 3:
+                                  sheetListItem.listDecoration = e.id;
+                                  _findSheetListItem();
+                                  break;
+                                default:
+                              }
+                            }),
+                            child: Container(
+                              padding: EdgeInsets.all(!onlyLibrary?3:6),
+                              decoration: BoxDecoration(
+                                color: !onlyLibrary? defaultPalette.secondary: defaultPalette.secondary,
+                                border: Border.all(
+                                  color: defaultPalette.extras[0],
+                                  width: !onlyLibrary?0.5:0.2
+                                ),
+                                borderRadius: BorderRadius.circular(!onlyLibrary?5:15),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    decoration:BoxDecoration(
+                                      border:Border.all(width:0.5),
+                                      borderRadius: BorderRadius.circular(!onlyLibrary?5:15),
+                                      color:defaultPalette.primary,
+                                    ),
+                                    height: 75,
+                                    width: 55,
+                                    child: buildDecoratedContainer(
+                                      e is! ItemDecoration ? e as SuperDecoration? : SuperDecoration(id: 'yo', itemDecorationList: [e.id]),
+                                      SizedBox(),
+                                      true, 
+                                      maxDepth: 2,
+                                    ),
+                                  ),
+                                  SizedBox(width: 3),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          e.name,
+                                          style: GoogleFonts.lexend(
+                                            color: defaultPalette.extras[0],
+                                            letterSpacing: -1,
+                                            fontSize: 15,
+                                          ),
+                                          maxLines: 2,
+                                        ),
+                                        Text(
+                                          e.id,
+                                          style: GoogleFonts.lexend(
+                                            color: defaultPalette.extras[0],
+                                            letterSpacing: -0.5,
+                                            fontSize: 8,
+                                          ),
+                                          maxLines: 1,
+                                          textAlign: TextAlign.end,
+                                        ),
+                                        SizedBox(height: 5),
+                                        // The runTimeType badge for Decoration in Search
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: !onlyLibrary? defaultPalette.secondary: defaultPalette.primary,
+                                            border: Border.all(width: 0.6),
+                                            borderRadius: BorderRadius.circular(5),
+                                          ),
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SizedBox(width: 3),
+                                                DecoratedBox(
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(9999),
+                                                    color: (e is ItemDecoration) ? defaultPalette.tertiary : defaultPalette.extras[2],
+                                                  ),
+                                                  child: SizedBox(
+                                                    height: 10,
+                                                    width: 10,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 3),
+                                                Text(
+                                                  e.runtimeType.toString(),
+                                                  style: GoogleFonts.lexend(
+                                                    color: defaultPalette.extras[0],
+                                                    letterSpacing: -1,
+                                                    fontSize: 10,
+                                                  ),
+                                                  maxLines: 1,
+                                                ),
+                                                SizedBox(width: 3),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 3),
+
+                        // The buttons in the cards and functions in searching decoration
+                        if(!onlyLibrary)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            UtilityWidgets.maybeTooltip(
+                              message: 'add this as a layer to the current SuperDecoration.',
+                              child: roundButton(
+                                () {
+                                  var currentItemDecoration = (sheetDecorationMap[inx] as SuperDecoration);
+              
+                                  if (currentItemDecoration.itemDecorationList.length < 70) {
+                                    
+                                      var updatedList = List<String>.from(currentItemDecoration.itemDecorationList);
+                                      updatedList.add(e.id);
+              
+                                      var updatedDecoration = currentItemDecoration.copyWith(
+                                        itemDecorationList: updatedList,
+                                      );
+                                      sheetDecorationMap[inx] = updatedDecoration;
+                                      updateSheetDecorationvariables(sheetDecorationMap[inx] as SuperDecoration); // Pass the original, or the updated?
+                                      print('New decoration added');
+                                      print(updatedDecoration.itemDecorationList);
+                                    
+                                  } else {
+                                    print('Guys come on, turn this into a super now');
+                                  }
+                                },
+                                Icon(TablerIcons.plus, size: 14),
+                                'add',
+                                 EdgeInsets.all(2),
+                                 false,
+                              ),
+                            ),
+                            UtilityWidgets.maybeTooltip(
+                              message: 'delete this decoration permanently.',
+                              child: roundButton(
+                                () {
+                                    sheetDecorationMap.remove(e.id);
+                                    filteredDecorations.remove(e.id);
+                                    Boxes.getDecorations().delete(e.id);
+                                },
+                                Icon(TablerIcons.trash, size: 14),
+                                'delete',
+                                EdgeInsets.all(2),
+                                 false,
+                              ),
+                            ),
+                            if (e is SuperDecoration && itemDecorationPath.length == 1) // Ensure 'itemDecorationPath' is accessible
+                              UtilityWidgets.maybeTooltip(
+                                message: 'switch the current SuperDecoration with this one.',
+                                child: roundButton(
+                                  () {
+                                    var tmpinx = e.id;
+                                    switch (whichPropertyTabIsClicked) {
+                                      case 2:
+                                        item.textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
+                                        updateSheetDecorationvariables(e);
+                                        decorationIndex = -1;
+                                        itemDecorationPath
+                                          ..clear()
+                                          ..add(e.id);
+                                        break;
+                                      case 3:
+                                        sheetListItem.listDecoration = (sheetDecorationMap[tmpinx] as SuperDecoration).id;
+                                        updateSheetDecorationvariables(e);
+                                        decorationIndex = -1;
+                                        itemDecorationPath
+                                          ..clear()
+                                          ..add(e.id);
+                                        break;
+                                      case 4:
+                                        if (whichTableDecorationIsClicked == 0) {
+                                          updateSheetDecorationvariables(e);
+                                          decorationIndex = -1;
+                                          itemDecorationPath
+                                            ..clear()
+                                            ..add(e.id);
+              
+                                          for (var i = 0; i < sheetTableItem.cellData.length; i++) {
+                                            var row = sheetTableItem.cellData[i];
+                                            for (var j = 0; j < row.length; j++) {
+                                              var cell = row[j];
+                                              if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.columnData[j].columnDecoration) {
+                                                print('cell');
+                                                sheetTableItem.columnData[j].columnDecoration = sheetDecorationMap[tmpinx]!.id;
+                                              }
+                                              if ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.rowData[i].rowDecoration) {
+                                                print('bell');
+                                                sheetTableItem.rowData[i].rowDecoration = sheetDecorationMap[tmpinx]!.id;
+                                              }
+                                              print('sell');
+                                              print((cell.sheetItem as SheetText).textDecoration.id);
+                                              print(sheetTableItem.sheetTableDecoration.id);
+                                              print('sell');
+                                              if (cell.sheetItem is SheetText &&
+                                                  ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id)) {
+                                                print(cell.sheetItem);
+                                                print('dell');
+                                                (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
+                                              }
+                                            }
+                                          }
+                                          sheetTableItem.sheetTableDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
+                                        } else if (whichTableDecorationIsClicked == 1) {
+                                          sheetTableItem.sheetTablebgDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
+                                          updateSheetDecorationvariables(e);
+                                          decorationIndex = -1;
+                                          itemDecorationPath
+                                            ..clear()
+                                            ..add(e.id);
+                                        } else if (whichTableDecorationIsClicked == 2) {
+                                          updateSheetDecorationvariables(e);
+                                          decorationIndex = -1;
+                                          itemDecorationPath
+                                            ..clear()
+                                            ..add(e.id);
+                                          for (var cell in sheetTableItem.cellData[sheetTableVariables.rowLayerIndex]) {
+                                            if (cell.sheetItem is SheetText &&
+                                                ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id ||
+                                                    (cell.sheetItem as SheetText).textDecoration.id ==
+                                                        sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration)) {
+                                              (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
+                                            }
+                                          }
+                                          sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].rowDecoration = sheetDecorationMap[tmpinx]!.id;
+                                        } else if (whichTableDecorationIsClicked == 3) {
+                                          updateSheetDecorationvariables(e);
+                                          decorationIndex = -1;
+                                          itemDecorationPath
+                                            ..clear()
+                                            ..add(e.id);
+                                          for (var row in sheetTableItem.cellData) {
+                                            var cell = row[sheetTableVariables.columnLayerIndex];
+                                            print(cell);
+                                            if (cell.sheetItem is SheetText &&
+                                                ((cell.sheetItem as SheetText).textDecoration.id == sheetTableItem.sheetTableDecoration.id ||
+                                                    (cell.sheetItem as SheetText).textDecoration.id ==
+                                                        sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration)) {
+                                              print(cell.sheetItem);
+                                              (cell.sheetItem as SheetText).textDecoration = sheetDecorationMap[tmpinx] as SuperDecoration;
+                                            }
+                                          }
+                                          sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration = sheetDecorationMap[tmpinx]!.id;
+                                        }
+                                        break;
+                                    }
+                                    itemDecorationNameController.text = e.name;
+                                  },
+                                  Icon(TablerIcons.replace, size: 14),
+                                  'switchTo',
+                                  EdgeInsets.all(2),
+                                  false,
+                                ),
+                              ),
+                            if (e is SuperDecoration)
+                              UtilityWidgets.maybeTooltip(
+                                message: '''add it's child layers to the current SuperDecoration.''',
+                                child: roundButton(
+                                  () {
+                                    if ((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length < 70) {
+                                      if ((sheetDecorationMap[inx]) is SuperDecoration) {
+                                        (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.addAll(e.itemDecorationList);
+                                      } else {
+                                        print('Error: Decoration is not a SuperDecoration');
+                                      }
+                                    } else {
+                                      print('Guys come on, turn this into a super now');
+                                    }
+                                  },
+                                  Icon(TablerIcons.library_plus, size: 14),
+                                  'switchTo',
+                                  EdgeInsets.all(2),
+                                  false,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          )
+                                              
+        ],
+      ),
+    );
+                                  
+  }
+  
   List<Widget> buildSuperDecorationEditor(
     BuildContext context,
     SuperDecoration superDecoration,
@@ -20723,6 +21013,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           pinned['decoration']['image']['invertColors'] ||
           pinned['decoration']['boxShadow'])
         buildDecorationEditor(context, itemDecoration, index: index, shadowLayerIndex: shadowLayerIndex),
+
+      SizedBox(
+        height: 3,
+      ),
+      if (pinned['foregroundDecoration']['color'] ||
+          pinned['foregroundDecoration']['border'] ||
+          pinned['foregroundDecoration']['borderRadius']['topLeft'] ||
+          pinned['foregroundDecoration']['borderRadius']['topRight'] ||
+          pinned['foregroundDecoration']['borderRadius']['bottomLeft'] ||
+          pinned['foregroundDecoration']['borderRadius']['bottomRight'] ||
+          pinned['foregroundDecoration']['image']['bytes'] ||
+          pinned['foregroundDecoration']['image']['fit'] ||
+          pinned['foregroundDecoration']['image']['repeat'] ||
+          pinned['foregroundDecoration']['image']['alignment'] ||
+          pinned['foregroundDecoration']['image']['scale'] ||
+          pinned['foregroundDecoration']['image']['opacity'] ||
+          pinned['foregroundDecoration']['image']['filterQuality'] ||
+          pinned['foregroundDecoration']['image']['invertColors'] ||
+          pinned['foregroundDecoration']['boxShadow'])
+        buildDecorationEditor(context, itemDecoration, index: index, shadowLayerIndex: sheetDecorationVariables[index].listShadowLayerSelectedIndex2, isForeground: true),
     ];
   }
 
@@ -20735,10 +21045,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     bool isBorderRadius = false,
     bool isBorder = false,
     Map<String, dynamic> pinned = const {},
-    int index = -1
+    int index = -1,
+    bool isForeground = false,
   }) {
     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
     // Choose the proper controller list based on the flag.
+    var isListBorderRadiusExpanded = isForeground? sheetDecorationVariables[index].isListBorderRadiusExpanded2 :sheetDecorationVariables[index].isListBorderRadiusExpanded;
+    var isListMarginExpanded = sheetDecorationVariables[index].isListMarginExpanded;
+    var isListPaddingExpanded = sheetDecorationVariables[index].isListPaddingExpanded;
+    
     var isExpanded = isBorderRadius
         ? isListBorderRadiusExpanded
         : isMargin
@@ -20750,12 +21065,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             ? marginControllers
             : listPaddingControllers;
     final focusNodes = isBorderRadius
-        ? sheetDecorationVariables[index].borderRadiusFocusNodes
+        ? isForeground? sheetDecorationVariables[index].borderRadiusFocusNodes2: sheetDecorationVariables[index].borderRadiusFocusNodes
         : isMargin
             ? sheetDecorationVariables[index].marginFocusNodes
             : sheetDecorationVariables[index].listPaddingFocusNodes;
     String pinnedKey =
-        isBorderRadius ? 'decoration' : (isMargin ? 'margin' : 'padding');
+        isBorderRadius ? isForeground?'foregroundDecoration':'decoration' : (isMargin ? 'margin' : 'padding');
     String subKey = isBorderRadius ? 'borderRadius' : '';
     var tmpinx = sheetDecorationVariables[index].id;
     ItemDecoration currentItemDecoration = sheetDecorationMap[tmpinx] as ItemDecoration;
@@ -20806,7 +21121,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           .decoration
                           .copyWith(
             borderRadius: setBorderRadius(
-                s, parsedValue, itemDecoration),
+                s, parsedValue, itemDecoration, isForeground: isForeground,),
           ));
           
         } else if (isMargin) {
@@ -20858,7 +21173,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           .decoration
                           .copyWith(
             borderRadius: setBorderRadius(
-                s, parsedValue, itemDecoration),
+                s, parsedValue, itemDecoration,isForeground: isForeground,),
           ));
           
         } else if (isMargin) {
@@ -21029,20 +21344,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         setState(() {
                           // Toggle isPinned based on the condition
                           if (isBorderRadius) {
-                            currentItemDecoration.pinned['decoration']
+                            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                     ['borderRadius']['isPinned'] =
-                                !currentItemDecoration.pinned['decoration']
+                                !currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                     ['borderRadius']['isPinned'];
-                            currentItemDecoration.pinned['decoration']
+                            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                 ['borderRadius']['topLeft'] = false;
-                            currentItemDecoration.pinned['decoration']
+                            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                 ['borderRadius']['topRight'] = false;
-                            currentItemDecoration.pinned['decoration']
+                            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                 ['borderRadius']['bottomLeft'] = false;
-                            currentItemDecoration.pinned['decoration']
+                            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                 ['borderRadius']['bottomRight'] = false;
-                            expansionLevels[7] =
-                                currentItemDecoration.pinned['decoration']
+                            expansionLevels[isForeground?4:7] =
+                                currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                     ['borderRadius']['isPinned'];
                           } else if (isMargin) {
                             currentItemDecoration.pinned['margin']['isPinned'] =
@@ -21102,7 +21417,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       },
                       child: Icon(
                           isBorderRadius
-                              ? pinned['decoration']['borderRadius']['isPinned']
+                              ? pinned[isForeground? 'foregroundDecoration':'decoration']['borderRadius']['isPinned']
                                   ? TablerIcons.pin_filled
                                   : TablerIcons.pin
                               : isMargin
@@ -21239,11 +21554,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             // Toggle isPinned based on the condition
                                             if (isBorderRadius) {
                                               currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['topLeft'] =
                                                   !currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['topLeft'];
                                             } else if (isMargin) {
@@ -21263,7 +21578,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         },
                                         child: Icon(
                                             isBorderRadius
-                                                ? pinned['decoration']
+                                                ? pinned[isForeground? 'foregroundDecoration':'decoration']
                                                             ['borderRadius']
                                                         ['topLeft']
                                                     ? TablerIcons.pin_filled
@@ -21393,11 +21708,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             // Toggle isPinned based on the condition
                                             if (isBorderRadius) {
                                               currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['topRight'] =
                                                   !currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['topRight'];
                                             } else if (isMargin) {
@@ -21421,7 +21736,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         },
                                         child: Icon(
                                             isBorderRadius
-                                                ? pinned['decoration']
+                                                ? pinned[isForeground? 'foregroundDecoration':'decoration']
                                                             ['borderRadius']
                                                         ['topRight']
                                                     ? TablerIcons.pin_filled
@@ -21562,11 +21877,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             // Toggle isPinned based on the condition
                                             if (isBorderRadius) {
                                               currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['bottomLeft'] =
                                                   !currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['bottomLeft'];
                                             } else if (isMargin) {
@@ -21587,7 +21902,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         },
                                         child: Icon(
                                             isBorderRadius
-                                                ? pinned['decoration']
+                                                ? pinned[isForeground? 'foregroundDecoration':'decoration']
                                                             ['borderRadius']
                                                         ['bottomLeft']
                                                     ? TablerIcons.pin_filled
@@ -21719,11 +22034,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             // Toggle isPinned based on the condition
                                             if (isBorderRadius) {
                                               currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['bottomRight'] =
                                                   !currentItemDecoration.pinned[
-                                                              'decoration']
+                                                              isForeground? 'foregroundDecoration':'decoration']
                                                           ['borderRadius']
                                                       ['bottomRight'];
                                             } else if (isMargin) {
@@ -21745,7 +22060,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         },
                                         child: Icon(
                                             isBorderRadius
-                                                ? pinned['decoration']
+                                                ? pinned[isForeground? 'foregroundDecoration':'decoration']
                                                             ['borderRadius']
                                                         ['bottomRight']
                                                     ? TablerIcons.pin_filled
@@ -21781,66 +22096,66 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   }
 
   BorderRadius setBorderRadius(
-      String s, double value, ItemDecoration itemDecoration) {
+      String s, double value, ItemDecoration itemDecoration, {bool isForeground = false}) {
     bool isNotNull = itemDecoration.decoration.borderRadius != null;
     switch (s) {
       case 'topLeft':
         return BorderRadius.only(
           topLeft: Radius.circular(value),
           topRight: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .topRight
               : Radius.circular(0),
           bottomLeft: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .bottomLeft
               : Radius.circular(0),
           bottomRight: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .bottomRight
               : Radius.circular(0),
         );
       case 'topRight':
         return BorderRadius.only(
           topLeft: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius).topLeft
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius).topLeft
               : Radius.circular(0),
           topRight: Radius.circular(value),
           bottomLeft: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .bottomLeft
               : Radius.circular(0),
           bottomRight: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .bottomRight
               : Radius.circular(0),
         );
       case 'bottomLeft':
         return BorderRadius.only(
           topLeft: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius).topLeft
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius).topLeft
               : Radius.circular(0),
           topRight: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .topRight
               : Radius.circular(0),
           bottomLeft: Radius.circular(value),
           bottomRight: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .bottomRight
               : Radius.circular(0),
         );
       case 'bottomRight':
         return BorderRadius.only(
           topLeft: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius).topLeft
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius).topLeft
               : Radius.circular(0),
           topRight: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .topRight
               : Radius.circular(0),
           bottomLeft: isNotNull
-              ? (itemDecoration.decoration.borderRadius as BorderRadius)
+              ? ((isForeground? itemDecoration.foregroundDecoration:itemDecoration.decoration).borderRadius as BorderRadius)
                   .bottomLeft
               : Radius.circular(0),
           bottomRight: Radius.circular(value),
@@ -21859,45 +22174,47 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     {
       int index =-1,
       int shadowLayerIndex = -1,
+      bool isForeground = false,
     }
   ) {
     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
     var tmpinx = sheetDecorationVariables[index].id;
     ItemDecoration currentItemDecoration = itemDecoration ?? 
         sheetDecorationMap[tmpinx] as ItemDecoration;
+    var decor = isForeground? currentItemDecoration.foregroundDecoration:currentItemDecoration.decoration;
     Border currentBorder =
-        (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
+        (decor.border ?? Border.all(color: defaultPalette.transparent)) as Border;
     final borderRadiusControllers = [
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.borderRadius ??
+        ..text = ((decor.borderRadius ??
                 BorderRadius.circular(0)) as BorderRadius)
             .topLeft
             .x
             .toString()
             .replaceAll(RegExp(r'\.0$'), ''),
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.borderRadius ??
+        ..text = ((decor.borderRadius ??
                 BorderRadius.circular(0)) as BorderRadius)
             .topLeft
             .x
             .toString()
             .replaceAll(RegExp(r'\.0$'), ''),
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.borderRadius ??
+        ..text = ((decor.borderRadius ??
                 BorderRadius.circular(0)) as BorderRadius)
             .topRight
             .x
             .toString()
             .replaceAll(RegExp(r'\.0$'), ''),
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.borderRadius ??
+        ..text = ((decor.borderRadius ??
                 BorderRadius.circular(0)) as BorderRadius)
             .bottomLeft
             .x
             .toString()
             .replaceAll(RegExp(r'\.0$'), ''),
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.borderRadius ??
+        ..text = ((decor.borderRadius ??
                 BorderRadius.circular(0)) as BorderRadius)
             .bottomRight
             .x
@@ -21906,32 +22223,32 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     ];
     final listBorderControllers = [
       TextEditingController()
-        ..text = (currentItemDecoration.decoration.border ?? Border.all())
+        ..text = (decor.border ?? Border.all())
             .top
             .width
             .toString()
             .replaceAll(RegExp(r'.0$'), ''),
       TextEditingController()
-        ..text = (currentItemDecoration.decoration.border ?? Border.all())
+        ..text = (decor.border ?? Border.all())
             .top
             .width
             .toString()
             .replaceAll(RegExp(r'.0$'), ''),
       TextEditingController()
-        ..text = (currentItemDecoration.decoration.border ?? Border.all())
+        ..text = (decor.border ?? Border.all())
             .bottom
             .width
             .toString()
             .replaceAll(RegExp(r'.0$'), ''),
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.border ?? Border.all())
+        ..text = ((decor.border ?? Border.all())
                 as Border)
             .left
             .width
             .toString()
             .replaceAll(RegExp(r'.0$'), ''),
       TextEditingController()
-        ..text = ((currentItemDecoration.decoration.border ?? Border.all())
+        ..text = ((decor.border ?? Border.all())
                 as Border)
             .right
             .width
@@ -21940,10 +22257,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     ];
     List<TextEditingController> colorHexControllers = [
       TextEditingController()
-        ..text = colorToHex(currentItemDecoration.decoration.color ??
+        ..text = colorToHex(decor.color ??
             defaultPalette.transparent),
       TextEditingController()
-        ..text = (((currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent))
+        ..text = (((decor.border ?? Border.all(color: defaultPalette.transparent))
                 as Border))
             .top
             .color
@@ -21954,7 +22271,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     final widthBig =
         (sWidth * wH2DividerPosition) - (showDecorationLayers ? 74 : 40);
     final isSizeBigForBorderRow = (sWidth * wH2DividerPosition) > 260;
-
+    var listBorderFocusNodes = isForeground? sheetDecorationVariables[index].listBorderFocusNodes2:sheetDecorationVariables[index].listBorderFocusNodes;
+    var colorHexFocusNodes = isForeground? sheetDecorationVariables[index].colorHexFocusNodes2:sheetDecorationVariables[index].colorHexFocusNodes;
+    var isListColorExpanded = isForeground? sheetDecorationVariables[index].isListColorExpanded2 :sheetDecorationVariables[index].isListColorExpanded;
+    var isListBorderExpanded = isForeground? sheetDecorationVariables[index].isListBorderExpanded2 :sheetDecorationVariables[index].isListBorderExpanded;
+    
     Widget borderSideSelect(int s, String side, Color color, String width) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(5),
@@ -21982,7 +22303,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     cursor: SystemMouseCursors.resizeLeftRight,
                     child: GestureDetector(
                       onHorizontalDragCancel: () {
-                        sheetDecorationVariables[index].listBorderFocusNodes[s].requestFocus();
+                        (listBorderFocusNodes)[s].requestFocus();
                       },
                       onHorizontalDragStart: (details) {
                         dragBackupValue =
@@ -22004,7 +22325,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         double parsedValue = double.parse(newValue.toStringAsFixed(2));
 
                         // Get the current border from the decoration or default to Border.all()
-                        Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
+                        Border currentBorder = (decor.border ?? Border.all(color: defaultPalette.transparent)) as Border;
 
                         // Utility function to update the border side with the new width
                         BorderSide updateBorderSide(BorderSide side) {
@@ -22043,11 +22364,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         }
 
                         // Update the item decoration with the new border
-                        currentItemDecoration = currentItemDecoration.copyWith(
-                          decoration: currentItemDecoration.decoration.copyWith(
-                            border: updatedBorder,
-                          ),
-                        );
+                        if (!isForeground) {
+                          currentItemDecoration = currentItemDecoration.copyWith(
+                            decoration: currentItemDecoration.decoration.copyWith(
+                              border: updatedBorder,
+                            ),
+                          );
+                        } else {
+                          currentItemDecoration = currentItemDecoration.copyWith(
+                            foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                              border: updatedBorder,
+                            ),
+                          );
+                        }
 
                         // Update the decoration in the sheetDecorationList
                         sheetDecorationMap[tmpinx] = currentItemDecoration;
@@ -22069,8 +22398,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       height: 20,
                       child: TextFormField(
                         onTapOutside: (event) =>
-                            sheetDecorationVariables[index].listBorderFocusNodes[s].unfocus(),
-                        focusNode: sheetDecorationVariables[index].listBorderFocusNodes[s],
+                            listBorderFocusNodes[s].unfocus(),
+                        focusNode: listBorderFocusNodes[s],
                         controller: listBorderControllers[s],
                         inputFormatters: [
                           NumericInputFormatter(),
@@ -22099,7 +22428,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             double parsedValue = double.parse(value);
 
                             // Get the current border from the decoration or default to Border.all()
-                            Border currentBorder = (currentItemDecoration.decoration.border ?? Border.all(color: defaultPalette.transparent)) as Border;
+                            Border currentBorder = ((isForeground? currentItemDecoration.foregroundDecoration: currentItemDecoration.decoration).border ?? Border.all(color: defaultPalette.transparent)) as Border;
 
                             // Utility function to update the border side with the new width
                             BorderSide updateBorderSide(BorderSide side) {
@@ -22137,11 +22466,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             }
 
                             // Update the item decoration with the new border
+                            if (!isForeground) {
                             currentItemDecoration = currentItemDecoration.copyWith(
                               decoration: currentItemDecoration.decoration.copyWith(
                                 border: updatedBorder,
                               ),
+                              );
+                            } else {
+                              currentItemDecoration = currentItemDecoration.copyWith(
+                              foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                border: updatedBorder,
+                              ),
                             );
+                            }
 
                             // Update the decoration in the sheetDecorationList
                             sheetDecorationMap[tmpinx] = currentItemDecoration;
@@ -22184,7 +22521,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Text(
-                          ' decor ',
+                          isForeground? 'foregroundDecor':' decor ',
                           style: GoogleFonts.lexend(
                               fontSize: 15,
                               letterSpacing: -1,
@@ -22210,7 +22547,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   highlightColor: defaultPalette.tertiary,
                   onTap: () {
                     setState(() {
-                      currentItemDecoration.pinned['decoration'] = {
+                      currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration'] = {
                         'isPinned': false,
                         'color': false,
                         'border': false,
@@ -22241,7 +22578,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     });
                   },
                   child: Icon(
-                      currentItemDecoration.pinned['decoration']['isPinned']
+                      currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['isPinned']
                           ? TablerIcons.pin_filled
                           : TablerIcons.pin,
                       size: 16,
@@ -22260,7 +22597,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         ),
 
         ///COLOR FOR THE DECORATION SECTION
-        if (currentItemDecoration.pinned['decoration']['color'])
+        if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['color'])
           Flex(
             direction: Axis.vertical,
             children: [
@@ -22269,8 +22606,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               GestureDetector(
                       onTap: () {
                         setState(() {
-                          isListColorExpanded = !isListColorExpanded;
-                        });
+                        if (isForeground) {
+                          sheetDecorationVariables[index].isListColorExpanded2 = 
+                              !sheetDecorationVariables[index].isListColorExpanded2;
+                        } else {
+                          sheetDecorationVariables[index].isListColorExpanded = 
+                              !sheetDecorationVariables[index].isListColorExpanded;
+                        }
+                      });
+
                       },
                 child: Container(
                   height: 25,
@@ -22300,7 +22644,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         child: SizedBox(
                           height: 25,
                           child: TextField(
-                            focusNode: sheetDecorationVariables[index].colorHexFocusNodes[0],
+                            focusNode: colorHexFocusNodes[0],
                             controller: colorHexControllers[0],
                             onSubmitted: (value) {
                               setState(() {
@@ -22347,7 +22691,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             border: Border.fromBorderSide(
                               BorderSide.none,
                             ),
-                            color: currentItemDecoration.decoration.color ??
+                            color: decor.color ??
                                 defaultPalette.transparent,
                           ),
                           child: SizedBox(
@@ -22398,9 +22742,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             highlightColor: defaultPalette.tertiary,
                             onTap: () {
                               setState(() {
-                                currentItemDecoration.pinned['decoration']
+                                currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                         ['color'] =
-                                    !currentItemDecoration.pinned['decoration']
+                                    !currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                         ['color'];
                 
                                 // Update the list item with the modified currentItemDecoration
@@ -22408,7 +22752,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               });
                             },
                             child: Icon(
-                                currentItemDecoration.pinned['decoration']
+                                currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                         ['color']
                                     ? TablerIcons.pin_filled
                                     : TablerIcons.pin,
@@ -22447,7 +22791,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         scrollDirection: Axis.horizontal,
                         child: Text(
                           ' ${(ColorTools.nameThatColor(
-                            currentItemDecoration.decoration.color ??
+                            decor.color ??
                                 defaultPalette.transparent,
                           )).toLowerCase()}',
                           style: GoogleFonts.lexend(
@@ -22464,7 +22808,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Expanded(
                               child: HSVPicker(
                                 color: HSVColor.fromColor(
-                                  currentItemDecoration.decoration.color ??
+                                  decor.color ??
                                       defaultPalette.transparent,
                                 ),
                                 onChanged: (value) {
@@ -22492,7 +22836,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   //list COLOR WHEEL COLOR
                                   WheelPicker(
                                     color: HSVColor.fromColor(
-                                      currentItemDecoration.decoration.color ??
+                                      decor.color ??
                                           defaultPalette.transparent,
                                     ),
                                     onChanged: (HSVColor value) {
@@ -22515,12 +22859,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       ),
                       //list alpha picker
                       AlphaPicker(
-                        alpha: (currentItemDecoration.decoration.color ??
+                        alpha: (decor.color ??
                                 defaultPalette.transparent)
                             .alpha,
                         onChanged: (int value) {
-                          currentItemDecoration =currentItemDecoration.copyWith(decoration: currentItemDecoration.decoration
-                                    .copyWith(color: (currentItemDecoration.decoration.color ??
+                          currentItemDecoration =currentItemDecoration.copyWith(decoration: decor
+                                    .copyWith(color: (decor.color ??
                                                 defaultPalette.transparent).withAlpha(value)));
                           
                           setState(() {
@@ -22538,13 +22882,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           ),
 
         ///BORDER COLOR AND WIDTH SECTION FOR DECORATION
-        if (currentItemDecoration.pinned['decoration']['border']) ...[
+        if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['border']) ...[
           //title for border
           GestureDetector(
             onTap: () {
               setState(() {
-                isListBorderExpanded = !isListBorderExpanded;
+                if (isForeground) {
+                  sheetDecorationVariables[index].isListBorderExpanded2 = 
+                      !sheetDecorationVariables[index].isListBorderExpanded2;
+                } else {
+                  sheetDecorationVariables[index].isListBorderExpanded = 
+                      !sheetDecorationVariables[index].isListBorderExpanded;
+                }
               });
+
             },
             child: Container(
             height: 25,
@@ -22573,13 +22924,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   child: SizedBox(
                     height: 25,
                     child: TextField(
-                      focusNode: sheetDecorationVariables[index].colorHexFocusNodes[1],
+                      focusNode: colorHexFocusNodes[1],
                       controller: colorHexControllers[1],
                       onSubmitted: (value) {
                         setState(() {
                           currentItemDecoration =
                               currentItemDecoration.copyWith(
-                                  decoration: currentItemDecoration.decoration
+                                  decoration: decor
                                       .copyWith(
                                           border: Border.all(
                                               color: hexToColor(value))));
@@ -22621,7 +22972,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       border: Border.fromBorderSide(
                         BorderSide.none,
                       ),
-                      color: (currentItemDecoration.decoration.border ??
+                      color: (decor.border ??
                               Border.all(color: defaultPalette.transparent))
                           .top
                           .color,
@@ -22648,7 +22999,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           setState(() {
                           currentItemDecoration =
                         currentItemDecoration.copyWith(
-                            decoration: currentItemDecoration.decoration
+                            decoration: decor
                                 .copyWith(
                                     border: Border.all(
                                         color: value?? defaultPalette.extras[0])));
@@ -22675,8 +23026,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       highlightColor: defaultPalette.tertiary,
                       onTap: () {
                         setState(() {
-                          currentItemDecoration.pinned['decoration']['border'] =
-                              !currentItemDecoration.pinned['decoration']
+                          currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['border'] =
+                              !currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                   ['border'];
           
                           // Update the list item with the modified currentItemDecoration
@@ -22684,7 +23035,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         });
                       },
                       child: Icon(
-                          currentItemDecoration.pinned['decoration']['border']
+                          currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['border']
                               ? TablerIcons.pin_filled
                               : TablerIcons.pin,
                           size: 16,
@@ -22791,11 +23142,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             borderSideSelect(
                                 0,
                                 'all',
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                         Border.all(color: defaultPalette.transparent))
                                     .top
                                     .color,
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                         Border.all(color: defaultPalette.transparent))
                                     .top
                                     .width
@@ -22809,11 +23160,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             borderSideSelect(
                                 1,
                                 'top',
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                         Border.all(color: defaultPalette.transparent))
                                     .top
                                     .color,
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                         Border.all(color: defaultPalette.transparent))
                                     .top
                                     .width
@@ -22827,11 +23178,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             borderSideSelect(
                                 2,
                                 'bottom',
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                         Border.all(color: defaultPalette.transparent))
                                     .bottom
                                     .color,
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                         Border.all(color: defaultPalette.transparent))
                                     .bottom
                                     .width
@@ -22845,11 +23196,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             borderSideSelect(
                                 3,
                                 'left',
-                                ((currentItemDecoration.decoration.border ??
+                                ((decor.border ??
                                         Border.all(color: defaultPalette.transparent)) as Border)
                                     .left
                                     .color,
-                                ((currentItemDecoration.decoration.border ??
+                                ((decor.border ??
                                         Border.all(color: defaultPalette.transparent)) as Border)
                                     .left
                                     .width
@@ -22863,11 +23214,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             borderSideSelect(
                                 4,
                                 'right',
-                                ((currentItemDecoration.decoration.border ??
+                                ((decor.border ??
                                         Border.all(color: defaultPalette.transparent)) as Border)
                                     .right
                                     .color,
-                                ((currentItemDecoration.decoration.border ??
+                                ((decor.border ??
                                         Border.all(color: defaultPalette.transparent)) as Border)
                                     .right
                                     .width
@@ -22898,14 +23249,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         //list Wheel COLOR
                         WheelPicker(
                           color: HSVColor.fromColor(
-                            (currentItemDecoration.decoration.border ??
+                            (decor.border ??
                                     Border.all(color: defaultPalette.transparent))
                                 .top
                                 .color,
                           ),
                           onChanged: (HSVColor value) {
                             Border currentBorder =
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                     Border.all(color: defaultPalette.transparent)) as Border;
                             currentItemDecoration =currentItemDecoration.copyWith(
                               decoration: currentItemDecoration
@@ -22941,14 +23292,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         ),
                         //Alpha picker list decoration
                         AlphaPicker(
-                          alpha: (currentItemDecoration.decoration.border ??
+                          alpha: (decor.border ??
                                   Border.all(color: defaultPalette.transparent))
                               .top
                               .color
                               .alpha,
                           onChanged: (int value) {
                             Border currentBorder =
-                                (currentItemDecoration.decoration.border ??
+                                (decor.border ??
                                     Border.all(color: defaultPalette.transparent)) as Border;
                              currentItemDecoration =
                                   currentItemDecoration.copyWith(
@@ -22986,7 +23337,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           SizedBox(width: 2, height: 3),
         ],
 
-        if (currentItemDecoration.pinned['decoration']['borderRadius']
+        if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['borderRadius']
             ['isPinned']) ...[
           buildListPaddingMarginEditor(
             isBorderRadius: true,
@@ -22994,25 +23345,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             itemDecoration: (currentItemDecoration as ItemDecoration),
             pinned: currentItemDecoration.pinned,
             borderRadiusControllers: borderRadiusControllers,
-            index: index
+            index: index,
+            isForeground: isForeground,
           ),
           SizedBox(width: 2, height: 3),
         ],
-        if (currentItemDecoration.pinned['decoration']['boxShadow']) ...[
-          buildShadowEditor(context, shadowLayerIndex: shadowLayerIndex, sIndex: index),
+        if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['boxShadow']) ...[
+          buildShadowEditor(context, shadowLayerIndex: shadowLayerIndex, sIndex: index, isForeground: isForeground, ),
           SizedBox(width: 2, height: 2),
         ],
 
-        if (currentItemDecoration.pinned['decoration']['image']['bytes'] ||
-            currentItemDecoration.pinned['decoration']['image']['fit'] ||
-            currentItemDecoration.pinned['decoration']['image']['repeat'] ||
-            currentItemDecoration.pinned['decoration']['image']['alignment'] ||
-            currentItemDecoration.pinned['decoration']['image']['scale'] ||
-            currentItemDecoration.pinned['decoration']['image']['opacity'] ||
-            currentItemDecoration.pinned['decoration']['image']
+        if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['bytes'] ||
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['fit'] ||
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['repeat'] ||
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['alignment'] ||
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['scale'] ||
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['opacity'] ||
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                 ['filterQuality'] ||
-            currentItemDecoration.pinned['decoration']['image']['invertColors'])
-          buildDecorationImageEditor(index: index),
+            currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']['invertColors'])
+          buildDecorationImageEditor(index: index, isForeground: isForeground,),
         SizedBox(width: 2, height: 10),
       ],
     );
@@ -23023,6 +23375,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     {
       int sIndex = -1,
       int shadowLayerIndex = -1,
+      bool isForeground = false,
     }
   ) {
     sIndex = sIndex==-1? decorationIndex==-1?0: decorationIndex:sIndex;
@@ -23032,8 +23385,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     var tmpinx =sheetDecorationVariables[sIndex].id;
     ItemDecoration currentItemDecoration = 
         sheetDecorationMap[tmpinx] as ItemDecoration;
+    var decor = isForeground? currentItemDecoration.foregroundDecoration:currentItemDecoration.decoration;
     List<BoxShadow> currentShadow =
-        currentItemDecoration.decoration.boxShadow ?? [BoxShadow()];
+        decor.boxShadow ?? [BoxShadow()];
     currentShadow = [...(currentShadow.isEmpty ? [BoxShadow()] : currentShadow)];
     List<List<TextEditingController>> listShadowControllers = [];
     final widthSmall =
@@ -23041,7 +23395,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     final widthBig =
         (sWidth * wH2DividerPosition) - (showDecorationLayers ? 68 : 32);
     final isSizeBigForRow = (sWidth * wH2DividerPosition) > 260;
-
+    var listShadowFocusNodes = isForeground? sheetDecorationVariables[sIndex].listShadowFocusNodes2:sheetDecorationVariables[sIndex].listShadowFocusNodes;
+    var isListShadowExpanded = isForeground? sheetDecorationVariables[sIndex].isListShadowExpanded2 :sheetDecorationVariables[sIndex].isListShadowExpanded;
+    
     currentShadow.forEach(
       (element) {
         listShadowControllers.add([
@@ -23053,6 +23409,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         ]);
       },
     );
+    
     List<Widget> shadowPropertyTile(
       int s,
       String name,
@@ -23062,7 +23419,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           cursor: SystemMouseCursors.resizeLeftRight,
           child: GestureDetector(
             onHorizontalDragCancel: () {
-              sheetDecorationVariables[sIndex].listShadowFocusNodes[shadowLayerIndex][s]
+              listShadowFocusNodes[shadowLayerIndex][s]
                   .requestFocus();
             },
             onHorizontalDragUpdate: (details) {
@@ -23128,9 +23485,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           height: 12,
           child: TextFormField(
             onTapOutside: (event) =>
-                sheetDecorationVariables[sIndex].listShadowFocusNodes[shadowLayerIndex][s]
+                listShadowFocusNodes[shadowLayerIndex][s]
                     .unfocus(),
-            focusNode: sheetDecorationVariables[sIndex].listShadowFocusNodes[shadowLayerIndex][s],
+            focusNode: listShadowFocusNodes[shadowLayerIndex][s],
             controller: listShadowControllers[shadowLayerIndex]
                 [s],
             inputFormatters: [
@@ -23215,8 +23572,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      isListShadowExpanded = !isListShadowExpanded;
+                      if (isForeground) {
+                        sheetDecorationVariables[sIndex].isListShadowExpanded2 = 
+                            !sheetDecorationVariables[sIndex].isListShadowExpanded2;
+                      } else {
+                        sheetDecorationVariables[sIndex].isListShadowExpanded = 
+                            !sheetDecorationVariables[sIndex].isListShadowExpanded;
+                      }
                     });
+
                   },
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -23320,10 +23684,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .copyWith(
                                                     boxShadow: currentShadow));
                                     sheetDecorationMap[tmpinx] = currentItemDecoration;
-                                    sheetDecorationVariables[sIndex].listShadowFocusNodes = List.generate( 
+                                    listShadowFocusNodes = List.generate( 
                                       currentItemDecoration.decoration.boxShadow!.length,(index) => List.generate( 5,(index) => FocusNode(),)
                                     ,);     
-                                    sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = 0;
+                                    // listShadowLayerSelectedIndex = 0;
+                                    setState(() {
+                                      if (isForeground) {
+                                        sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex2 = 0;
+                                      } else {
+                                        sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = 0;
+                                      }
+                                    });
+
                                   });
                                 },
                                 child: Container(
@@ -23442,7 +23814,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         SizedBox(
                                           height: 18,
                                           child: TextField(
-                                            focusNode: sheetDecorationVariables[sIndex].listShadowFocusNodes[
+                                            focusNode: listShadowFocusNodes[
                                                 shadowLayerIndex][4],
                                             controller: listShadowControllers[
                                                 shadowLayerIndex][4],
@@ -23645,9 +24017,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   .primary,
                                                           onTap: () {
                                                             setState(() {
-                                                              sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex =
+                                                              if (isForeground) {
+                                                                sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex2 =
                                                                   i;
+                                                              } else {
+                                                                sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex =
+                                                                  i;
+                                                              }
                                                             });
+
                                                           },
                                                           child: Container(
                                                             margin:
@@ -23728,11 +24106,23 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   transform: currentItemDecoration.transform
                                                   );    
                                                sheetDecorationMap[tmpinx] = currentItemDecoration;       
-                                          sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = (shadowLayerIndex -
+                                          
+                                            setState(() {
+                                              if (isForeground) {
+                                                sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex2 = (shadowLayerIndex -
                                                                 1)
                                                             .clamp(0,
                                                                 double.infinity)
-                                                        as int;              
+                                                        as int; 
+                                              } else {
+                                                sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = (shadowLayerIndex -
+                                                                1)
+                                                            .clamp(0,
+                                                                double.infinity)
+                                                        as int; 
+                                              }
+                                            });
+             
                                           }
                                           //  shadowLayerIndex = currentShadow.length-1;
                                         });
@@ -23948,14 +24338,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
   Widget buildDecorationImageEditor(
     {
-      int index = -1
+      int index = -1,
+      bool isForeground= false,
     }
   ) {
     index = index==-1? decorationIndex==-1?0: decorationIndex:index;
     var tmpinx = sheetDecorationVariables[index].id;
     ItemDecoration currentItemDecoration = 
         sheetDecorationMap[tmpinx] as ItemDecoration;
-    final currentDecorationImage = currentItemDecoration.decoration.image;
+    var decor = isForeground? currentItemDecoration.foregroundDecoration:currentItemDecoration.decoration;
+    final currentDecorationImage = decor.image;
+    
     // final widthSmall =  ((sWidth * wH2DividerPosition)-(showDecorationLayers? 84:48))/2;
     final widthBig =
         (sWidth * wH2DividerPosition) - (showDecorationLayers ? 74 : 40);
@@ -23986,7 +24379,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               .replaceAll(RegExp(r'.0$'), ''),
       ];
     }
-
+    var listImageAlignFocusNodes = isForeground? sheetDecorationVariables[index].listImageAlignFocusNodes2:sheetDecorationVariables[index].listImageAlignFocusNodes;
+    var listImagePropertyFocusNodes = isForeground? sheetDecorationVariables[index].listImagePropertyFocusNodes2:sheetDecorationVariables[index].listImagePropertyFocusNodes;
+    var isListDecorationImageExpanded = isForeground? sheetDecorationVariables[index].isListDecorationImageExpanded2:sheetDecorationVariables[index].isListDecorationImageExpanded;
+    
     Widget roundButton(
       void Function() onTap,
       Widget icon, {
@@ -24108,11 +24504,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         if (value is BoxFit) {
           return () {
             if (currentDecorationImage != null) {
-              currentItemDecoration = currentItemDecoration.copyWith(
-                  decoration: currentItemDecoration.decoration.copyWith(
-                      image: DecorationImage(
-                image: MemoryImage(
-                    (currentDecorationImage.image as MemoryImage).bytes),
+              final updatedImage = DecorationImage(
+                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes),
                 fit: value,
                 repeat: currentDecorationImage.repeat,
                 alignment: currentDecorationImage.alignment,
@@ -24120,18 +24513,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-              )));
+              );
+
+              currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: isForeground
+                    ? currentItemDecoration.decoration
+                    : currentItemDecoration.decoration.copyWith(image: updatedImage),
+                foregroundDecoration: isForeground
+                    ? currentItemDecoration.foregroundDecoration.copyWith(image: updatedImage)
+                    : currentItemDecoration.foregroundDecoration,
+              );
+
               sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
           };
         } else if (value is FilterQuality) {
           return () {
             if (currentDecorationImage != null) {
-              currentItemDecoration = currentItemDecoration.copyWith(
-                  decoration: currentItemDecoration.decoration.copyWith(
-                      image: DecorationImage(
-                image: MemoryImage(
-                    (currentDecorationImage.image as MemoryImage).bytes),
+              final updatedImage = DecorationImage(
+                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes),
                 fit: currentDecorationImage.fit,
                 repeat: currentDecorationImage.repeat,
                 alignment: currentDecorationImage.alignment,
@@ -24139,21 +24539,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 opacity: currentDecorationImage.opacity,
                 filterQuality: value,
                 invertColors: currentDecorationImage.invertColors,
-              )));
+              );
+
+              currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: isForeground
+                    ? currentItemDecoration.decoration
+                    : currentItemDecoration.decoration.copyWith(image: updatedImage),
+                foregroundDecoration: isForeground
+                    ? currentItemDecoration.foregroundDecoration.copyWith(image: updatedImage)
+                    : currentItemDecoration.foregroundDecoration,
+              );
+
               sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
           };
         } else if (value is double) {
           return () {
-            Alignment newAlignment = Alignment(value.clamp(-1, 1),
-                (currentDecorationImage!.alignment as Alignment).y);
-
             if (currentDecorationImage != null) {
-              currentItemDecoration = currentItemDecoration.copyWith(
-                  decoration: currentItemDecoration.decoration.copyWith(
-                      image: DecorationImage(
-                image: MemoryImage(
-                    (currentDecorationImage.image as MemoryImage).bytes),
+              final newAlignment = Alignment(
+                value.clamp(-1.0, 1.0),
+                (currentDecorationImage.alignment as Alignment).y,
+              );
+
+              final updatedImage = DecorationImage(
+                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes),
                 fit: currentDecorationImage.fit,
                 repeat: currentDecorationImage.repeat,
                 alignment: newAlignment,
@@ -24161,24 +24570,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-              )));
-             sheetDecorationMap[tmpinx] = currentItemDecoration;
-            }
+              );
 
-            currentItemDecoration = currentItemDecoration.copyWith(
-                decoration: currentItemDecoration.decoration);
+              currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: isForeground
+                    ? currentItemDecoration.decoration
+                    : currentItemDecoration.decoration.copyWith(image: updatedImage),
+                foregroundDecoration: isForeground
+                    ? currentItemDecoration.foregroundDecoration.copyWith(image: updatedImage)
+                    : currentItemDecoration.foregroundDecoration,
+              );
+
+              sheetDecorationMap[tmpinx] = currentItemDecoration;
+            }
           };
         } else if (value is Alignment) {
           return () {
-            Alignment newAlignment = Alignment(
-                (currentDecorationImage!.alignment as Alignment).x, value.y);
-
             if (currentDecorationImage != null) {
-              currentItemDecoration = currentItemDecoration.copyWith(
-                  decoration: currentItemDecoration.decoration.copyWith(
-                      image: DecorationImage(
-                image: MemoryImage(
-                    (currentDecorationImage.image as MemoryImage).bytes),
+              final newAlignment = Alignment(
+                (currentDecorationImage.alignment as Alignment).x,
+                value.y,
+              );
+
+              final updatedImage = DecorationImage(
+                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes),
                 fit: currentDecorationImage.fit,
                 repeat: currentDecorationImage.repeat,
                 alignment: newAlignment,
@@ -24186,21 +24601,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-              )));
+              );
+
+              currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: isForeground
+                    ? currentItemDecoration.decoration
+                    : currentItemDecoration.decoration.copyWith(image: updatedImage),
+                foregroundDecoration: isForeground
+                    ? currentItemDecoration.foregroundDecoration.copyWith(image: updatedImage)
+                    : currentItemDecoration.foregroundDecoration,
+              );
+
               sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
-
-            currentItemDecoration = currentItemDecoration.copyWith(
-                decoration: currentItemDecoration.decoration);
           };
         } else {
+          // assuming 'value' here is ImageRepeat
           return () {
             if (currentDecorationImage != null) {
-              currentItemDecoration = currentItemDecoration.copyWith(
-                  decoration: currentItemDecoration.decoration.copyWith(
-                      image: DecorationImage(
-                image: MemoryImage(
-                    (currentDecorationImage.image as MemoryImage).bytes),
+              final updatedImage = DecorationImage(
+                image: MemoryImage((currentDecorationImage.image as MemoryImage).bytes),
                 fit: currentDecorationImage.fit,
                 repeat: value,
                 alignment: currentDecorationImage.alignment,
@@ -24208,11 +24628,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 opacity: currentDecorationImage.opacity,
                 filterQuality: currentDecorationImage.filterQuality,
                 invertColors: currentDecorationImage.invertColors,
-              )));
+              );
+
+              currentItemDecoration = currentItemDecoration.copyWith(
+                decoration: isForeground
+                    ? currentItemDecoration.decoration
+                    : currentItemDecoration.decoration.copyWith(image: updatedImage),
+                foregroundDecoration: isForeground
+                    ? currentItemDecoration.foregroundDecoration.copyWith(image: updatedImage)
+                    : currentItemDecoration.foregroundDecoration,
+              );
+
               sheetDecorationMap[tmpinx] = currentItemDecoration;
             }
           };
         }
+
       }
 
       return Container(
@@ -24246,7 +24677,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           cursor: SystemMouseCursors.resizeLeftRight,
           child: GestureDetector(
             onHorizontalDragCancel: () {
-              sheetDecorationVariables[index].listImageAlignFocusNodes[s].requestFocus();
+              listImageAlignFocusNodes[s].requestFocus();
             },
             onHorizontalDragUpdate: (details) {
               var multiplier = HardwareKeyboard.instance.isControlPressed
@@ -24303,8 +24734,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           child: SizedBox(
             height: 12,
             child: TextFormField(
-              onTapOutside: (event) => sheetDecorationVariables[index].listImageAlignFocusNodes[s].unfocus(),
-              focusNode: sheetDecorationVariables[index].listImageAlignFocusNodes[s],
+              onTapOutside: (event) => listImageAlignFocusNodes[s].unfocus(),
+              focusNode: listImageAlignFocusNodes[s],
               controller: listImageAlignControllers[s],
               inputFormatters: [
                 NumericInputFormatter(allowNegative: true),
@@ -24398,7 +24829,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           cursor: SystemMouseCursors.resizeLeftRight,
           child: GestureDetector(
             onHorizontalDragCancel: () {
-              sheetDecorationVariables[index].listImagePropertyFocusNodes[s].requestFocus();
+              listImagePropertyFocusNodes[s].requestFocus();
             },
             onHorizontalDragUpdate: (details) {
               var multiplier = HardwareKeyboard.instance.isControlPressed
@@ -24460,8 +24891,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           child: SizedBox(
             height: 12,
             child: TextFormField(
-              onTapOutside: (event) => sheetDecorationVariables[index].listImagePropertyFocusNodes[s].unfocus(),
-              focusNode: sheetDecorationVariables[index].listImagePropertyFocusNodes[s],
+              onTapOutside: (event) => listImagePropertyFocusNodes[s].unfocus(),
+              focusNode: listImagePropertyFocusNodes[s],
               controller: listImagePropertyControllers[s],
               inputFormatters: [
                 NumericInputFormatter(allowNegative: true),
@@ -24541,9 +24972,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      isListDecorationImageExpanded =
-                          !isListDecorationImageExpanded;
+                      if (isForeground) {
+                        sheetDecorationVariables[index].isListDecorationImageExpanded2 = 
+                            !sheetDecorationVariables[index].isListDecorationImageExpanded2;
+                      } else {
+                        sheetDecorationVariables[index].isListDecorationImageExpanded = 
+                            !sheetDecorationVariables[index].isListDecorationImageExpanded;
+                      }
                     });
+
                   },
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -25034,7 +25471,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       pinnedColumns: 1,
       pinnedRows: 1,
       sheetTableDecoration: newDecoration,
-      sheetTablebgDecoration: newSuperDecoration(),
+      sheetTablebgDecoration: newSuperDecoration(placeholder: false),
       indexPath: newIndexPath,
     );
   }
@@ -25462,18 +25899,33 @@ class SheetDecorationVariables {
   List<FocusNode> listImageAlignFocusNodes = [FocusNode(), FocusNode()];
   List<FocusNode> listImagePropertyFocusNodes = [FocusNode(), FocusNode()];
   int listShadowLayerSelectedIndex =0;
+  bool isListBorderRadiusExpanded2 = false;
+  bool isListBorderExpanded2 = true;
+  bool isListColorExpanded2 = true;
+  bool isListShadowExpanded2 = true;
+  bool isListDecorationImageExpanded2 = true;
+  List<FocusNode> marginFocusNodes2 = [];
+  List<FocusNode> listPaddingFocusNodes2 = [];
+  List<FocusNode> colorHexFocusNodes2 = [ ];
+  List<FocusNode> borderFocusNodes2 = [];
+  List<FocusNode> borderRadiusFocusNodes2 = [];
+  List<FocusNode> listBorderFocusNodes2 = [];
+  List<List<FocusNode>> listShadowFocusNodes2 = [];
+  List<FocusNode> listImageAlignFocusNodes2 = [FocusNode(), FocusNode()];
+  List<FocusNode> listImagePropertyFocusNodes2 = [FocusNode(), FocusNode()];
+  int listShadowLayerSelectedIndex2 =0;
   SheetDecorationVariables({
     this.id ='',
     this.isExpanded = false,
     this.isListMarginExpanded = false,
     this.isListPaddingExpanded = false,
+    this.marginFocusNodes = const [],
+    this.listPaddingFocusNodes = const [],
     this.isListBorderRadiusExpanded = false,
     this.isListBorderExpanded = false,
     this.isListColorExpanded = false,
     this.isListShadowExpanded = false,
     this.isListDecorationImageExpanded = false,
-    this.marginFocusNodes = const [],
-    this.listPaddingFocusNodes = const [],
     this.colorHexFocusNodes = const [],
     this.borderFocusNodes = const [],
     this.borderRadiusFocusNodes = const [],
@@ -25481,7 +25933,20 @@ class SheetDecorationVariables {
     this.listShadowFocusNodes = const [],
     this.listImageAlignFocusNodes = const [],
     this.listImagePropertyFocusNodes = const [],
-    this.listShadowLayerSelectedIndex = 0
+    this.listShadowLayerSelectedIndex = 0,
+    this.isListBorderRadiusExpanded2 = false,
+    this.isListBorderExpanded2 = false,
+    this.isListColorExpanded2 = false,
+    this.isListShadowExpanded2 = false,
+    this.isListDecorationImageExpanded2 = false,
+    this.colorHexFocusNodes2 = const [],
+    this.borderFocusNodes2 = const [],
+    this.borderRadiusFocusNodes2 = const [],
+    this.listBorderFocusNodes2 = const [],
+    this.listShadowFocusNodes2 = const [],
+    this.listImageAlignFocusNodes2 = const [],
+    this.listImagePropertyFocusNodes2 = const [],
+    this.listShadowLayerSelectedIndex2 = 0
   });
   
 }
