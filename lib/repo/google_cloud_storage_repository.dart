@@ -33,6 +33,7 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
         print("❌ Google Sign-In failed or was canceled.");
         ref.read(processMessageProvider.notifier).state = "❌ Google Sign-In failed or was canceled.";
         overlay?.markNeedsBuild();
+        overlay?.remove();
         return false;
       }
       authManager.state = AuthTokenManager(
@@ -178,6 +179,7 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
     print("❌ Error during authentication or data sync: $e");
     ref.read(processMessageProvider.notifier).state = "❌ Error during authentication or data sync: $e";
     overlay?.markNeedsBuild();
+    overlay?.remove();
     return false;
   }
   return true; // Indicate success
@@ -186,18 +188,24 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
 //
 //
 //
-Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref) async {
+Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, OverlayEntry? overlay) async {
   final googleSignIn = ref.read(gapSignInProvider);
   try {
     final authManager = ref.read(authTokenManagerProvider.notifier);
+    ref.read(processMessageProvider.notifier).state = "Signing in to Google...";
+    overlay?.markNeedsBuild();
     gap.GoogleSignInCredentials? creds;
     // 🔁 Check and refresh token if needed
     if (!authManager.state.isValid) {
       print("🔐 Token expired or missing. Signing in again...");
+      ref.read(processMessageProvider.notifier).state = "🔐 Token expired or missing. Signing in again...";
+      overlay?.markNeedsBuild();
       creds = await googleSignIn.signInOnline();
       if (creds == null) {
         print("❌ Google Sign-In failed.");
-        throw Exception("Sign-in failed");
+        ref.read(processMessageProvider.notifier).state = "❌ Google Sign-In failed.";
+        overlay?.markNeedsBuild();
+        overlay?.remove();
       }
       authManager.state = AuthTokenManager(
         credentials: creds,
@@ -225,13 +233,26 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref) asyn
       q: "name='LayoutModelBox' and mimeType='application/vnd.google-apps.spreadsheet'",
     );
     if (fileList.files == null || fileList.files!.isEmpty) {
-      throw Exception("LayoutModelBox spreadsheet not found");
+      print("❌ LayoutModelBox spreadsheet not found.");
+      ref.read(processMessageProvider.notifier).state = "❌ Storage not found in drive.";
+      overlay?.markNeedsBuild();
+      overlay?.remove();
+      return {};
     }
+    
     final sheetId = fileList.files!.first.id!;
+    ref.read(processMessageProvider.notifier).state = "📄 Found existing storage with ID: ${sheetId}";
+    print("📄 Found existing sheet with ID: $sheetId");
+    overlay?.markNeedsBuild();
     final sheetData = await sheetsApi.spreadsheets.values.get(sheetId, "Sheet1");
     final rows = sheetData.values;
     if (rows == null || rows.length < 2) {
-      throw Exception("No layout data in sheet");
+      print("❌ No layout data found in sheet.");
+      ref.read(processMessageProvider.notifier).state = "❌ No data found in storage.";
+      overlay?.markNeedsBuild();
+      overlay?.remove();
+      return {};
+
     }
     final headers = rows.first;
     final Map<String, dynamic> box = {};
@@ -253,8 +274,12 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref) asyn
       );
       if (docResponse.statusCode != 200) {
         print("❌ Failed to fetch Google Doc $docId");
+        ref.read(processMessageProvider.notifier).state = "❌ Failed to fetch spreadSheetList for ${data['name']}";
+        overlay?.markNeedsBuild();
         continue;
       }
+      ref.read(processMessageProvider.notifier).state = "📥 Fetched spreadsheetList from Google Doc for ${data['name']}";
+      overlay?.markNeedsBuild();
       final docBody = jsonDecode(docResponse.body);
       final content = docBody['body']['content'] as List? ?? [];
       final textRuns = content
@@ -263,6 +288,7 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref) asyn
           .whereType<String>();
       final firstTextElement = textRuns.join();
       // 🧱 Rebuild spreadsheetList
+      ref.read(processMessageProvider.notifier).state = "🧱 Decoding spreadsheetList for ${data['name']}";
       final spreadsheetListRaw = jsonDecode(firstTextElement.trim());
       final List<SheetListBox> spreadsheetList = (spreadsheetListRaw as List)
           .map((e) => SheetListBox.fromMap(e))
@@ -286,10 +312,15 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref) asyn
       box.addAll({model.id: model});
     }
     print("✅ LayoutModelBox loaded from Google Sheet and Docs");
+    ref.read(processMessageProvider.notifier).state = "✅ Layouts&Bills loaded from Google Drive.";
+    overlay?.markNeedsBuild();
     return box;
   } catch (e) {
     print("❌ Failed to fetch LayoutModels: $e");
-    rethrow;
+    ref.read(processMessageProvider.notifier).state = "❌ Failed to fetch Layouts&Bills: $e";
+    overlay?.markNeedsBuild();
+    overlay?.remove();
+    return {};
   }
 }
             
