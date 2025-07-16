@@ -2425,7 +2425,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
         );
       },).toList();
-    
+    // print(sheetDecorationVariables[0].listShadowFocusNodes2.toString());
     });
   }
   
@@ -18519,36 +18519,38 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     ),
                   ),
           
-                  ScrollConfiguration(
-                  behavior:
-                      ScrollBehavior().copyWith(scrollbars: false),
-                  child: DynMouseScroll(
-                      durationMS: 500,
-                      scrollSpeed: 1,
-                      builder: (context, controller, physics) {
-                        return Padding(
-                          padding: const EdgeInsets.only(left:1.0),
-                          child: ClipRRect(
-                            borderRadius:BorderRadius.only(
-                              bottomRight: Radius.circular(30),
-                              bottomLeft: Radius.circular(30),
+                  Expanded(
+                    child: ScrollConfiguration(
+                    behavior:
+                        ScrollBehavior().copyWith(scrollbars: false),
+                    child: DynMouseScroll(
+                        durationMS: 500,
+                        scrollSpeed: 1,
+                        builder: (context, controller, physics) {
+                          return Padding(
+                            padding: const EdgeInsets.only(left:1.0),
+                            child: ClipRRect(
+                              borderRadius:BorderRadius.only(
+                                bottomRight: Radius.circular(30),
+                                bottomLeft: Radius.circular(30),
+                              ),
+                              child: buildSheetDecorationLibrary(
+                                (p0, p1, p2, padding, showText) => roundButton(p0, p1, p2, padding: padding,showText: showText),
+                                inx,
+                                controller,
+                                physics,
+                                width,
+                                itemDecorationPath,
+                                itemDecorationNameController,
+                                (sHeight*0.9)-50-12-11-68-11-25-46,
+                                onlySuper: true,
+                                onlyLibrary:true,
+                              ),
                             ),
-                            child: buildSheetDecorationLibrary(
-                              (p0, p1, p2, padding, showText) => roundButton(p0, p1, p2, padding: padding,showText: showText),
-                              inx,
-                              controller,
-                              physics,
-                              width,
-                              itemDecorationPath,
-                              itemDecorationNameController,
-                              sHeight-283,
-                              onlySuper: true,
-                              onlyLibrary:true,
-                            ),
-                          ),
-                        );
-                    }
-                  ))
+                          );
+                      }
+                    )),
+                  )
                 ],
               ),
             ),
@@ -21033,6 +21035,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           pinned['foregroundDecoration']['image']['invertColors'] ||
           pinned['foregroundDecoration']['boxShadow'])
         buildDecorationEditor(context, itemDecoration, index: index, shadowLayerIndex: sheetDecorationVariables[index].listShadowLayerSelectedIndex2, isForeground: true),
+      SizedBox(
+        height: 3,
+      ),
+      if (pinned['transform']['isPinned'])
+        buildTransformEditor(
+          index: index,
+        )
     ];
   }
 
@@ -21115,14 +21124,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         
 
         if (isBorderRadius) {
-          currentItemDecoration =
-              (currentItemDecoration as ItemDecoration)
-                  .copyWith(decoration: currentItemDecoration
-                          .decoration
-                          .copyWith(
-            borderRadius: setBorderRadius(
-                s, parsedValue, itemDecoration, isForeground: isForeground,),
-          ));
+          if (!isForeground) {
+          currentItemDecoration = currentItemDecoration.copyWith(
+            decoration: currentItemDecoration.decoration.copyWith(
+              borderRadius: setBorderRadius(
+                s,
+                parsedValue,
+                itemDecoration,
+                isForeground: isForeground,
+              ),
+            ),
+          );
+        } else {
+          currentItemDecoration = currentItemDecoration.copyWith(
+            foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+              borderRadius: setBorderRadius(
+                s,
+                parsedValue,
+                itemDecoration,
+                isForeground: isForeground,
+              ),
+            ),
+          );
+        }
+
+
           
         } else if (isMargin) {
           EdgeInsets inset = side == 0
@@ -21215,17 +21241,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       onTap: () {
         setState(() {
           if (isBorderRadius) {
-            isListBorderRadiusExpanded = !isListBorderRadiusExpanded;
+            if (isForeground) {
+              sheetDecorationVariables[index].isListBorderRadiusExpanded2 = 
+                  !sheetDecorationVariables[index].isListBorderRadiusExpanded2;
+            } else {
+              sheetDecorationVariables[index].isListBorderRadiusExpanded = 
+                  !sheetDecorationVariables[index].isListBorderRadiusExpanded;
+            };
+
           } else if (isMargin) {
-            isListMarginExpanded = !isListMarginExpanded;
+            sheetDecorationVariables[index].isListMarginExpanded = 
+                  !sheetDecorationVariables[index].isListMarginExpanded;
           } else {
-            isListPaddingExpanded = !isListPaddingExpanded;
+            sheetDecorationVariables[index].isListPaddingExpanded = 
+                  !sheetDecorationVariables[index].isListPaddingExpanded;
           }
           isExpanded = isBorderRadius
-              ? isListBorderRadiusExpanded
+              ? isForeground? sheetDecorationVariables[index].isListBorderRadiusExpanded2: sheetDecorationVariables[index].isListBorderRadiusExpanded
               : isMargin
-                  ? isListMarginExpanded
-                  : isListPaddingExpanded;
+                  ? sheetDecorationVariables[index].isListMarginExpanded
+                  : sheetDecorationVariables[index].isListPaddingExpanded;
           // print(isExpanded);
         });
       },
@@ -22648,11 +22683,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             controller: colorHexControllers[0],
                             onSubmitted: (value) {
                               setState(() {
-                                currentItemDecoration =
-                                    currentItemDecoration.copyWith(
-                                        decoration: currentItemDecoration
-                                            .decoration
-                                            .copyWith(color: hexToColor(value)));
+                                if (!isForeground) {
+                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                    decoration: currentItemDecoration.decoration.copyWith(
+                                      color: hexToColor(value),
+                                    ),
+                                  );
+                                } else {
+                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                    foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                      color: hexToColor(value),
+                                    ),
+                                  );
+                                }
+
                               sheetDecorationMap[tmpinx] = currentItemDecoration;
                               });
                             },
@@ -22714,11 +22758,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             onTap: () {
                               EyeDropper.enableEyeDropper(context, (value) {
                                 setState(() {
-                                currentItemDecoration =
-                                    currentItemDecoration.copyWith(
-                                        decoration: currentItemDecoration
-                                            .decoration
-                                            .copyWith(color: value));
+                                if (!isForeground) {
+                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                    decoration: currentItemDecoration.decoration.copyWith(
+                                      color: value,
+                                    ),
+                                  );
+                                } else {
+                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                    foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                      color: value,
+                                    ),
+                                  );
+                                }
+
                                 
                                   sheetDecorationMap[tmpinx] = currentItemDecoration;
                                 
@@ -22812,14 +22865,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       defaultPalette.transparent,
                                 ),
                                 onChanged: (value) {
-                                  currentItemDecoration = currentItemDecoration.copyWith(
-                                    decoration: currentItemDecoration
-                                      .decoration
-                                      .copyWith(
+                                  if (!isForeground) {
+                                    currentItemDecoration = currentItemDecoration.copyWith(
+                                      decoration: currentItemDecoration.decoration.copyWith(
                                         color: value.toColor().withAlpha(
-                                          (currentItemDecoration
-                                            .decoration
-                                            .color ??defaultPalette.transparent).alpha)));
+                                          (currentItemDecoration.decoration.color ?? defaultPalette.transparent).alpha,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    currentItemDecoration = currentItemDecoration.copyWith(
+                                      foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                        color: value.toColor().withAlpha(
+                                          (currentItemDecoration.foregroundDecoration.color ?? defaultPalette.transparent).alpha,
+                                        ),
+                                      ),
+                                    );
+                                  }
+
                                            
                                   setState(() { 
                                   sheetDecorationMap[tmpinx] = currentItemDecoration;
@@ -22840,11 +22903,23 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           defaultPalette.transparent,
                                     ),
                                     onChanged: (HSVColor value) {
-                                      currentItemDecoration = currentItemDecoration.copyWith(
-                                            decoration: currentItemDecoration
-                                            .decoration
-                                            .copyWith(color: value.toColor().withAlpha((currentItemDecoration
-                                                    .decoration.color ??defaultPalette.transparent).alpha)));
+                                      if (!isForeground) {
+                                        currentItemDecoration = currentItemDecoration.copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            color: value.toColor().withAlpha(
+                                              (currentItemDecoration.decoration.color ?? defaultPalette.transparent).alpha,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        currentItemDecoration = currentItemDecoration.copyWith(
+                                          foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                            color: value.toColor().withAlpha(
+                                              (currentItemDecoration.foregroundDecoration.color ?? defaultPalette.transparent).alpha,
+                                            ),
+                                          ),
+                                        );
+                                      }
                                       
                                       setState(() {
                                       sheetDecorationMap[tmpinx] = currentItemDecoration;
@@ -22863,9 +22938,21 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 defaultPalette.transparent)
                             .alpha,
                         onChanged: (int value) {
-                          currentItemDecoration =currentItemDecoration.copyWith(decoration: decor
-                                    .copyWith(color: (decor.color ??
-                                                defaultPalette.transparent).withAlpha(value)));
+                          if (!isForeground) {
+                            final decor = currentItemDecoration.decoration;
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              decoration: decor.copyWith(
+                                color: (decor.color ?? defaultPalette.transparent).withAlpha(value),
+                              ),
+                            );
+                          } else {
+                            final decor = currentItemDecoration.foregroundDecoration;
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              foregroundDecoration: decor.copyWith(
+                                color: (decor.color ?? defaultPalette.transparent).withAlpha(value),
+                              ),
+                            );
+                          }
                           
                           setState(() {
                           sheetDecorationMap[tmpinx] = currentItemDecoration;
@@ -22928,12 +23015,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       controller: colorHexControllers[1],
                       onSubmitted: (value) {
                         setState(() {
-                          currentItemDecoration =
-                              currentItemDecoration.copyWith(
-                                  decoration: decor
-                                      .copyWith(
-                                          border: Border.all(
-                                              color: hexToColor(value))));
+                          if (!isForeground) {
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              decoration: decor.copyWith(
+                                border: Border.all(color: hexToColor(value)),
+                              ),
+                            );
+                          } else {
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                border: Border.all(color: hexToColor(value)),
+                              ),
+                            );
+                          }
+
                           sheetDecorationMap[tmpinx] = currentItemDecoration;                   
                         });
                       },
@@ -23230,7 +23325,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     ],
                   ),
                   // if(isSizeBigForBorderRow)
-                  //COLOR SELECTOR SECTION
+                  //COLOR SELECTOR SECTION For BORDER
                   SizedBox(
                     width: isSizeBigForBorderRow ? widthSmall : widthBig,
                     child: Column(
@@ -23258,33 +23353,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Border currentBorder =
                                 (decor.border ??
                                     Border.all(color: defaultPalette.transparent)) as Border;
-                            currentItemDecoration =currentItemDecoration.copyWith(
-                              decoration: currentItemDecoration
-                                  .decoration
-                                  .copyWith(
-                              border:Border(
-                                bottom: currentBorder.bottom.copyWith(
-                                    color: value.toColor().withAlpha(
-                                          (currentBorder.bottom.color)
-                                              .alpha,
-                                        )),
-                                top: currentBorder.top.copyWith(
-                                    color: value.toColor().withAlpha(
-                                          (currentBorder.top.color)
-                                              .alpha,
-                                        )),
-                                left: currentBorder.left.copyWith(
-                                    color: value.toColor().withAlpha(
-                                          (currentBorder.left.color)
-                                              .alpha,
-                                        )),
-                                right: currentBorder.right.copyWith(
-                                    color: value.toColor().withAlpha(
-                                          (currentBorder.right.color)
-                                              .alpha,
-                                        )),
-                                ),
-                              ));        
+                            final updatedBorder = Border(
+                            bottom: currentBorder.bottom.copyWith(
+                              color: value.toColor().withAlpha(currentBorder.bottom.color.alpha),
+                            ),
+                            top: currentBorder.top.copyWith(
+                              color: value.toColor().withAlpha(currentBorder.top.color.alpha),
+                            ),
+                            left: currentBorder.left.copyWith(
+                              color: value.toColor().withAlpha(currentBorder.left.color.alpha),
+                            ),
+                            right: currentBorder.right.copyWith(
+                              color: value.toColor().withAlpha(currentBorder.right.color.alpha),
+                            ),
+                          );
+
+                          if (!isForeground) {
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              decoration: currentItemDecoration.decoration.copyWith(border: updatedBorder),
+                            );
+                          } else {
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(border: updatedBorder),
+                            );
+                          }
+        
                             setState(() {
                               sheetDecorationMap[tmpinx] = currentItemDecoration;
                             });
@@ -23301,26 +23394,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             Border currentBorder =
                                 (decor.border ??
                                     Border.all(color: defaultPalette.transparent)) as Border;
-                             currentItemDecoration =
-                                  currentItemDecoration.copyWith(
-                                      decoration: currentItemDecoration
-                                          .decoration
-                                          .copyWith(
-                                border: Border(
-                                  bottom: currentBorder.bottom.copyWith(
-                                      color: currentBorder.bottom.color
-                                          .withAlpha(value)),
-                                  top: currentBorder.top.copyWith(
-                                      color: currentBorder.top.color
-                                          .withAlpha(value)),
-                                  left: currentBorder.left.copyWith(
-                                      color: currentBorder.left.color
-                                          .withAlpha(value)),
-                                  right: currentBorder.right.copyWith(
-                                      color: currentBorder.right.color
-                                          .withAlpha(value)),
-                                ),
-                              ));        
+                            final updatedBorder = Border(
+                              bottom: currentBorder.bottom.copyWith(
+                                color: currentBorder.bottom.color.withAlpha(value),
+                              ),
+                              top: currentBorder.top.copyWith(
+                                color: currentBorder.top.color.withAlpha(value),
+                              ),
+                              left: currentBorder.left.copyWith(
+                                color: currentBorder.left.color.withAlpha(value),
+                              ),
+                              right: currentBorder.right.copyWith(
+                                color: currentBorder.right.color.withAlpha(value),
+                              ),
+                            );
+
+                            if (!isForeground) {
+                              currentItemDecoration = currentItemDecoration.copyWith(
+                                decoration: currentItemDecoration.decoration.copyWith(border: updatedBorder),
+                              );
+                            } else {
+                              currentItemDecoration = currentItemDecoration.copyWith(
+                                foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(border: updatedBorder),
+                              );
+                            }
+                                  
                             setState(() {
                               sheetDecorationMap[tmpinx] = currentItemDecoration;
                             });
@@ -23457,17 +23555,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 );
 
                 currentItemDecoration = ItemDecoration(
-                  id:currentItemDecoration.id,
+                  id: currentItemDecoration.id,
                   alignment: currentItemDecoration.alignment,
-                  decoration: currentItemDecoration.decoration
-                        .copyWith(boxShadow: [...currentShadow]),
-                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
+                  decoration: !isForeground
+                      ? currentItemDecoration.decoration.copyWith(
+                          boxShadow: [...currentShadow],
+                        )
+                      : currentItemDecoration.decoration,
+                  foregroundDecoration: isForeground
+                      ? currentItemDecoration.foregroundDecoration.copyWith(
+                          boxShadow: [...currentShadow],
+                        )
+                      : currentItemDecoration.foregroundDecoration,
                   margin: currentItemDecoration.margin,
                   padding: currentItemDecoration.padding,
                   name: currentItemDecoration.name,
                   pinned: currentItemDecoration.pinned,
-                  transform: currentItemDecoration.transform
-                  );
+                  transform: currentItemDecoration.transform,
+                );
+
                
                sheetDecorationMap[tmpinx] = currentItemDecoration;
               });
@@ -23528,17 +23634,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 );
 
                 currentItemDecoration = ItemDecoration(
-                  id:currentItemDecoration.id,
+                  id: currentItemDecoration.id,
                   alignment: currentItemDecoration.alignment,
-                  decoration: currentItemDecoration.decoration
-                        .copyWith(boxShadow: [...currentShadow]),
-                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
+                  decoration: !isForeground
+                      ? currentItemDecoration.decoration.copyWith(
+                          boxShadow: [...currentShadow],
+                        )
+                      : currentItemDecoration.decoration,
+                  foregroundDecoration: isForeground
+                      ? currentItemDecoration.foregroundDecoration.copyWith(
+                          boxShadow: [...currentShadow],
+                        )
+                      : currentItemDecoration.foregroundDecoration,
                   margin: currentItemDecoration.margin,
                   padding: currentItemDecoration.padding,
                   name: currentItemDecoration.name,
                   pinned: currentItemDecoration.pinned,
-                  transform: currentItemDecoration.transform
-                  );
+                  transform: currentItemDecoration.transform,
+                );
+
                 sheetDecorationMap[tmpinx] = currentItemDecoration;      
               });
             },
@@ -23607,9 +23721,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     highlightColor: defaultPalette.tertiary,
                     onTap: () {
                       setState(() {
-                        currentItemDecoration.pinned['decoration']
+                        currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                 ['boxShadow'] =
-                            !currentItemDecoration.pinned['decoration']
+                            !currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']
                                 ['boxShadow'];
 
                         // Update the list item with the modified currentItemDecoration
@@ -23617,7 +23731,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       });
                     },
                     child: Icon(
-                        currentItemDecoration.pinned['decoration']['boxShadow']
+                        currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['boxShadow']
                             ? TablerIcons.pin_filled
                             : TablerIcons.pin,
                         size: 16,
@@ -23677,16 +23791,36 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 onTap: () {
                                   setState(() {
                                     currentShadow.add(BoxShadow());
-                                    currentItemDecoration = currentItemDecoration
-                                        .copyWith(
-                                            decoration: currentItemDecoration
-                                                .decoration
-                                                .copyWith(
-                                                    boxShadow: currentShadow));
+                                    if (!isForeground) {
+                                      currentItemDecoration = currentItemDecoration.copyWith(
+                                        decoration: currentItemDecoration.decoration.copyWith(
+                                          boxShadow: currentShadow,
+                                        ),
+                                      );
+                                    } else {
+                                      currentItemDecoration = currentItemDecoration.copyWith(
+                                        foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                          boxShadow: currentShadow,
+                                        ),
+                                      );
+                                    }
+
+                                    // Update the map
                                     sheetDecorationMap[tmpinx] = currentItemDecoration;
-                                    listShadowFocusNodes = List.generate( 
-                                      currentItemDecoration.decoration.boxShadow!.length,(index) => List.generate( 5,(index) => FocusNode(),)
-                                    ,);     
+
+                                    // Generate the listShadowFocusNodes correctly
+                                    final newList = List.generate(
+                                      currentShadow.length,
+                                      (index) => List.generate(5, (_) => FocusNode()),
+                                    );
+
+                                    // Assign to the correct shadow focus node list
+                                    if (!isForeground) {
+                                      sheetDecorationVariables[sIndex].listShadowFocusNodes = newList;
+                                    } else {
+                                      sheetDecorationVariables[sIndex].listShadowFocusNodes2 = newList;
+                                    }
+                                        
                                     // listShadowLayerSelectedIndex = 0;
                                     setState(() {
                                       if (isForeground) {
@@ -23820,34 +23954,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 shadowLayerIndex][4],
                                             onSubmitted: (value) {
                                               setState(() {
-                                                currentShadow[
-                                                        shadowLayerIndex] =
-                                                    currentShadow[
-                                                            shadowLayerIndex]
-                                                        .copyWith(
-                                                            color: hexToColor(
-                                                                value));
-                                                currentItemDecoration =
-                                                    currentItemDecoration.copyWith(
-                                                        decoration:
-                                                            currentItemDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    boxShadow:
-                                                                        currentShadow));
-                                                currentItemDecoration = ItemDecoration(
-                                                  id:currentItemDecoration.id,
-                                                  alignment: currentItemDecoration.alignment,
-                                                  decoration: currentItemDecoration.decoration
-                                                        .copyWith(boxShadow: [...currentShadow]),
-                                                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
-                                                  margin: currentItemDecoration.margin,
-                                                  padding: currentItemDecoration.padding,
-                                                  name: currentItemDecoration.name,
-                                                  pinned: currentItemDecoration.pinned,
-                                                  transform: currentItemDecoration.transform
-                                                  );    
-                                               sheetDecorationMap[tmpinx] = currentItemDecoration;                       
+                                                currentShadow[shadowLayerIndex] =
+                                                    currentShadow[ shadowLayerIndex]
+                                                        .copyWith( color: hexToColor(value));
+                                                if (!isForeground) {
+                                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                                    decoration: currentItemDecoration.decoration.copyWith(
+                                                      boxShadow: [...currentShadow],
+                                                    ),
+                                                  );
+                                                } else {
+                                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                                    foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                                      boxShadow: [...currentShadow],
+                                                    ),
+                                                  );
+                                                }
+
+                                                // Now safely update the map
+                                                sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                                                  
                                               });
                                             },
                                             // textAlignVertical: TextAlignVertical.top,
@@ -23930,55 +24056,38 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           child: ReorderableListView(
                                             onReorder: (oldIndex, newIndex) {
                                               setState(() {
-                                                print(oldIndex.toString() +
-                                                    ' ' +
-                                                    newIndex.toString());
-                                                final shadowList =
-                                                    currentItemDecoration
-                                                            .decoration
-                                                            .boxShadow ??
-                                                        [];
+                                                print('$oldIndex → $newIndex');
 
-                                                final shadow = shadowList
-                                                    .removeAt(oldIndex);
-                                                if ((newIndex !=
-                                                    shadowList.length + 1)) {
-                                                  print('hah' +
-                                                      shadowList.length
-                                                          .toString() +
-                                                      ' ' +
-                                                      newIndex.toString());
+                                                final shadowList = (isForeground
+                                                        ? currentItemDecoration.foregroundDecoration.boxShadow
+                                                        : currentItemDecoration.decoration.boxShadow)
+                                                    ?.toList() ?? [];
 
-                                                  shadowList.insert(
-                                                      newIndex, shadow);
-                                                  if (oldIndex < newIndex) {
-                                                    shadowLayerIndex =
-                                                        newIndex - 1;
-                                                  } else {
-                                                    shadowLayerIndex =
-                                                        newIndex;
-                                                  }
-                                                  print('hah' +
-                                                      shadowLayerIndex
-                                                          .toString() +
-                                                      ' ' +
-                                                      newIndex.toString());
+                                                // 💥 Guard against invalid oldIndex
+                                                if (oldIndex < 0 || oldIndex >= shadowList.length) {
+                                                  print('Invalid oldIndex: $oldIndex');
+                                                  return;
+                                                }
+
+                                                final shadow = shadowList.removeAt(oldIndex);
+
+                                                if (newIndex <= shadowList.length) {
+                                                  shadowList.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, shadow);
+                                                  shadowLayerIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
                                                 } else {
                                                   shadowList.add(shadow);
-                                                  shadowLayerIndex =
-                                                      shadowList.length - 1;
-                                                  print(oldIndex.toString() +
-                                                      ' ' +
-                                                      newIndex.toString());
+                                                  shadowLayerIndex = shadowList.length - 1;
                                                 }
-                                                currentItemDecoration =
-                                                    currentItemDecoration.copyWith(
-                                                        decoration:
-                                                            currentItemDecoration
-                                                                .decoration
-                                                                .copyWith(
-                                                                    boxShadow:
-                                                                        shadowList));
+
+                                                currentItemDecoration = currentItemDecoration.copyWith(
+                                                  decoration: !isForeground
+                                                      ? currentItemDecoration.decoration.copyWith(boxShadow: shadowList)
+                                                      : currentItemDecoration.decoration,
+                                                  foregroundDecoration: isForeground
+                                                      ? currentItemDecoration.foregroundDecoration.copyWith(boxShadow: shadowList)
+                                                      : currentItemDecoration.foregroundDecoration,
+                                                );
+                                                sheetDecorationMap[tmpinx] = currentItemDecoration;
                                               });
                                             },
                                             proxyDecorator:
@@ -24094,34 +24203,39 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             currentShadow.removeAt(
                                                 shadowLayerIndex);
                                             currentItemDecoration = ItemDecoration(
-                                                  id:currentItemDecoration.id,
-                                                  alignment: currentItemDecoration.alignment,
-                                                  decoration: currentItemDecoration.decoration
-                                                        .copyWith(boxShadow: [...currentShadow]),
-                                                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
-                                                  margin: currentItemDecoration.margin,
-                                                  padding: currentItemDecoration.padding,
-                                                  name: currentItemDecoration.name,
-                                                  pinned: currentItemDecoration.pinned,
-                                                  transform: currentItemDecoration.transform
-                                                  );    
-                                               sheetDecorationMap[tmpinx] = currentItemDecoration;       
+                                            id: currentItemDecoration.id,
+                                            alignment: currentItemDecoration.alignment,
+                                            decoration: !isForeground
+                                                ? currentItemDecoration.decoration.copyWith(boxShadow: [...currentShadow])
+                                                : currentItemDecoration.decoration,
+                                            foregroundDecoration: isForeground
+                                                ? currentItemDecoration.foregroundDecoration.copyWith(boxShadow: [...currentShadow])
+                                                : currentItemDecoration.foregroundDecoration,
+                                            margin: currentItemDecoration.margin,
+                                            padding: currentItemDecoration.padding,
+                                            name: currentItemDecoration.name,
+                                            pinned: currentItemDecoration.pinned,
+                                            transform: currentItemDecoration.transform,
+                                          );
+
+                                          sheetDecorationMap[tmpinx] = currentItemDecoration;
+     
                                           
-                                            setState(() {
-                                              if (isForeground) {
-                                                sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex2 = (shadowLayerIndex -
-                                                                1)
-                                                            .clamp(0,
-                                                                double.infinity)
-                                                        as int; 
-                                              } else {
-                                                sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = (shadowLayerIndex -
-                                                                1)
-                                                            .clamp(0,
-                                                                double.infinity)
-                                                        as int; 
-                                              }
-                                            });
+                                          setState(() {
+                                            if (isForeground) {
+                                              sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex2 = (shadowLayerIndex -
+                                                              1)
+                                                          .clamp(0,
+                                                              double.infinity)
+                                                      as int; 
+                                            } else {
+                                              sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = (shadowLayerIndex -
+                                                              1)
+                                                          .clamp(0,
+                                                              double.infinity)
+                                                      as int; 
+                                            }
+                                          });
              
                                           }
                                           //  shadowLayerIndex = currentShadow.length-1;
@@ -24156,19 +24270,29 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               currentShadow[
                                                   shadowLayerIndex]);
                                           currentItemDecoration = ItemDecoration(
-                                                  id:currentItemDecoration.id,
-                                                  alignment: currentItemDecoration.alignment,
-                                                  decoration: currentItemDecoration.decoration
-                                                        .copyWith(boxShadow: [...currentShadow]),
-                                                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
-                                                  margin: currentItemDecoration.margin,
-                                                  padding: currentItemDecoration.padding,
-                                                  name: currentItemDecoration.name,
-                                                  pinned: currentItemDecoration.pinned,
-                                                  transform: currentItemDecoration.transform
-                                                  );    
-                                               sheetDecorationMap[tmpinx] = currentItemDecoration;         
-                                          sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = shadowLayerIndex +1;            
+                                            id: currentItemDecoration.id,
+                                            alignment: currentItemDecoration.alignment,
+                                            decoration: !isForeground
+                                                ? currentItemDecoration.decoration.copyWith(boxShadow: [...currentShadow])
+                                                : currentItemDecoration.decoration,
+                                            foregroundDecoration: isForeground
+                                                ? currentItemDecoration.foregroundDecoration.copyWith(boxShadow: [...currentShadow])
+                                                : currentItemDecoration.foregroundDecoration,
+                                            margin: currentItemDecoration.margin,
+                                            padding: currentItemDecoration.padding,
+                                            name: currentItemDecoration.name,
+                                            pinned: currentItemDecoration.pinned,
+                                            transform: currentItemDecoration.transform,
+                                          );
+
+                                          sheetDecorationMap[tmpinx] = currentItemDecoration;
+
+                                          if (isForeground) {
+                                            sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex2 = shadowLayerIndex + 1;
+                                          } else {
+                                            sheetDecorationVariables[sIndex].listShadowLayerSelectedIndex = shadowLayerIndex + 1;
+                                          }
+            
                                           //  shadowLayerIndex = currentShadow.length-1;
                                         });
                                       },
@@ -24228,23 +24352,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           shadowLayerIndex]
                                       .copyWith(
                                           color: value);
-                                  currentItemDecoration =
-                                      currentItemDecoration.copyWith(
-                                          decoration: currentItemDecoration.decoration
-                                              .copyWith(boxShadow: currentShadow));
                                   currentItemDecoration = ItemDecoration(
-                                  id:currentItemDecoration.id,
+                                  id: currentItemDecoration.id,
                                   alignment: currentItemDecoration.alignment,
-                                  decoration: currentItemDecoration.decoration
-                                        .copyWith(boxShadow: [...currentShadow]),
-                                  foregroundDecoration: currentItemDecoration.foregroundDecoration,
+                                  decoration: !isForeground
+                                      ? currentItemDecoration.decoration.copyWith(boxShadow: [...currentShadow])
+                                      : currentItemDecoration.decoration,
+                                  foregroundDecoration: isForeground
+                                      ? currentItemDecoration.foregroundDecoration.copyWith(boxShadow: [...currentShadow])
+                                      : currentItemDecoration.foregroundDecoration,
                                   margin: currentItemDecoration.margin,
                                   padding: currentItemDecoration.padding,
                                   name: currentItemDecoration.name,
                                   pinned: currentItemDecoration.pinned,
-                                  transform: currentItemDecoration.transform
-                                  );    
-                                sheetDecorationMap[tmpinx] = currentItemDecoration;                  
+                                  transform: currentItemDecoration.transform,
+                                );
+
+                                sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                              
                           });
                               },);
                             },
@@ -24273,23 +24398,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 shadowLayerIndex]
                                             .color
                                             .alpha));
-                            currentItemDecoration =
-                                currentItemDecoration.copyWith(
-                                    decoration: currentItemDecoration.decoration
-                                        .copyWith(boxShadow: currentShadow));
                             currentItemDecoration = ItemDecoration(
-                            id:currentItemDecoration.id,
-                            alignment: currentItemDecoration.alignment,
-                            decoration: currentItemDecoration.decoration
-                                  .copyWith(boxShadow: [...currentShadow]),
-                            foregroundDecoration: currentItemDecoration.foregroundDecoration,
-                            margin: currentItemDecoration.margin,
-                            padding: currentItemDecoration.padding,
-                            name: currentItemDecoration.name,
-                            pinned: currentItemDecoration.pinned,
-                            transform: currentItemDecoration.transform
-                            );    
-                          sheetDecorationMap[tmpinx] = currentItemDecoration;                  
+                              id: currentItemDecoration.id,
+                              alignment: currentItemDecoration.alignment,
+                              decoration: !isForeground
+                                  ? currentItemDecoration.decoration.copyWith(boxShadow: [...currentShadow])
+                                  : currentItemDecoration.decoration,
+                              foregroundDecoration: isForeground
+                                  ? currentItemDecoration.foregroundDecoration.copyWith(boxShadow: [...currentShadow])
+                                  : currentItemDecoration.foregroundDecoration,
+                              margin: currentItemDecoration.margin,
+                              padding: currentItemDecoration.padding,
+                              name: currentItemDecoration.name,
+                              pinned: currentItemDecoration.pinned,
+                              transform: currentItemDecoration.transform,
+                            );
+
+                            sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                              
                           });
                           
                         },
@@ -24309,18 +24435,23 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             .color
                                             .withAlpha(value));
                             currentItemDecoration = ItemDecoration(
-                              id:currentItemDecoration.id,
+                              id: currentItemDecoration.id,
                               alignment: currentItemDecoration.alignment,
-                              decoration: currentItemDecoration.decoration
-                                    .copyWith(boxShadow: [...currentShadow]),
-                              foregroundDecoration: currentItemDecoration.foregroundDecoration,
+                              decoration: !isForeground
+                                  ? currentItemDecoration.decoration.copyWith(boxShadow: [...currentShadow])
+                                  : currentItemDecoration.decoration,
+                              foregroundDecoration: isForeground
+                                  ? currentItemDecoration.foregroundDecoration.copyWith(boxShadow: [...currentShadow])
+                                  : currentItemDecoration.foregroundDecoration,
                               margin: currentItemDecoration.margin,
                               padding: currentItemDecoration.padding,
                               name: currentItemDecoration.name,
                               pinned: currentItemDecoration.pinned,
-                              transform: currentItemDecoration.transform
-                              );    
-                            sheetDecorationMap[tmpinx] = currentItemDecoration;                  
+                              transform: currentItemDecoration.transform,
+                            );
+
+                            sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                            
                           });
                           
                         },
@@ -24701,9 +24832,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       );
 
                 if (currentDecorationImage != null) {
-                  currentItemDecoration = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                          image: DecorationImage(
+                  final updatedImage = DecorationImage(
                     image: MemoryImage(
                         (currentDecorationImage.image as MemoryImage).bytes),
                     fit: currentDecorationImage.fit,
@@ -24713,12 +24842,29 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     opacity: currentDecorationImage.opacity,
                     filterQuality: currentDecorationImage.filterQuality,
                     invertColors: currentDecorationImage.invertColors,
-                  )));
+                  );
+
+                  if (!isForeground) {
+                    currentItemDecoration = currentItemDecoration.copyWith(
+                      decoration: currentItemDecoration.decoration.copyWith(
+                        image: updatedImage,
+                      ),
+                    );
+                  } else {
+                    currentItemDecoration = currentItemDecoration.copyWith(
+                      foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                        image: updatedImage,
+                      ),
+                    );
+                  }
                 }
 
-                currentItemDecoration = currentItemDecoration.copyWith(
-                    decoration: currentItemDecoration.decoration);
-                sheetDecorationMap[tmpinx] = currentItemDecoration; 
+                // This part is unnecessary unless it's meant to trigger a rebuild
+                // currentItemDecoration = currentItemDecoration.copyWith(
+                //     decoration: currentItemDecoration.decoration);
+
+                sheetDecorationMap[tmpinx] = currentItemDecoration;
+
               });
             },
             child: Icon(
@@ -24769,11 +24915,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         );
 
                   if (currentDecorationImage != null) {
-                    currentItemDecoration = currentItemDecoration.copyWith(
-                        decoration: currentItemDecoration.decoration.copyWith(
-                            image: DecorationImage(
+                    final updatedImage = DecorationImage(
                       image: MemoryImage(
-                          (currentDecorationImage.image as MemoryImage).bytes),
+                        (currentDecorationImage.image as MemoryImage).bytes,
+                      ),
                       fit: currentDecorationImage.fit,
                       repeat: currentDecorationImage.repeat,
                       alignment: newAlignment,
@@ -24781,12 +24926,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       opacity: currentDecorationImage.opacity,
                       filterQuality: currentDecorationImage.filterQuality,
                       invertColors: currentDecorationImage.invertColors,
-                    )));
+                    );
+
+                    if (!isForeground) {
+                      currentItemDecoration = currentItemDecoration.copyWith(
+                        decoration: currentItemDecoration.decoration.copyWith(
+                          image: updatedImage,
+                        ),
+                      );
+                    } else {
+                      currentItemDecoration = currentItemDecoration.copyWith(
+                        foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                          image: updatedImage,
+                        ),
+                      );
+                    }
                   }
 
+                  // This redundant reassignment can be omitted unless needed for a specific effect.
+                  // Keeping only if you're relying on triggering a state propagation or rebuild.
                   currentItemDecoration = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration);
-                  sheetDecorationMap[tmpinx] = currentItemDecoration; 
+                    decoration: currentItemDecoration.decoration,
+                  );
+
+                  sheetDecorationMap[tmpinx] = currentItemDecoration;
                 });
               },
             ),
@@ -24847,11 +25010,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 double parsedValue = double.parse(newValue.toStringAsFixed(4));
 
                 if (currentDecorationImage != null) {
-                  currentItemDecoration = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration.copyWith(
-                          image: DecorationImage(
+                  final updatedImage = DecorationImage(
                     image: MemoryImage(
-                        (currentDecorationImage.image as MemoryImage).bytes),
+                      (currentDecorationImage.image as MemoryImage).bytes,
+                    ),
                     fit: currentDecorationImage.fit,
                     repeat: currentDecorationImage.repeat,
                     alignment: currentDecorationImage.alignment,
@@ -24861,12 +25023,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         : currentDecorationImage.opacity,
                     filterQuality: currentDecorationImage.filterQuality,
                     invertColors: currentDecorationImage.invertColors,
-                  )));
+                  );
+
+                  if (!isForeground) {
+                    currentItemDecoration = currentItemDecoration.copyWith(
+                      decoration: currentItemDecoration.decoration.copyWith(
+                        image: updatedImage,
+                      ),
+                    );
+                  } else {
+                    currentItemDecoration = currentItemDecoration.copyWith(
+                      foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                        image: updatedImage,
+                      ),
+                    );
+                  }
                 }
 
+                // Optional: can remove this if it’s not doing anything meaningful.
                 currentItemDecoration = currentItemDecoration.copyWith(
-                    decoration: currentItemDecoration.decoration);
+                  decoration: currentItemDecoration.decoration,
+                );
+
                 sheetDecorationMap[tmpinx] = currentItemDecoration;
+
               });
             },
             child: Row(
@@ -24918,26 +25098,43 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   double parsedValue = double.parse(value);
 
                   if (currentDecorationImage != null) {
-                    currentItemDecoration = currentItemDecoration.copyWith(
-                        decoration: currentItemDecoration.decoration.copyWith(
-                            image: DecorationImage(
+                    final updatedImage = DecorationImage(
                       image: MemoryImage(
-                          (currentDecorationImage.image as MemoryImage).bytes),
+                        (currentDecorationImage.image as MemoryImage).bytes,
+                      ),
                       fit: currentDecorationImage.fit,
                       repeat: currentDecorationImage.repeat,
                       alignment: currentDecorationImage.alignment,
-                      scale:
-                          s == 0 ? parsedValue : currentDecorationImage.scale,
-                      opacity:
-                          s == 1 ? parsedValue : currentDecorationImage.opacity,
+                      scale: s == 0 ? parsedValue : currentDecorationImage.scale,
+                      opacity: s == 1
+                          ? parsedValue.clamp(0, 1)
+                          : currentDecorationImage.opacity,
                       filterQuality: currentDecorationImage.filterQuality,
                       invertColors: currentDecorationImage.invertColors,
-                    )));
+                    );
+
+                    if (!isForeground) {
+                      currentItemDecoration = currentItemDecoration.copyWith(
+                        decoration: currentItemDecoration.decoration.copyWith(
+                          image: updatedImage,
+                        ),
+                      );
+                    } else {
+                      currentItemDecoration = currentItemDecoration.copyWith(
+                        foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                          image: updatedImage,
+                        ),
+                      );
+                    }
                   }
 
+                  // Optional: can remove this if it’s not doing anything meaningful.
                   currentItemDecoration = currentItemDecoration.copyWith(
-                      decoration: currentItemDecoration.decoration);
+                    decoration: currentItemDecoration.decoration,
+                  );
+
                   sheetDecorationMap[tmpinx] = currentItemDecoration;
+
                 });
               },
             ),
@@ -25007,17 +25204,27 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     highlightColor: defaultPalette.tertiary,
                     onTap: () {
                       setState(() {
-                        currentItemDecoration.pinned['decoration']['image']
+                        var pinKey = isForeground? 'foregroundDecoration':'decoration';
+                        currentItemDecoration.pinned[pinKey]['image']
                                 ['isPinned'] =
-                            !currentItemDecoration.pinned['decoration']['image']
+                            !currentItemDecoration.pinned[pinKey]['image']
                                 ['isPinned'];
+                        currentItemDecoration.pinned[pinKey]['image']['bytes'] = !currentItemDecoration.pinned[pinKey]['image']['bytes']; 
+                        currentItemDecoration.pinned[pinKey]['image']['fit'] = !currentItemDecoration.pinned[pinKey]['image']['fit']; 
+                        currentItemDecoration.pinned[pinKey]['image']['repeat'] = !currentItemDecoration.pinned[pinKey]['image']['repeat']; 
+                        currentItemDecoration.pinned[pinKey]['image']['alignment'] = !currentItemDecoration.pinned[pinKey]['image']['alignment']; 
+                        currentItemDecoration.pinned[pinKey]['image']['scale'] = !currentItemDecoration.pinned[pinKey]['image']['scale']; 
+                        currentItemDecoration.pinned[pinKey]['image']['opacity'] = !currentItemDecoration.pinned[pinKey]['image']['opacity']; 
+                        currentItemDecoration.pinned[pinKey]['image']['filterQuality'] = !currentItemDecoration.pinned[pinKey]['image']['filterQuality']; 
+                        currentItemDecoration.pinned[pinKey]['image']['invertColors'] = !currentItemDecoration.pinned[pinKey]['image']['invertColors'];
 
                         // Update the list item with the modified currentItemDecoration
                         currentItemDecoration = currentItemDecoration;
+                        sheetDecorationMap[tmpinx] = currentItemDecoration;
                       });
                     },
                     child: Icon(
-                        currentItemDecoration.pinned['decoration']['image']
+                        currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                                 ['isPinned']
                             ? TablerIcons.pin_filled
                             : TablerIcons.pin,
@@ -25058,17 +25265,29 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               
                       if (result != null) {
                         setState(() {
-                          currentItemDecoration = currentItemDecoration
-                            .copyWith(
-                              decoration: currentItemDecoration.decoration
-                              .copyWith(
-                                image: DecorationImage(
-                                  image: MemoryImage(
-                                    result.files[0].bytes!),
-                                  fit: currentDecorationImage !=null
-                                    ? currentDecorationImage.fit
-                                    : BoxFit.fitWidth)));
-                         sheetDecorationMap[tmpinx] = currentItemDecoration;                     
+                          final newImage = DecorationImage(
+                            image: MemoryImage(result.files[0].bytes!),
+                            fit: currentDecorationImage != null
+                                ? currentDecorationImage.fit
+                                : BoxFit.fitWidth,
+                          );
+
+                          if (!isForeground) {
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              decoration: currentItemDecoration.decoration.copyWith(
+                                image: newImage,
+                              ),
+                            );
+                          } else {
+                            currentItemDecoration = currentItemDecoration.copyWith(
+                              foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                image: newImage,
+                              ),
+                            );
+                          }
+
+                          sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                        
                         });
                       }
                     }
@@ -25112,44 +25331,56 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           withData: true);
                                   if (result != null) {
                                     setState(() {
-                                      currentItemDecoration =
-                                          currentItemDecoration.copyWith(
-                                              decoration: currentItemDecoration
-                                              .decoration .copyWith(
-                                                image: DecorationImage(
-                                                image: MemoryImage( result.files[0].bytes!),
-                                                fit: currentDecorationImage !=null
-                                                ? currentDecorationImage
-                                                    .fit
-                                                : BoxFit
-                                                    .fitWidth)));
-                                    sheetDecorationMap[tmpinx] = currentItemDecoration;             
+                                      final newImage = DecorationImage(
+                                        image: MemoryImage(result.files[0].bytes!),
+                                        fit: currentDecorationImage != null
+                                            ? currentDecorationImage.fit
+                                            : BoxFit.fitWidth,
+                                      );
+
+                                      if (!isForeground) {
+                                        currentItemDecoration = currentItemDecoration.copyWith(
+                                          decoration: currentItemDecoration.decoration.copyWith(
+                                            image: newImage,
+                                          ),
+                                        );
+                                      } else {
+                                        currentItemDecoration = currentItemDecoration.copyWith(
+                                          foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(
+                                            image: newImage,
+                                          ),
+                                        );
+                                      }
+
+                                      sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                                
                                     });
                                   }
                                 }, Icon(TablerIcons.photo_plus, size: 15),
                                     isSelected: true),
                                 SizedBox(width: 2),
                                 roundButton(() {
-                                  currentItemDecoration =
-                                      currentItemDecoration.copyWith(
-                                          decoration: BoxDecoration(
-                                              image: null,
-                                              border: currentItemDecoration
-                                                  .decoration.border,
-                                              borderRadius:
-                                                  currentItemDecoration
-                                                      .decoration.borderRadius,
-                                              boxShadow: currentItemDecoration
-                                                  .decoration.boxShadow,
-                                              color: currentItemDecoration
-                                                  .decoration.color,
-                                              gradient: currentItemDecoration
-                                                  .decoration.gradient,
-                                              backgroundBlendMode:
-                                                  currentItemDecoration
-                                                      .decoration
-                                                      .backgroundBlendMode));
-                                sheetDecorationMap[tmpinx] = currentItemDecoration;                  
+                                  final currentDecor = isForeground
+                                      ? currentItemDecoration.foregroundDecoration
+                                      : currentItemDecoration.decoration;
+
+                                  final clearedImageDecoration = BoxDecoration(
+                                    image: null, // clearing image
+                                    border: currentDecor.border,
+                                    borderRadius: currentDecor.borderRadius,
+                                    boxShadow: currentDecor.boxShadow,
+                                    color: currentDecor.color,
+                                    gradient: currentDecor.gradient,
+                                    backgroundBlendMode: currentDecor.backgroundBlendMode,
+                                  );
+
+                                  currentItemDecoration = currentItemDecoration.copyWith(
+                                    decoration: !isForeground ? clearedImageDecoration : currentItemDecoration.decoration,
+                                    foregroundDecoration: isForeground ? clearedImageDecoration : currentItemDecoration.foregroundDecoration,
+                                  );
+
+                                  sheetDecorationMap[tmpinx] = currentItemDecoration;
+                                                  
                                 }, Icon(TablerIcons.trash, size: 15),
                                     isSelected: true),
                               ],
@@ -25162,7 +25393,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 SizedBox(height: 4),
                 if (currentDecorationImage != null) ...[
                   ////The setup for BoxFit
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['fit']) ...[
                     titleTile(' ${currentDecorationImage.fit!.name}',
                         TablerIcons.artboard),
@@ -25199,7 +25430,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   ],
 
                   ////The setup for Repeating Image
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['repeat']) ...[
                     titleTile(' ${currentDecorationImage.repeat.name}',
                         TablerIcons.layout_grid),
@@ -25233,7 +25464,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   ],
 
                   ///The setup for Aligning Image
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['alignment']) ...[
                     titleTile(
                         ' ${currentDecorationImage.alignment.toString()}'
@@ -25253,7 +25484,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     ),
                   ],
                   ////The setup for Scale Image
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['scale']) ...[
                     SizedBox(height: 4),
                     Row(
@@ -25261,7 +25492,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     ),
                   ],
                   ////The setup for Opacity of Image
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['opacity']) ...[
                     SizedBox(height: 3),
                     Row(
@@ -25270,7 +25501,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     SizedBox(height: 4),
                   ],
                   ////The setup for Quality of Image
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['filterQuality']) ...[
                     titleTile(' ${currentDecorationImage.filterQuality.name}',
                         TablerIcons.michelin_star),
@@ -25300,7 +25531,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     ]),
                   ],
                   ////The setup for Inversion of Image
-                  if (currentItemDecoration.pinned['decoration']['image']
+                  if (currentItemDecoration.pinned[isForeground? 'foregroundDecoration':'decoration']['image']
                       ['invertColors']) ...[
                     SizedBox(height: 4),
                     titleTile(' invert', TablerIcons.brightness_2),
@@ -25311,26 +25542,35 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       second: true,
                       onChanged: (value) {
                         setState(() {
-                          currentItemDecoration =
-                              currentItemDecoration.copyWith(
-                                  decoration:
-                                      currentItemDecoration.decoration.copyWith(
-                                          image: DecorationImage(
-                            image: MemoryImage(
-                                (currentDecorationImage.image as MemoryImage)
-                                    .bytes),
-                            fit: currentDecorationImage.fit,
-                            repeat: currentDecorationImage.repeat,
-                            alignment: currentDecorationImage.alignment,
-                            scale: currentDecorationImage.scale,
-                            opacity: currentDecorationImage.opacity,
-                            filterQuality: currentDecorationImage.filterQuality,
-                            invertColors: value,
-                          )));
-                          currentItemDecoration =
-                              currentItemDecoration.copyWith(
-                                  decoration: currentItemDecoration.decoration);
-                         sheetDecorationMap[tmpinx] = currentItemDecoration;     
+                          final updatedImage = DecorationImage(
+                          image: MemoryImage(
+                              (currentDecorationImage.image as MemoryImage).bytes),
+                          fit: currentDecorationImage.fit,
+                          repeat: currentDecorationImage.repeat,
+                          alignment: currentDecorationImage.alignment,
+                          scale: currentDecorationImage.scale,
+                          opacity: currentDecorationImage.opacity,
+                          filterQuality: currentDecorationImage.filterQuality,
+                          invertColors: value,
+                        );
+
+                        if (!isForeground) {
+                          currentItemDecoration = currentItemDecoration.copyWith(
+                            decoration: currentItemDecoration.decoration.copyWith(image: updatedImage),
+                          );
+                        } else {
+                          currentItemDecoration = currentItemDecoration.copyWith(
+                            foregroundDecoration: currentItemDecoration.foregroundDecoration.copyWith(image: updatedImage),
+                          );
+                        }
+
+                        // Optional redundancy for triggering listeners or layout rebuild
+                        currentItemDecoration = currentItemDecoration.copyWith(
+                          decoration: currentItemDecoration.decoration,
+                        );
+
+                        sheetDecorationMap[tmpinx] = currentItemDecoration;
+                          
                         });
                       },
                       animationCurve: Curves.easeInOutExpo,
@@ -25374,6 +25614,102 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     );
   }
  
+  Widget buildTransformEditor(
+    {
+      int index = -1,
+    }
+  ){
+    index = index==-1? decorationIndex==-1?0: decorationIndex:index;
+    var tmpinx = sheetDecorationVariables[index].id;
+    ItemDecoration currentItemDecoration = 
+        sheetDecorationMap[tmpinx] as ItemDecoration;
+    final widthBig =
+        (sWidth * wH2DividerPosition) - (showDecorationLayers ? 74 : 40);
+    return Column(
+      children: [
+        //Title for Decoration Image Editor
+        Container(
+          width: widthBig,
+          margin: EdgeInsets.only(
+            left: 3,
+            right: 3,
+          ),
+          padding: EdgeInsets.only(left: 2, right: 2, top: 0, bottom: 0),
+          decoration: BoxDecoration(
+              border: Border.all(),
+              color: defaultPalette.primary,
+              borderRadius: BorderRadius.circular(5)),
+          // transform:Matrix4.identity()
+          // ..translate(-50.0, 0.0)
+          // ..rotateZ(-math.pi / 6)
+          // ..scale(1.2)
+          // ..skew(0.1, 0.2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(TablerIcons.transform_point,
+                  size: 16, color: defaultPalette.extras[0]),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      sheetDecorationVariables[index].isListTransformExpanded = 
+                          !sheetDecorationVariables[index].isListTransformExpanded;
+                      
+                    });
+
+                  },
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(
+                      ' transform ',
+                      style: GoogleFonts.lexend(
+                          fontSize: 15,
+                          letterSpacing: -1,
+                          color: defaultPalette.extras[0]),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 2,
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(500),
+                child: Material(
+                  color: defaultPalette.transparent,
+                  child: InkWell(
+                    hoverColor: defaultPalette.tertiary,
+                    splashColor: defaultPalette.tertiary,
+                    highlightColor: defaultPalette.tertiary,
+                    onTap: () {
+                      setState(() {
+                        currentItemDecoration.pinned['transform']
+                                ['isPinned'] =
+                            !currentItemDecoration.pinned['transform']
+                                ['isPinned'];
+                        // Update the list item with the modified currentItemDecoration
+                        currentItemDecoration = currentItemDecoration;
+                        sheetDecorationMap[tmpinx] = currentItemDecoration;
+                      });
+                    },
+                    child: Icon(
+                        currentItemDecoration.pinned['transform']['isPinned']
+                            ? TablerIcons.pin_filled
+                            : TablerIcons.pin,
+                        size: 16,
+                        color: defaultPalette.extras[0]),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 2, height: 4),
+      ],
+    );
+  }
+
   List<List<SheetTableCell>> defaultSheetTableCellData(String parentId, SuperDecoration sheetTableDecoration, IndexPath indexPath) {
   const rows = 5;
   const cols = 8;
@@ -25884,6 +26220,8 @@ class SheetDecorationVariables {
   bool isExpanded = true;
   bool isListMarginExpanded = false;
   bool isListPaddingExpanded = false;
+  bool isListTransformExpanded = false;
+
   bool isListBorderRadiusExpanded = false;
   bool isListBorderExpanded = true;
   bool isListColorExpanded = true;
@@ -25961,6 +26299,23 @@ class SheetTableVariables {
     this.rowLayerIndex =0,
     this.columnLayerIndex =0,
   });
+}
+
+extension Matrix4SkewExtension on Matrix4 {
+  /// Applies a skew/shear to the matrix.
+  /// [skewX] and [skewY] are in radians.
+  Matrix4 skew(double skewX, double skewY) {
+    // Create a skew matrix
+    final skewMatrix = Matrix4(
+      1, math.tan(skewY), 0, 0,
+      math.tan(skewX), 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    );
+
+    // Multiply this matrix by the skew matrix and return it
+    return this..multiply(skewMatrix);
+  }
 }
 
 class MeasureSize extends StatefulWidget {
