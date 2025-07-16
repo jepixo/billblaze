@@ -2422,6 +2422,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         listImageAlignFocusNodes2 : [FocusNode(), FocusNode()],
         listImagePropertyFocusNodes2 : [FocusNode(), FocusNode()],
         listShadowLayerSelectedIndex2 : 0,
+        listTransformFocusNodes: List.generate(16, (c)=>FocusNode())
 
         );
       },).toList();
@@ -25625,6 +25626,185 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         sheetDecorationMap[tmpinx] as ItemDecoration;
     final widthBig =
         (sWidth * wH2DividerPosition) - (showDecorationLayers ? 74 : 40);
+    var isListTransformExpanded = sheetDecorationVariables[index].isListTransformExpanded;
+    var listTransformFocusNodes = sheetDecorationVariables[index].listTransformFocusNodes;
+    var m = currentItemDecoration.transform?.storage ?? [
+      1.0, 0.0, 0.0, 0.0,  
+      0.0, 1.0, 0.0, 0.0,  
+      0.0, 0.0, 1.0, 0.0,  
+      0.0, 0.0, 0.0, 1.0   
+    ];
+    double tx = m[12];
+    double ty = m[13];
+    // Step 2: Extract scale (before affecting it by rotation or skew)
+    double scaleX = sqrt(m[0] * m[0] + m[1] * m[1]);
+    double scaleY = sqrt(m[4] * m[4] + m[5] * m[5]);
+    double scaleZ = sqrt(m[8] * m[8] + m[9] * m[9] + m[10] * m[10]);
+
+    // Normalize just the Z-rotation part
+    double r00 = m[0] / scaleX; // cosθ
+    double r01 = m[1] / scaleX; // sinθ
+
+    // Extract rotationZ in radians
+    double rotZ = atan2(r01, r00);
+
+    // Step 5: Estimate skew separately (best-effort basis)
+    const double radToDeg = 180 / 3.1415926535897932;
+    List<TextEditingController> listTransformControllers =[
+      TextEditingController()..text = num.parse(tx.toStringAsFixed(3)).toString(),
+      TextEditingController()..text = num.parse(ty.toStringAsFixed(3)).toString(),
+      // TextEditingController()..text = num.parse(tz.toStringAsFixed(3)).toString(),
+      // TextEditingController()..text = num.parse((rotX * radToDeg).toStringAsFixed(2)).toString(),
+      // TextEditingController()..text = num.parse((rotY * radToDeg).toStringAsFixed(2)).toString(),
+      TextEditingController()..text = num.parse((rotZ * radToDeg).toStringAsFixed(2)).toString(),
+      TextEditingController()..text = num.parse(scaleX.toStringAsFixed(3)).toString(),
+      TextEditingController()..text = num.parse(scaleY.toStringAsFixed(3)).toString(),
+      TextEditingController()..text = num.parse(scaleZ.toStringAsFixed(3)).toString(),
+      // TextEditingController()..text = num.parse(skewX.toStringAsFixed(3)).toString(),
+      // TextEditingController()..text = num.parse(skewY.toStringAsFixed(3)).toString(),
+    ];
+
+    IconData _getTransformIcon(int s) {
+      switch (s) {
+        case 0: 
+          return TablerIcons.arrows_move_horizontal;
+        case 1:
+          return TablerIcons.arrows_move_vertical;
+        case 2:
+          return TablerIcons.rotate_dot;
+        case 3:
+          return TablerIcons.switch_horizontal;
+        case 4:
+          return TablerIcons.switch_vertical;
+        case 5:
+        default:
+          return TablerIcons.question_mark;
+      }
+    }
+
+    String _getTransformLabel(int s) {
+      const labels = [
+        "translateX",
+        "translateY",
+        "rotateZ",
+        "scaleX",
+        "scaleY",
+      ];
+      return labels[s];
+    }
+    
+    void updateCurrentTransformFromControllers() {
+      final tx = double.tryParse(listTransformControllers[0].text) ?? 0.0;
+      final ty = double.tryParse(listTransformControllers[1].text) ?? 0.0;
+      // final tz = double.tryParse(listTransformControllers[2].text) ?? 0.0;
+
+      final rz = (double.tryParse(listTransformControllers[2].text) ?? 0.0) * (pi / 180);
+
+
+      final sx = double.tryParse(listTransformControllers[3].text) ?? 1.0;
+      final sy = double.tryParse(listTransformControllers[4].text) ?? 1.0;
+      // final sz = double.tryParse(listTransformControllers[5].text) ?? 1.0;
+
+      // final skx = double.tryParse(listTransformControllers[6].text) ?? 0.0;
+      // final sky = double.tryParse(listTransformControllers[7].text) ?? 0.0;
+
+      Matrix4 transform = Matrix4.identity()
+        ..translate(tx, ty, 0)
+        ..rotateZ(rz)
+        ..scale(sx, sy, 1);
+
+      currentItemDecoration = currentItemDecoration.copyWith(transform: transform);
+      sheetDecorationMap[tmpinx] = currentItemDecoration;
+    }
+
+
+    List<Widget> transformPropertyTile(int s) {
+      return [
+        MouseRegion(
+          cursor: SystemMouseCursors.resizeLeftRight,
+          child: GestureDetector(
+            onHorizontalDragCancel: () {
+              listTransformFocusNodes[s].requestFocus();
+            },
+            onHorizontalDragUpdate: (details) {
+              var multiplier = HardwareKeyboard.instance.isControlPressed
+                  ? 0.5
+                  : HardwareKeyboard.instance.isShiftPressed
+                      ? 0.001
+                      : 0.1;
+
+              setState(() {
+                double currentValue =
+                    double.tryParse(listTransformControllers[s].text) ?? 0.0;
+                double newValue =
+                    (currentValue + details.delta.dx * multiplier).clamp(-999.0, 999.0);
+
+                double parsedValue = double.parse(newValue.toStringAsFixed(4));
+                listTransformControllers[s].text = parsedValue.toString();
+
+                // Update transform based on all 11 controllers
+                updateCurrentTransformFromControllers();
+              });
+            },
+            child: Row(
+              children: [
+                Icon(
+                  _getTransformIcon(s),
+                  size: 16,
+                ),
+                SizedBox(width: 2),
+                Text(
+                  _getTransformLabel(s),
+                  style: GoogleFonts.lexend(
+                      fontSize: 14,
+                      letterSpacing: -1,
+                      color: defaultPalette.extras[0]),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 10,
+          child: SizedBox(
+            height: 12,
+            child: TextFormField(
+              onTapOutside: (event) => listTransformFocusNodes[s].unfocus(),
+              focusNode: listTransformFocusNodes[s],
+              controller: listTransformControllers[s],
+              inputFormatters: [
+                NumericInputFormatter(allowNegative: true),
+              ],
+              cursorColor: defaultPalette.tertiary,
+              selectionControls: NoMenuTextSelectionControls(),
+              textAlign: TextAlign.end,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(0),
+                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                fillColor: defaultPalette.transparent,
+                border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+              ),
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.mitr(
+                  fontSize: 13,
+                  color: defaultPalette.extras[0],
+                  letterSpacing: -1),
+              onFieldSubmitted: (value) {
+                setState(() {
+                  listTransformControllers[s].text = double.parse(value).toString();
+                  updateCurrentTransformFromControllers();
+                });
+              },
+            ),
+          ),
+        ),
+        SizedBox(width: 2),
+      ];
+    }
+
+
     return Column(
       children: [
         //Title for Decoration Image Editor
@@ -25639,11 +25819,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               border: Border.all(),
               color: defaultPalette.primary,
               borderRadius: BorderRadius.circular(5)),
-          // transform:Matrix4.identity()
-          // ..translate(-50.0, 0.0)
-          // ..rotateZ(-math.pi / 6)
-          // ..scale(1.2)
-          // ..skew(0.1, 0.2),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -25684,6 +25859,36 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     highlightColor: defaultPalette.tertiary,
                     onTap: () {
                       setState(() {
+                        currentItemDecoration =currentItemDecoration.copyWith(
+                          transform: Matrix4.fromList(List<double>.from([
+                            1.0, 0.0, 0.0, 0.0,  
+                            0.0, 1.0, 0.0, 0.0,  
+                            0.0, 0.0, 1.0, 0.0,  
+                            0.0, 0.0, 0.0, 1.0   
+                          ]))
+                        );
+                        // Update the list item with the modified currentItemDecoration
+                        sheetDecorationMap[tmpinx] = currentItemDecoration;
+                      });
+                    },
+                    child: Icon(
+                         TablerIcons.refresh,
+                        size: 16,
+                        color: defaultPalette.extras[0]),
+                  ),
+                ),
+              ),
+            
+              ClipRRect(
+                borderRadius: BorderRadius.circular(500),
+                child: Material(
+                  color: defaultPalette.transparent,
+                  child: InkWell(
+                    hoverColor: defaultPalette.tertiary,
+                    splashColor: defaultPalette.tertiary,
+                    highlightColor: defaultPalette.tertiary,
+                    onTap: () {
+                      setState(() {
                         currentItemDecoration.pinned['transform']
                                 ['isPinned'] =
                             !currentItemDecoration.pinned['transform']
@@ -25702,10 +25907,39 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   ),
                 ),
               ),
+            
             ],
           ),
         ),
         SizedBox(width: 2, height: 4),
+
+        if (isListTransformExpanded)...[
+          Column(
+            children: [
+              Container(
+                width: widthBig,
+                margin: EdgeInsets.only(
+                  left: 3,
+                  right: 3,
+                ),
+                padding: EdgeInsets.only(left: 2, right: 2, top: 2, bottom: 2),
+                decoration: BoxDecoration(
+                    border: Border.all(),
+                    color: defaultPalette.primary,
+                    borderRadius: BorderRadius.circular(5)),
+                child: Column(
+                  children: [
+                    for(int s =0; s<5;s++)
+                    Row(
+                      children: transformPropertyTile(s),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+          SizedBox(width: 2, height: 8),
+        ],
       ],
     );
   }
@@ -26229,6 +26463,7 @@ class SheetDecorationVariables {
   bool isListDecorationImageExpanded = true;
   List<FocusNode> marginFocusNodes = [];
   List<FocusNode> listPaddingFocusNodes = [];
+  List<FocusNode> listTransformFocusNodes = [];
   List<FocusNode> colorHexFocusNodes = [ ];
   List<FocusNode> borderFocusNodes = [];
   List<FocusNode> borderRadiusFocusNodes = [];
@@ -26242,8 +26477,6 @@ class SheetDecorationVariables {
   bool isListColorExpanded2 = true;
   bool isListShadowExpanded2 = true;
   bool isListDecorationImageExpanded2 = true;
-  List<FocusNode> marginFocusNodes2 = [];
-  List<FocusNode> listPaddingFocusNodes2 = [];
   List<FocusNode> colorHexFocusNodes2 = [ ];
   List<FocusNode> borderFocusNodes2 = [];
   List<FocusNode> borderRadiusFocusNodes2 = [];
@@ -26284,6 +26517,7 @@ class SheetDecorationVariables {
     this.listShadowFocusNodes2 = const [],
     this.listImageAlignFocusNodes2 = const [],
     this.listImagePropertyFocusNodes2 = const [],
+    this.listTransformFocusNodes = const [],
     this.listShadowLayerSelectedIndex2 = 0
   });
   
