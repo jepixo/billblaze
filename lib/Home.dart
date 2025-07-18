@@ -175,11 +175,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   //       result = output;
   //     });
   //   });
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    if (ref.read(llamaProvider).status != LlamaStatus.ready) {
-      await LlamaRespository.init(ref);
-    }
-  });
+  // WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+  //   await LlamaRepository.init(ref);
+  // },);
   
   
   }
@@ -191,6 +189,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     sliderFadeAnimationController.dispose();
     sliderController.dispose();
     // recentsCardController.dispose();
+    ref.read(llamaProvider).dispose();
+    // LlamaRepository.dispose();
     super.dispose();
   }
 
@@ -902,12 +902,21 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     MouseRegion(
                                       cursor: SystemMouseCursors.click,
                                       child: GestureDetector(
-                                        onTap:()=>LlamaRespository.llamaRun(ref, 'What day is it?'),
+                                        // onTap:() async =>await LlamaRepository.runPrompt(
+                                        //   prompt: 'What day is it?', 
+                                        // onToken: (tok) {
+                                        //     print("toktok...");
+                                        //      ref.read(aiTokenProvider.notifier).state = ref.read(aiTokenProvider.notifier).state+tok;
+                                        //   },
+                                        //   onDone: () {
+                                        //     print('AI done responding');
+                                        //   },),
+                                        onTap: () async => await LlamaRepository.llamaRun(ref, 'What time is it?'),
                                         child: Container(
                                           width: 100,
                                           height:100,
                                           alignment: Alignment(0,0),
-                                          decoration: BoxDecoration(color:defaultPalette.tertiary),
+                                          decoration: BoxDecoration(color:defaultPalette.tertiary.withOpacity(0.4)),
                                         ),
                                       ),
                                     ),

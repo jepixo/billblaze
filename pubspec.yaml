@@ -88,7 +88,7 @@ flutter:
   uses-material-design: true
   assets:
     - .env
-    - assets/models/phi-2.Q8_0.gguf
+    # - assets/models/phi-2.Q8_0.gguf
     - assets/models/Phi-3-mini-4k-instruct-q4.gguf
   fonts:
     - family: Billabong

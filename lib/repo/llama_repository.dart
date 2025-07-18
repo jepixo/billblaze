@@ -1,18 +1,16 @@
-import 'dart:async';
-import 'dart:ffi';
 import 'dart:io';
+
 import 'package:billblaze/home.dart';
 import 'package:billblaze/providers/llama_provider.dart';
-import 'package:ffi/ffi.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
-class LlamaRespository {
+class LlamaRepository {
   
   static init(WidgetRef ref) async {
-
+    print("llama initializing...");
     try {
-    await ref.read(llamaProvider.notifier).state.init();
+    await ref.read(llamaProvider).init();
     var llamaParent = ref.read(llamaProvider);
     // Add a timeout to prevent infinite waiting
     int attempts = 0;
@@ -29,7 +27,7 @@ class LlamaRespository {
 
       if (llamaParent.status == LlamaStatus.error) {
         print("Error loading model. Exiting.");
-        exit(1);
+        // exit(1);
       }
     }
 
@@ -42,9 +40,18 @@ class LlamaRespository {
 
     print(
         "Model loaded successfully in isolate! Status: ${llamaParent.status}");
+    ref.read(llamaProvider.notifier).state = llamaParent;    
+    llamaParent.sendPrompt(ref.read(chatHistoryProvider).exportFormat(ChatFormat.gemini));
+     ref.read(llamaProvider).stream.listen((token) {
+    ref.read(aiTokenProvider.notifier).state = ref.read(aiTokenProvider.notifier).state+token;
+
+      // currentResponse.write(token);
+    }, onError: (e) {
+      print("\nSTREAM ERROR: $e");
+    });
   } catch (e) {
     print("Error initializing model: $e");
-    exit(1);
+    // exit(1);
   }
 
 
@@ -52,8 +59,14 @@ class LlamaRespository {
   }
 
   static llamaRun(WidgetRef ref, String prompt) async {
-
-    await ref.read(llamaProvider.notifier).state.sendPrompt(ref.read(chatHistoryProvider).exportFormat(ChatFormat.gemini));
+    // await ref.read(llamaProvider).dispose();
+    await init(ref);
+    print("sending prompt...");
+    ref.read(aiTokenProvider.notifier).state ='';
+    var chatHistory = ref.read(chatHistoryProvider);
+    chatHistory.addMessage(role: Role.user, content: prompt+'\n<|assisstant|>');
+    ref.read(chatHistoryProvider.notifier).state = chatHistory;
+    await ref.read(llamaProvider).sendPrompt(ref.read(chatHistoryProvider).exportFormat(ChatFormat.gemini));
     StringBuffer currentResponse = StringBuffer();
     ref.read(llamaProvider).stream.listen((token) {
     ref.read(aiTokenProvider.notifier).state = ref.read(aiTokenProvider.notifier).state+token;
@@ -78,14 +91,11 @@ class LlamaRespository {
         if (full.length > 5) {
           final recent = full.sublist(full.length - 3); 
           final older = full.sublist(0, full.length - 3);
-          final summaryPrompt = await _buildSummary(ref, older.sublist(1)); // your summarization logic
-          final newHistory = [
-            {'role': 'system', 'content': summaryPrompt},
-            ...recent
-          ];
+          // final summaryPrompt = await _buildSummary(ref, older.sublist(1)); // your summarization logic
+          
           history.clear();
-          history.addMessage(role: older[0].role, content: older[0].content);
-          history.addMessage(role: Role.system, content: summaryPrompt);
+          // history.addMessage(role: older[0].role, content: older[0].content);
+          // history.addMessage(role: Role.system, content: summaryPrompt);
           for (var i = 0; i < 3; i++) {
             history.addMessage(role: recent[i].role, content: recent[i].content);
           }
@@ -98,6 +108,9 @@ class LlamaRespository {
     } else {
       print("Completion failed for prompt: ${event.promptId}");
     }
+    await ref.read(llamaProvider.notifier).state.dispose();
+    await ref.read(llamaProvider).dispose();
+    // await init(ref);
   });
 
   }
@@ -129,5 +142,92 @@ class LlamaRespository {
 
 }
 
+// import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
+// class LlamaRepository {
+//   /// The single Llama instance / isolate.
+//   static late final LlamaParent _llama;
 
+//   /// Initialize the model isolate. Call once at startup.
+//   /// [libraryPath] should point at your llama.dll
+//   /// [modelPath] your .gguf file.
+//   static Future<void> init({required String modelPath,int nGpuLayers = 99,int nCtx = 2048,}) async {
+//     // 1) point at the native DLL:
+//   print("llama init...");
+//     // 2) prepare the load command:
+//     final load = LlamaLoad(
+//       path: modelPath,
+//       modelParams: ModelParams()..nGpuLayers = nGpuLayers,
+//       contextParams: ContextParams()
+//         ..nPredict = 8192
+//         ..nCtx = 8192
+//         ..nBatch = 512,
+//       samplingParams: SamplerParams()
+//         ..temp = 0.7
+//         ..topK = 64
+//         ..topP = 0.95
+//         ..penaltyRepeat = 1.1,
+//       format: GeminiFormat(), // or your desired format
+//     );
+
+//     // 3) create the isolate:
+//     _llama = LlamaParent(load);
+
+//     // 4) init it & wait for ready:
+//     await _llama.init();
+
+//     // 5) block until status==ready (or throw):
+//     final timeout = Duration(seconds: 30);
+//     final sw = Stopwatch()..start();
+//     while (_llama.status != LlamaStatus.ready) {
+//       if (sw.elapsed > timeout) {
+//         throw Exception('Timeout waiting for LlamaStatus.ready, got ${_llama.status}');
+//       }
+//       await Future.delayed(const Duration(milliseconds: 100));
+//     }
+//   }
+
+//   /// Send [prompt] to the model.
+//   ///
+//   /// [onToken] will be called for each streamed token.
+//   /// [onDone] will be called once the completion is finished.
+//   static Future<void> runPrompt({
+//     required String prompt,
+//     required void Function(String token) onToken,
+//     required void Function() onDone,
+//     ChatFormat format = ChatFormat.gemini,
+//   }) async {
+//     if (_llama.status != LlamaStatus.ready) {
+//       throw Exception('Model not ready; call init() first.');
+//     }
+//     print("runpromptt...");
+//     // listen to tokens:
+//     final sub = _llama.stream.listen(onToken, onError: (e) {
+//       // optionally handle stream error
+//       print('Llama token stream error: $e');
+//     });
+
+//     // send it:
+//     await _llama.sendPrompt(prompt);
+
+//     // listen for completion events (to know when done)
+//     var compSub; 
+//     compSub = _llama.completions.listen((evt) {
+//       if (evt.success) {
+//         onDone();
+//       } else {
+//         print('Llama completion failed: promptId=${evt.promptId}');
+//         onDone();
+//       }
+//       sub.cancel();
+//       compSub.cancel();
+//     });
+//   }
+
+//   /// Clean up the isolate when you're completely done.
+//   static Future<void> dispose() async {
+//     try {
+//       await _llama.dispose();
+//     } catch (_) {}
+//   }
+// }

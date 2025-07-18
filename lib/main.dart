@@ -67,7 +67,10 @@ Future<void> main() async {
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;
   await dotenv.load(fileName: ".env");
-  
+  Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+  // await LlamaRepository.init(
+  //   modelPath: Directory.current.path +"/assets/models/Phi-3-mini-4k-instruct-q4.gguf",
+  // );
   
   
 

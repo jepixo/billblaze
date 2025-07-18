@@ -5,18 +5,19 @@ import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
 final llamaCtxProvider = StateProvider<ContextParams>((ref) {
   ContextParams contextParams = ContextParams();
-  contextParams.nPredict = 8192;
-  contextParams.nCtx = 8192;
-  contextParams.nBatch = 512;
+  contextParams.nPredict = 64;
+  contextParams.nCtx = 2048;
+  contextParams.nBatch = 64;
   return contextParams;
 });
 
 final llamaSamplerProvider = StateProvider<SamplerParams>((ref) {
   final samplerParams = SamplerParams();
-  samplerParams.temp = 0.7;
-  samplerParams.topK = 64;
-  samplerParams.topP = 0.95;
-  samplerParams.penaltyRepeat = 1.1;
+  samplerParams.temp = 0.0;   // pure greedy
+  samplerParams.topK = 1;     // only the single most likely token
+  samplerParams.topP = 1.0;   // disables nucleus sampling
+  samplerParams.penaltyRepeat = 1.0; // no extra penalty needed if greedy
+
   return samplerParams;
 });
 
@@ -39,7 +40,7 @@ final chatHistoryProvider = StateProvider<ChatHistory>((ref) {
   ChatHistory chatHistory = ChatHistory();
   chatHistory.addMessage(
       role: Role.system,
-      content: "You are a concise, analytical assistant. Always focus directly on the user's prompt, keep responses short and precise, and never include unnecessary elaboration. Your main goal is to analyze BillBlaze's statistical JSON data and provide clear, fact-based answers that directly address the user’s query.");
+      content: "You are a concise, analytical assistant. Always focus directly on asnwering the user's prompt, keep responses short and precise, and never include unnecessary elaboration. Only generate the answer and stop.");
 
-  return ChatHistory();
+  return chatHistory;
 });
