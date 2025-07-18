@@ -4,13 +4,13 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_linux
-  display_metrics_linux
   file_selector_linux
   printing
   url_launcher_linux
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  llama_cpp_dart
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

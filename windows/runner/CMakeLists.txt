@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
+set(CMAKE_SKIP_INSTALL_RULES ON)
 project(runner LANGUAGES CXX)
 
 # Define the application target. To change its name, change BINARY_NAME in the
@@ -15,6 +16,7 @@ add_executable(${BINARY_NAME} WIN32
   "Runner.rc"
   "runner.exe.manifest"
 )
+
 
 # Apply the standard set of build settings. This can be removed for applications
 # that need different build settings.
