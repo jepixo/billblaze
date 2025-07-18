@@ -17,6 +17,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
+import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/screens/login_sign_up.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,8 +26,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+// import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +67,10 @@ Future<void> main() async {
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;
   await dotenv.load(fileName: ".env");
+  
+  
+  
+
   runApp(const ProviderScope(child: MainApp()));
   if (Platform.isWindows) {
     doWhenWindowReady(() {

@@ -9,7 +9,9 @@ import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
+import 'package:billblaze/providers/llama_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
+import 'package:billblaze/repo/llama_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -34,6 +36,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
@@ -55,6 +58,12 @@ final homeScreenTabIndexProvider = StateProvider<int>((ref) {
 final processMessageProvider = StateProvider<String>((ref) {
   return  'Initializing...';
 });
+
+final aiTokenProvider = StateProvider<String>((ref) {
+  return  'Initializing...';
+});
+
+
 
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
@@ -97,7 +106,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
- 
+  String result ='Loading AI';
   // bool isHomeTab = true;
 
   Key titleMainKey = GlobalKey();
@@ -148,6 +157,31 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     dateTextControllers = [
     TextEditingController()..text = monthNames[selectedMonth-1], TextEditingController()..text = selectedYear.toString()
   ];
+  // Future.delayed(Duration.zero, () async {
+  //     final String output = await Future.delayed(
+  //       Duration.zero,
+  //       () {
+  //         String modelPath = Directory.current.path + r"\assets\models\phi-2.Q8_0.gguf";
+  //         // String modelPath = "D:/Jepixo/CurrYaar/App/billblaze/assets/models/phi-2.Q8_0.gguf";
+  //         return runAI(
+  //         modelPath,
+  //         "Summarize this month's transactions",
+  //         ref
+  //         );
+  //       },
+  //     );
+
+  //     setState(() {
+  //       result = output;
+  //     });
+  //   });
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    if (ref.read(llamaProvider).status != LlamaStatus.ready) {
+      await LlamaRespository.init(ref);
+    }
+  });
+  
+  
   }
 
   @override
@@ -823,7 +857,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     border: Border.all(width: 2),
                                     borderRadius: BorderRadius.circular(30),
                                   ),
-                                  child: Text(index.toString()),
                                 ),
                               ),
                               Positioned.fill(
@@ -849,10 +882,38 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       border: Border.all(width: 2),
                                       borderRadius: BorderRadius.circular(30),
                                     ),
-                                    child: Text(index.toString()),
                                   ),
                                 ),
                               ),
+                              Positioned.fill(
+                                left: 25, right:25, top:25, bottom:25,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(25),
+                                  child: SingleChildScrollView(
+                                    padding: EdgeInsets.all(10),
+                                    child: Text( ref.watch(aiTokenProvider))),
+                                )),
+                              Positioned.fill(
+                              left: 25, right:25, top:25, bottom:25,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(25),
+                                child: Column(
+                                  children: [
+                                    MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap:()=>LlamaRespository.llamaRun(ref, 'What day is it?'),
+                                        child: Container(
+                                          width: 100,
+                                          height:100,
+                                          alignment: Alignment(0,0),
+                                          decoration: BoxDecoration(color:defaultPalette.tertiary),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
                             ],
                           );
                         },

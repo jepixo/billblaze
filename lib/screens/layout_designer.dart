@@ -18862,11 +18862,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           ? (sheetDecorationMap[inx] as SuperDecoration) 
                                           : sheetDecorationMap[itinx]).runtimeType.toString()
                                           .replaceAll(RegExp(r'Decoration'), '')
-                                          .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString()), maxLines:1,
+                                          .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString())
+                                          .replaceAll(RegExp(r'Super'), 'Layer ' + decorationIndex.toString()), 
+                                          maxLines:1,
                                             style: GoogleFonts.rockSalt(
                                             color: defaultPalette.extras[0],
                                             height: 1.5,
-                                            fontSize: 16,
+                                            fontSize: 14,
                                           ),
                                           overflow: TextOverflow.ellipsis
                                         ),
@@ -19748,8 +19750,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       is SuperDecoration)
                                         ...buildSuperDecorationEditor(context,sheetDecorationMap[itinx]
                                             as SuperDecoration),
-                                  if(decorationIndex == -1 && !isListDecorationLibraryToggled )
-                                  ...buildSuperDecorationEditor(context,sheetDecorationMap[inx] as SuperDecoration),
+                                  // if(decorationIndex == -1 && !isListDecorationLibraryToggled )
+                                  // ...buildSuperDecorationEditor(context,sheetDecorationMap[inx] as SuperDecoration),
                                             
                                   //THE LIBRARY FOR DECORATION          
                                   if(isListDecorationLibraryToggled)
@@ -20060,7 +20062,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             .extras[0]
                                                         : defaultPalette
                                                             .tertiary
-                                                    : defaultPalette
+                                                    : decorationIndex ==
+                                                            entry.key
+                                                        ? defaultPalette
+                                                            .extras[0]
+                                                        :defaultPalette
                                                         .extras[1],
                                                 border:Border.all()      ,  
                                                 borderRadius:
@@ -20143,20 +20149,28 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     : 500),
                                                         border: Border(
                                                           right: BorderSide(
-                                                              color: defaultPalette
-                                                                  .tertiary,
+                                                              color:entry.value
+                                                        is ItemDecoration
+                                                    ? defaultPalette
+                                                                  .tertiary: defaultPalette.extras[1],
                                                               width: 2),
                                                           left: BorderSide(
-                                                              color: defaultPalette
-                                                                  .tertiary,
+                                                              color: entry.value
+                                                        is ItemDecoration
+                                                    ? defaultPalette
+                                                                  .tertiary: defaultPalette.extras[1],
                                                               width: 2),
                                                           top: BorderSide(
-                                                              color: defaultPalette
-                                                                  .tertiary,
+                                                              color: entry.value
+                                                        is ItemDecoration
+                                                    ? defaultPalette
+                                                                  .tertiary: defaultPalette.extras[1],
                                                               width: 2),
                                                           bottom: BorderSide(
-                                                              color: defaultPalette
-                                                                  .tertiary,
+                                                              color: entry.value
+                                                        is ItemDecoration
+                                                    ? defaultPalette
+                                                                  .tertiary: defaultPalette.extras[1],
                                                               width:
                                                                   16),
                                                         )),
