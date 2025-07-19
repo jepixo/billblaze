@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/home.dart';
+import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/layout_model.dart';
@@ -324,3 +325,78 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
   }
 }
             
+Future<String> _dumpLayoutDataAsJson() async {
+  final box = await Hive.openBox<LayoutModel>("layouts");
+  final all = box.values.toList();
+
+  // filter out ‘-old’ and keep only latest
+  final revised = all.where((l) => l.name.endsWith('-revised'))
+                     .map((l) => l.name.replaceFirst('-revised', ''))
+                     .toSet();
+  final layouts = all.where((l) {
+    final n = l.name;
+    return !n.endsWith('-old') && !revised.contains(n);
+  }).toList();
+
+  // aggregate
+  double totalRevenue = 0;
+  int totalBills = layouts.length, totalTax=0, totalCredit=0;
+  final monthMap = <String,double>{};
+  final yearMap  = <String,double>{};
+
+  for (var l in layouts) {
+    final v = _extractTotalPayable(l);
+    totalRevenue += v;
+    if (l.type == SheetType.taxInvoice.index) totalTax++;
+    if (l.type == SheetType.creditNote.index) totalCredit++;
+
+    final ym = "${l.createdAt.year}-${l.createdAt.month.toString().padLeft(2,'0')}";
+    monthMap[ym] = (monthMap[ym] ?? 0) + v;
+    yearMap["${l.createdAt.year}"] = (yearMap["${l.createdAt.year}"] ?? 0) + v;
+  }
+
+  // detailed per‐year→per‐month:
+  final byYear = <String, Map<String,double>>{};
+  yearMap.forEach((yr, _) {
+    byYear[yr] = Map.fromEntries(
+      monthMap.entries
+        .where((e) => e.key.startsWith("$yr-"))
+        .map((e) => MapEntry(e.key.substring(5), e.value))
+    );
+  });
+
+  // also build detailed invoice info map:
+  final detail = <String, Map<String,dynamic>>{};
+  for (var l in layouts) {
+    detail[l.id] = {
+      'billName': l.name,
+      'type': SheetType.values[l.type].name,
+      'invoiceNumber': _extractInvoiceNumber(l),
+      // ... copy any other labels you need
+    };
+  }
+
+  final out = {
+    'totalRevenue'   : totalRevenue,
+    'totalBills'     : totalBills,
+    'taxInvoiceCount': totalTax,
+    'creditNoteCount': totalCredit,
+    'yearly'         : byYear,
+    'details'        : detail,
+  };
+
+  return JsonEncoder.withIndent("  ").convert(out);
+}
+
+double _extractTotalPayable(LayoutModel l) {
+  // find the 'totalPayable' label in l.labelList...
+  // parse text → number
+  // return 0 if not found
+  // (Your existing logic here)
+  return 0.0; 
+}
+
+String _extractInvoiceNumber(LayoutModel l) {
+  // find the RequiredText 'invoiceNumber' and extract...
+  return "";
+}

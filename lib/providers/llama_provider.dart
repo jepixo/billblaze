@@ -13,10 +13,10 @@ final llamaCtxProvider = StateProvider<ContextParams>((ref) {
 
 final llamaSamplerProvider = StateProvider<SamplerParams>((ref) {
   final samplerParams = SamplerParams();
-  samplerParams.temp = 0.0;   // pure greedy
-  samplerParams.topK = 1;     // only the single most likely token
-  samplerParams.topP = 1.0;   // disables nucleus sampling
-  samplerParams.penaltyRepeat = 1.0; // no extra penalty needed if greedy
+  samplerParams.temp = 0.3;   // pure greedy
+  samplerParams.topK = 64;     // only the single most likely token
+  samplerParams.topP = 0.95;   // disables nucleus sampling
+  samplerParams.penaltyRepeat = 1.2; // no extra penalty needed if greedy
 
   return samplerParams;
 });
@@ -24,7 +24,9 @@ final llamaSamplerProvider = StateProvider<SamplerParams>((ref) {
 final llamaLoadProvider = StateProvider<LlamaLoad>((ref) {
   return LlamaLoad(
     // path: "D:/Jepixo/CurrYaar/App/billblaze/assets/models/phi-2.Q8_0.gguf",
-    path: Directory.current.path +"/assets/models/Phi-3-mini-4k-instruct-q4.gguf",
+    // path: "E:/Jepixo Neo/Karriere/Flutter/phi-2.Q8_0.gguf",
+    // path: Directory.current.path +"/assets/models/Phi-3-mini-4k-instruct-q4.gguf",
+    path: Directory.current.path +"/assets/models/Nous-Hermes-2-Mistral-7B-DPO.Q2_K.gguf",
     modelParams: ModelParams(),
     contextParams:ref.read(llamaCtxProvider),
     samplingParams: ref.read(llamaSamplerProvider),
@@ -40,7 +42,12 @@ final chatHistoryProvider = StateProvider<ChatHistory>((ref) {
   ChatHistory chatHistory = ChatHistory();
   chatHistory.addMessage(
       role: Role.system,
-      content: "You are a concise, analytical assistant. Always focus directly on asnwering the user's prompt, keep responses short and precise, and never include unnecessary elaboration. Only generate the answer and stop.");
+      content: """" You are a concise, analytical assistant.
+       Always focus directly on asnwering the user's prompt, 
+       keep responses short and precise, and never include unnecessary elaboration. 
+       Only generate the answer and stop. Never answer with information about geography, history, or unrelated trivia.
+       Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. 
+       Do not generate questions or mention unrelated topics. """);
 
   return chatHistory;
 });

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
@@ -175,9 +176,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   //       result = output;
   //     });
   //   });
-  // WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-  //   await LlamaRepository.init(ref);
-  // },);
+  // WidgetsBinding.instance.addPostFrameCallback((_) async {
+  //     await LlamaRepository.init(ref);
+  //   });
   
   
   }
@@ -189,7 +190,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     sliderFadeAnimationController.dispose();
     sliderController.dispose();
     // recentsCardController.dispose();
-    ref.read(llamaProvider).dispose();
+    // ref.read(llamaProvider).dispose();
     // LlamaRepository.dispose();
     super.dispose();
   }
@@ -902,16 +903,40 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     MouseRegion(
                                       cursor: SystemMouseCursors.click,
                                       child: GestureDetector(
-                                        // onTap:() async =>await LlamaRepository.runPrompt(
-                                        //   prompt: 'What day is it?', 
-                                        // onToken: (tok) {
-                                        //     print("toktok...");
-                                        //      ref.read(aiTokenProvider.notifier).state = ref.read(aiTokenProvider.notifier).state+tok;
-                                        //   },
-                                        //   onDone: () {
-                                        //     print('AI done responding');
-                                        //   },),
-                                        onTap: () async => await LlamaRepository.llamaRun(ref, 'What time is it?'),
+                                        onTap: () async {
+                                          final receivePort = ReceivePort();
+
+                                          final prompt = ChatHistory()
+                                            ..addMessage(
+                                              role: Role.system,
+                                              content: """"" You are a concise, analytical assistant.
+                                            Always focus directly on asnwering the user's prompt, 
+                                            keep responses short and precise, and never include unnecessary elaboration. 
+                                            Only generate the answer and stop. Never answer with information about geography, history, or unrelated trivia.
+                                            Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. 
+                                            Do not generate questions or mention unrelated topics. """)
+                                            ..addMessage(role: Role.user, content: "what time is it?")
+                                            ..addMessage(role: Role.assistant, content: "");
+
+                                          final modelPath = "C:/Users/ANTEC/Downloads/Compressed/LFM2-1.2B-Q4_K_M.gguf";
+
+                                          // ✅ Pass only data, not Flutter state
+                                          await Isolate.spawn(runLlamaModel, {
+                                            'sendPort': receivePort.sendPort,
+                                            'prompt': prompt.exportFormat(ChatFormat.chatml, leaveLastAssistantOpen: true),
+                                            'modelPath': modelPath,
+                                          });
+
+                                          final buffer = StringBuffer();
+                                          await for (final token in receivePort) {
+                                            if (token == null) break;
+                                            buffer.write(token);
+                                            ref.read(aiTokenProvider.notifier).state += token;
+                                          }
+
+                                          print("✅ Final Response: ${buffer.toString()}");
+                                        },
+                                        // onTap: () async => await LlamaRepository.llamaRun(ref, 'What time is it?'),
                                         child: Container(
                                           width: 100,
                                           height:100,
@@ -1325,10 +1350,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     ),
                     Positioned(
                       left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                      bottom: 0,
                        child: AnimatedContainer(
                         duration: Durations.medium3,
                         curve: Curves.easeIn,
-                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        height:isLayoutTab? ((sHeight/2.5)-46)/2:0,
                         width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
                         alignment: Alignment.topLeft,
                         padding: EdgeInsets.only(
@@ -1342,8 +1368,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                         decoration: BoxDecoration(
-                          color: defaultPalette.tertiary,
-                          border: Border.all(),
+                          color: defaultPalette.transparent,
+                          // border: Border.all(),
                           borderRadius: BorderRadius.circular(
                             isLayoutTab
                                 ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
@@ -1351,18 +1377,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             )
                           ),
                         
-                        child: Text(
-                          'Layout',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.start,
-                          style: GoogleFonts.lexend(
-                            fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                            color: defaultPalette.extras[0],
-                            letterSpacing: -0.8,
-                            fontWeight: FontWeight.w500
-                          ),
-                        ),
                       ),
                      ),
                     Positioned(
@@ -1413,17 +1427,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     child: Container(
                                       alignment: Alignment(-1, -1),
                                       padding: EdgeInsets.only(
-                                        top: 5,
-                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight),
-                                        right: mapValueDimensionBased( 7, 15, sWidth,sHeight,),
+                                        top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
+                                        left:mapValueDimensionBasedLockOnDesync( 8, 20, sWidth,sHeight),
+                                        right: mapValueDimensionBasedLockOnDesync( 7, 15, sWidth,sHeight,),
                                       ),
                                       child: Text(
-                                        'Create \nNew',
+                                        'Layout \nNew',
                                         maxLines: 4,
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.start,
                                         style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight,),
+                                          fontSize: mapValueDimensionBasedLockOnDesync( 15.5, 30, sWidth,sHeight,),
                                           color: defaultPalette.extras[0],
                                           letterSpacing: -1,
                                       
@@ -1433,8 +1447,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   ),
                                 ]),
                             baseDecoration: BoxDecoration(
-                              color: Colors.transparent,
-                              // border: Border.all(),
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
                             ),
                           ),
                       ),
@@ -1459,10 +1473,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     ),
                     Positioned(
                       left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                      bottom: 0,
                        child: AnimatedContainer(
                         duration: Durations.medium3,
                         curve: Curves.easeIn,
-                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
                         width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
                         alignment: Alignment.topLeft,
                         padding: EdgeInsets.only(
@@ -1475,28 +1490,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                         decoration: BoxDecoration(
-                          color: defaultPalette.tertiary,
-                          border: Border.all(),
+                          color: defaultPalette.transparent,
+                          // border: Border.all(),
                           borderRadius:
                               BorderRadius.circular(
                                 isLayoutTab
                                     ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
                                     : 900)),
                         
-                        child: Text(
-                          'Bill',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.start,
-                          style: GoogleFonts.lexend(
-                            fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                            color: defaultPalette.extras[0],
-                            // color: defaultPalette.primary.withOpacity(1),
-                            letterSpacing: -0.8,
-                            fontWeight: FontWeight.w500
-
-                          ),
-                        ),
+                        
                       ),
                      ),
                     Positioned(
@@ -1567,16 +1569,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     child: Container(
                                       alignment: Alignment(-1, -1),
                                       padding: EdgeInsets.only(
-                                        top: 5,
-                                        left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                                        top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
+                                        left:mapValueDimensionBasedLockOnDesync( 8, 20, sWidth,sHeight)
                                       ),
                                       child: Text(
-                                        'Create \nNew',
+                                        'Bill \nNew',
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.start,
                                         style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased( 15.5, 32, sWidth,sHeight),
+                                          fontSize: mapValueDimensionBasedLockOnDesync( 15.5, 30, sWidth,sHeight),
                                           color: defaultPalette.extras[0],
                                           letterSpacing: -1,
                                           fontWeight: FontWeight.w400
@@ -1586,8 +1588,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   ),
                                 ]),
                             baseDecoration: BoxDecoration(
-                              color: Colors.transparent,
-                              // border: Border.all(),
+                              color: defaultPalette.extras[0],
+                              border: Border.all(),
                             ),
                           ),
                       ),
@@ -1606,7 +1608,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: AnimatedContainer(
                 duration: Durations.medium3,
                 curve: Curves.easeIn,
-                height:isLayoutTab?(sHeight/2.5)-50:0,
+                height:isLayoutTab?((sHeight/2.5)-50-mapValueDimensionBased( 0, 10, sWidth,sHeight))/2:0,
                 width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
                 padding: EdgeInsets.only(
                           top: 5,
@@ -1619,23 +1621,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
                           ..rotateZ( isLayoutTab? 0: -math.pi / 2),
                 decoration: BoxDecoration(
-                  color: defaultPalette.tertiary,
+                  color: defaultPalette.extras[0],
                   border: Border.all(),
                   borderRadius: BorderRadius.circular( mapValueDimensionBased( 12, 40, sWidth,sHeight))),
-                child: Text(
-                        'Cloud',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.start,
-                        style: GoogleFonts.lexend(
-                          fontSize: mapValueDimensionBased( 16, 40, sWidth,sHeight),
-                          color: defaultPalette.extras[0],
-                          // color: defaultPalette.primary,
-                          letterSpacing: -0.8,
-                          fontWeight: FontWeight.w500
-
-                        ),
-                      ),
+                
                 ),
                 
               ),
@@ -2059,13 +2048,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       Expanded(
                                         child: Container(
                                           padding: EdgeInsets.only(
-                                            top: 5,
+                                            top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
                                           ),
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.center,
                                             children: [
-                                              Icon(TablerIcons.cloud,size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
-                                              Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
+                                              Icon(TablerIcons.cloud,size: mapValueDimensionBased( 16, 40, sWidth,sHeight),),
+                                              Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 40, sWidth,sHeight),),
                                             ],
                                           )
                                         ),
@@ -2254,13 +2243,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       Expanded(
                                         child: Container(
                                           padding: EdgeInsets.only(
-                                            top: 5,
+                                            top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
                                           ),
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.center,
                                             children: [
-                                              Icon(TablerIcons.cloud, size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
-                                              Icon(TablerIcons.upload, size: mapValueDimensionBased( 16, 45, sWidth,sHeight),),
+                                              Icon(TablerIcons.cloud, size: mapValueDimensionBasedLockOnDesync( 16, 40, sWidth,sHeight),),
+                                              Icon(TablerIcons.upload, size: mapValueDimensionBasedLockOnDesync( 16, 40, sWidth,sHeight),),
                                             ],
                                           ),
                                         ),
@@ -2292,7 +2281,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border.all(),
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync( 10, 36, sWidth,sHeight),),
                     ),
                     child: AnimatedToggleSwitch<bool>.dual(
                       current: isTemplateView,
@@ -2313,30 +2302,38 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ToggleStyle(
                               borderRadius:
                                   BorderRadius
-                                      .circular(8),
+                                      .circular(mapValueDimensionBasedLockOnDesync( 9, 35, sWidth,sHeight),),
                               indicatorBorderRadius:
-                                  BorderRadius.circular(8),
+                                  BorderRadius.only(
+                                    topLeft:  Radius.circular(!value?8:34) ,
+                                    topRight: Radius.circular(value?8:34) ,
+                                    bottomLeft:Radius.circular(!value?8:34) ,
+                                    bottomRight:  Radius.circular(value?8:34) ,
+                                    ),
                               indicatorBorder: Border.all(),
-                              borderColor:value ?
+                              borderColor:
                                   defaultPalette
-                                      .tertiary : defaultPalette.extras[0],
-                              backgroundColor: value ?
+                                      .extras[0],
+                              backgroundColor:
                                   defaultPalette
-                                      .tertiary : defaultPalette.extras[0],
+                                      .extras[0],
                               indicatorColor:
                                   defaultPalette
                                           .primary), // indicatorColor changes and animates its value with the selection
                       iconBuilder: (value) {
-                        return Transform.rotate(
-                          angle: pi/2,
-                          child: Icon(
-                              !value? TablerIcons
-                                      .layout
-                                  : TablerIcons
-                                      .template,
-                              size: mapValueDimensionBased( 12, 30, sWidth,sHeight),
-                              color: defaultPalette
-                                  .extras[0]),
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Transform.rotate(
+                            angle: pi/2,
+                            child: Icon(
+                                !value? TablerIcons
+                                        .layout
+                                    : TablerIcons
+                                        .template,
+                                size: mapValueDimensionBased( 12,30, sWidth,sHeight),
+                                color: defaultPalette
+                                    .extras[0]),
+                          ),
                         );
                       },
                       textBuilder: (value) {
@@ -2347,11 +2344,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           overflow: TextOverflow.ellipsis,
                           style:
                               GoogleFonts.lexend(
-                                  fontSize: mapValueDimensionBased( 10, 30, sWidth,sHeight),
+                                  fontSize: mapValueDimensionBased( 10, 20, sWidth,sHeight),
                                   fontWeight: FontWeight.w500,
-                                  color: !value ?
+                                  color: 
                                   defaultPalette
-                                      .primary : defaultPalette.extras[0],
+                                      .primary ,
                                   ),
                         );
                       },
@@ -2363,23 +2360,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
             ),
             //quote
-            // AnimatedPositioned(
-            //   duration: Durations.medium2,
-            //   left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(2*sWidth/10) + 2*mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
-            //   bottom: isLayoutTab ?   1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
-            //   child: Text(
-            //       ' Pay up, \n buttercup!',
-            //       maxLines: 2,
-            //       overflow: TextOverflow.ellipsis,
-            //       // textAlign: TextAlign.end,
-            //       style: GoogleFonts.lexend(
-            //         fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
-            //         color: defaultPalette.extras[0].withOpacity(0.4),
-            //         letterSpacing: -0.2,
-            //         height: 1
-            //       ),
-            //     ),
-            //   ),        
+            AnimatedPositioned(
+              duration: Durations.medium2,
+              left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/1.5),
+              bottom: isLayoutTab ? 1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
+              child: Text(
+                  ' Pay up, \n buttercup!',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  // textAlign: TextAlign.end,
+                  style: GoogleFonts.lexend(
+                    fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                    color: defaultPalette.extras[0].withOpacity(0.4),
+                    letterSpacing: -0.2,
+                    height: 1
+                  ),
+                ),
+              ),
             
             //LayoutList
             AnimatedPositioned(
@@ -2623,10 +2620,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                 margin: EdgeInsets.only(left:8,top:8,bottom: 2),
                                                                 decoration: BoxDecoration(
                                                                   color:defaultPalette.primary,
-                                                                  border: Border.all(width: 1.2, color:defaultPalette.extras[0]),
+                                                                  border: Border.all(width: 1.2, color:defaultPalette.extras[0], strokeAlign: BorderSide.strokeAlignOutside),
                                                                   borderRadius: BorderRadius.circular(10),
                                                                   image:layoutModel.pdf==null?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
                                                                 ),
+                                                                // foregroundDecoration: BoxDecoration(
+                                                                //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
+                                                                //   borderRadius: BorderRadius.circular(10),
+                                                                // ),
                                                               ),
                                                             ),    
                                                           ],
@@ -3048,7 +3049,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               //     : sHeight,
               // left: 90,
               right: 15,
-              height: (sHeight / 1.1)-60,
+              height: (sHeight)-60-20,//60 from the top padding difference and 20 for bottom padding
               width: sWidth / 2.5,
               child: IgnorePointer(
                 ignoring: !isBillTab,

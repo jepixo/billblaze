@@ -3458,14 +3458,21 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                         if (getItemAtPath(label.indexPath).id == 'yo') {
                                                                           label.indexPath = IndexPath(index: -951);
                                                                           isMapped = false;
+                                                                        } else if (!isItemSheet && getItemAtPath(label.indexPath) is! SheetText){
+                                                                          label.indexPath = IndexPath(index: -951);
+                                                                          isMapped = false;
                                                                         }
-                                                                        final SheetText? linkedText =
+                                                                        //  print(getItemAtPath(label.indexPath).id);
+                                                                        //   print(isItemSheet);
+                                                                        //    print(isMapped);
+                                                                        final SheetText? linkedText = isItemSheet? null:
                                                                             !isItemSheet && isMapped ? getItemAtPath(label.indexPath) as SheetText? : null;
                                                                         
                                                                         final String previewText = isMapped && linkedText != null
                                                                             ? linkedText.textEditorConfigurations.controller.document.toPlainText().trim()
                                                                             : '';
                                                                         final bool isOptional = label.isOptional;
+                                                                        //  print(getItemAtPath(label.indexPath).id);
 
                                                                         return Tooltip(
                                                                           decoration: BoxDecoration(
@@ -3561,7 +3568,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                               margin: const EdgeInsets.only(right: 4, bottom: 2, left: 0),
                                                                               padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                                                                               decoration: BoxDecoration(
-                                                                                color: !isMapped ? defaultPalette.extras[4] : defaultPalette.secondary,
+                                                                                color: !isMapped ?  defaultPalette.extras[label.isOptional? 1:4] : defaultPalette.secondary,
                                                                                 border: Border.all(
                                                                                   color: defaultPalette.primary,
                                                                                   width: 1.5,
@@ -3573,7 +3580,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                                 style: GoogleFonts.lexend(
                                                                                   fontSize: 14,
                                                                                   color:
-                                                                                      !isMapped ? defaultPalette.primary : defaultPalette.extras[0],
+                                                                                      !isMapped ? label.isOptional? defaultPalette.extras[0]: defaultPalette.primary : defaultPalette.extras[0],
                                                                                   letterSpacing: -0.3,
                                                                                   fontWeight: FontWeight.w500,
                                                                                 ),
@@ -8093,6 +8100,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   (listItem as SheetList).sheetList.removeAt(sheetTable.indexPath.index);
                   _reassignSheetListIndexPath((listItem as SheetList));
                   assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
+                  doubleCheckLabelList(labelList);
                 });
               },
             )
@@ -8274,7 +8282,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ],
                                                 ),
                                               ),
-                  
                                               
                                             ]
                                             
@@ -8320,6 +8327,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     child: Column(
 
       children: [
+        
         Expanded(
           child: Row(
             children: [
@@ -8755,8 +8763,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   bool textFieldTapDown(TapDownDetails details, String newId, IndexPath indexPath) {
     
     setState(() {
-      // print(newId);
-      // print(indexPath);
+      print(newId);
+      print(indexPath);
       print(getItemAtPath(indexPath));
       SheetText? textItem;
       var textItemParent; 
@@ -8799,6 +8807,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         // print(sheetDecorationVariables.length);
         whichPropertyTabIsClicked = 2;
         // propertyTabController.jumpToPage(1);
+        textItem.textEditorConfigurations.controller.editorFocusNode?.requestFocus();
         print('end fieldDown: ');
         //  print('SUPP: ');
         //   print('SUPPPP ');
@@ -9109,6 +9118,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     List<RequiredText> labelList,
     List<SheetList> spreadSheetList,
   ) {
+    print('assignPathAndDisambiguate');
     final unmatchedLabels = labelList
         .where((rt) => rt.indexPath.index == -951)
         .toList(); // Only unset RequiredText
@@ -9163,11 +9173,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
   }
 
-  void doubleCheckLabelList(labelList){
+  void doubleCheckLabelList(List<RequiredText> labelList){
     for (int j = 0; j < labelList.length; j++) {
       final requiredText = labelList[j];
       if (requiredText.indexPath.index != -951)  {
         final sheetText = getItemAtPath(requiredText.indexPath);
+        if (requiredText.name =='itemSheet') {
+          if(!sheetText.id.startsWith('TB')){
+            requiredText.indexPath = IndexPath(index: -951);
+          }
+        }
         if (sheetText is! SheetTable) {
           if (sheetText.id == 'yo' || sheetText.id.isEmpty || (sheetText as SheetText).name != requiredText.name) {
             
@@ -10324,6 +10339,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  //table title
                                   Container(
                                     width:sWidth/4,
                                     decoration: BoxDecoration(
@@ -10344,6 +10360,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ),
                                     ),
                                   ),
+                                  //table content horizontal scroll
                                   SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
                                     child: SizedBox(
@@ -10351,9 +10368,182 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       width: 30.0*sheetItem.cellData[0].length,
                                       child: Table(
                                         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                                        children: sheetItem.cellData.map((row) {
+                                        children: [
+                                          //the row that represents the cols A,B,C... used to add the entire col
+                                          TableRow(
+                                            children: [
+                                              // the empty cell at the topleft corner
+                                               Container(
+                                                  width: 30,
+                                                  height: 18,
+                                                  decoration: BoxDecoration(
+                                                    // color: defaultPalette.primary.withOpacity(0.2),
+                                                    borderRadius: BorderRadius.circular(5),
+                                                  ),
+                                                  margin: EdgeInsets.all(2),
+                                                  child:  ClipRRect(
+                                                      borderRadius:BorderRadius.circular(5),
+                                                      child: Material(
+                                                        color: defaultPalette.primary.withOpacity(0.2),
+                                                        child: InkWell(
+                                                          hoverColor:defaultPalette.extras[0],
+                                                          splashColor:defaultPalette.extras[0],
+                                                          highlightColor:defaultPalette.extras[0],
+                                                          onTap:(){
+                                                            setState(() {
+                                                              // if (inputBlocks == null) {
+                                                              //   item.inputBlocks.add(InputBlock(
+                                                              //     indexPath: sheetCellItem.indexPath, 
+                                                              //     blockIndex: [-2],
+                                                              //     id: sheetCellItem.id
+                                                              //     ));
+                                                              //   // inputBlockExpansionList.add(false); 
+                                                              // } else {
+                                                              //   inputBlocks.add(
+                                                              //     InputBlock(
+                                                              //     indexPath: sheetCellItem.indexPath, 
+                                                              //     blockIndex: [-2],
+                                                              //     id: sheetCellItem.id)
+                                                              //   );
+                                                              // }
+                                                            });
+                                                          },
+                                                          child: Text(
+                                                          '',
+                                                          textAlign: TextAlign.center,
+                                                          style: GoogleFonts.lexend(
+                                                            color: defaultPalette.primary,
+                                                            fontWeight: FontWeight.w500,
+                                                            fontSize: 12,
+                                                            letterSpacing: -1,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              // A, B, C,...
+                                              ...sheetItem.columnData.asMap().entries.map((el) {
+                                              return Tooltip(
+                                                message: ' add ${numberToColumnLabel(el.key+1)} column',
+                                                child: Container(
+                                                    width: 30,
+                                                    height: 18,
+                                                    decoration: BoxDecoration(
+                                                      // color: defaultPalette.primary.withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(5),
+                                                    ),
+                                                    margin: EdgeInsets.all(2),
+                                                    child:  ClipRRect(
+                                                        borderRadius:BorderRadius.circular(5),
+                                                        child: Material(
+                                                          color: defaultPalette.primary.withOpacity(0.2),
+                                                          child: InkWell(
+                                                            hoverColor:defaultPalette.extras[0],
+                                                            splashColor:defaultPalette.extras[0],
+                                                            highlightColor:defaultPalette.extras[0],
+                                                            onTap:(){
+                                                              setState(() {
+                                                                if (inputBlocks == null) {
+                                                                  for (var i = 0; i < sheetItem.cellData.length; i++) {
+                                                                    item.inputBlocks.add( InputBlock(
+                                                                    indexPath: sheetItem.cellData[i][el.key].sheetItem.indexPath, 
+                                                                    blockIndex: [-2],
+                                                                    id: sheetItem.cellData[i][el.key].sheetItem.id
+                                                                    ));
+                                                                  }
+                                                                  
+                                                                  // inputBlockExpansionList.add(false); 
+                                                                } else {
+                                                                  for (var i = 0; i < sheetItem.cellData.length; i++) {
+                                                                    inputBlocks.add( InputBlock(
+                                                                    indexPath: sheetItem.cellData[i][el.key].sheetItem.indexPath, 
+                                                                    blockIndex: [-2],
+                                                                    id: sheetItem.cellData[i][el.key].sheetItem.id
+                                                                    ));
+                                                                  }
+                                                                }
+                                                              });
+                                                            },
+                                                            child: Text(
+                                                            numberToColumnLabel(el.key+1),
+                                                            textAlign: TextAlign.center,
+                                                            style: GoogleFonts.lexend(
+                                                              color: defaultPalette.primary,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 12,
+                                                              letterSpacing: -1,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              );
+                                            },).toList()]
+                                          ),
+                                          //The rows representing cells A1, A2,...
+                                          ...sheetItem.cellData.asMap().entries.map((elm) {
                                           return TableRow(
-                                            children: row.map((cell) {
+                                            children: [
+                                              // to show the row number 1,2,3... used to add the entire row
+                                              Tooltip(
+                                                message:'add all cells from ${(elm.key+1).toString()} row',
+                                                child: Container(
+                                                    width: 30,
+                                                    height: 18,
+                                                    decoration: BoxDecoration(
+                                                      // color: defaultPalette.primary.withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(5),
+                                                    ),
+                                                    margin: EdgeInsets.all(2),
+                                                    child:  ClipRRect(
+                                                        borderRadius:BorderRadius.circular(5),
+                                                        child: Material(
+                                                          color: defaultPalette.primary.withOpacity(0.2),
+                                                          child: InkWell(
+                                                            hoverColor:defaultPalette.extras[0],
+                                                            splashColor:defaultPalette.extras[0],
+                                                            highlightColor:defaultPalette.extras[0],
+                                                            onTap:(){
+                                                              setState(() {
+                                                                if (inputBlocks == null) {
+                                                                  for (var i = 0; i < sheetItem.columnData.length; i++) {
+                                                                    item.inputBlocks.add( InputBlock(
+                                                                    indexPath: sheetItem.cellData[elm.key][i].sheetItem.indexPath, 
+                                                                    blockIndex: [-2],
+                                                                    id: sheetItem.cellData[elm.key][i].sheetItem.id
+                                                                    ));
+                                                                  }
+                                                                  
+                                                                  // inputBlockExpansionList.add(false); 
+                                                                } else {
+                                                                  for (var i = 0; i < sheetItem.columnData.length; i++) {
+                                                                    inputBlocks.add( InputBlock(
+                                                                    indexPath: sheetItem.cellData[elm.key][i].sheetItem.indexPath, 
+                                                                    blockIndex: [-2],
+                                                                    id: sheetItem.cellData[elm.key][i].sheetItem.id
+                                                                    ));
+                                                                  }
+                                                                }
+                                                              });
+                                                            },
+                                                            child: Text(
+                                                            (elm.key+1).toString(),
+                                                            textAlign: TextAlign.center,
+                                                            style: GoogleFonts.lexend(
+                                                              color: defaultPalette.primary,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 12,
+                                                              letterSpacing: -1,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ),
+                                              ...elm.value.map((cell) {
                                               final sheetCellItem = cell.sheetItem;
                                               if (sheetCellItem is SheetText) {
                                                 return Container(
@@ -10413,9 +10603,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               } else {
                                                 return const SizedBox.shrink();
                                               }
-                                            }).toList(),
+                                            }).toList()],
                                           );
-                                        }).toList(),
+                                        }).toList()
+                                      ],
                                       ),
                                     ),
                                   )
@@ -11272,7 +11463,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             SizedBox(
                               width:width,
                               child: Material(
-                              color: defaultPalette.tertiary,
+                              color: defaultPalette.primary,
                               child: InkWell(
                                 hoverColor: defaultPalette.secondary,
                                 splashColor: defaultPalette.secondary,
@@ -11913,7 +12104,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   /// then finally for double check fetch the item for each RT and see if they exist, if they dont then assign the indexPath path to -951.
                                                   for (int j = 0; j < labelList.length; j++) {
                                                     final requiredText = labelList[j];
-                                                    if (value == requiredText.name) {
+                                                    if (value == requiredText.name && value != 'itemSheet') {
                                                       final path = requiredText.indexPath;
 
                                                       if (path.index == -951) {
