@@ -30,6 +30,8 @@ class SheetFunction {
     switch (map['type']) {
       case 'sum':
         return SumFunction.fromMap(map);
+      case 'column':
+        return ColumnFunction.fromMap(map);
       // Add more subclasses here if needed
       default:
         throw Exception('Unknown SheetFunction type: ${map['type']}');
@@ -94,6 +96,69 @@ class SumFunction extends SheetFunction {
         (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
+      );
+
+}
+
+@HiveType(typeId:19)
+class ColumnFunction extends SheetFunction {
+  @HiveField(2)
+  List<InputBlock> inputBlocks;
+
+  @HiveField(3)
+  String func;
+
+  ColumnFunction(this.inputBlocks, this.func) : super(0, 'column');
+
+  @override
+  dynamic result(Function getItemAtPath) {
+    double sum = 0;
+
+    for (final block in inputBlocks) {
+      final item = getItemAtPath(block.indexPath);
+
+      if (item == null) continue;
+
+      // If the block is directly tied to a function, call its result
+      if (block.function != null) {
+        final value = block.function!.result(getItemAtPath);
+        if (value is num) {
+          sum += value.toDouble();
+        }
+        // skip if it's a string/bool/anything else
+        continue;
+      }
+
+      // Handle raw items: check type and apply if it's numeric
+      if (item is SheetText) {
+        final text = item.textEditorConfigurations.controller.document.toPlainText().trim();
+        final parsed = double.tryParse(text);
+        if (parsed != null) {
+          sum += parsed;
+        }
+      }
+
+      // Extend here if you want to handle other SheetItem types like SheetListBox, SheetTableCell, etc.
+    }
+
+    return sum;
+  }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'type': 'column',
+        'returnType': returnType,
+        'name': name,
+        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+        'func': func
+      };
+
+  factory ColumnFunction.fromMap(Map<String, dynamic> map) => ColumnFunction(
+        (map['inputBlocks'] as List)
+            .map((e) => InputBlock.fromMap(e))
+            .toList(),
+            map['func']
+
       );
 
 }

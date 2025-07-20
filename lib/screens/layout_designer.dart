@@ -1577,7 +1577,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     for (final col in sheetTable.columnData) {
       if (!col.hide) tableWidth += col.size;
     }
-
+    print('building Table: '+sheetTable.id);
     return buildDecoratedContainer(
       sheetDecorationMap[sheetTable.sheetTablebgDecoration.id] as SuperDecoration?,
       SizedBox(
@@ -1661,7 +1661,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     // var tmpinx = int.tryParse(sheetText.textDecoration.id.substring(sheetText.textDecoration.id.indexOf('/') + 1))??-111;
         
     SuperDecoration? decor = sheetDecorationMap[sheetText.textDecoration.id] as SuperDecoration?;
-    
+    print('building TableCEll: '+sheetText.id);
     return ClipRRect(
       borderRadius:BorderRadius.circular(0),
       child: buildDecoratedContainer(
@@ -3047,25 +3047,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       hoverColor: defaultPalette.extras[3],
                                       onTap: () {
                                           setState(() {
-                                            String newId = 'TB-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration(placeholder: false);
-                                            var newIndexPath = IndexPath(
-                                                  parent: spreadSheetList[currentPageIndex].indexPath,
-                                                  index: spreadSheetList[currentPageIndex].length);
+                                            final tid   = 'TB-${Uuid().v4()}';
+                                            final deco  = newSuperDecoration(placeholder: false);
+                                            final ipath = IndexPath(
+                                              parent: spreadSheetList[currentPageIndex].indexPath,
+                                              index:  spreadSheetList[currentPageIndex].length,
+                                            );
+
                                             spreadSheetList[currentPageIndex].add(
-                                              SheetTable(
-                                                id: newId, 
+                                              buildDefaultTable(
+                                                tableId:   tid,
                                                 parentId: spreadSheetList[currentPageIndex].id,
-                                                cellData: defaultSheetTableCellData(newId, newDecoration,newIndexPath),
-                                                columnData: defaultSheetTableColumnData(newId, newDecoration.id,newIndexPath),
-                                                rowData: defaultSheetTableRowData(newId, newDecoration.id,newIndexPath),
-                                                pinnedColumns: 1,
-                                                pinnedRows: 1,
-                                                sheetTableDecoration: newSuperDecoration(placeholder: false),
-                                                indexPath: newIndexPath
-                                                )
+                                                decoration: deco,
+                                                indexPath:  ipath,
+                                                rows:       5, // or your desired defaults
+                                                cols:       8,
+                                              ),
                                             );
                                           });
+
                                         },
                                       ),
                                       //itemTable
@@ -3089,7 +3089,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         },
                                       ),
                                       const Expanded(child: SizedBox()),
-                                      
                                       toolBarButton(TablerIcons.device_floppy, 'save',
                                       fontSize: 12,
                                       iconSize: 13,
@@ -3124,9 +3123,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 },
                                       ),
                                       SizedBox(height:5)
-                                    ]
+                                    ] //sheetTableHeight in UI tweakin
                                   )
-                                  
                                 ),
                                 //emulating the pdf preview //Desktop WEB
                                 Expanded(
@@ -7958,7 +7956,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   Widget buildSheetTableWidget(SheetTable sheetTable){
     var tableHeight = 0.0;
     var tableWidth = 0.0;
-    sheetTable.rowData.forEach((element) => tableHeight += element.size,);
+    sheetTable.rowData.forEach((element) => tableHeight += element.size+2,);
     sheetTable.columnData.forEach((element) => tableWidth += element.size+16,);
     
 
@@ -8378,7 +8376,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 ),
               ),
             ],
-                   ),
+          ),
          ),
       ],
     ),
@@ -9171,6 +9169,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         }
       }
     }
+    print('done');
   }
 
   void doubleCheckLabelList(List<RequiredText> labelList){
@@ -10445,22 +10444,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             onTap:(){
                                                               setState(() {
                                                                 if (inputBlocks == null) {
-                                                                  for (var i = 0; i < sheetItem.cellData.length; i++) {
-                                                                    item.inputBlocks.add( InputBlock(
-                                                                    indexPath: sheetItem.cellData[i][el.key].sheetItem.indexPath, 
-                                                                    blockIndex: [-2],
-                                                                    id: sheetItem.cellData[i][el.key].sheetItem.id
-                                                                    ));
-                                                                  }
+                                                                  // for (var i = 0; i < sheetItem.cellData.length; i++) {
+                                                                    item.inputBlocks.add(InputBlock(
+                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      blockIndex: [-2], 
+                                                                      id: 'yo',
+                                                                      function: ColumnFunction(
+                                                                        sheetItem.columnData[el.key].columnInputBlocks,
+                                                                        'sum'
+                                                                      ),
+                                                                      ));
+                                                                  // }
                                                                   
                                                                   // inputBlockExpansionList.add(false); 
                                                                 } else {
                                                                   for (var i = 0; i < sheetItem.cellData.length; i++) {
                                                                     inputBlocks.add( InputBlock(
-                                                                    indexPath: sheetItem.cellData[i][el.key].sheetItem.indexPath, 
-                                                                    blockIndex: [-2],
-                                                                    id: sheetItem.cellData[i][el.key].sheetItem.id
-                                                                    ));
+                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      blockIndex: [-2], 
+                                                                      id: 'yo',
+                                                                      function: ColumnFunction(
+                                                                        sheetItem.columnData[el.key].columnInputBlocks,
+                                                                        'sum'
+                                                                      ),
+                                                                    )
+                                                                  );
                                                                   }
                                                                 }
                                                               });
@@ -10895,9 +10903,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock){
                     var funcBlock = inputBlock[index];
-                    var funcInputBlocks = (inputBlock[index].function as SumFunction).inputBlocks;
+                    var funcInputBlocks;
 
-                    Widget functionInputBlocks(List<InputBlock> inBlock, int inx){
+                    if (inputBlock[index].function is SumFunction) {
+                     funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
+                    } else if (inputBlock[index].function is ColumnFunction) {
+                      funcInputBlocks =  (inputBlock[index].function as ColumnFunction).inputBlocks;
+                    }
+
+                    Widget sumFunctionInputBlocks(List<InputBlock> inBlock, int inx){
                       if (inx < 0 || inx >= inBlock.length) {
                         return SizedBox.shrink(
                         key: ValueKey(inx),
@@ -11090,7 +11104,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   GestureDetector(
                                     onTap:(){
                                       setState(() {
-                                        selectedInputBlocks =(inBlock[inx].function as SumFunction).inputBlocks;
+                                        if (inBlock[inx].function is SumFunction) {
+                                          selectedInputBlocks =(inBlock[inx].function as SumFunction).inputBlocks;
+                                        } else if (inBlock[inx].function is ColumnFunction) {
+                                          selectedInputBlocks =(inBlock[inx].function as ColumnFunction).inputBlocks;
+                                        }
+                                        
                                       });
                                     },
                                     child: Stack(
@@ -11106,7 +11125,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               defaultPalette.primary,
                                               defaultPalette.primary,
                                               defaultPalette.primary,
-                                              selectedInputBlocks ==(inBlock[inx].function as SumFunction).inputBlocks? defaultPalette.extras[0]: defaultPalette.primary,
+                                              inBlock[inx].function is SumFunction
+                                                ? selectedInputBlocks ==(inBlock[inx].function as SumFunction).inputBlocks 
+                                                  ? defaultPalette.extras[0]
+                                                  : defaultPalette.primary
+                                                  : defaultPalette.primary,
                                             ],
                                           options: AnimatedMeshGradientOptions(
                                               amplitude: 5,
@@ -11414,7 +11437,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       );
                     }
                     // return for funtionTileBlock
-                    return[ 
+                    if(inputBlock[index].function is SumFunction) {
+                      return[ 
                       if(funcBlock.isExpanded)
                       Container(
                         // color: defaultPalette.extras[0],
@@ -11453,7 +11477,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       proxyDecorator: (child, index, animation) {
                                         return Container(child: child); },
                                         itemBuilder: (context, inx) {
-                                          return functionInputBlocks(funcInputBlocks, inx);
+                                          return sumFunctionInputBlocks(funcInputBlocks, inx);
                                       });
                                     }
                                   ),
@@ -11679,6 +11703,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       ),
                               
                     ];
+                    }
+                    
+                    return [];
                   }
 
                   //Return for inputBlock
@@ -11853,7 +11880,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 GestureDetector(
                                                   onTap:(){
                                                     setState(() {
-                                                      selectedInputBlocks = (inputBlock[index].function as SumFunction).inputBlocks;
+                                                      if (inputBlock[index].function is SumFunction) {
+                                                         selectedInputBlocks = (inputBlock[index].function as SumFunction).inputBlocks;
+                                                      }
+                                                     
                                                     });
                                                   },
                                                   child: Stack(children:buildFunctionTile(index,width,inputBlock)))
@@ -15445,85 +15475,147 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 onTap: () {
                                   setState(() {
                                     
-                                    if (axis==0) {
-                                      
-                                      sheetTableItem.rowData.add(
-                                        SheetTableRow(
-                                          id: 'RW-'+Uuid().v4(), 
-                                          parentId: sheetTableItem.id,
-                                          rowDecoration: sheetTableItem.sheetTableDecoration.id,
-                                          indexPath: IndexPath(
-                                            parent: sheetTableItem.indexPath,
-                                            index: sheetTableItem.rowData.length)
-                                          )
-                                      );
-                                      sheetTableItem.cellData.add(
-                                        List.generate(sheetTableItem.columnData.length, (index)  
-                                        { 
-                                          var rowIndexPath = IndexPath(
-                                            parent: sheetTableItem.indexPath,
-                                            index:sheetTableItem.cellData.length
-                                          );
-                                          var newId = 'TX-${Uuid().v4()}';
-                                          return SheetTableCell(
-                                          id: '${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(), 
-                                          parentId: sheetTableItem.id, 
-                                          sheetItem: _addTextField(
-                                            id: newId,
-                                            parentId: sheetTableItem.id,
-                                            textDecoration: sheetTableItem.sheetTableDecoration,
-                                            shouldReturn: true,
-                                            isCell: true,
-                                            hide:false,inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId)],
-                                            indexPath: IndexPath(
-                                              parent: rowIndexPath,
-                                              index: index),
-                                            name:'${numberToColumnLabel(index+1)}'+sheetTableItem.rowData.length.toString(),
-                                            ),
-                                          indexPath: rowIndexPath  
-                                          );
-                                        }
-                                        )
-                                      );
-                                    } else{
-                                      sheetTableItem.columnData.add(
-                                        SheetTableColumn(
-                                          id: 'CL-'+Uuid().v4(), parentId: sheetTableItem.id,
-                                          size: 50,
-                                          columnDecoration: sheetTableItem.sheetTableDecoration.id,
-                                          indexPath: IndexPath(
-                                            parent: sheetTableItem.indexPath,
-                                            index: sheetTableItem.columnData.length)
-                                          )
-                                      );
-                                      for (var i = 0; i < sheetTableItem.rowData.length; i++) {
-                                        var rowIndexPath = IndexPath(
-                                          parent: sheetTableItem.indexPath,
-                                          index: i
-                                        );
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        sheetTableItem.cellData[i].add(
-                                          SheetTableCell(
-                                            id: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(), 
-                                            parentId: sheetTableItem.id, 
-                                            sheetItem: _addTextField(
-                                              id: newId,
-                                            parentId: sheetTableItem.id,
-                                            textDecoration: sheetTableItem.sheetTableDecoration,
-                                            shouldReturn: true,
-                                            isCell: true,
-                                            hide: false,inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-                                            name: '${numberToColumnLabel(sheetTableItem.cellData[i].length+1)}'+(i+1).toString(),
-                                            indexPath: IndexPath(
-                                              parent: rowIndexPath,
-                                              index: sheetTableItem.cellData[i].length)
-                                            ),
-                                            indexPath: rowIndexPath
-                                            )
+                                    if (axis == 0) {
+                                  // ─── Adding a new ROW ────────────────────────────────────
+                                  final newRowIndex = sheetTableItem.rowData.length;
+                                  final rowIndexPath = IndexPath(
+                                    parent: sheetTableItem.indexPath,
+                                    index: newRowIndex,
+                                  );
 
-                                        );
-                                      }
-                                    }
+                                  // Prepare the InputBlock list for the new row
+                                  final rowInputBlocks = <InputBlock>[];
+
+                                  // For each existing column, make a cell and link its InputBlock
+                                  sheetTableItem.cellData.add(
+                                    List.generate(sheetTableItem.columnData.length, (colIndex) {
+                                      final newId = 'TX-${Uuid().v4()}';
+                                      var itemIndexPath =IndexPath(
+                                              parent: rowIndexPath,
+                                              index: colIndex);
+                                      final inputBlock = InputBlock(
+                                        indexPath: itemIndexPath,
+                                        blockIndex: [-2],
+                                        id: newId,
+                                      );
+
+                                      // 1) Link into this new row
+                                      rowInputBlocks.add(inputBlock);
+
+                                      // 2) Also link into the existing column
+                                      sheetTableItem.columnData[colIndex]
+                                          .columnInputBlocks
+                                          .add(inputBlock);
+                                      print(sheetTableItem.columnData[colIndex]
+                                          .columnInputBlocks);
+
+                                      return SheetTableCell(
+                                        id:
+                                            '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
+                                        parentId: sheetTableItem.id,
+                                        indexPath: rowIndexPath,
+                                        sheetItem: _addTextField(
+                                          id: newId,
+                                          parentId: sheetTableItem.id,
+                                          textDecoration:
+                                              sheetTableItem.sheetTableDecoration,
+                                          shouldReturn: true,
+                                          isCell: true,
+                                          hide: false,
+                                          inputBlocks: [inputBlock],
+                                          indexPath: itemIndexPath,
+                                          name:
+                                              '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
+                                        ),
+                                      );
+                                    }),
+                                  );
+
+                                  // Finally register the new row itself
+                                  sheetTableItem.rowData.add(
+                                    SheetTableRow(
+                                      id: 'RW-${Uuid().v4()}',
+                                      parentId: sheetTableItem.id,
+                                      rowDecoration:
+                                          sheetTableItem.sheetTableDecoration.id,
+                                      indexPath: rowIndexPath,
+                                      rowInputBlocks: rowInputBlocks,
+                                    ),
+                                  );
+                                } else {
+                                  // ─── Adding a new COLUMN ─────────────────────────────────
+                                  final newColIndex = sheetTableItem.columnData.length;
+                                  final colIndexPath = IndexPath(
+                                    parent: sheetTableItem.indexPath,
+                                    index: newColIndex,
+                                  );
+
+                                  // Prepare the InputBlock list for the new column
+                                  final colInputBlocks = <InputBlock>[];
+
+                                  // 1) Create the new column
+                                  sheetTableItem.columnData.add(
+                                    SheetTableColumn(
+                                      id: 'CL-${Uuid().v4()}',
+                                      parentId: sheetTableItem.id,
+                                      size: 50,
+                                      columnDecoration:
+                                          sheetTableItem.sheetTableDecoration.id,
+                                      indexPath: colIndexPath,
+                                      columnInputBlocks: colInputBlocks,
+                                    ),
+                                  );
+
+                                  // 2) For each existing row, add a cell and link into both the column and that row
+                                  for (var rowIndex = 0;
+                                      rowIndex < sheetTableItem.rowData.length;
+                                      rowIndex++) {
+                                    final rowIndexPath = IndexPath(
+                                      parent: sheetTableItem.indexPath,
+                                      index: rowIndex,
+                                    );
+                                    final newId = 'TX-${Uuid().v4()}';
+                                    var itemIndexPath =IndexPath(
+                                              parent: rowIndexPath,
+                                              index:  sheetTableItem.cellData[rowIndex].length);
+                                    final inputBlock = InputBlock(
+                                      indexPath: itemIndexPath,
+                                      blockIndex: [-2],
+                                      id: newId,
+                                    );
+
+                                    // link into the new column
+                                    colInputBlocks.add(inputBlock);
+
+                                    // link into the existing row
+                                    sheetTableItem.rowData[rowIndex]
+                                        .rowInputBlocks
+                                        .add(inputBlock);
+
+                                    sheetTableItem.cellData[rowIndex].add(
+                                      SheetTableCell(
+                                        id:
+                                            '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
+                                        parentId: sheetTableItem.id,
+                                        indexPath: rowIndexPath,
+                                        sheetItem: _addTextField(
+                                          id: newId,
+                                          parentId: sheetTableItem.id,
+                                          textDecoration:
+                                              sheetTableItem.sheetTableDecoration,
+                                          shouldReturn: true,
+                                          isCell: true,
+                                          hide: false,
+                                          inputBlocks: [inputBlock],
+                                          name:
+                                              '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
+                                          indexPath:itemIndexPath,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+
                                   });
                                 },
                                 child: Icon(
@@ -15881,6 +15973,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             sheetTableVariables.columnLayerIndex--;
                                           }
                                          reassignCellIds(sheetTableItem); 
+                                         whichPropertyTabIsClicked = 4;
                                         });
                                       },
                                       child: Container(
@@ -26162,100 +26255,261 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     );
   }
 
-  List<List<SheetTableCell>> defaultSheetTableCellData(String parentId, SuperDecoration sheetTableDecoration, IndexPath indexPath) {
-  const rows = 5;
-  const cols = 8;
-  
-  return List.generate(rows, (row) {
-    return List.generate(cols, (col) {
-      final content = 'Cell ${String.fromCharCode(65 + col)}${row+1}';
-      var newId = 'TX-${ const Uuid().v4()}'; 
-      var cellIndexPath = IndexPath(
-        parent: indexPath,
-        index: row);
-      return SheetTableCell(
-        id: '${numberToColumnLabel(col+1)}${row+1}',
-        parentId: parentId,
-        data: content,
-        sheetItem: addTextField(
-          id: newId,
-          parentId: parentId,
-          docString: [],
-          findItem: _findItem,
-          textFieldTapDown: textFieldTapDown,
-          getReplaceTextFunctionForType: getReplaceTextFunctionForType,
-          textDecoration: sheetTableDecoration,
-          hide: false,
-          name:'${numberToColumnLabel(col+1)}${row+1}',
-          indexPath: IndexPath(
-            parent: cellIndexPath,
-            index: col), 
-          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
-          locked: false,
-          ),
-        rowSpan: 1,
-        colSpan: 1,
-        indexPath: cellIndexPath,
-        
+  /// Reusable: builds a ROW×COL default SheetTable where
+  /// each cell’s InputBlock is back‑patched into both its
+  /// rowData[r].rowInputBlocks and columnData[c].columnInputBlocks.
+  SheetTable buildDefaultTable({
+    required String tableId,
+    required String parentId,
+    required SuperDecoration decoration,
+    required IndexPath indexPath,
+    int rows = 5,
+    int cols = 8,
+  }) {
+    // 1) prepare the row and column “skeletons”
+    final rowData = List.generate(rows, (r) {
+      return SheetTableRow(
+        id:             'RW-${Uuid().v4()}',
+        parentId:       tableId,
+        size:           30,
+        rowDecoration:  decoration.id,
+        indexPath:      IndexPath(parent: indexPath, index: r),
+        rowInputBlocks: <InputBlock>[],
       );
-      
+    });
+    final columnData = List.generate(cols, (c) {
+      return SheetTableColumn(
+        id:               'CL-${Uuid().v4()}',
+        parentId:         tableId,
+        size:             80,
+        columnDecoration: decoration.id,
+        indexPath:        IndexPath(parent: indexPath, index: c),
+        columnInputBlocks:<InputBlock>[],
+      );
+    });
+
+    // 2) build cells, hooking each InputBlock into its row & column
+    final cellData = List.generate(rows, (r) {
+      return List.generate(cols, (c) {
+        final cellIndexPath = IndexPath(parent: indexPath, index: r);
+        final textIndexPath = IndexPath(parent: cellIndexPath, index: c);
+        final newId         = 'TX-${Uuid().v4()}';
+
+        // create & register the block
+        final inputBlock = InputBlock(
+          id:         newId,
+          indexPath:  textIndexPath,
+          blockIndex: [-2],
+        );
+        rowData[r].rowInputBlocks.add(inputBlock);
+        columnData[c].columnInputBlocks.add(inputBlock);
+
+        // finally, the cell
+        return SheetTableCell(
+          id:        '${numberToColumnLabel(c+1)}${r+1}',
+          parentId:  parentId,
+          sheetItem: addTextField(
+            id:                         newId,
+            parentId:                   parentId,
+            docString:                  [], // start empty
+            findItem:                   _findItem,
+            textFieldTapDown:           textFieldTapDown,
+            getReplaceTextFunctionForType:
+                                        getReplaceTextFunctionForType,
+            textDecoration:             decoration,
+            hide:                       false,
+            name:                       '${numberToColumnLabel(c+1)}${r+1}',
+            indexPath:                  textIndexPath,
+            inputBlocks:               [ inputBlock ],
+            locked:                     false,
+          ),
+          rowSpan:   1,
+          colSpan:   1,
+          indexPath: cellIndexPath,
+        );
       });
+    });
+
+    // 3) return your fully‑wired up table
+    return SheetTable(
+      id:                    tableId,
+      parentId:              parentId,
+      cellData:              cellData,
+      rowData:               rowData,
+      columnData:            columnData,
+      pinnedRows:            1,
+      pinnedColumns:         1,
+      sheetTableDecoration:  decoration,
+      sheetTablebgDecoration:newSuperDecoration(placeholder: false),
+      indexPath:             indexPath,
+    );
+  }
+
+  List<List<SheetTableCell>> defaultSheetTableCellData(
+    String parentId,
+    SuperDecoration sheetTableDecoration,
+    IndexPath tableIndexPath,
+    List<SheetTableRow> rowData,
+    List<SheetTableColumn> columnData,
+  ) {
+    const rows = 5;
+    const cols = 8;
+
+    // Prepare a parallel structure to hold each row's InputBlocks
+    final rowInputLists = List.generate(rows, (_) => <InputBlock>[]);
+    // Prepare a parallel structure to hold each column's InputBlocks
+    final colInputLists = List.generate(cols, (_) => <InputBlock>[]);
+
+    final cells = List.generate(rows, (r) {
+      final rowIndexPath = IndexPath(parent: tableIndexPath, index: r);
+      return List.generate(cols, (c) {
+        final newId = 'TX-${Uuid().v4()}';
+        final cellIndexPath = IndexPath(parent: rowIndexPath, index: c);
+
+        // 1) Make exactly one InputBlock per cell
+        final ib = InputBlock(
+          indexPath: cellIndexPath,
+          blockIndex: [-2],
+          id: newId,
+        );
+
+        // 2) Link it into that row’s list
+        rowInputLists[r].add(ib);
+        // 3) Link it into that column’s list
+        colInputLists[c].add(ib);
+
+        // Build the actual SheetTableCell
+        return SheetTableCell(
+          id: '${numberToColumnLabel(c + 1)}${r + 1}',
+          parentId: parentId,
+          data: 'Cell ${String.fromCharCode(65 + c)}${r + 1}',
+          sheetItem: addTextField(
+            id: newId,
+            parentId: parentId,
+            docString: [],
+            findItem: _findItem,
+            textFieldTapDown: textFieldTapDown,
+            getReplaceTextFunctionForType: getReplaceTextFunctionForType,
+            textDecoration: sheetTableDecoration,
+            hide: false,
+            name: '${numberToColumnLabel(c + 1)}${r + 1}',
+            indexPath: cellIndexPath,
+            inputBlocks: [ib],
+            locked: false,
+          ),
+          rowSpan: 1,
+          colSpan: 1,
+          indexPath: rowIndexPath,
+        );
+      });
+    });
+
+    // Now inject those input‑blocks lists back into your rowData & columnData
+    for (var r = 0; r < rows; r++) {
+      rowData[r].rowInputBlocks = rowInputLists[r];
+    }
+    for (var c = 0; c < cols; c++) {
+      columnData[c].columnInputBlocks = colInputLists[c];
+    }
+
+    return cells;
+  }
+
+  List<SheetTableColumn> defaultSheetTableColumnData(
+    String parentId,
+    String columnDecoration,
+    IndexPath tableIndexPath,
+    int rowCount,
+  ) {
+    // Similar idea: we’ll fill in the columnInputBlocks later
+    return List.generate(8, (c) {
+      return SheetTableColumn(
+        id: 'CL-${Uuid().v4()}',
+        parentId: parentId,
+        size: 80,
+        columnDecoration: columnDecoration,
+        indexPath: IndexPath(parent: tableIndexPath, index: c),
+        columnInputBlocks: <InputBlock>[], // to be populated by the cells generator
+      );
     });
   }
 
-  List<SheetTableColumn> defaultSheetTableColumnData(String parentId, String columnDecoration, IndexPath indexPath) {
-  return List.generate(8, (index) {
-    return SheetTableColumn(
-      id: 'CL-${ const Uuid().v4()}',
-      parentId: parentId,
-      size: 80, 
-      columnDecoration: columnDecoration,
-      indexPath: IndexPath(
-        parent: indexPath,
-        index: index)
-    );
-  });
-  }
-
-  List<SheetTableRow> defaultSheetTableRowData(String parentId, String rowDecoration, IndexPath indexPath) {
-
-    return List.generate(5, (index) {
+  List<SheetTableRow> defaultSheetTableRowData(
+    String parentId,
+    String rowDecoration,
+    IndexPath tableIndexPath,
+    int colCount,
+  ) {
+    // Similar: rowInputBlocks to be populated later
+    return List.generate(5, (r) {
       return SheetTableRow(
-        id: 'RW-${ const Uuid().v4()}',
+        id: 'RW-${Uuid().v4()}',
         parentId: parentId,
         size: 30,
         rowDecoration: rowDecoration,
-        indexPath: IndexPath(
-          parent: indexPath,
-          index: index)
+        indexPath: IndexPath(parent: tableIndexPath, index: r),
+        rowInputBlocks: <InputBlock>[], // will be filled
       );
     });
   }
-  
-  SheetTable generateInvoiceTable(SheetType type, String newId, String parentId, SuperDecoration newDecoration, IndexPath newIndexPath) {
+
+  SheetTable generateInvoiceTable(
+    SheetType type,
+    String newId,
+    String parentId,
+    SuperDecoration newDecoration,
+    IndexPath newIndexPath,
+  ) {
+    // 1) Get your headers
     final headers = getInvoiceColumns(type);
 
+    // 2) Create your empty rowData and columnData first
+    final rowData = List.generate(
+      2,
+      (i) => SheetTableRow(
+        id: 'RW-${Uuid().v4()}',
+        parentId: newId,
+        size: i == 0 ? 30 : 35,
+        rowDecoration: newDecoration.id,
+        indexPath: IndexPath(parent: newIndexPath, index: i),
+        rowInputBlocks: <InputBlock>[], // will be filled later
+      ),
+    );
+
+    final columnData = List.generate(
+      headers.length,
+      (c) {
+        final isHiddenProfit = c >= headers.length - 3;
+        return SheetTableColumn(
+          id: 'CL-${Uuid().v4()}',
+          parentId: newId,
+          size: 100,
+          columnDecoration: newDecoration.id,
+          indexPath: IndexPath(parent: newIndexPath, index: c),
+          hide: isHiddenProfit,
+          columnInputBlocks: <InputBlock>[], // will be filled later
+        );
+      },
+    );
+
+    // 3) Build the cells and let it populate rowData/columnData.inputBlocks
+    final cellData = generateInvoiceCellData(
+      parentId: newId,
+      sheetTableDecoration: newDecoration,
+      tableIndexPath: newIndexPath,
+      rowData: rowData,
+      columnData: columnData,
+      headers: headers,
+    );
+
+    // 4) Construct and return the table
     return SheetTable(
       id: newId,
-      parentId: parentId, // set later
+      parentId: parentId,
       name: 'itemSheet',
-      cellData: generateInvoiceCellData(
-        parentId: newId,
-        sheetTableDecoration: newDecoration,
-        indexPath: newIndexPath,
-        headers: headers,
-      ),
-      columnData: generateInvoiceColumns(newId, newIndexPath, headers, newDecoration.id),
-      rowData: List.generate(
-        2,
-        (i) => SheetTableRow(
-          id: 'RW-${const Uuid().v4()}',
-          parentId: newId,
-          size: i == 0 ? 30 : 35,
-          rowDecoration: newDecoration.id,
-          indexPath: IndexPath(parent: newIndexPath, index: i),
-        ),
-      ),
+      cellData: cellData,
+      columnData: columnData,
+      rowData: rowData,
       pinnedColumns: 1,
       pinnedRows: 1,
       sheetTableDecoration: newDecoration,
@@ -26346,7 +26600,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         size: 100,
         columnDecoration: columnDecoration,
         indexPath: IndexPath(parent: indexPath, index: i),
-        hide: isHiddenProfitColumn, // 👈 hide only profit-related columns
+        hide: isHiddenProfitColumn, 
+        columnInputBlocks: []
       );
     });
   }
@@ -26354,46 +26609,48 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<List<SheetTableCell>> generateInvoiceCellData({
     required String parentId,
     required SuperDecoration sheetTableDecoration,
-    required IndexPath indexPath,
+    required IndexPath tableIndexPath,
+    required List<SheetTableRow> rowData,
+    required List<SheetTableColumn> columnData,
     required List<String> headers,
   }) {
-    return List.generate(2, (row) {
-      return List.generate(headers.length, (col) {
-        final isHeader = row == 0;
-        final newId = 'TX-${const Uuid().v4()}';
-        final cellIndexPath = IndexPath(parent: indexPath, index: row);
-        final textIndexPath = IndexPath(
-              parent: cellIndexPath,
-              index: col,
-            );
-        final docDelta =  Delta()..insert(isHeader
-          ?'${headers[col]}\n':'\n'); 
-        var sheetText = addTextField(
-            id: newId,
-            parentId: parentId,
-            docString: docDelta.toJson(),
-            findItem: _findItem,
-            textFieldTapDown: textFieldTapDown,
-            getReplaceTextFunctionForType: getReplaceTextFunctionForType,
-            textDecoration: sheetTableDecoration,
-            hide: false, // Don't show editable field for headers
-            name: '${numberToColumnLabel(col + 1)}${row + 1}',
-            indexPath: textIndexPath,
-            inputBlocks: [
-              InputBlock(
-                indexPath: textIndexPath,
-                blockIndex: [-2],
-                id: newId,
-              )
-            ],
-            locked: isHeader,
-          );
+    final rows = rowData.length;
+    final cols = headers.length;
+    final rowInputLists = List.generate(rows, (_) => <InputBlock>[]);
+    final colInputLists = List.generate(cols, (_) => <InputBlock>[]);
 
-          
-       
+    final cells = List.generate(rows, (r) {
+      final rowIndexPath = IndexPath(parent: tableIndexPath, index: r);
+      return List.generate(cols, (c) {
+        final isHeader = r == 0;
+        final newId = 'TX-${Uuid().v4()}';
+        final cellIndexPath = IndexPath(parent: rowIndexPath, index: c);
+        final ib = InputBlock(
+          indexPath: cellIndexPath,
+          blockIndex: [-2],
+          id: newId,
+        );
+        rowInputLists[r].add(ib);
+        colInputLists[c].add(ib);
+
+        final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
+        final sheetText = addTextField(
+          id: newId,
+          parentId: parentId,
+          docString: docDelta.toJson(),
+          findItem: _findItem,
+          textFieldTapDown: textFieldTapDown,
+          getReplaceTextFunctionForType: getReplaceTextFunctionForType,
+          textDecoration: sheetTableDecoration,
+          hide: false,
+          name: '${numberToColumnLabel(c + 1)}${r + 1}',
+          indexPath: cellIndexPath,
+          inputBlocks: [ib],
+          locked: isHeader,
+        );
 
         return SheetTableCell(
-          id: '${numberToColumnLabel(col + 1)}${row + 1}',
+          id: '${numberToColumnLabel(c + 1)}${r + 1}',
           parentId: parentId,
           sheetItem: sheetText,
           rowSpan: 1,
@@ -26402,6 +26659,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         );
       });
     });
+
+    // Inject back into rowData and columnData
+    for (var r = 0; r < rows; r++) {
+      rowData[r].rowInputBlocks = rowInputLists[r];
+    }
+    for (var c = 0; c < cols; c++) {
+      columnData[c].columnInputBlocks = colInputLists[c];
+    }
+
+    return cells;
   }
 
   void applySpans(SheetTable sheetTable) {

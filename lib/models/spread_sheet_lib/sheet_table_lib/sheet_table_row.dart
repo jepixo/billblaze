@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
 
@@ -18,6 +19,8 @@ class SheetTableRowBox extends SheetItem {
   bool hide;
   @HiveField(7)
   String rowDecoration;
+  @HiveField(8)
+  List<InputBlock> rowInputBlocks;
   
   SheetTableRowBox({
     required super.id, 
@@ -28,6 +31,7 @@ class SheetTableRowBox extends SheetItem {
     this.hide = false,
     this.rowDecoration = '',
     required super.indexPath,
+    required this.rowInputBlocks,
     });
   
   SheetTableRow toSheetTableRow( ) {
@@ -40,6 +44,7 @@ class SheetTableRowBox extends SheetItem {
       hide: hide,
       rowDecoration: rowDecoration,
       indexPath: indexPath,
+      rowInputBlocks: rowInputBlocks,
       );
   }
   
@@ -55,6 +60,7 @@ class SheetTableRowBox extends SheetItem {
         'maxSize': maxSize,
         'hide': hide,
         'rowDecoration': rowDecoration,
+        'rowInputBlocks': rowInputBlocks.map((e) => e.toMap()).toList(),
       };
       print(map);
     return map;
@@ -69,6 +75,9 @@ class SheetTableRowBox extends SheetItem {
         maxSize: (map['maxSize'] as num).toDouble(),
         hide: map['hide'],
         rowDecoration: map['rowDecoration'],
+        rowInputBlocks: (map['rowInputBlocks'] as List)
+          .map((e) => InputBlock.fromMap(e))
+          .toList()
       );
 
   @override
@@ -85,6 +94,7 @@ class SheetTableRow extends SheetItem {
   double maxSize;
   bool hide;
   String rowDecoration;
+  List<InputBlock> rowInputBlocks;
   
   SheetTableRow({
     required super.id, 
@@ -95,6 +105,7 @@ class SheetTableRow extends SheetItem {
     this.hide = false,
     this.rowDecoration ='',
     required super.indexPath,
+    required this.rowInputBlocks,
     });
 
   SheetTableRowBox toSheetTableRowBox( ) {
@@ -107,6 +118,7 @@ class SheetTableRow extends SheetItem {
       hide: hide,
       rowDecoration: rowDecoration,
       indexPath: indexPath,
+      rowInputBlocks: rowInputBlocks,
       );
   }
 }

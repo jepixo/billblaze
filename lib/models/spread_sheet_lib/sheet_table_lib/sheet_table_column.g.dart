@@ -25,13 +25,14 @@ class SheetTableColumnBoxAdapter extends TypeAdapter<SheetTableColumnBox> {
       hide: fields[6] as bool,
       columnDecoration: fields[7] as String,
       indexPath: fields[2] as IndexPath,
+      columnInputBlocks: (fields[8] as List).cast<InputBlock>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableColumnBox obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(3)
       ..write(obj.size)
       ..writeByte(4)
@@ -42,6 +43,8 @@ class SheetTableColumnBoxAdapter extends TypeAdapter<SheetTableColumnBox> {
       ..write(obj.hide)
       ..writeByte(7)
       ..write(obj.columnDecoration)
+      ..writeByte(8)
+      ..write(obj.columnInputBlocks)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

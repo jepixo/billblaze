@@ -102,6 +102,7 @@ class SheetTableCellBox extends SheetItem {
 
   SheetTableCell toSheetTableCell( Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),IndexPath sheetTableIndexPath ) {
     super.indexPath.parent = sheetTableIndexPath;
+    print('toTableCELL : ${super.id}');
     return SheetTableCell(
       id: super.id, 
       parentId: super.parentId,

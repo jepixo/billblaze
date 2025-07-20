@@ -8,7 +8,9 @@ import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
+import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/llama_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
@@ -99,6 +101,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   late List<LayoutModel> filteredLayoutBox;
   double _cardPosition = 0;
   double totalRevenue = 0;
+  double totalProfit =0;
   late AppinioSwiperController recentsCardController;
   late AnimationController squiggleFadeAnimationController;
   late AnimationController sliderFadeAnimationController;
@@ -3723,10 +3726,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951) {
                       final item = getItemAtPath(totalPayableLabel.indexPath, layout.spreadSheetList);
                       if (item is SheetTextBox) {
-                        final List<Map<String, dynamic>> rawDelta = List<Map<String, dynamic>>.from(item.textEditorController);
-                        final delta = Delta.fromJson(rawDelta);
-                        final doc = Document.fromDelta(delta);
-                        final rawText = doc.toPlainText();
+                        final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
                         double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
 
                         // If it's a credit note, negate the value
@@ -4444,32 +4444,41 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   return true;
                 }).toList();
                 typeStats ={};
+                totalProfit =0;
                 for (final layout in layouts) {
                   final type = SheetType.values[layout.type];
                   double totalPayable = 0;
+                  double profit = 0;
 
                   try {
-                    final label = layout.labelList.firstWhere((l) => l.name == 'totalPayable');
-                    if (label.indexPath.index != -951) {
-                      final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
-                      if (item is SheetTextBox) {
-                        final delta = Delta.fromJson(List<Map<String, dynamic>>.from(item.textEditorController));
-                        final doc = Document.fromDelta(delta);
-                        final rawText = doc.toPlainText();
-                        totalPayable = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0;
+                    for (final label in layout.labelList) {
+                      if (label.indexPath.index == -951) continue;
 
+                      final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
+                      if (item is! SheetTextBox) continue;
+
+                      final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
+                      final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
+
+                      if (label.name == 'totalPayable') {
+                        totalPayable = cleaned;
                         if (type == SheetType.creditNote) {
                           totalPayable = -totalPayable;
                         }
+                      } else if (label.name == 'profits') {
+                        profit = cleaned;
+                        totalProfit += profit;
                       }
                     }
                   } catch (_) {
                     // silently skip errors
                   }
 
+                  // Update or initialize the stat object
                   typeStats[type] = {
                     'count': (typeStats[type]?['count'] ?? 0) + 1,
                     'payable': (typeStats[type]?['payable'] ?? 0.0) + totalPayable,
+                    'profit': (typeStats[type]?['profit'] ?? 0.0) + profit,
                   };
                 }
 
@@ -4547,9 +4556,38 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         letterSpacing: -1),),
                                         
                                     ),
-                                    SizedBox(width:6,),
+                                    SizedBox(width:5,),
                                     ],
                                   ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      SizedBox(width: 2,),
+                                      ...[Icon(TablerIcons.cash, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                                      SizedBox(width: 5,),],
+                                      Expanded(
+                                        child: Text('Total Profit',
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                          color: defaultPalette.extras[0],
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -1),),
+                                      ),
+                                      Expanded(
+                                      child: Text(NumberFormat.decimalPattern('en_IN').format(totalProfit),
+                                      maxLines: 1,
+                                      textAlign: TextAlign.end,
+                                      style: GoogleFonts.lexend(
+                                        fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: -1),),
+                                        
+                                    ),
+                                      SizedBox(width: 5,),
+                                    ],
+                                    ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -4576,36 +4614,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         letterSpacing: -1),),
                                         
                                     ),
-                                      SizedBox(width: 6,),
+                                      SizedBox(width: 5,),
                                     ],
                                     ),
-                                    SizedBox(height: 10,),
+                                    SizedBox(height: 8,),
                                     summaryTile('Tax Invoices',
-                                      typeStats[SheetType.taxInvoice]!,
+                                      typeStats[SheetType.taxInvoice]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
                                       TablerIcons.file_invoice,
                                       sWidth,
                                       sHeight,
                                     ), 
                                     summaryTile('Credit Notes',
-                                      typeStats[SheetType.creditNote]!,
+                                      typeStats[SheetType.creditNote]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
                                       TablerIcons.credit_card_pay,
                                       sWidth,
                                       sHeight,
                                     ),
                                     summaryTile('Debit Notes',
-                                      typeStats[SheetType.debitNote]!,
+                                      typeStats[SheetType.debitNote]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
                                       TablerIcons.credit_card_refund,
                                       sWidth,
                                       sHeight,
                                     ),
                                     summaryTile('Bills of Supply',
-                                      typeStats[SheetType.billOfSupply]!,
+                                      typeStats[SheetType.billOfSupply]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
                                       TablerIcons.receipt_2,
                                       sWidth,
                                       sHeight,
                                     ),
                                     summaryTile('Proforma Invoices',
-                                      typeStats[SheetType.proformaInvoice]!,
+                                      typeStats[SheetType.proformaInvoice]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
                                       TablerIcons.receipt_filled,
                                       sWidth,
                                       sHeight,
@@ -4639,7 +4677,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
               builder: (context, Box<LayoutModel> box, _) {
                 final allLayouts = box.values.toList();
-
+                
                 // Collect all revised layout base names
                 final revisedNames = allLayouts
                     .where((l) => l.name.endsWith('-revised'))
@@ -4648,11 +4686,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                 // Now filter the layouts
                 final layouts = allLayouts.where((layout) {
-                  final name = layout.name;
-                  if (name.endsWith('-old')) return false;
-                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
-                  return true;
-                }).toList();
+                final name = layout.name;
+                if (!layout.id.startsWith('BI-')) return false; // ✅ Only include 'BI-' layouts
+                if (name.endsWith('-old')) return false;
+                if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                return true;
+              }).toList();
 
 
                 final Map<SheetType, int> yearlyCounts = {
@@ -5359,14 +5398,55 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   return str.substring(1).split('').every((c) => c == '0');
 }
 
-  List<PieChartSectionData> showingSections({
+List<PieChartSectionData> showingSections({
   required Map<SheetType, int> billCounts,
   required int touchedIndex,
   double sWidth = 800,
   double sHeight = 600,
 }) {
   final totalBills = billCounts.values.fold(0, (sum, count) => sum + count);
-  if (totalBills == 0) return [];
+  if (totalBills == 0) {
+    final radius = mapValueDimensionBasedLockOnDesync(25, 90, sWidth, sHeight);
+    final fontSize = mapValueDimensionBasedLockOnDesync(18, 40, sWidth, sHeight);
+
+    return [
+      PieChartSectionData(
+        color: Colors.grey[300], // Neutral color
+        value: 100,
+        title: "0",
+        radius: radius,
+        titleStyle: GoogleFonts.lexend(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[700],
+        ),
+        badgeWidget: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(2, 2),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(4),
+          child: Text(
+            "No\nBills",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.lexend(
+              fontSize: fontSize * 0.4,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        badgePositionPercentageOffset: 1.1,
+        titlePositionPercentageOffset: 0.3,
+      ),
+    ];
+  }
 
   final visibleEntries = billCounts.entries
       .where((entry) => entry.value > 0)
@@ -5377,19 +5457,27 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     final type = entry.key;
     final count = entry.value;
     final isTouched = i == touchedIndex;
-    final fontSize = isTouched ? mapValueDimensionBasedLockOnDesync(25, 40, sWidth, sHeight) : mapValueDimensionBasedLockOnDesync(13, 30, sWidth, sHeight);
-    final radius = isTouched ? mapValueDimensionBasedLockOnDesync(40, 180, sWidth, sHeight) : mapValueDimensionBasedLockOnDesync(25, 90, sWidth, sHeight);
+    final fontSize = isTouched
+        ? mapValueDimensionBasedLockOnDesync(25, 40, sWidth, sHeight)
+        : mapValueDimensionBasedLockOnDesync(13, 30, sWidth, sHeight);
+    final radius = isTouched
+        ? mapValueDimensionBasedLockOnDesync(40, 180, sWidth, sHeight)
+        : mapValueDimensionBasedLockOnDesync(25, 90, sWidth, sHeight);
     const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
 
-    String badgeLabel = type.name.replaceFirstMapped(RegExp(r'[A-Z]'), (m) => '\n${m[0]}');// e.g. 'billOfSupply' -> 'bill\nof\nsupply'
+    String badgeLabel = type.name.replaceFirstMapped(
+      RegExp(r'[A-Z]'),
+      (m) => '\n${m[0]}',
+    );
 
     return PieChartSectionData(
-      color: defaultPalette.extras[0], // You can assign different colors by type too
+      color: defaultPalette.extras[0], // You can customize per type if needed
       value: count.toDouble() / totalBills * 100,
       title: count.toString(),
       radius: radius,
       titleStyle: GoogleFonts.lexend(
-        fontSize: fontSize*mapValueDimensionBasedLockOnDesync(isTouched?0.5:0.8, isTouched?0.7:1, sWidth, sHeight),
+        fontSize: fontSize * mapValueDimensionBasedLockOnDesync(
+            isTouched ? 0.5 : 0.8, isTouched ? 0.7 : 1, sWidth, sHeight),
         fontWeight: FontWeight.bold,
         color: defaultPalette.primary,
         shadows: shadows,
@@ -5412,12 +5500,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           badgeLabel,
           textAlign: TextAlign.center,
           style: GoogleFonts.lexend(
-            fontSize: fontSize *mapValueDimensionBasedLockOnDesync(0.4, 0.5, sWidth, sHeight),
+            fontSize: fontSize *
+                mapValueDimensionBasedLockOnDesync(0.4, 0.5, sWidth, sHeight),
             color: defaultPalette.extras[0],
           ),
         ),
       ),
-      badgePositionPercentageOffset: mapValueDimensionBasedLockOnDesync(isTouched?1.2:1.2, isTouched?0.8: 1, sWidth, sHeight,),
+      badgePositionPercentageOffset: mapValueDimensionBasedLockOnDesync(
+          isTouched ? 1.2 : 1.2, isTouched ? 0.8 : 1, sWidth, sHeight),
       titlePositionPercentageOffset: 0.3,
     );
   });
@@ -5426,7 +5516,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Widget summaryTile (String s, Map<String, double> stats, IconData icon, double sWidth, double sHeight, {textAlign = TextAlign.start}) {
     return Container(
       padding: EdgeInsets.all(mapValueDimensionBased(5, 10, sWidth, sHeight)),
-      margin: EdgeInsets.only(bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), right:2),
+      margin: EdgeInsets.only(bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), right:0),
       decoration: BoxDecoration(
         color: defaultPalette.secondary,
         borderRadius: BorderRadius.circular(12),
@@ -5438,7 +5528,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              ...[Icon(icon, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+              ...[
+                Icon(icon, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
               SizedBox(width: 5,),],
               Expanded(
                 child: Text(s,
@@ -5449,31 +5540,18 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   fontWeight: FontWeight.w500,
                   letterSpacing: -1),),
               ),
-             
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-              child: Text('count  ',
-              textAlign: textAlign,
-              style: GoogleFonts.lexend(
-                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                color: defaultPalette.extras[0],
-                fontWeight: FontWeight.w500,
-                letterSpacing: -1),),
-              ),
               Expanded(
               child: Text(NumberFormat.decimalPattern('en_IN').format(stats['count']),
               maxLines: 1,
               textAlign: TextAlign.end,
               style: GoogleFonts.lexend(
-                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                fontSize: mapValueDimensionBased(12, 23, sWidth, sHeight),
                 color: defaultPalette.extras[0],
                 fontWeight: FontWeight.w500,
                 letterSpacing: -1),),
                   
               ),
+             SizedBox(width: 2,)
             ],
           ),
           Row(
@@ -5499,7 +5577,34 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   
               ),
             ],
-          )
+          ),
+          Row(
+            children: [
+              Expanded(
+              child: Text('profit  ',
+              textAlign: textAlign,
+              style: GoogleFonts.lexend(
+                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -1),),
+              ),
+              Expanded(
+              child: Text(
+               s=='Credit Notes'?'~~~~~~~~': NumberFormat.decimalPattern('en_IN').format(stats['profit']) + '₹',
+              maxLines: 1,
+              textAlign: TextAlign.end,
+              style: GoogleFonts.lexend(
+                fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -1),),
+                  
+              ),
+            ],
+          ),
+          SizedBox(height: 2,),
+        
         ],
       ),
     );
@@ -5567,6 +5672,85 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   // Desync: freeze at the value where sync broke (based on last common progress)
   final frozenProgress = math.min(widthProgress, heightProgress);
   return outMin + (outMax - outMin) * frozenProgress;
+}
+
+String buildCombinedTextFromBlocks(List<InputBlock> inputBlocks, List<SheetListBox> spreadSheetList) {
+  final mergedDelta = Delta();
+
+  for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
+    final block = inputBlocks[blockIdx];
+
+    if (block.function != null) {
+      final result = block.function!.result(getItemAtPath);
+      if (result is num || result is String) {
+        final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
+        mergedDelta.push(Operation.insert(text));
+      }
+
+      // Optional back-patching
+      if (block.indexPath.index != -77) {
+        final targetItem = getItemAtPath(block.indexPath, spreadSheetList);
+        if (targetItem is SheetText) {
+          final controller = targetItem.textEditorConfigurations.controller;
+          controller.replaceText(
+            0,
+            controller.document.length,
+            '$result',
+            TextSelection.collapsed(offset: '$result'.length),
+          );
+        }
+      }
+      continue;
+    }
+
+    final item = getItemAtPath(block.indexPath, spreadSheetList);
+    Delta delta;
+
+    if (item is SheetTextBox) {
+      // Convert from List<Map<String, dynamic>> → Delta
+      delta = Delta.fromJson(item.textEditorController);
+    } else if (item is SheetText) {
+      delta = item.textEditorConfigurations.controller.document.toDelta();
+    } else {
+      continue; // Unknown or null item
+    }
+
+    final ops = delta.toList();
+    final isLastBlock = blockIdx == inputBlocks.length - 1;
+
+    // Trim trailing newline if not last block
+    if (!isLastBlock && ops.isNotEmpty) {
+      final last = ops.last;
+      if (last.data is String) {
+        final String data = last.data as String;
+        if (data == '\n') {
+          ops.removeLast();
+        } else if (data.endsWith('\n')) {
+          final trimmed = data.substring(0, data.length - 1);
+          ops[ops.length - 1] = Operation.insert(trimmed, last.attributes);
+        }
+      }
+    }
+
+    if (block.blockIndex.isNotEmpty && block.blockIndex.first == -2) {
+      for (final op in ops) {
+            mergedDelta.push(op);
+          }
+    } else {
+      for (final i in block.blockIndex) {
+        if (i >= 0 && i < ops.length) {
+          mergedDelta.push(ops[i]);
+        }
+      }
+    }
+  }
+
+  if (inputBlocks.isEmpty || mergedDelta.isEmpty) {
+    mergedDelta.insert('\n');
+  }
+
+  final doc = Document.fromDelta(mergedDelta);
+  return doc.toPlainText().trimRight(); // Remove trailing newlines
 }
 
 
