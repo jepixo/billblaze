@@ -89,7 +89,8 @@ flutter:
   assets:
     - .env
     # - assets/models/phi-2.Q8_0.gguf
-    - assets/models/Phi-3-mini-4k-instruct-q4.gguf
+    # - assets/models/Phi-3-mini-4k-instruct-q4.gguf
+    - assets/models/LFM2-1.2B-Q4_K_M.gguf
   fonts:
     - family: Billabong
       fonts:

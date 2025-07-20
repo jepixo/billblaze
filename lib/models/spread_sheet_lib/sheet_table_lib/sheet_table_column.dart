@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
 
@@ -19,6 +20,8 @@ class SheetTableColumnBox extends SheetItem {
   bool hide;
   @HiveField(7)
   String columnDecoration;
+  @HiveField(8)
+  List<InputBlock> columnInputBlocks;
 
   SheetTableColumnBox({
     required super.id, 
@@ -29,6 +32,7 @@ class SheetTableColumnBox extends SheetItem {
     this.hide = false,
     this.columnDecoration ='',
     required super.indexPath,
+    required this.columnInputBlocks,
     });
 
   SheetTableColumn toSheetTableColumn( ) {
@@ -41,6 +45,7 @@ class SheetTableColumnBox extends SheetItem {
       hide: hide,
       columnDecoration: columnDecoration,
       indexPath: indexPath,
+      columnInputBlocks: columnInputBlocks
       );
   }
   
@@ -56,6 +61,7 @@ class SheetTableColumnBox extends SheetItem {
         'maxSize': maxSize,
         'hide': hide,
         'columnDecoration': columnDecoration,
+        'columnInputBlocks': columnInputBlocks.map((e) => e.toMap()).toList(),
       };
 
       print(map);
@@ -70,6 +76,9 @@ class SheetTableColumnBox extends SheetItem {
         maxSize: (map['maxSize'] as num).toDouble(),
         hide: map['hide'],
         columnDecoration: map['columnDecoration'],
+        columnInputBlocks: (map['columnInputBlocks'] as List)
+          .map((e) => InputBlock.fromMap(e))
+          .toList()
       );
 
   @override
@@ -86,6 +95,7 @@ class SheetTableColumn extends SheetItem {
   double maxSize;
   bool hide;
   String columnDecoration;
+  List<InputBlock> columnInputBlocks;
 
   SheetTableColumn({
     required super.id, 
@@ -96,6 +106,7 @@ class SheetTableColumn extends SheetItem {
     this.hide = false,
     this.columnDecoration ='',
     required super.indexPath,
+    required this.columnInputBlocks,
     });
   SheetTableColumnBox toSheetTableColumnBox( ) {
     return SheetTableColumnBox(
@@ -107,6 +118,7 @@ class SheetTableColumn extends SheetItem {
       minSize: minSize,
       columnDecoration:columnDecoration,
       indexPath: indexPath,
+      columnInputBlocks: columnInputBlocks,
       );
   }
   SheetTableColumn copy() {
@@ -119,6 +131,7 @@ class SheetTableColumn extends SheetItem {
       maxSize: maxSize,
       hide: hide,
       columnDecoration: columnDecoration,
+      columnInputBlocks: columnInputBlocks,
     );
   }
 }

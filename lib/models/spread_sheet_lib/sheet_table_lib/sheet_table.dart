@@ -48,6 +48,7 @@ class SheetTableBox extends SheetItem {
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTable toSheetTable(Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),) {
+    print('toSheetTable : ${super.id}');
     return SheetTable(
       id: super.id, 
       parentId: super.parentId,

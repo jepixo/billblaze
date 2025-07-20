@@ -25,13 +25,14 @@ class SheetTableRowBoxAdapter extends TypeAdapter<SheetTableRowBox> {
       hide: fields[6] as bool,
       rowDecoration: fields[7] as String,
       indexPath: fields[2] as IndexPath,
+      rowInputBlocks: (fields[8] as List).cast<InputBlock>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, SheetTableRowBox obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(3)
       ..write(obj.size)
       ..writeByte(4)
@@ -42,6 +43,8 @@ class SheetTableRowBoxAdapter extends TypeAdapter<SheetTableRowBox> {
       ..write(obj.hide)
       ..writeByte(7)
       ..write(obj.rowDecoration)
+      ..writeByte(8)
+      ..write(obj.rowInputBlocks)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

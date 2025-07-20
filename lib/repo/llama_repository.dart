@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:billblaze/home.dart';
 import 'package:billblaze/providers/llama_provider.dart';
@@ -7,114 +8,88 @@ import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
 class LlamaRepository {
   
-  static init(WidgetRef ref) async {
+  static Future<void> init(WidgetRef ref) async {
+  final llama = ref.read(llamaProvider);
+
+  if (llama.status == LlamaStatus.ready) {
+    print("✅ Model already initialized.");
+    return;
+  }
+
+  if (llama.status == LlamaStatus.loading) {
+    print("⏳ Model is already loading.");
+    return;
+  }
+
+  try {
     print("llama initializing...");
-    try {
-    await ref.read(llamaProvider).init();
-    var llamaParent = ref.read(llamaProvider);
-    // Add a timeout to prevent infinite waiting
+    await llama.init().catchError((e) async {
+      print("❌ Model load failed: $e");
+      await llama.dispose();
+      ref.read(llamaProvider.notifier).state = llama;
+    });
+    if (llama.status == LlamaStatus.ready) print("✅ Model initialized!");
+  } catch (e) {
+    print("❌ Error initializing model: $e");
+  }
+}
+
+  
+  static Future<void> llamaRun(WidgetRef ref, String prompt) async {
+  final llama = ref.read(llamaProvider);
+
+  if (llama.status != LlamaStatus.ready) {
+    print("! Model not ready. Waiting...");
+    await init(ref);
     int attempts = 0;
     const maxAttempts = 200;
-
-    print("Waiting for model to be ready...");
-    while (llamaParent.status != LlamaStatus.ready && attempts < maxAttempts) {
-      await Future.delayed(Duration(milliseconds: 500));
+    while (llama.status != LlamaStatus.ready && attempts < maxAttempts) {
+      await Future.delayed(const Duration(milliseconds: 200));
       attempts++;
-
-      if (attempts % 10 == 0) {
-        print("Still waiting... Status: ${llamaParent.status}");
-      }
-
-      if (llamaParent.status == LlamaStatus.error) {
-        print("Error loading model. Exiting.");
-        // exit(1);
-      }
     }
 
-    if (attempts >= maxAttempts && llamaParent.status != LlamaStatus.ready) {
-      print(
-          "Timeout waiting for model to be ready. Current status: ${llamaParent.status}");
-      print(
-          "Continuing anyway as the model might be ready despite status not being updated...");
+    if (llama.status != LlamaStatus.ready) {
+      print("❌ Timeout: Model still not ready.");
+
+      return;
     }
 
-    print(
-        "Model loaded successfully in isolate! Status: ${llamaParent.status}");
-    ref.read(llamaProvider.notifier).state = llamaParent;    
-    llamaParent.sendPrompt(ref.read(chatHistoryProvider).exportFormat(ChatFormat.gemini));
-     ref.read(llamaProvider).stream.listen((token) {
-    ref.read(aiTokenProvider.notifier).state = ref.read(aiTokenProvider.notifier).state+token;
-
-      // currentResponse.write(token);
-    }, onError: (e) {
-      print("\nSTREAM ERROR: $e");
-    });
-  } catch (e) {
-    print("Error initializing model: $e");
-    // exit(1);
+    print("✅ Model became ready. Proceeding with prompt.");
   }
 
+  // Reset AI response
+  ref.read(aiTokenProvider.notifier).state = '';
 
+  // Update chat history
+  final chatHistory = ref.read(chatHistoryProvider);
+  chatHistory.addMessage(role: Role.user, content: prompt);
+  ref.read(chatHistoryProvider.notifier).state = chatHistory;
 
-  }
+  print("🚀 Sending prompt...");
 
-  static llamaRun(WidgetRef ref, String prompt) async {
-    // await ref.read(llamaProvider).dispose();
-    await init(ref);
-    print("sending prompt...");
-    ref.read(aiTokenProvider.notifier).state ='';
-    var chatHistory = ref.read(chatHistoryProvider);
-    chatHistory.addMessage(role: Role.user, content: prompt+'\n<|assisstant|>');
-    ref.read(chatHistoryProvider.notifier).state = chatHistory;
-    await ref.read(llamaProvider).sendPrompt(ref.read(chatHistoryProvider).exportFormat(ChatFormat.gemini));
-    StringBuffer currentResponse = StringBuffer();
-    ref.read(llamaProvider).stream.listen((token) {
-    ref.read(aiTokenProvider.notifier).state = ref.read(aiTokenProvider.notifier).state+token;
+  await llama.sendPrompt(chatHistory.exportFormat(ChatFormat.chatml));
 
-      currentResponse.write(token);
-    }, onError: (e) {
-      print("\nSTREAM ERROR: $e");
-    });
-    // var chatHistory = ref.read(chatHistoryProvider);
-    ref.read(llamaProvider).completions.listen((event) async {
-    if (event.success) {
-      final notifier = ref.read(chatHistoryProvider.notifier);
-      final history = notifier.state;
-      final messages = history.messages;
-      if (messages.isNotEmpty &&
-          messages.last.role == Role.assistant) {
-        messages.last =
-            Message(role: Role.assistant, content: currentResponse.toString());
-        notifier.state = history;
+  final currentResponse = StringBuffer();
 
-        final full = history.messages; // returns List<Map<String, String>>
-        if (full.length > 5) {
-          final recent = full.sublist(full.length - 3); 
-          final older = full.sublist(0, full.length - 3);
-          // final summaryPrompt = await _buildSummary(ref, older.sublist(1)); // your summarization logic
-          
-          history.clear();
-          // history.addMessage(role: older[0].role, content: older[0].content);
-          // history.addMessage(role: Role.system, content: summaryPrompt);
-          for (var i = 0; i < 3; i++) {
-            history.addMessage(role: recent[i].role, content: recent[i].content);
-          }
-          notifier.state = history;
-        }
-
-
-      }
-      currentResponse.clear();
-    } else {
-      print("Completion failed for prompt: ${event.promptId}");
-    }
-    await ref.read(llamaProvider.notifier).state.dispose();
-    await ref.read(llamaProvider).dispose();
-    // await init(ref);
+  // Listen to token stream
+  llama.stream.listen((token) {
+    ref.read(aiTokenProvider.notifier).state += token;
+    currentResponse.write(token);
   });
 
-  }
-  
+  // Listen to completion events
+  llama.completions.listen((event) {
+    if (event.success) {
+      final history = ref.read(chatHistoryProvider.notifier).state;
+      history.messages.last = Message(role: Role.assistant, content: currentResponse.toString());
+      ref.read(chatHistoryProvider.notifier).state = history;
+      print("✅ Response complete.");
+    } else {
+      print("❌ Completion failed: ${event.promptId}");
+    }
+  });
+}
+
   static Future<String> _buildSummary(
   WidgetRef ref,
   List<Message> older,
@@ -142,6 +117,88 @@ class LlamaRepository {
 
 }
 
+void runLlamaModel(Map args) async {
+  final sendPort = args['sendPort'] as SendPort;
+  final prompt = args['prompt'] as String;
+  final modelPath = args['modelPath'] as String;
+
+  final contextParams = ContextParams()
+    ..nPredict = 64
+    ..nCtx = 8192
+    ..nBatch = 512;
+  print(contextParams);
+  final samplerParams = SamplerParams()
+    ..temp = 0.7
+    ..topK = 64
+    ..topP = 0.95
+    ..penaltyRepeat = 1.1;
+
+  //TODO for release turn this into llama.dll only since it will be in the root 
+  Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+  final llama = Llama(modelPath, ModelParams(), contextParams, samplerParams, false);
+  print(llama.status);
+
+  llama.setPrompt(prompt);
+  while (true) {
+    final (token, done) = llama.getNext();
+    sendPort.send(token);
+    if (done) break;
+  }
+
+  llama.dispose();
+  sendPort.send(null); // signal end
+}
+
+void rnLlamaModel(Map args) async {
+  final SendPort sendPort = args['sendPort'];
+  final String prompt = args['prompt'];
+  final String modelPath = args['modelPath'];
+
+  final contextParams = ContextParams()
+    ..nPredict = 64
+    ..nCtx = 8192
+    ..nBatch = 512;
+
+  final samplerParams = SamplerParams()
+    ..temp = 0.7
+    ..topK = 64
+    ..topP = 0.95
+    ..penaltyRepeat = 1.1;
+
+  final load = LlamaLoad(
+    path: modelPath,
+    modelParams: ModelParams(),
+    contextParams: contextParams,
+    samplingParams: samplerParams,
+    format: ChatMLFormat(),
+  );
+
+  final llama = LlamaParent(load);
+
+  try {
+    await llama.init();
+
+    llama.stream.listen(
+      (token) {
+        sendPort.send(token);
+      },
+      onError: (err) {
+        sendPort.send("❌ ERROR: $err");
+      },
+      onDone: () async {
+        await llama.dispose();
+        sendPort.send(null); // signal end
+      },
+      cancelOnError: true,
+    );
+
+    llama.sendPrompt(prompt);
+  } catch (e, st) {
+    sendPort.send("❌ INIT ERROR: $e\n$st");
+    await llama.dispose();
+    sendPort.send(null); // signal end even if failed
+  }
+}
 // import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
 // class LlamaRepository {

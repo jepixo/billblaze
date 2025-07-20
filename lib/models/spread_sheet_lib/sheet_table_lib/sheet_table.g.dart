@@ -74,4 +74,3 @@ class SheetTableBoxAdapter extends TypeAdapter<SheetTableBox> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
-

@@ -56,6 +56,7 @@ Future<void> main() async {
   Hive.registerAdapter(SheetFunctionAdapter());
   Hive.registerAdapter(SumFunctionAdapter());
   Hive.registerAdapter(RequiredTextAdapter());
+  Hive.registerAdapter(ColumnFunctionAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
