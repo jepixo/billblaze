@@ -92,8 +92,8 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return ColumnFunction(
-      (fields[2] as List).cast<InputBlock>(),
-      fields[3] as String,
+      inputBlocks: (fields[2] as List).cast<InputBlock>(),
+      func: fields[3] as String,
     );
   }
 
