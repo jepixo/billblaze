@@ -108,7 +108,7 @@ class ColumnFunction extends SheetFunction {
   @HiveField(3)
   String func;
 
-  ColumnFunction(this.inputBlocks, this.func) : super(0, 'column');
+  ColumnFunction({required this.inputBlocks, required this.func}) : super(0, 'column');
 
   @override
   dynamic result(Function getItemAtPath) {
@@ -154,10 +154,12 @@ class ColumnFunction extends SheetFunction {
       };
 
   factory ColumnFunction.fromMap(Map<String, dynamic> map) => ColumnFunction(
+      inputBlocks: 
         (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
-            map['func']
+        func:
+            map['func'],
 
       );
 
