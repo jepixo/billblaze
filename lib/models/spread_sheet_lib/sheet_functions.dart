@@ -32,6 +32,8 @@ class SheetFunction {
         return SumFunction.fromMap(map);
       case 'column':
         return ColumnFunction.fromMap(map);
+      case 'count':
+        return CountFunction.fromMap(map);
       // Add more subclasses here if needed
       default:
         throw Exception('Unknown SheetFunction type: ${map['type']}');
@@ -112,6 +114,14 @@ class ColumnFunction extends SheetFunction {
 
   @override
   dynamic result(Function getItemAtPath) {
+    switch (func) {
+      case 'sum':
+        return SumFunction(inputBlocks).result(getItemAtPath);
+      
+      case 'count':
+        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath);
+      default:
+    }
     double sum = 0;
 
     for (final block in inputBlocks) {
@@ -165,12 +175,37 @@ class ColumnFunction extends SheetFunction {
 
 }
 
-class IfFunction extends SheetFunction {
-  IfFunction():super(1,'if');
+@HiveType(typeId:20)
+class CountFunction extends SheetFunction {
+  @HiveField(2)
+  List<InputBlock> inputBlocks;
+
+  @override
+  result(Function getItemAtPath) {
+    return inputBlocks.length;
+  }
+
+  CountFunction(
+    {required this.inputBlocks,}
+  ):super(1,'count');
+
+   @override
+  Map<String, dynamic> toMap() => {
+        'type': 'count',
+        'returnType': returnType,
+        'name': name,
+        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+      };
+
+  factory CountFunction.fromMap(Map<String, dynamic> map) => CountFunction(
+        inputBlocks: (map['inputBlocks'] as List)
+            .map((e) => InputBlock.fromMap(e))
+            .toList(),
+      );
 }
 
-class CountFunction extends SheetFunction {
-  CountFunction():super(1,'count');
+class IfFunction extends SheetFunction {
+  IfFunction():super(1,'if');
 }
 
 class UniqueFunction extends SheetFunction {
