@@ -2441,6 +2441,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     panelIndex.parentId = '';
     panelIndex.itemIndexPath = IndexPath(index: -2);
     panelIndex.parentIndexPath = IndexPath(index: -2);
+    whichPagePropertyIsClicked = 1;
   });
 
   Future<void> _unfocusAll() {
@@ -2582,7 +2583,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       }
       if((getItemAtPath(block.indexPath).id == 'yo' || getItemAtPath(block.indexPath).id != block.id) && block.function == null){
           print('this should be running');
-          block.indexPath = _sheetItemIterator(block.id, spreadSheetList[currentPageIndex],shouldReturn: true).indexPath;
+          var blkindexPath = _sheetItemIterator(block.id, spreadSheetList[currentPageIndex],shouldReturn: true).indexPath;
+          block.indexPath.parent = blkindexPath.parent;
+          block.indexPath.index = blkindexPath.index;
           if(block.indexPath.index ==-42){
             inputBlocks.removeAt(blockIdx);
             if (blockIdx == inputBlocks.length) {
@@ -2590,6 +2593,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               continue;
             }
           }
+          
       }
 
       
@@ -8108,6 +8112,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   _reassignSheetListIndexPath((listItem as SheetList));
                   assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
                   doubleCheckLabelList(labelList);
+                  resetPanelIndex();
+                  whichPropertyTabIsClicked = 1;
                 });
               },
             )
@@ -8359,7 +8365,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             ],
           ),
         ),
-        if( sheetText.inputBlocks.length>1)
+        if( sheetText.inputBlocks.length>1 || sheetText.inputBlocks[0].id != sheetText.id)
          Expanded(
            child: Row(
             children: [
@@ -10436,7 +10442,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ),
                                               // A, B, C,...
                                               ...sheetItem.columnData.asMap().entries.map((el) {
-                                              return Tooltip(
+                                              return UtilityWidgets.maybeTooltip(
                                                 message: ' add ${numberToColumnLabel(el.key+1)} column',
                                                 child: Container(
                                                     width: 30,
@@ -10508,7 +10514,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           return TableRow(
                                             children: [
                                               // to show the row number 1,2,3... used to add the entire row
-                                              Tooltip(
+                                              UtilityWidgets.maybeTooltip(
                                                 message:'add all cells from ${(elm.key+1).toString()} row',
                                                 child: Container(
                                                     width: 30,
@@ -10529,23 +10535,34 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             onTap:(){
                                                               setState(() {
                                                                 if (inputBlocks == null) {
-                                                                  for (var i = 0; i < sheetItem.columnData.length; i++) {
-                                                                    item.inputBlocks.add( InputBlock(
-                                                                    indexPath: sheetItem.cellData[elm.key][i].sheetItem.indexPath, 
-                                                                    blockIndex: [-2],
-                                                                    id: sheetItem.cellData[elm.key][i].sheetItem.id
-                                                                    ));
-                                                                  }
+                                                                  
+                                                                    item.inputBlocks.add(
+                                                                      InputBlock(
+                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      blockIndex: [-2], 
+                                                                      id: 'yo',
+                                                                      function: ColumnFunction(
+                                                                        inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
+                                                                        func:  'sum',
+                                                                      ),
+                                                                    )
+                                                                    );
+                                                                  
                                                                   
                                                                   // inputBlockExpansionList.add(false); 
                                                                 } else {
-                                                                  for (var i = 0; i < sheetItem.columnData.length; i++) {
+                                                                  
                                                                     inputBlocks.add( InputBlock(
-                                                                    indexPath: sheetItem.cellData[elm.key][i].sheetItem.indexPath, 
-                                                                    blockIndex: [-2],
-                                                                    id: sheetItem.cellData[elm.key][i].sheetItem.id
-                                                                    ));
-                                                                  }
+                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      blockIndex: [-2], 
+                                                                      id: 'yo',
+                                                                      function: ColumnFunction(
+                                                                        inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
+                                                                        func:  'sum',
+                                                                      ),
+                                                                    )
+                                                                    );
+                                                                  
                                                                 }
                                                               });
                                                             },
@@ -15759,15 +15776,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       rowInputBlocks.add(inputBlock);
 
                                       // 2) Also link into the existing column
-                                      sheetTableItem.columnData[colIndex]
-                                          .columnInputBlocks
-                                          .add(inputBlock);
-                                      print(sheetTableItem.columnData[colIndex]
-                                          .columnInputBlocks);
+                                      final column = sheetTableItem.columnData[colIndex];
+                                      // if (!column.columnInputBlocks.any((b) => b.id == inputBlock.id)) {
+                                        column.columnInputBlocks.add(inputBlock);
+                                      // }
+
 
                                       return SheetTableCell(
-                                        id:
-                                            '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
+                                        id: '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
                                         parentId: sheetTableItem.id,
                                         indexPath: rowIndexPath,
                                         sheetItem: _addTextField(
@@ -15871,6 +15887,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     );
                                   }
                                 }
+                                for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
+                                  for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
+
+                                  for (int r = 0; r < sheetTableItem.cellData.length; r++) {
+                                    for (int c = 0; c < sheetTableItem.cellData[r].length; c++) {
+                                      final cell = sheetTableItem.cellData[r][c];
+                                      print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                      
+                                      if (cell.sheetItem is! SheetText) continue;
+                                        sheetTableItem.rowData[r].rowInputBlocks.add(
+                                          InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                        sheetTableItem.columnData[c].columnInputBlocks.add(
+                                          InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                      print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                      
+
+                                    }
+                                  }
 
                                   });
                                 },
@@ -16209,49 +16243,39 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       hoverColor: defaultPalette.secondary,
                                       splashColor: defaultPalette.secondary,
                                       highlightColor: defaultPalette.secondary,
-                                      onTap: () {
-                                        setState(() async {
-                                        //  if (axis == 0 && sheetTableItem.rowData.length>1 ) {
-                                        //   sheetTableItem.rowData.removeAt(sheetTableVariables.rowLayerIndex);
-                                        //   sheetTableItem.cellData.removeAt(sheetTableVariables.rowLayerIndex);
-                                        //   if (sheetTableVariables.rowLayerIndex == sheetTableItem.rowData.length) {
-                                        //     sheetTableVariables.rowLayerIndex--;
-                                        //   }
-                                        //  } else if(axis == 1 &&sheetTableItem.columnData.length>1 ){
-                                        //   sheetTableItem.columnData.removeAt(sheetTableVariables.columnLayerIndex);
-                                        //   for (var i = 0; i < sheetTableItem.rowData.length; i++) {
-
-                                        //     sheetTableItem.cellData[i].removeAt(sheetTableVariables.columnLayerIndex);
-                                        //   }
-                                         
-                                        //   if (sheetTableVariables.columnLayerIndex == sheetTableItem.columnData.length) {
-                                        //       sheetTableVariables.columnLayerIndex--;
-                                        //   }
-                                        //  }
-                                        //  rebuildSheetTextItems(sheetTableItem); 
-                                        //   if (getItemAtPath(panelIndex.itemIndexPath).runtimeType is SheetItem) {
-                                        //     resetPanelIndex();
-                                        //     _findItem();
-                                        //   }
-                                        setState(() async {
+                                      onTap: () async {
+                                        print('yo is this even Wokring');
+                                        setState(() {
                                           FocusManager.instance.primaryFocus?.unfocus();
-                                          await Future.delayed(Duration(milliseconds: 30));
-                                         if (axis == 0 && sheetTableItem.rowData.length>1 ) {
+                                          Future.delayed(Duration(milliseconds: 30));
+                                          if(sheetTableVariables.columnLayerIndex == item.indexPath.index || sheetTableVariables.rowLayerIndex == item.indexPath.parent?.index){
+                                            panelIndex.id = sheetTableItem.cellData[0][0].sheetItem.id;
+                                            panelIndex.itemIndexPath = sheetTableItem.cellData[0][0].sheetItem.indexPath;
+                                          }
+                                           if (axis == 0 && sheetTableItem.rowData.length>1 ) {
                                           sheetTableItem.rowData.removeAt(sheetTableVariables.rowLayerIndex);
                                           sheetTableItem.cellData.removeAt(sheetTableVariables.rowLayerIndex);
                                           
-                                          for (int i = sheetTableVariables.rowLayerIndex; i < sheetTableItem.rowData.length; i++) {
-                                            sheetTableItem.rowData[i].indexPath.index -= 1;
+                                          // 2) Now **rebuild** every row/column indexPath from scratch:
+                                          for (var rowIdx = 0; rowIdx < sheetTableItem.rowData.length; rowIdx++) {
+                                            // update the row itself:
+                                            sheetTableItem.rowData[rowIdx].indexPath.index = rowIdx;
 
-                                            for (int j = 0; j < sheetTableItem.cellData[i].length; j++) {
-                                              var cell = sheetTableItem.cellData[i][j];
-                                              cell.indexPath.index -= 1; // shift row part
-                                              //cell indexpath is linked to sheetItemindexpath it will reflect automatically
-                                              // if (cell.sheetItem is SheetText) {
-                                              //   (cell.sheetItem as SheetText).indexPath.parent!.index -= 1; // update row part of item
-                                              // }
+                                            // update each cell in that row:
+                                            for (var colIdx = 0; colIdx < sheetTableItem.cellData[rowIdx].length; colIdx++) {
+                                              
+                                              final cell = sheetTableItem.cellData[rowIdx][colIdx];
+                                              cell.indexPath.index = rowIdx;
+                                              final rowIndexPath = cell.indexPath;
+                                              if (cell.sheetItem is SheetText) {
+                                                final st = cell.sheetItem as SheetText;
+                                                // st.indexPath.index = ;
+                                                // also update any self-linked InputBlock
+                                                
+                                              }
                                             }
                                           }
+                                          
 
                                           if (sheetTableVariables.rowLayerIndex == sheetTableItem.rowData.length) {
                                             sheetTableVariables.rowLayerIndex--;
@@ -16262,20 +16286,47 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           for (var i = 0; i < sheetTableItem.rowData.length; i++) {
                                             sheetTableItem.cellData[i].removeAt(sheetTableVariables.columnLayerIndex);
                                           }
-                                          for (int i = sheetTableVariables.columnLayerIndex; i < sheetTableItem.columnData.length; i++) {
-                                            sheetTableItem.columnData[i].indexPath.index -= 1;
 
-                                            for (int row = 0; row < sheetTableItem.rowData.length; row++) {
-                                              final cell = sheetTableItem.cellData[row][i];
-                                              // cell.indexPath.index -= 1; // column is deleted so this wont change
+                                          for (var rowIdx = 0; rowIdx < sheetTableItem.rowData.length; rowIdx++) {
+                                            // update the row itself:
+                                            sheetTableItem.rowData[rowIdx].indexPath.index = rowIdx;
+
+                                            // update each cell in that row:
+                                            for (var colIdx = 0; colIdx < sheetTableItem.cellData[rowIdx].length; colIdx++) {
+                                              
+                                              final cell = sheetTableItem.cellData[rowIdx][colIdx];
+                                              cell.indexPath.index = rowIdx;
                                               if (cell.sheetItem is SheetText) {
-                                                (cell.sheetItem as SheetText).indexPath.index -= 1; // update column part of item
+                                                final st = cell.sheetItem as SheetText;
+                                                st.indexPath.index = colIdx;
+                                                // st.indexPath.index = ;
+                                                // also update any self-linked InputBlock
+                                                
                                               }
                                             }
                                           }
 
                                          }
-                                         
+                                         for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
+                                          for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
+
+                                          for (int r = 0; r < sheetTableItem.cellData.length; r++) {
+                                            for (int c = 0; c < sheetTableItem.cellData[r].length; c++) {
+                                              final cell = sheetTableItem.cellData[r][c];
+                                              // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                              
+                                              if (cell.sheetItem is! SheetText) continue;
+                                                sheetTableItem.rowData[r].rowInputBlocks.add(
+                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                                sheetTableItem.columnData[c].columnInputBlocks.add(
+                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                              // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                              
+
+                                            }
+                                          }
+                                          for (final row in sheetTableItem.rowData) print('row :'+row.rowInputBlocks.toString());
+                                          for (final col in sheetTableItem.columnData) print('col :'+col.columnInputBlocks.toString());
                                          if (sheetTableVariables.columnLayerIndex == sheetTableItem.columnData.length) {
                                             sheetTableVariables.columnLayerIndex--;
                                           }
@@ -16285,9 +16336,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                          whichPropertyTabIsClicked = 4;
                                         });
                                          
-                                         print(sheetTableItem.cellData.toString());
+                                        //  print(sheetTableItem.cellData.toString());
                                         await Future.delayed(Duration(milliseconds: 30));
-                                        });
+                                      
                                       },
                                       child: Container(
                                           padding: EdgeInsets.all(0),
