@@ -10,7 +10,6 @@ import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
-import 'package:billblaze/components/widgets/gradient_text.dart';
 import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/home.dart';
@@ -59,7 +58,7 @@ import 'package:billblaze/components/tab_container/tab_controller.dart';
 import 'package:billblaze/util/hex_input_formatter.dart';
 import 'package:flutter/rendering.dart';
 import "package:billblaze/components/color_picker.dart"
-    show ColorPicker, ColorTools, FlexPickerNoNullColorExtensions, Picker, PickerOrientation;
+    show ColorTools, FlexPickerNoNullColorExtensions;
 // import 'package:flex_color_picker/flex_color_picker.dart' as fl;
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
@@ -91,7 +90,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
-import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart' show FixedTableSpanExtent, TableSpan, TableVicinity, TableView, TableViewCell;
 import 'dart:math' as math;
 
 import 'package:uuid/uuid.dart';
@@ -127,25 +125,18 @@ class PanelIndex {
 }
 
 class SelectedIndexPaths {
-  // int pageIndex;
-  String id;
-  Map<String,IndexPath> selectedIndexes;
+  Map<String, PanelIndex> selectedIndexes;
   SelectedIndexPaths({
-    // required this.pageIndex,
-    required this.id,
     required this.selectedIndexes,
   });
   SelectedIndexPaths copyWith({
-    String? id,
-    Map<String,IndexPath>? selectedIndexes,
+    Map<String, PanelIndex>? selectedIndexes,
   }) {
     return SelectedIndexPaths(
-      id: id ?? this.id,
       selectedIndexes: selectedIndexes ?? this.selectedIndexes,
     );
   }
 }
-
 
 
 
@@ -233,6 +224,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   double get sHeight => MediaQuery.of(context).size.height;
   DateTime dateTimeNow = DateTime.now();
   PanelIndex panelIndex = PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
+  Map<String, PanelIndex> selectedIndexPaths = {};
   List<SheetList?> sheetListClipboard =[null,null];
   PageController pageViewIndicatorController = PageController();
   PageController textStyleTabControler = PageController();
@@ -2245,12 +2237,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       item = getItemAtPath(panelIndex.itemIndexPath) as SheetText;
           // _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
           //     as SheetText;
+      
+        if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+          if (selectedIndexPaths[item.id] == null) {
+            selectedIndexPaths.addAll({
+              item.id: panelIndex.copyWith(),
+            });
+          }
+        } else {
+          selectedIndexPaths = {
+            item.id: panelIndex.copyWith(),
+          };
+        }
+      
       setState(() {
         if(whichPropertyTabIsClicked != 2){
           whichPropertyTabIsClicked = 2;
         }
         
-      
+      // print(selectedIndexPaths);
       // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
       if (item.textDecoration.id == 'yo' || sheetDecorationMap[item.textDecoration.id] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
         textDecorationNameController.text = '[Unassigned]';
@@ -2274,8 +2279,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             hide:true,indexPath: IndexPath(index:-1));
       panelIndex.id = '';
       panelIndex.itemIndexPath = IndexPath(index:-1);
+      selectedIndexPaths = {};
+      print(selectedIndexPaths);
       print('findItem? Yeah not found.'+e.toString());
     });
+    } finally{
+      print(selectedIndexPaths);
     }
     
   }
@@ -2288,6 +2297,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         sheetListItem = getItemAtPath(panelIndex.parentIndexPath!) as SheetList;
             // print('sheetDecorationVariables hello.');
             // print(sheetListItem.parentId);
+        
+          if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+            if (selectedIndexPaths[sheetListItem.id] == null)  {
+                selectedIndexPaths.addAll({
+                sheetListItem.id: panelIndex.copyWith(),
+                });
+              }
+          } else {
+            selectedIndexPaths = {
+            sheetListItem.id: panelIndex.copyWith(),
+            };
+          }
+        
       setState(() {
         // var tmpinx = int.tryParse(sheetListItem.listDecoration.id.substring(sheetListItem.listDecoration.id.indexOf('/') + 1))??-111;
         if (sheetListItem.listDecoration == 'yo' || sheetDecorationMap[sheetListItem.listDecoration] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
@@ -2322,6 +2344,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           try {
             sheetTable =  getItemAtPath(panelIndex.parentIndexPath!) as SheetTable;
             // _sheetTableIterator(panelIndex.parentId, spreadSheetList[currentPageIndex])!;
+            
             try {
               _findItem();
             } on Exception catch (e) {
@@ -2338,6 +2361,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         // var rwinx = int.tryParse(sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.substring(sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration.indexOf('/') + 1))??-42;
         // var clinx = int.tryParse(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.substring(sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration.indexOf('/') + 1))??-42;
         sheetTableItem = sheetTable!;
+        
+        if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+          if (selectedIndexPaths[sheetTableItem.id] == null)  {
+            selectedIndexPaths.addAll({
+              sheetTableItem.id: panelIndex.copyWith(),
+            });
+          }
+        } else {
+          selectedIndexPaths = {
+            sheetTableItem.id: panelIndex.copyWith(),
+          };
+        }
+        
         panelIndex.parentId = sheetTable!.id;
         panelIndex.parentIndexPath = sheetTable!.indexPath;
         whichPropertyTabIsClicked = 4;
@@ -5551,7 +5587,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         panelIndex.parentIndexPath = sheetList.indexPath;
                         
                         whichPropertyTabIsClicked = 2;
-                      
                         item = sheetText;
                         _findItem();
                         
@@ -5688,8 +5723,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             // buildlistw
             decoration: BoxDecoration(
               border: Border.all(
-                  width: panelIndex.parentId == sheetList.id ? 1.5 : 1.2,
-                  color: panelIndex.parentId == sheetList.id
+                  width: (panelIndex.parentId == sheetList.id || selectedIndexPaths[sheetList.id] != null) ? 1.5 : 1.2,
+                  color: (panelIndex.parentId == sheetList.id || selectedIndexPaths[sheetList.id] != null)
                       ?  spreadSheetList[currentPageIndex].id == sheetList.id
                         ? defaultPalette.transparent
                         :defaultPalette.extras[1]
@@ -5750,6 +5785,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           panelIndex.itemIndexPath = IndexPath(index: -2);
                           panelIndex.parentIndexPath = IndexPath(index: -2);
                           print(panelIndex);
+                          selectedIndexPaths ={};
+                          whichPropertyTabIsClicked =1;
                         });
                       },
                       child: ConstrainedBox(
@@ -6471,7 +6508,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   return 
     Container(
       margin: const EdgeInsets.only(
-        // bottom: 2,
         left: 2,
         top: 4,
         right: 2),
@@ -6485,13 +6521,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         border: Border.all(
           strokeAlign:
               BorderSide.strokeAlignInside,
-          width: panelIndex.id ==
-                  sheetText.id
+          width:( panelIndex.id ==
+                  sheetText.id || selectedIndexPaths[sheetText.id]!=null)
               ? 2
               : 1.2,
     
-          color: panelIndex.id ==
-                  sheetText.id
+          color:( panelIndex.id ==
+                  sheetText.id || selectedIndexPaths[sheetText.id]!=null)
               ? defaultPalette.tertiary
               : defaultPalette.black,
         ),
@@ -6541,8 +6577,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               if(sheetText.name != 'unlabeled')
           ...[
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: mapValue(value: (sWidth *
-                                (1 - wH1DividerPosition - wH2DividerPosition)).clamp(200, double.infinity), inMin: 200, inMax: 2122, outMin: 20, outMax: 200)),
+              constraints: BoxConstraints(maxWidth: mapValue(value: (sWidth * (1 - wH1DividerPosition - wH2DividerPosition)).clamp(200, double.infinity), inMin: 200, inMax: 2122, outMin: 20, outMax: 200)),
               child: 
               Text(
                   sheetText.name,
@@ -8280,6 +8315,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 sheetTableVariables.rowLayerIndex = row;
                                                                 sheetTableVariables.columnLayerIndex = col;
                                                                 whichTablePropertyTabIsClicked = 1;
+                                                                _findItem();
                                                               });
                                                             },
                                                             child: Container(
@@ -8326,8 +8362,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     decoration: BoxDecoration(
       color: defaultPalette.primary,
       border: Border.fromBorderSide(
-            panelIndex.id ==
-                    sheetText.id
+            ( panelIndex.id ==
+                  sheetText.id || selectedIndexPaths[sheetText.id]!=null)
                 ?
             BorderSide( 
             strokeAlign:
@@ -8385,8 +8421,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     scale:0.8,
                     child: QuillEditor(
                       configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
-                      focusNode:
-                          sheetText.focusNode,
+                      focusNode: FocusNode(),
                       scrollController:
                           ScrollController(),
                     ),
@@ -9028,7 +9063,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           };
           
         
-
         case SheetTextType.phone:
           if(check)
           {
@@ -9100,7 +9134,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         case SheetTextType.string:
         default:
           return (int index, int length, Object? data) => true;
-          break;
       }
   }
 
@@ -9418,6 +9451,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     return MaterialAccentColor(color.value, swatch);
   }
 
+  void updateSheetTextProperties(void Function(SheetText) updates){
+    for (var i = 0; i < selectedIndexPaths.length; i++) {
+      final element = selectedIndexPaths.values.toList()[i]; 
+      if (selectedIndexPaths.keys.toList()[i].startsWith('TX')) {
+        final sheetText = getItemAtPath(element.itemIndexPath);
+        if (sheetText is SheetText) {
+          print(sheetText.id);   
+          updates(sheetText);  
+        }
+      }
+    
+    }
+  }
+
   _getProperTiesCards() {
     switch (whichPropertyTabIsClicked) {
       case 2:
@@ -9642,33 +9689,45 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           double parsedValue = double.parse(newValue.toStringAsFixed(4));
                           switch (s) {
                             case 0:
-                               item.textEditorController
-                                .formatSelection(
-                              Attribute.clone(
-                                  Attribute.size,
-                                  parsedValue.toString()),
-                              );
+                              //  item.textEditorController
+                              //   .formatSelection(
+                              // Attribute.clone(
+                              //     Attribute.size,
+                              //     parsedValue.toString()),
+                              // );
+                              updateSheetTextProperties((p0) {
+                                p0.updateFontSize( parsedValue);
+                              },);
                               break;
                             case 1:
-                              item.textEditorController
-                                  .formatSelection(
-                                LetterSpacingAttribute(
-                                    (parsedValue).toString()),
-                              );
+                              // item.textEditorController
+                              //     .formatSelection(
+                              //   LetterSpacingAttribute(
+                              //       (parsedValue).toString()),
+                              // );
+                               updateSheetTextProperties((p0) {
+                                p0.updateLetterSpacing( parsedValue);
+                              },);
                               break;
                             case 2:
-                              item.textEditorController
-                                  .formatSelection(
-                                WordSpacingAttribute(
-                                    (parsedValue).toString()),
-                              );
+                              // item.textEditorController
+                              //     .formatSelection(
+                              //   WordSpacingAttribute(
+                              //       (parsedValue).toString()),
+                              // );
+                               updateSheetTextProperties((p0) {
+                                p0.updateWordSpacing( parsedValue);
+                              },);
                               break;
                             case 3:
-                              item.textEditorController
-                                  .formatSelection(
-                                LineHeightAttribute(
-                                    (parsedValue).toString()),
-                              );
+                              // item.textEditorController
+                              //     .formatSelection(
+                              //   LineHeightAttribute(
+                              //       (parsedValue).toString()),
+                              // );
+                               updateSheetTextProperties((p0) {
+                                p0.updateLineHeight( parsedValue);
+                              },);
                               break;    
                             default:
                           }
@@ -11112,6 +11171,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           final block = inBlock[inx];
                           // If the block has a function, don't try to fetch an item at the indexPath
                           final hasFunction = block.function != null;
+                          SheetFunction? sheetFunction;
+                          int length =2;
+                           if (inBlock[inx].function is SumFunction) {
+                            sheetFunction =(inBlock[inx].function as SumFunction);
+                            length = (inBlock[inx].function as SumFunction).inputBlocks.length;
+                          } else if (inBlock[inx].function is ColumnFunction) {
+                            sheetFunction =(inBlock[inx].function as ColumnFunction);
+                            length = (inBlock[inx].function as ColumnFunction).inputBlocks.length;
+                          }
                           String? delta;
                           SheetText? itemAtPath;
                           if (!hasFunction) {
@@ -11142,7 +11210,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
                                           height: 60,
-                                          width: width,
+                                          width: width+13,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
                                             color: defaultPalette.tertiary,
@@ -11296,10 +11364,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       GestureDetector(
                                         onTap:(){
                                           setState(() {
-                                            if (inBlock[inx].function is SumFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as SumFunction).inputBlocks;
-                                            } else if (inBlock[inx].function is ColumnFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as ColumnFunction).inputBlocks;
+                                            if (sheetFunction is SumFunction) {
+                                              selectedInputBlocks =(sheetFunction as SumFunction).inputBlocks;
+                                            } else if (sheetFunction is ColumnFunction) {
+                                              selectedInputBlocks =(sheetFunction as ColumnFunction).inputBlocks;
                                             }
                                             
                                           });
@@ -11317,8 +11385,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   defaultPalette.primary,
                                                   defaultPalette.primary,
                                                   defaultPalette.primary,
-                                                  inBlock[inx].function is SumFunction
-                                                    ? selectedInputBlocks ==(inBlock[inx].function as SumFunction).inputBlocks 
+                                                  sheetFunction is SumFunction
+                                                    ? selectedInputBlocks ==(sheetFunction as SumFunction).inputBlocks 
                                                       ? defaultPalette.extras[0]
                                                       : defaultPalette.primary
                                                       : defaultPalette.primary,
@@ -11377,7 +11445,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
+                                                                if(sheetFunction is SumFunction)
                                                                 TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                if(sheetFunction is ColumnFunction)
+                                                                TextSpan(text: ' ${sheetFunction.func}: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                
                                                                 TextSpan(
                                                                   text: '${block.function!.result(getItemAtPath).toString()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
@@ -11393,7 +11465,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         Expanded(
                                                           flex:5,
                                                           child: Text(
-                                                            inBlock[inx].function!.name,
+                                                            sheetFunction?.name ??'',
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
@@ -11482,7 +11554,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     children: [
                                                                       TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
                                                                       TextSpan(
-                                                                        text: '0 - ${((inBlock[inx].function! as SumFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                                        text: '0 - ${(length - 1).clamp(0, double.infinity)}',
                                                                         style: TextStyle(color:defaultPalette.primary),
                                                                       ),
                                                                     ],
@@ -11514,6 +11586,82 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
+                                                        if(sheetFunction is ColumnFunction)
+                                                        Material(
+                                                          color: defaultPalette.transparent,
+                                                          child: InkWell(
+                                                            hoverColor: defaultPalette.primary.withOpacity(0.05),
+                                                            highlightColor: defaultPalette.primary.withOpacity(0.05),
+                                                            splashColor: defaultPalette.primary.withOpacity(0.05),
+                                                            onTapDown:(d){
+                                                              ContextMenu(
+                                                                entries: [
+                                                                  MenuItem(
+                                                                    label: 'sum',
+                                                                    style: GoogleFonts.lexend(
+                                                                      fontWeight: FontWeight.w300,
+                                                                      color: defaultPalette.primary,
+                                                                    ),
+                                                                    hoverColor: defaultPalette.extras[0],
+                                                                  onSelected: () {
+                                                                    setState(() {
+                                                                      (sheetFunction as ColumnFunction).func = 'sum';
+                                                                    });
+                                                                    
+                                                                  },
+                                                                  ),
+                                                                  MenuItem(label: 'count',
+                                                                  style: GoogleFonts.lexend(
+                                                                      fontWeight: FontWeight.w300,
+                                                                      color: defaultPalette.primary,
+                                                                    ),
+                                                                  hoverColor: defaultPalette.extras[0],
+                                                                  onSelected: () {
+                                                                    setState(() {
+                                                                      (sheetFunction as ColumnFunction).func = 'count';
+                                                                    });
+                                                                  },
+                                                                  ),
+                                                                ],
+                                                                boxDecoration: BoxDecoration(
+                                                                    boxShadow: [
+                                                                      BoxShadow(
+                                                                        color: defaultPalette
+                                                                            .black,
+                                                                        blurRadius: 2,
+                                                                      )
+                                                                    ],
+                                                                    color: defaultPalette.extras[0],
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            10)),
+                                                                position: Offset(
+                                                                    d.globalPosition.dx,
+                                                                    d.globalPosition.dy+20))
+                                                            .show(context);
+                                                              },
+                                                              child: Row(
+                                                                children: [
+                                                                  Icon(
+                                                                    TablerIcons.caret_down_filled,
+                                                                    size: 12,
+                                                                    color: defaultPalette.primary,
+                                                                  ),
+                                                                  Text(
+                                                                    '${(sheetFunction as ColumnFunction).func}:',
+                                                                    style: GoogleFonts.lexend(
+                                                                      letterSpacing: -0.5,
+                                                                      fontWeight: FontWeight.w400,
+                                                                      fontSize: 14,
+                                                                      color: defaultPalette.extras[8],
+                                                                    ),),
+                                                                  const SizedBox(width: 3),
+                                                                ],
+                                                              ),
+                                                              
+                                                              )
+                                                            ),
+                                                        const SizedBox(width: 3),
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -11524,6 +11672,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
+                                                                if(sheetFunction is SumFunction)
                                                                 TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
                                                                   text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
@@ -12139,6 +12288,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           if(funcBlock.isExpanded)
                           Container(
                             padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            width: width+13,
                             child: Column(
                               children: [
                                 Container(
@@ -12180,8 +12330,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ),
                                 ),
                                 //add field or function inside the expansion of a function tile
-                                SizedBox(
+                                Container(
                                   width:width,
+                                  margin:EdgeInsets.only(right:1),
                                   child: Material(
                                   color: defaultPalette.primary,
                                   child: InkWell(
@@ -12786,7 +12937,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     key: ValueKey(index),
                                     index: index,
                                     child: Padding(
-                                      padding: const EdgeInsets.only(bottom:8.0),
+                                      padding: const EdgeInsets.only(bottom:8.0, left:1.5),
                                       child: Row(
                                         children: [
                                           Expanded(
@@ -13075,6 +13226,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   const SizedBox(
                                         height:3
                                       ),
+                                  //id
                                   Row(
                                     children: [
                                       const SizedBox(
@@ -13130,6 +13282,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   Row(
                                     children: [
                                       Expanded(child: titleTile('label', TablerIcons.signature, fontSize:15)),
+                                      
                                       //TextField
                                       Expanded(
                                         child: SizedBox(
@@ -13236,9 +13389,80 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       const SizedBox(width:2)  
                                     ],
                                   ), 
-                                  
-                                  const SizedBox(
-                                    height:4
+                                  //'type'
+                                  Row(
+                                    children: [
+                                      Expanded(child: titleTile('type', TablerIcons.writing, fontSize: 15, )),
+                                      Expanded(
+                                        child: MouseRegion(
+                                          cursor:SystemMouseCursors.click,
+                                          child: GestureDetector(
+                                            onTapDown:(d){
+                                              setState(() {
+                                                isTableDecorationModeDropped= !isTableDecorationModeDropped;
+                                                // final entries = buildContextMenuEntries(sheetText.textEditorController, index, sheetText, sheetList);
+                                                  ContextMenu(
+                                                      entries: [
+                                                        typeChangeItem('string',0),
+                                                        typeChangeItem('number',1),
+                                                        typeChangeItem('integer',2),
+                                                        typeChangeItem('bool',3),
+                                                        typeChangeItem('date',4),
+                                                        typeChangeItem('time',5),
+                                                        // typeChangeItem('email',6),
+                                                        // typeChangeItem('url',7),
+                                                        typeChangeItem('phone',8),
+                                                        // typeChangeItem('choice',9),
+                                                        // typeChangeItem('currency',10),
+                                                      ],
+                                                      boxDecoration: BoxDecoration(
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: defaultPalette
+                                                                  .black,
+                                                              blurRadius: 2,
+                                                            )
+                                                          ],
+                                                          color: defaultPalette.extras[0],
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                  10)),
+                                                      position: Offset(
+                                                          d.globalPosition.dx,
+                                                          d.globalPosition.dy+20))
+                                                  .show(context);
+                                              });
+                                            },
+                                            child: Container(
+                                              height:26,
+                                              decoration:BoxDecoration(
+                                                color: defaultPalette.transparent,
+                                                borderRadius:BorderRadius.circular(20),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(child: Text(
+                                                    '${item.type.name}  ',
+                                                    maxLines: 1,
+                                                    overflow:TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.end,
+                                                    style: GoogleFonts.lexend(
+                                                      fontWeight: FontWeight.w500,
+                                                      letterSpacing: -1,
+                                                      fontSize:15
+                                                    ))),
+                                                  SizedBox(width:6)
+                                                ],
+                                              )
+                                        ),
+                                                                                ),
+                                                                              ),
+                                      ),
+                                        
+                                    ],
+                                  ),
+                                 const SizedBox(
+                                    height:2
                                   ),
                                   //'hide'
                                   Container(
@@ -13255,7 +13479,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       second: true,
                                       onChanged: (value) {
                                         setState(() {
-                                          item.hide = value;    
+                                          updateSheetTextProperties((p0) {
+                                            p0.toggleVisibility();
+                                          },);
                                         });
                                       },
                                       animationCurve: Curves.easeInOutExpo,
@@ -13310,12 +13536,21 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       second: true,
                                       onChanged: (value) {
                                         setState(() {
-                                          item.locked = value; 
-                                          if (item.locked) {
-                                            item.textEditorConfigurations.controller.onReplaceText = (int _,int_x, Object? _r) => false;
-                                          } else {
-                                            item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(item.type.index, item.textEditorConfigurations.controller);
-                                          }
+                                          // item.locked = value; 
+                                          // if (item.locked) {
+                                          //   item.textEditorConfigurations.controller.onReplaceText = (int _,int_x, Object? _r) => false;
+                                          // } else {
+                                          //   item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(item.type.index, item.textEditorConfigurations.controller);
+                                          // }
+                                          updateSheetTextProperties((p0) {
+                                            p0.toggleLock();
+                                            if (p0.locked) {
+                                                  p0.textEditorConfigurations.controller.onReplaceText = (int _,int_x, Object? _r) => false;
+                                                } else {
+                                                  p0.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(p0.type.index, p0.textEditorConfigurations.controller);
+                                                }
+                                          },);
+                                          FocusManager.instance.primaryFocus?.unfocus();
                                         });
                                       },
                                       animationCurve: Curves.easeInOutExpo,
@@ -13457,23 +13692,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.bold),
                                         onClick: () {
-                                          final currentValue = item
-                                              .textEditorController
-                                              .getSelectionStyle()
-                                              .attributes
-                                              .containsKey(
-                                                  Attribute.bold
-                                                      .key);
-                                          item.textEditorController
-                                              .formatSelection(
-                                            currentValue
-                                                ? Attribute.clone(
-                                                    Attribute
-                                                        .bold,
-                                                    null)
-                                                : Attribute
-                                                    .bold,
-                                          );
+                                          // final currentValue = item
+                                          //     .textEditorController
+                                          //     .getSelectionStyle()
+                                          //     .attributes
+                                          //     .containsKey(
+                                          //         Attribute.bold
+                                          //             .key);
+                                          // item.textEditorController
+                                          //     .formatSelection(
+                                          //   currentValue
+                                          //       ? Attribute.clone(
+                                          //           Attribute
+                                          //               .bold,
+                                          //           null)
+                                          //       : Attribute
+                                          //           .bold,
+                                          // );
+                                          updateSheetTextProperties((p0){
+                                            p0.toggleBold();
+                                          });
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.bold,
@@ -13492,24 +13730,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.italic),
                                       onClick: () {
-                                        final currentValue = item
-                                            .textEditorController
-                                            .getSelectionStyle()
-                                            .attributes
-                                            .containsKey(
-                                                Attribute
-                                                    .italic
-                                                    .key);
-                                        item.textEditorController
-                                            .formatSelection(
-                                          currentValue
-                                              ? Attribute.clone(
-                                                  Attribute
-                                                      .italic,
-                                                  null)
-                                              : Attribute
-                                                  .italic,
-                                        );
+                                        updateSheetTextProperties((p0){
+                                            p0.toggleItalic();
+                                          });
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.italic,
@@ -13529,25 +13752,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 Attribute
                                                     .underline),
                                       onClick:  () {
-                                              final currentValue = item
-                                                  .textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes
-                                                  .containsKey(
-                                                      Attribute
-                                                          .underline
-                                                          .key);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .underline,
-                                                        null)
-                                                    : Attribute
-                                                        .underline,
-                                              );
-                                            },
+                                        updateSheetTextProperties((p0){
+                                          p0.toggleUnderline();
+                                        });
+                                      },
                                       topLayerChild: const Icon(
                                         TablerIcons.underline,
                                         color: Colors.black,
@@ -13565,24 +13773,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.strikeThrough),
                                       onClick: () {
-                                              final currentValue = item
-                                                  .textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes
-                                                  .containsKey(Attribute
-                                                      .strikeThrough
-                                                      .key);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .strikeThrough,
-                                                        null)
-                                                    : Attribute
-                                                        .strikeThrough,
-                                              );
-                                            },
+                                        updateSheetTextProperties((p0){
+                                          p0.toggleStrikeThrough();
+                                        });
+                                      },
                                       topLayerChild: const Icon(
                                         TablerIcons.strikethrough,
                                         color: Colors.black,
@@ -13607,85 +13801,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.leftAlignment),
                                         onClick:  () {
-                                              var currentValue = getIsToggled(
-                                                  item.textEditorController
-                                                      .getSelectionStyle()
-                                                      .attributes,
-                                                  Attribute
-                                                      .leftAlignment);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .leftAlignment,
-                                                        null)
-                                                    : Attribute
-                                                        .leftAlignment,
-                                              );
-                                              final uncurrentValue = item
-                                                  .textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes
-                                                  .containsKey(Attribute
-                                                      .rightAlignment
-                                                      .key);
-                                              if (uncurrentValue &&
-                                                  currentValue) {
-                                                item.textEditorController
-                                                    .formatSelection(
-                                                  Attribute.clone(
-                                                      Attribute
-                                                          .leftAlignment,
-                                                      null),
-                                                );
-                                                currentValue = getIsToggled(
-                                                    item.textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes,
-                                                    Attribute
-                                                        .leftAlignment);
-                                              }
-                                              print(
-                                                  '$uncurrentValue && $currentValue');
-                                              if (uncurrentValue &&
-                                                  !currentValue) {
-                                                print('un');
-                                                print(
-                                                    uncurrentValue);
-                                                item.textEditorController
-                                                    .formatSelection(
-                                                        Attribute.clone(
-                                                            Attribute
-                                                                .rightAlignment,
-                                                            null));
-                                                item.textEditorController
-                                                    .formatSelection(
-                                                  Attribute
-                                                      .leftAlignment,
-                                                );
-                                                setState(() {
-                                                  currentValue = getIsToggled(
-                                                      item.textEditorController
-                                                          .getSelectionStyle()
-                                                          .attributes,
-                                                      Attribute
-                                                          .leftAlignment);
-                                                });
-                                                print('cu');
-                                                print(currentValue);
-                                                return;
-                                              }
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .leftAlignment,
-                                                        null)
-                                                    : Attribute
-                                                        .leftAlignment,
-                                              );
+                                            updateSheetTextProperties((p0){
+                                              p0.alignLeft();
+                                            });
                                             },
                                         topLayerChild: const Icon(
                                           TablerIcons.align_left,
@@ -13704,23 +13822,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     .attributes,
                                                 Attribute.centerAlignment),
                                       onClick: () {
-                                              var currentValue = getIsToggled(
-                                                  item.textEditorController
-                                                      .getSelectionStyle()
-                                                      .attributes,
-                                                  Attribute
-                                                      .centerAlignment);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .centerAlignment,
-                                                        null)
-                                                    : Attribute
-                                                        .centerAlignment,
-                                              );
-                                            },
+                                        updateSheetTextProperties((p0){
+                                          p0.alignCenter();
+                                        });
+                                      },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_center,
                                         color: Colors.black,
@@ -13738,85 +13843,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.rightAlignment),
                                       onClick:  () {
-                                              var currentValue = getIsToggled(
-                                                  item.textEditorController
-                                                      .getSelectionStyle()
-                                                      .attributes,
-                                                  Attribute
-                                                      .rightAlignment);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .rightAlignment,
-                                                        null)
-                                                    : Attribute
-                                                        .rightAlignment,
-                                              );
-                                              final uncurrentValue = item
-                                                  .textEditorController
-                                                  .getSelectionStyle()
-                                                  .attributes
-                                                  .containsKey(Attribute
-                                                      .leftAlignment
-                                                      .key);
-                                              if (uncurrentValue &&
-                                                  currentValue) {
-                                                item.textEditorController
-                                                    .formatSelection(
-                                                  Attribute.clone(
-                                                      Attribute
-                                                          .rightAlignment,
-                                                      null),
-                                                );
-                                                currentValue = getIsToggled(
-                                                    item.textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes,
-                                                    Attribute
-                                                        .rightAlignment);
-                                              }
-                                              print(
-                                                  '$uncurrentValue && $currentValue');
-                                              if (uncurrentValue &&
-                                                  !currentValue) {
-                                                print('un');
-                                                print(
-                                                    uncurrentValue);
-                                                item.textEditorController
-                                                    .formatSelection(
-                                                        Attribute.clone(
-                                                            Attribute
-                                                                .leftAlignment,
-                                                            null));
-                                                item.textEditorController
-                                                    .formatSelection(
-                                                  Attribute
-                                                      .rightAlignment,
-                                                );
-                                                setState(() {
-                                                  currentValue = getIsToggled(
-                                                      item.textEditorController
-                                                          .getSelectionStyle()
-                                                          .attributes,
-                                                      Attribute
-                                                          .rightAlignment);
-                                                });
-                                                print('cu');
-                                                print(currentValue);
-                                                return;
-                                              }
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .rightAlignment,
-                                                        null)
-                                                    : Attribute
-                                                        .rightAlignment,
-                                              );
+                                            updateSheetTextProperties((p0){
+                                              p0.alignRight();
+                                            });
                                             },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_right,
@@ -13835,23 +13864,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.justifyAlignment),
                                       onClick: () {
-                                              var currentValue = getIsToggled(
-                                                  item.textEditorController
-                                                      .getSelectionStyle()
-                                                      .attributes,
-                                                  Attribute
-                                                      .justifyAlignment);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                currentValue
-                                                    ? Attribute.clone(
-                                                        Attribute
-                                                            .justifyAlignment,
-                                                        null)
-                                                    : Attribute
-                                                        .justifyAlignment,
-                                              );
-                                            },
+                                          updateSheetTextProperties((p0){
+                                            p0.alignJustify();
+                                          });
+                                        },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_justified,
                                         color: Colors.black,
@@ -13876,13 +13892,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.blockQuote),
                                         onClick: () {
-                                          final currentValue = item.textEditorController
-                                              .getSelectionStyle()
-                                              .attributes
-                                              .containsKey(Attribute.blockQuote.key);
-                                          item.textEditorController.formatSelection(
-                                            currentValue ? Attribute.clone(Attribute.blockQuote, null) : Attribute.blockQuote,
-                                          );
+                                          // final currentValue = item.textEditorController
+                                          //     .getSelectionStyle()
+                                          //     .attributes
+                                          //     .containsKey(Attribute.blockQuote.key);
+                                          // item.textEditorController.formatSelection(
+                                          //   currentValue ? Attribute.clone(Attribute.blockQuote, null) : Attribute.blockQuote,
+                                          // );
+                                          updateSheetTextProperties((p0){
+                                          p0.toggleBlockQuote();
+                                        });
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.quote,
@@ -13902,13 +13921,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.codeBlock),
                                         onClick: () {
-                                          final currentValue = item.textEditorController
-                                              .getSelectionStyle()
-                                              .attributes
-                                              .containsKey(Attribute.codeBlock.key);
-                                          item.textEditorController.formatSelection(
-                                            currentValue ? Attribute.clone(Attribute.codeBlock, null) : Attribute.codeBlock,
-                                          );
+                                          updateSheetTextProperties((p0){
+                                            p0.toggleCodeBlock();
+                                          });
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.code,
@@ -13928,13 +13943,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.ul),
                                         onClick: () {
-                                          final currentValue = item.textEditorController
-                                              .getSelectionStyle()
-                                              .attributes
-                                              .containsKey(Attribute.ul.key);
-                                          item.textEditorController.formatSelection(
-                                            currentValue ? Attribute.clone(Attribute.ul, null) : Attribute.ul,
-                                          );
+                                          updateSheetTextProperties((p0){
+                                          p0.toggleUnorderedList();
+                                        });
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.list,
@@ -13954,13 +13965,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.ol),
                                         onClick: () {
-                                          final currentValue = item.textEditorController
-                                              .getSelectionStyle()
-                                              .attributes
-                                              .containsKey(Attribute.ol.key);
-                                          item.textEditorController.formatSelection(
-                                            currentValue ? Attribute.clone(Attribute.ol, null) : Attribute.ol,
-                                          );
+                                          updateSheetTextProperties((p0){
+                                          p0.toggleOrderedList();
+                                        });
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.list_numbers,
@@ -13988,85 +13995,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   .attributes,
                                               Attribute.subscript),
                                           onClick: () {
-                                            var currentValue =
-                                                getIsToggled(
-                                                    item.textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes,
-                                                    Attribute
-                                                        .subscript);
-                                            item.textEditorController
-                                                .formatSelection(
-                                              currentValue
-                                                  ? Attribute.clone(
-                                                      Attribute
-                                                          .subscript,
-                                                      null)
-                                                  : Attribute
-                                                      .subscript,
-                                            );
-                                            final uncurrentValue = item
-                                                .textEditorController
-                                                .getSelectionStyle()
-                                                .attributes
-                                                .containsKey(
-                                                    Attribute
-                                                        .superscript
-                                                        .key);
-                                            if (uncurrentValue &&
-                                                currentValue) {
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                Attribute.clone(
-                                                    Attribute
-                                                        .subscript,
-                                                    null),
-                                              );
-                                              currentValue = getIsToggled(
-                                                  item.textEditorController
-                                                      .getSelectionStyle()
-                                                      .attributes,
-                                                  Attribute
-                                                      .subscript);
-                                            }
-                                            print(
-                                                '$uncurrentValue && $currentValue');
-                                            if (uncurrentValue &&
-                                                !currentValue) {
-                                              print('un');
-                                              print(uncurrentValue);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                      Attribute.clone(
-                                                          Attribute
-                                                              .superscript,
-                                                          null));
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                Attribute.subscript,
-                                              );
-                                              setState(() {
-                                                currentValue = getIsToggled(
-                                                    item.textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes,
-                                                    Attribute
-                                                        .subscript);
-                                              });
-                                              print('cu');
-                                              print(currentValue);
-                                              return;
-                                            }
-                                            item.textEditorController
-                                                .formatSelection(
-                                              currentValue
-                                                  ? Attribute.clone(
-                                                      Attribute
-                                                          .subscript,
-                                                      null)
-                                                  : Attribute
-                                                      .subscript,
-                                            );
+                                            updateSheetTextProperties((p0){
+                                              p0.toggleSubscript();
+                                            });
                                           },
                                           topLayerChild: Icon(
                                             TablerIcons.subscript,
@@ -14087,85 +14018,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               Attribute
                                                   .superscript),
                                           onClick: () {
-                                            var currentValue = getIsToggled(
-                                                item.textEditorController
-                                                    .getSelectionStyle()
-                                                    .attributes,
-                                                Attribute
-                                                    .superscript);
-                                            item.textEditorController
-                                                .formatSelection(
-                                              currentValue
-                                                  ? Attribute.clone(
-                                                      Attribute
-                                                          .superscript,
-                                                      null)
-                                                  : Attribute
-                                                      .superscript,
-                                            );
-                                            final uncurrentValue = item
-                                                .textEditorController
-                                                .getSelectionStyle()
-                                                .attributes
-                                                .containsKey(
-                                                    Attribute
-                                                        .subscript
-                                                        .key);
-                                            if (uncurrentValue &&
-                                                currentValue) {
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                Attribute.clone(
-                                                    Attribute
-                                                        .superscript,
-                                                    null),
-                                              );
-                                              currentValue = getIsToggled(
-                                                  item.textEditorController
-                                                      .getSelectionStyle()
-                                                      .attributes,
-                                                  Attribute
-                                                      .superscript);
-                                            }
-                                            print(
-                                                '$uncurrentValue && $currentValue');
-                                            if (uncurrentValue &&
-                                                !currentValue) {
-                                              print('un');
-                                              print(uncurrentValue);
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                      Attribute.clone(
-                                                          Attribute
-                                                              .subscript,
-                                                          null));
-                                              item.textEditorController
-                                                  .formatSelection(
-                                                Attribute
-                                                    .superscript,
-                                              );
-                                              setState(() {
-                                                currentValue = getIsToggled(
-                                                    item.textEditorController
-                                                        .getSelectionStyle()
-                                                        .attributes,
-                                                    Attribute
-                                                        .superscript);
-                                              });
-                                              print('cu');
-                                              print(currentValue);
-                                              return;
-                                            }
-                                            item.textEditorController
-                                                .formatSelection(
-                                              currentValue
-                                                  ? Attribute.clone(
-                                                      Attribute
-                                                          .superscript,
-                                                      null)
-                                                  : Attribute
-                                                      .superscript,
-                                            );
+                                            
+                                            updateSheetTextProperties((p0){
+                                              p0.toggleSuperscript();
+                                            });
                                           },
                                           
                                           topLayerChild: Icon(
@@ -14439,11 +14295,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 EyeDropper.enableEyeDropper(context, (p0) {
                                                   Color color = (p0?? hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value) );
                                                   setState(() {
-                                                  item.textEditorController
-                                                      .formatSelection(
-                                                    ColorAttribute(
-                                                        '#${colorToHex(color)}'),
-                                                  );
+                                                    updateSheetTextProperties((p0) {
+                                                      p0.updateColor(color);
+                                                    },);
                                                   hexController.text =
                                                       '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                                 
@@ -14490,11 +14344,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                         onChanged: (value) {
                                           setState(() {
-                                            item.textEditorController
-                                                .formatSelection(
-                                              ColorAttribute(
-                                                  '#${colorToHex(value.toColor())}'),
-                                            );
+                                            updateSheetTextProperties((p0) {
+                                              p0.updateColor(value.toColor());
+                                            },);
                                             hexController.text =
                                                 '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                           
@@ -14515,11 +14367,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                               onChanged: (HSVColor value) {
                                                 setState(() {
-                                                    item.textEditorController
-                                                        .formatSelection(
-                                                      ColorAttribute(
-                                                          '#${colorToHex(value.toColor())}'),
-                                                    );
+                                                    updateSheetTextProperties((p0) {
+                                              p0.updateColor(value.toColor());
+                                            },);
                                                     hexController.text =
                                               '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                             });
@@ -14537,11 +14387,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         .alpha,
                                     onChanged: (int value) {
                                       setState(() {
-                                        item.textEditorController
-                                            .formatSelection(
-                                          ColorAttribute(
-                                              '#${colorToHex(fontHex.withAlpha(value))}'),
-                                        );
+                                        updateSheetTextProperties((p0) {
+                                              p0.updateColor(fontHex.withAlpha(value));
+                                            },);
                                         hexController.text =
                                             '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                       });
@@ -14703,14 +14551,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                     ),
                                                     onPressed: () {
-                                                      item.textEditorController.formatSelection(
-                                                      Attribute.fromKeyValue(
-                                                        Attribute.font.key,
-                                                        GoogleFonts.getFont( fontName).fontFamily == 'Clear'
-                                                            ? null
-                                                            : GoogleFonts.getFont( fontName).fontFamily,
-                                                        ),
-                                                      );
+                                                      updateSheetTextProperties((p0) {
+                                                        p0.updateFontFamily(GoogleFonts.getFont( fontName).fontFamily??'Clear');
+                                                      },);
                                                       setState(() {});
                                                     },
                                                     child: Text(
@@ -14819,36 +14662,23 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   child: TextButton(
                                                                     style: TextButton.styleFrom(
                                                                       backgroundColor: item
-                                                                          .textEditorController
-                                                                          .getSelectionStyle()
-                                                                          .attributes[Attribute.font.key]
-                                                                          ?.value == GoogleFonts.getFont(fontName).fontFamily
-                                                                          ? defaultPalette.tertiary
-                                                                          : defaultPalette.primary,
+                                                                        .textEditorController
+                                                                        .getSelectionStyle()
+                                                                        .attributes[Attribute.font.key]
+                                                                        ?.value == GoogleFonts.getFont(fontName).fontFamily
+                                                                        ? defaultPalette.tertiary
+                                                                        : defaultPalette.primary,
                                                                       foregroundColor: defaultPalette.extras[0],
                                                                       minimumSize:Size(75, 80),
-                                                                      shape:
-                                                                          RoundedRectangleBorder(
+                                                                      shape: RoundedRectangleBorder(
                                                                             side: BorderSide(width: 0.4),
                                                                             borderRadius: BorderRadius.circular(5)
                                                                           ),
                                                                     ),
                                                                     onPressed: () {
-                                                                      item.textEditorController
-                                                                          .formatSelection(
-                                                                        Attribute
-                                                                            .fromKeyValue(
-                                                                          Attribute
-                                                                              .font.key,
-                                                                          GoogleFonts.getFont(fontName)
-                                                                                      .fontFamily ==
-                                                                                  'Clear'
-                                                                              ? null
-                                                                              : GoogleFonts.getFont(
-                                                                                      fontName)
-                                                                                  .fontFamily,
-                                                                        ),
-                                                                      );
+                                                                      updateSheetTextProperties((p0) {
+                                                                        p0.updateFontFamily(fontName);
+                                                                      },);
                                                                       setState(() {});
                                                                     },
                                                                     child: Text(
@@ -14856,8 +14686,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       textAlign: TextAlign
                                                                           .center,
                                                                       style: GoogleFonts.getFont(
-                                                                          color: defaultPalette
-                                                                              .extras[0],
+                                                                          color: defaultPalette.extras[0],
                                                                           fontName,
                                                                           fontSize: 14),
                                                                       maxLines: 1,
@@ -15116,7 +14945,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     //   ),
 
                                   //Function Title
-                                  Padding(
+                                  Padding( 
                                     padding: const EdgeInsets.only(top:2, left:2, right:2),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(20),
@@ -15150,7 +14979,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   ),
                                               
                                               const SizedBox(
-                                                    height:4
+                                                    height:2
                                                   ),
                                               //function 'label'
                                               Row(
@@ -15163,46 +14992,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       letterSpacing: -1,
                                                       fontWeight: FontWeight.w500,
                                                       fontSize: 14,
+                                                      height: 0.8,
                                                       color: defaultPalette.primary),
                                                       ),),
                                                    const SizedBox(width:2)  
                                                 ],
                                               ), 
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height:5
-                                  ),
-                                  //type for field
-                                  Container(
-                                    padding: EdgeInsets.all(2),
-                                    margin: const EdgeInsets.only(top:2, left:2, right:2),
-                                    width:width+13,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                    color: defaultPalette.primary,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: defaultPalette.primary, width: 1.5)),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: Row(
-                                        children: [
-                                          Expanded(child: titleTile('type', TablerIcons.writing, fontSize: 15, space:10)),
-                                          Expanded(
-                                            child: ClipRRect(
-                                              borderRadius:BorderRadius.circular(20),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.secondary,
-                                                  highlightColor: defaultPalette.secondary,
-                                                  splashColor: defaultPalette.secondary,
+                                              Row(
+                                                children:[
+                                                  Expanded(
+                                              child: MouseRegion(
+                                                cursor:SystemMouseCursors.click,
+                                                child: GestureDetector(
                                                   onTapDown:(d){
                                                     setState(() {
                                                       isTableDecorationModeDropped= !isTableDecorationModeDropped;
@@ -15215,11 +15016,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               typeChangeItem('bool',3),
                                                               typeChangeItem('date',4),
                                                               typeChangeItem('time',5),
-                                                              // typeChangeItem('email',6),
-                                                              // typeChangeItem('url',7),
                                                               typeChangeItem('phone',8),
-                                                              // typeChangeItem('choice',9),
-                                                              // typeChangeItem('currency',10),
                                                             ],
                                                             boxDecoration: BoxDecoration(
                                                                 boxShadow: [
@@ -15239,37 +15036,40 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         .show(context);
                                                     });
                                                   },
-                                                  child: Container(
-                                                    height:26,
-                                                    decoration:BoxDecoration(
-                                                      color: defaultPalette.transparent,
-                                                      borderRadius:BorderRadius.circular(20),
-                                                    ),
-                                                    child: Row(
-                                                      children: [
-                                                        Expanded(child: Text(
-                                                          '${item.type.name}  ',
-                                                          maxLines: 1,
-                                                          overflow:TextOverflow.ellipsis,
-                                                          textAlign: TextAlign.end,
-                                                          style: GoogleFonts.lexend(
-                                                            fontWeight: FontWeight.w600,
-                                                            letterSpacing: -1,
-                                                            fontSize:15
-                                                          ))),
-                                                        SizedBox(width:6)
-                                                      ],
-                                                    )
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(child: Text(
+                                                        '${item.type.name}    ',
+                                                        maxLines: 1,
+                                                        overflow:TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.end,
+                                                        style: GoogleFonts.lexend(
+                                                          fontWeight: FontWeight.w300,
+                                                          letterSpacing: -0.5,
+                                                          fontSize:14,
+                                                          color:defaultPalette.primary
+                                                        ))),
+                                                      const SizedBox(width:2) 
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
+                                              ),
+                                                ]
+                                              ),
+                                              const SizedBox(
+                                                height:2
+                                              ),
+                                              ],
                                             ),
                                           ),
-                                          ),
-                                          ),
-        
-                                        ],
-                                      )
-                                      )
+                                        ),
+                                      ),
                                     ),
+                                  ),
+                                  const SizedBox(
+                                    height:5
+                                  ),
                                   const SizedBox(
                                     height:5
                                   ),
@@ -15281,12 +15081,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       });
                                     },
                                     child: Container(
-                                      padding: EdgeInsets.all(5).copyWith(top: 3),
+                                      padding: EdgeInsets.all(0).copyWith(top: 3),
                                       margin: const EdgeInsets.only(top:2, left:2, right:2),
                                       decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: defaultPalette.primary, width: 1.5)),
+                                      // border: Border.all(
+                                      //   color: defaultPalette.primary, width: 1.5)
+                                        ),
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(20),
                                           child:Column(
@@ -15651,6 +15452,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   child: Text(
                     name,
                     maxLines: 1,
+                    overflow:TextOverflow.ellipsis,
                     style: GoogleFonts.lexend(
                         fontSize: fontSize,
                         letterSpacing: -1,
@@ -15700,14 +15502,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   padding: EdgeInsets.all(2),
                   decoration: BoxDecoration(
                       color: defaultPalette.secondary,
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(5)),
+                      border: Border.all(width:0.4),
+                      borderRadius: BorderRadius.circular(20)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       for (int i = 0; i < icons.length; i++) ...[
                         Expanded(
-                            child: roundButton2(switchFunction(values[i]), icons[i], isSelected: selected[i], borderRadius: 5, ),),
+                            child: roundButton2(switchFunction(values[i]), icons[i], isSelected: selected[i], borderRadius: 20, ),),
                         if (i != icons.length - 1)
                           SizedBox(
                             width: 2,
@@ -15726,7 +15528,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color:index==0? defaultPalette.extras[1]: defaultPalette.primary,
+                        color:index==0? defaultPalette.secondary: defaultPalette.primary,
                         border: Border.all(width: 2),
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -15797,7 +15599,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       
                     Positioned.fill(
                       child: Padding(
-                        padding: EdgeInsets.all(15).copyWith(left: 12, right: 14),
+                        padding: EdgeInsets.all(15).copyWith(left: 11, right: 14),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: ScrollConfiguration(
@@ -15822,7 +15624,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                         child: Column(
                                           children: [
-                                        titleTile('listProperties', TablerIcons.brackets_contain_start,fontSize: 18, iconSize:20),  
+                                        titleTile('listProperties', TablerIcons.brackets_contain_end,fontSize: 18, iconSize:20),  
                                         const SizedBox(
                                             height:3
                                           ),
@@ -15845,341 +15647,224 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           ],
                                         ),  
                                         const SizedBox(
-                                              height:4
-                                            ),
-                                        //'hide'
-                                        // Container(
-                                        //   margin: EdgeInsets.all(2),
-                                        //   decoration: BoxDecoration(
-                                        //   borderRadius: BorderRadius.circular(10), 
-                                        //   color:defaultPalette.secondary,
-                                        //   border: Border.all(
-                                        //     width:0.2
-                                        //   ),),
-                                        //   child: AnimatedToggleSwitch<bool>.dual(
-                                        //     current: item.hide,
-                                        //     first: false,
-                                        //     second: true,
-                                        //     onChanged: (value) {
-                                        //       setState(() {
-                                        //         item.hide = value;    
-                                        //       });
-                                        //     },
-                                        //     animationCurve: Curves.easeInOutExpo,
-                                        //     animationDuration: Durations.medium4,
-                                        //     borderWidth:
-                                        //         2, // backgroundColor is set independently of the current selection
-                                        //     styleBuilder: (value) => ToggleStyle(
-                                        //         borderRadius: BorderRadius.circular(10),
-                                        //         indicatorBorderRadius: BorderRadius.circular(15),
-                                        //         borderColor: defaultPalette.secondary,
-                                        //         backgroundColor: defaultPalette.secondary,
-                                        //         indicatorBorder:
-                                        //             Border.all(
-                                        //               width: 1.2,
-                                        //               color: defaultPalette.extras[0]),
-                                        //         indicatorColor: defaultPalette
-                                        //             .primary), // indicatorColor changes and animates its value with the selection
-                                        //     iconBuilder: (value) {
-                                        //       return Icon(
-                                        //           value == false
-                                        //               ? Icons.remove_red_eye_outlined
-                                        //               : TablerIcons.eye_closed,
-                                        //           size: 18,
-                                        //           color: defaultPalette.extras[0]);
-                                        //     },
-                                        //     textBuilder: (value) {
-                                        //       return Text(
-                                        //         value == false ? 'visible' : 'hidden',
-                                        //         style: GoogleFonts.lexend(
-                                        //               letterSpacing: -1,
-                                        //               fontWeight: FontWeight.w500,
-                                        //               fontSize: 14,
-                                        //               color: defaultPalette.black),
-                                        //       );
-                                        //     },
-                                        //     height: 23,
-                                        //     spacing: (width) - 100,
-                                        //   ),
-                                        // ),
-                                        
+                                            height:10
+                                          ),
+                                        Container(
+                                          decoration: BoxDecoration(border: Border.all(width:0.2), borderRadius:BorderRadius.circular(20)),
+                                          child: AnimatedToggleSwitch<Axis>.dual(
+                                            current:
+                                                sheetListItem.direction,
+                                            first: Axis.vertical,
+                                            second: Axis.horizontal,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                sheetListItem
+                                                    .direction = value;
+                                              });
+                                            },
+                                            animationCurve:
+                                                Curves.easeInOutExpo,
+                                            animationDuration:
+                                                Durations.medium4,
+                                            borderWidth:
+                                                2, // backgroundColor is set independently of the current selection
+                                            styleBuilder: (value) =>
+                                                ToggleStyle(
+                                                    borderRadius:
+                                                        BorderRadius
+                                                            .circular(
+                                                                20),
+                                                    indicatorBorderRadius:
+                                                        BorderRadius
+                                                            .circular(
+                                                                20),
+                                                    borderColor:
+                                                        defaultPalette
+                                                            .secondary,
+                                                    backgroundColor:
+                                                        defaultPalette
+                                                            .secondary,
+                                                    indicatorBorder: Border.all(),
+                                                    indicatorColor:
+                                                        defaultPalette
+                                                                .primary), // indicatorColor changes and animates its value with the selection
+                                            iconBuilder: (value) {
+                                              return Icon(
+                                                  value ==
+                                                          Axis
+                                                              .horizontal
+                                                      ? TablerIcons
+                                                          .grip_horizontal
+                                                      : TablerIcons
+                                                          .grip_vertical,
+                                                  size: 12,
+                                                  color: defaultPalette
+                                                      .extras[0]);
+                                            },
+                                            textBuilder: (value) {
+                                              return Text(
+                                                value == Axis.horizontal
+                                                    ? 'Horizontal'
+                                                    : 'Vertical',
+                                                style:
+                                                    GoogleFonts.bungee(
+                                                        fontSize: 12),
+                                              );
+                                            },
+                                            height: 25,
+                                            spacing: (width) - 100,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                            height:3
+                                          ),
+                                        titleTile( ' mainAxisSize',
+                                              TablerIcons.ruler_measure),
+                                        Container(
+                                          decoration: BoxDecoration(border: Border.all(width:0.2), borderRadius:BorderRadius.circular(20)),
+                                          child: AnimatedToggleSwitch<MainAxisSize>.dual(
+                                                current:
+                                                    sheetListItem.mainAxisSize,
+                                                first: MainAxisSize.min,
+                                                second: MainAxisSize.max,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    sheetListItem
+                                                        .mainAxisSize = value;
+                                                  });
+                                                },
+                                                animationCurve:
+                                                    Curves.easeInOutExpo,
+                                                animationDuration:
+                                                    Durations.medium4,
+                                                borderWidth:
+                                                    2, // backgroundColor is set independently of the current selection
+                                                styleBuilder: (value) =>
+                                                    ToggleStyle(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    20),
+                                                        indicatorBorderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    20),
+                                                        indicatorBorder:Border.all(),
+                                                        borderColor: defaultPalette.secondary,
+                                                        backgroundColor: defaultPalette.secondary,
+                                                        indicatorColor: defaultPalette.primary), // indicatorColor changes and animates its value with the selection
+                                                iconBuilder: (value) {
+                                                  return Icon(
+                                                      value ==
+                                                              MainAxisSize.min
+                                                          ? TablerIcons
+                                                              .viewport_narrow
+                                                          : TablerIcons
+                                                              .viewport_wide,
+                                                      size: 12,
+                                                      color: defaultPalette
+                                                          .extras[0]);
+                                                },
+                                                textBuilder: (value) {
+                                                  return Text(
+                                                    value ==MainAxisSize.min
+                                                        ? 'min'
+                                                        : 'max',
+                                                    style:
+                                                        GoogleFonts.bungee(
+                                                            fontSize: 12),
+                                                  );
+                                                },
+                                                height: 25,
+                                                spacing: (width) - 100,
+                                              
+                                              
+                                              ),
+                                        ),
+                                        SizedBox(height:2),
+                                        Row(
+                                            children: [
+                                              Expanded(
+
+                                                child: titleTile( 
+                                                  'mainAxisAlignment',
+                                                  sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  '${sheetListItem.mainAxisAlignment.name}',
+                                                  maxLines: 1,
+                                                  textAlign: TextAlign.end,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.lexend(
+                                                      fontSize: 14,
+                                                      height:2,
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w500),
+                                                ),
+                                              ),
+                                              SizedBox(width:4),
+                                            ],
+                                          ),
+
+                                          toggleSelectionRow(
+                                            [
+                                            Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_top:TablerIcons.layout_align_left, size:18),
+                                            Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_center:TablerIcons.layout_align_middle, size:18),
+                                            Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_bottom:TablerIcons.layout_align_right, size:18),
+                                            Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_distribute_horizontal:TablerIcons.layout_distribute_vertical, size:18),
+                                            Icon(sheetListItem.direction == Axis.vertical?TablerIcons.dots_vertical:TablerIcons.dots, size:18),
+                                            Icon(sheetListItem.direction == Axis.vertical?TablerIcons.separator_horizontal:TablerIcons.separator_vertical, size:18),
+                                            
+                                          ], [
+                                            MainAxisAlignment.start,
+                                            MainAxisAlignment.center,
+                                            MainAxisAlignment.end,
+                                            MainAxisAlignment.spaceAround,
+                                            MainAxisAlignment.spaceEvenly,
+                                            MainAxisAlignment.spaceBetween
+                                          ]),
+                                                                                      
+                                          SizedBox(height:4),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: titleTile( 
+                                                  'crossAxisAlignment',
+                                                  sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  '${sheetListItem.crossAxisAlignment.name}',
+                                                  maxLines: 1,
+                                                  textAlign: TextAlign.end,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.lexend(
+                                                      fontSize: 14,
+                                                      height:2,
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w500),
+                                                ),
+                                              ),
+                                              SizedBox(width:4),
+                                            ],
+                                          ),
+                                          toggleSelectionRow([
+                                            Icon(TablerIcons.sign_left, size:18),
+                                            Icon(TablerIcons.float_center, size:18),
+                                            Icon(TablerIcons.sign_right, size:18), 
+                                          ], [ 
+                                            CrossAxisAlignment.start,
+                                            CrossAxisAlignment.center,
+                                            CrossAxisAlignment.end ]),
+                                          
+                                          SizedBox(height:4),
+                                    
                                         ],
                                         ),
                                         ),
-                                        
-                                      // Text(
-                                      //   'id: ' + sheetListItem.id,
-                                      //   maxLines: 1,
-                                      //   style: GoogleFonts.lexend(
-                                      //       fontSize: 12,
-                                      //       height:2,
-                                      //       letterSpacing: -1,
-                                      //       fontWeight: FontWeight.w500),
-                                      // ),
-                                      // Text(
-                                      //   'parentId: '+ sheetListItem.parentId,
-                                      //   maxLines: 1,
-                                      //   style: GoogleFonts.lexend(
-                                      //       fontSize: 12,
-                                      //       height:2,
-                                      //       letterSpacing: -1,
-                                      //       fontWeight: FontWeight.w500),
-                                      // ),
-                                      const SizedBox(
-                                              height:4
-                                            ),
-                                      Container(
-                                        margin: EdgeInsets.only(top:2),
-                                        padding: EdgeInsets.all(5),
-                                        decoration: BoxDecoration(
-                                        color:defaultPalette.primary,
-                                        borderRadius: BorderRadius.circular(15),
-                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            titleTile( 
-                                              'direction',
-                                              TablerIcons.directions),
-                                            
-                                            AnimatedToggleSwitch<Axis>.dual(
-                                              current:
-                                                  sheetListItem.direction,
-                                              first: Axis.vertical,
-                                              second: Axis.horizontal,
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  sheetListItem
-                                                      .direction = value;
-                                                });
-                                              },
-                                              animationCurve:
-                                                  Curves.easeInOutExpo,
-                                              animationDuration:
-                                                  Durations.medium4,
-                                              borderWidth:
-                                                  2, // backgroundColor is set independently of the current selection
-                                              styleBuilder: (value) =>
-                                                  ToggleStyle(
-                                                      borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                                  5),
-                                                      indicatorBorderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                                  5),
-                                                      borderColor:
-                                                          defaultPalette
-                                                              .secondary,
-                                                      backgroundColor:
-                                                          defaultPalette
-                                                              .secondary,
-                                                      indicatorColor:
-                                                          defaultPalette
-                                                                  .extras[
-                                                              0]), // indicatorColor changes and animates its value with the selection
-                                              iconBuilder: (value) {
-                                                return Icon(
-                                                    value ==
-                                                            Axis
-                                                                .horizontal
-                                                        ? TablerIcons
-                                                            .grip_horizontal
-                                                        : TablerIcons
-                                                            .grip_vertical,
-                                                    size: 12,
-                                                    color: defaultPalette
-                                                        .primary);
-                                              },
-                                              textBuilder: (value) {
-                                                return Text(
-                                                  value == Axis.horizontal
-                                                      ? 'Horizontal'
-                                                      : 'Vertical',
-                                                  style:
-                                                      GoogleFonts.bungee(
-                                                          fontSize: 12),
-                                                );
-                                              },
-                                              height: 25,
-                                              spacing: (width) - 100,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                                       
-                                      SizedBox(height:4),
-                                      Container(
-                                        margin: EdgeInsets.only(top:2),
-                                        padding: EdgeInsets.all(5),
-                                        decoration: BoxDecoration(
-                                        color:defaultPalette.primary,
-                                        borderRadius: BorderRadius.circular(15),
-                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: titleTile( 
-                                                    'mainAxisAlignment',
-                                                    sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
-                                                ),
-                                                Expanded(
-                                                  child: Text(
-                                                    '${sheetListItem.mainAxisAlignment.name}',
-                                                    maxLines: 1,
-                                                    textAlign: TextAlign.end,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.lexend(
-                                                        fontSize: 14,
-                                                        height:2,
-                                                        letterSpacing: -1,
-                                                        fontWeight: FontWeight.w500),
-                                                  ),
-                                                ),
-                                                SizedBox(width:4),
-                                              ],
-                                            ),
-
-                                            toggleSelectionRow(
-                                              [
-                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_top:TablerIcons.layout_align_left, size:18),
-                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_center:TablerIcons.layout_align_middle, size:18),
-                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_align_bottom:TablerIcons.layout_align_right, size:18),
-                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.layout_distribute_horizontal:TablerIcons.layout_distribute_vertical, size:18),
-                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.dots_vertical:TablerIcons.dots, size:18),
-                                              Icon(sheetListItem.direction == Axis.vertical?TablerIcons.separator_horizontal:TablerIcons.separator_vertical, size:18),
-                                              
-                                            ], [
-                                              MainAxisAlignment.start,
-                                              MainAxisAlignment.center,
-                                              MainAxisAlignment.end,
-                                              MainAxisAlignment.spaceAround,
-                                              MainAxisAlignment.spaceEvenly,
-                                              MainAxisAlignment.spaceBetween
-                                            ]),
-                                                                                        
-                                            SizedBox(height:4),
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: titleTile( 
-                                                    'crossAxisAlignment',
-                                                    sheetListItem.direction == Axis.vertical? TablerIcons.caret_up_down: TablerIcons.caret_left_right),
-                                                ),
-                                                Expanded(
-                                                  child: Text(
-                                                    '${sheetListItem.crossAxisAlignment.name}',
-                                                    maxLines: 1,
-                                                    textAlign: TextAlign.end,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.lexend(
-                                                        fontSize: 14,
-                                                        height:2,
-                                                        letterSpacing: -1,
-                                                        fontWeight: FontWeight.w500),
-                                                  ),
-                                                ),
-                                                SizedBox(width:4),
-                                              ],
-                                            ),
-                                            toggleSelectionRow([
-                                              Icon(TablerIcons.sign_left, size:18),
-                                              Icon(TablerIcons.float_center, size:18),
-                                              Icon(TablerIcons.sign_right, size:18), 
-                                            ], [ 
-                                              CrossAxisAlignment.start,
-                                              CrossAxisAlignment.center,
-                                              CrossAxisAlignment.end ]),
-                                            
-                                            SizedBox(height:4),
-                                          ],
-                                        ),
-                                      ),
                                       
-                                      SizedBox(height:4),
-                                      Container(
-                                        margin: EdgeInsets.only(top:2),
-                                        padding: EdgeInsets.all(5),
-                                        decoration: BoxDecoration(
-                                        color:defaultPalette.primary,
-                                        borderRadius: BorderRadius.circular(15),
-                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            titleTile( ' mainAxisSize',
-                                              TablerIcons.ruler_measure),
-                                            AnimatedToggleSwitch<MainAxisSize>.dual(
-                                              current:
-                                                  sheetListItem.mainAxisSize,
-                                              first: MainAxisSize.min,
-                                              second: MainAxisSize.max,
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  sheetListItem
-                                                      .mainAxisSize = value;
-                                                });
-                                              },
-                                              animationCurve:
-                                                  Curves.easeInOutExpo,
-                                              animationDuration:
-                                                  Durations.medium4,
-                                              borderWidth:
-                                                  2, // backgroundColor is set independently of the current selection
-                                              styleBuilder: (value) =>
-                                                  ToggleStyle(
-                                                      borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                                  5),
-                                                      indicatorBorderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                                  5),
-                                                      borderColor:
-                                                          defaultPalette
-                                                              .secondary,
-                                                      backgroundColor:
-                                                          defaultPalette
-                                                              .secondary,
-                                                      indicatorColor:
-                                                          defaultPalette
-                                                                  .extras[
-                                                              0]), // indicatorColor changes and animates its value with the selection
-                                              iconBuilder: (value) {
-                                                return Icon(
-                                                    value ==
-                                                            MainAxisSize.min
-                                                        ? TablerIcons
-                                                            .viewport_narrow
-                                                        : TablerIcons
-                                                            .viewport_wide,
-                                                    size: 12,
-                                                    color: defaultPalette
-                                                        .primary);
-                                              },
-                                              textBuilder: (value) {
-                                                return Text(
-                                                  value ==MainAxisSize.min
-                                                      ? 'min'
-                                                      : 'max',
-                                                  style:
-                                                      GoogleFonts.bungee(
-                                                          fontSize: 12),
-                                                );
-                                              },
-                                              height: 25,
-                                              spacing: (width) - 100,
-                                            
-                                            
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                                       
                                       // Text(sheetListItem.indexPath.toString()),
                                     ],
@@ -16266,28 +15951,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 TextEditingController()..text= sheetTableItem.name,    
               ];
               
-              Widget switchTableDecorationTile (int s, String p, double top){
-              return Positioned(
-                top:top,
-                child: GestureDetector(
-                  onTap:(){
-                    setState(() {
-                      whichTableDecorationIsClicked = s;
-                      selectedDecorationTitle = p;
-                      isTableDecorationModeDropped = false;
-                      _findSheetTableItem(sheetTableItem, updateVariables: false);
-                    });
-                  },
-                  child: Text( p,
-                  maxLines: 1,
-                  overflow:TextOverflow.ellipsis,
-                  style: GoogleFonts.lexend(
-                  fontSize: 15,
-                  letterSpacing:-1,
-                  )),
-                ));
-            }
-    
               Widget titleTile(
               String name,
               IconData icon, {
@@ -17116,7 +16779,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: index==0? defaultPalette.extras[3] : defaultPalette.secondary,
+                        color:whichTablePropertyTabIsClicked==2? defaultPalette.primary: defaultPalette.secondary,
                         border: Border.all(width: 2),
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -17158,17 +16821,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           titlesData: const FlTitlesData(show: false),
                           gridData: FlGridData(
                             getDrawingVerticalLine: (value) => FlLine(
-                              color: defaultPalette.primary
-                                  .withOpacity(0.5),
-                              dashArray: [5, 5],
+                              color: defaultPalette.extras[0].withOpacity(whichTablePropertyTabIsClicked==2?0.6:1),
+                              dashArray:whichTablePropertyTabIsClicked==2? [2,8]:[5, 5],
                               strokeWidth: 1),
                             getDrawingHorizontalLine: (value) => FlLine(
-                              color: defaultPalette.primary
-                                  .withOpacity(0.5),
-                              dashArray: [5, 5],
+                              color: defaultPalette.extras[0].withOpacity(whichTablePropertyTabIsClicked==2?0.6:1),
+                              dashArray:whichTablePropertyTabIsClicked==2?[2,8]:[5, 5],
                               strokeWidth: 1),
                             show: true,
-                            horizontalInterval: 2,
+                            horizontalInterval: whichTablePropertyTabIsClicked==2?3:2,
                             verticalInterval: 30),
                           borderData: FlBorderData(show: false),
                           minY: 0,
@@ -17791,6 +17452,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                        ),
                      )
                   ],
+                  
                   if (index == 2) ...[
                   ...buildSuperDecorationSwiperInterface(
                     whichTableDecorationIsClicked ==0
@@ -17810,58 +17472,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     : columnDecorationNameController
                     
                     ),
-                  
-                  Positioned(
-                  top:75,
-                  left:42,
-                  child: ClipRRect(
-                    borderRadius:BorderRadius.circular(5),
-                    child: Material(
-                            color: defaultPalette.transparent,
-                            child: InkWell(
-                              hoverColor: defaultPalette.primary,
-                              highlightColor: defaultPalette.primary,
-                              splashColor: defaultPalette.primary,
-                              onTap:(){
-                                setState(() {
-                                  isTableDecorationModeDropped= !isTableDecorationModeDropped;
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: Durations.medium4,
-                                height:isTableDecorationModeDropped? 80:26,
-                                width: width-90,
-                                decoration:BoxDecoration(
-                                  color: isTableDecorationModeDropped? defaultPalette.primary: defaultPalette.transparent,
-                                  border: isTableDecorationModeDropped? Border.all():null,
-                                  borderRadius:BorderRadius.circular(5),
-                                ),
-                                child: Stack(children: [
-                                  Positioned(
-                                    top:5,
-                                    width: width-90,
-                                    child: Row(
-                                      children: [
-                                        Expanded(child: Text(
-                                          selectedDecorationTitle,
-                                          maxLines: 1,
-                                          overflow:TextOverflow.ellipsis,
-                                          style: GoogleFonts.rockSalt())),
-                                        Icon(TablerIcons.transfer_vertical, size:18),
-                                        SizedBox(width:4)
-                                      ],
-                                    )),
-                                  switchTableDecorationTile(0, ' Table', 30),
-                                  switchTableDecorationTile(1, ' Tablebg', 50),
-                          
-                          // Text(sheetTableItem.id.startsWith('TB')? 'Table':'Row')
-                            ],)
-                          ),
-                        ),
-                      ),
-                      )
-                    ),
-        
                   ],
                   
                 ]
@@ -19767,7 +19377,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       );
     }
     var inx = itemDecorationPath.last;
-    if (sheetDecorationMap[inx] == null) {
+    if (sheetDecorationMap[inx] == null || sheetDecorationMap[inx]?.id =='yo' || sheetDecorationMap[inx]?.id =='') {
+      print(sheetDecorationMap[inx]);
       inx = 'yo';
       return [
         
@@ -20161,72 +19772,85 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             MainAxisAlignment.spaceBetween,
                         children: [
                           //Balloon Animation BG and TITLE saying "DECOR"
-                          Stack(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color:defaultPalette.extras[0],
-                                  borderRadius: BorderRadius.circular(50),
-                                  border: Border.all(
-                                    width:1,
-                                    color:defaultPalette.extras[0],)
-                                ),
-                                height: 30,
-                                child: ClipRRect(
-                                  borderRadius:
-                                BorderRadius.circular(60),
-                                  child: MultipleBalloons(
-                                  minSize: 15,
-                                  maxSize: 30,
-                                  maxSpeed: 1.5,
-                                  maxSwayAmount: 25,
-                                  minSwayAmount: 2,
-                                  balloonCount: 8,
-                                  colors: [
-                                    whichPropertyTabIsClicked ==2
-                                    ? defaultPalette.tertiary
-                                    : whichPropertyTabIsClicked ==3
-                                    ? defaultPalette.extras[1]
-                                    : defaultPalette.extras[3],
-                                    
-                                    whichPropertyTabIsClicked ==2
-                                    ? defaultPalette.tertiary
-                                    : whichPropertyTabIsClicked ==3
-                                    ? defaultPalette.extras[1]
-                                    : defaultPalette.extras[3],
-                                    defaultPalette.secondary,
-
-                                  ]
-                                  // [
-                                  //   defaultPalette.extras[0],
-                                  //   defaultPalette.extras[9],
-                                  //   defaultPalette.extras[6],
-                                  //   defaultPalette.extras[3],
-                                  //   defaultPalette.tertiary,
-                                  //   defaultPalette.extras[1],
-                                  //   defaultPalette.extras[3],
-                                  //   defaultPalette.tertiary,
-                                  // ],
-                                ),
-                                ),
+                          MouseRegion(
+                            cursor:whichPropertyTabIsClicked == 4? SystemMouseCursors.click: SystemMouseCursors.basic,
+                            child: GestureDetector(
+                              onTap:(){
+                                if(whichPropertyTabIsClicked == 4){ setState(() {
+                                  whichTableDecorationIsClicked = (whichTableDecorationIsClicked +1)%2;
+                                  _findSheetTableItem(sheetTableItem, updateVariables: false);
+                                });}
+                              },
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color:defaultPalette.extras[0],
+                                      borderRadius: BorderRadius.circular(50),
+                                      border: Border.all(
+                                        width:1,
+                                        color:defaultPalette.extras[0],)
+                                    ),
+                                    height: 30,
+                                    child: ClipRRect(
+                                      borderRadius:
+                                    BorderRadius.circular(60),
+                                      child: MultipleBalloons(
+                                      minSize: 15,
+                                      maxSize: 30,
+                                      maxSpeed: 1.5,
+                                      maxSwayAmount: 25,
+                                      minSwayAmount: 2,
+                                      balloonCount: 8,
+                                      colors: [
+                                        whichPropertyTabIsClicked ==2
+                                        ? defaultPalette.tertiary
+                                        : whichPropertyTabIsClicked ==3
+                                        ? defaultPalette.extras[1]
+                                        : defaultPalette.extras[3],
+                                        
+                                        whichPropertyTabIsClicked ==2
+                                        ? defaultPalette.tertiary
+                                        : whichPropertyTabIsClicked ==3
+                                        ? defaultPalette.extras[1]
+                                        : defaultPalette.extras[3],
+                                        defaultPalette.secondary,
+                              
+                                      ]
+                                      // [
+                                      //   defaultPalette.extras[0],
+                                      //   defaultPalette.extras[9],
+                                      //   defaultPalette.extras[6],
+                                      //   defaultPalette.extras[3],
+                                      //   defaultPalette.tertiary,
+                                      //   defaultPalette.extras[1],
+                                      //   defaultPalette.extras[3],
+                                      //   defaultPalette.tertiary,
+                                      // ],
+                                    ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    height: 30,
+                                    child: Text(
+                                      whichPropertyTabIsClicked == 2
+                                    ? "textDecor  "
+                                    : whichPropertyTabIsClicked == 3
+                                    ? 'listDecor '
+                                    : whichTableDecorationIsClicked==0
+                                      ?'tableDecor '
+                                      :'tableBgDecor ',
+                                      style: GoogleFonts.lexend(
+                                          fontSize: 18,
+                                          color: defaultPalette
+                                              .primary),
+                                      textAlign: TextAlign.start,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Positioned(
-                                right: 0,
-                                height: 30,
-                                child: Text(
-                                  whichPropertyTabIsClicked == 2
-                                ? "textDecor  "
-                                : whichPropertyTabIsClicked == 3
-                                ? 'listDecor '
-                                : 'tableDecor ',
-                                  style: GoogleFonts.lexend(
-                                      fontSize: 18,
-                                      color: defaultPalette
-                                          .primary),
-                                  textAlign: TextAlign.start,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                           SizedBox(height: 3),
                           //PreviewBox of Decoration AND Name of Decoration Editing Field. Title saying "SUPER". ID of Decoration display
@@ -20245,28 +19869,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     crossAxisAlignment:CrossAxisAlignment.start,
                                     children:  !isListDecorationPropertiesToggled
                                     ? [
-                                      if(whichPropertyTabIsClicked !=4)
+                                      // if(whichPropertyTabIsClicked !=4)
+                                      SizedBox(height:2),
+                                      if(decorationIndex != -1)
                                       // Title saying "SUPER"
                                       Padding(
                                         padding: const EdgeInsets.only(left:2.0),
                                         child: Text(
-                                          '' + (decorationIndex == -1  
-                                          ? (sheetDecorationMap[inx] as SuperDecoration) 
-                                          : sheetDecorationMap[itinx]).runtimeType.toString()
-                                          .replaceAll(RegExp(r'Decoration'), '')
-                                          .replaceAll(RegExp(r'Item'), 'Layer ' + decorationIndex.toString())
-                                          .replaceAll(RegExp(r'Super'), 'Layer ' + decorationIndex.toString()), 
+                                          '' +('Layer ' + decorationIndex.toString())
+                                          , 
                                           maxLines:1,
-                                            style: GoogleFonts.rockSalt(
+                                            style: GoogleFonts.lexend(
                                             color: defaultPalette.extras[0],
                                             height: 1.5,
-                                            fontSize: 14,
+                                            fontSize: 8,
                                           ),
                                           overflow: TextOverflow.ellipsis
                                         ),
-                                      )
-                                      
-                                      ,
+                                      ),
+                                      SizedBox(height:2),
+                                      runtimeTypeBadge(
+                                        (decorationIndex == -1 ?sheetDecorationMap[inx]:sheetDecorationMap[itinx])?? SuperDecoration(id: ''),
+                                        onlyLibrary: false
+                                        ),
+                                      SizedBox(height:4),
                                       //Name of Decoration Editing Field.
                                       SizedBox(
                                         height:
@@ -20396,7 +20022,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           decorationIndex == -1
                                               ? (sheetDecorationMap[inx] as SuperDecoration?)
                                               : SuperDecoration(
-                                                  id: 'yo',
+                                                  id: 'no',
                                                   itemDecorationList: [
                                                     ...(sheetDecorationMap[inx] as SuperDecoration)
                                                         .itemDecorationList
@@ -20654,8 +20280,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 ),
               ],
             )),
+        ),
       ),
-    ),
 
       //TreeView of Properties per layer and THE ALL THE EDITOR UIs and LIBRARY
       Positioned(
@@ -21272,7 +20898,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           child: AnimatedContainer(
               duration: Durations.medium1,
               curve: Curves.easeInOut,
-              height: (sHeight * 0.9) - 240,
+              height: (sHeight * 0.9) - 230,
               width: 38,
               padding: EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
@@ -21312,15 +20938,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 
                         },
                         child: Container(
-                          margin: EdgeInsets.only(left: 4,right: 3),
+                          margin: EdgeInsets.only(left: 7,right: 8),
                           decoration:BoxDecoration(
                             color:defaultPalette.primary,
-                            border:Border.all(width:1.5),
-                            borderRadius:BorderRadius.circular(8),
+                            // border:Border.all(width:1.5),
+                            borderRadius:BorderRadius.circular(20),
                             
                           ),
                           width: 38,
-                          height: 25,
+                          height: 23,
                           child: Icon(TablerIcons.plus, size:18)
                         ),
                       ),
@@ -21958,43 +21584,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                         SizedBox(height: 5),
                                         // The runTimeType badge for Decoration in Search
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: !onlyLibrary? defaultPalette.secondary: defaultPalette.primary,
-                                            border: Border.all(width: 0.6),
-                                            borderRadius: BorderRadius.circular(5),
-                                          ),
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SizedBox(width: 3),
-                                                DecoratedBox(
-                                                  decoration: BoxDecoration(
-                                                    borderRadius: BorderRadius.circular(9999),
-                                                    color: (e is ItemDecoration) ? defaultPalette.tertiary : defaultPalette.extras[2],
-                                                  ),
-                                                  child: SizedBox(
-                                                    height: 10,
-                                                    width: 10,
-                                                  ),
-                                                ),
-                                                SizedBox(width: 3),
-                                                Text(
-                                                  e.runtimeType.toString(),
-                                                  style: GoogleFonts.lexend(
-                                                    color: defaultPalette.extras[0],
-                                                    letterSpacing: -1,
-                                                    fontSize: 10,
-                                                  ),
-                                                  maxLines: 1,
-                                                ),
-                                                SizedBox(width: 3),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
+                                        runtimeTypeBadge(e,onlyLibrary:onlyLibrary)
                                       ],
                                     ),
                                   ),
@@ -27363,9 +26953,47 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     );
   }
 
-  /// Reusable: builds a ROW×COL default SheetTable where
-  /// each cell’s InputBlock is back‑patched into both its
-  /// rowData[r].rowInputBlocks and columnData[c].columnInputBlocks.
+  Widget runtimeTypeBadge(SheetDecoration s, {bool onlyLibrary= true}){
+    return Container(
+      decoration: BoxDecoration(
+        color: !onlyLibrary? defaultPalette.secondary: defaultPalette.primary,
+        border: Border.all(width: 0.6),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(width: 3),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9999),
+                color: (s is ItemDecoration) ? defaultPalette.tertiary : defaultPalette.extras[2],
+              ),
+              child: SizedBox(
+                height: 10,
+                width: 10,
+              ),
+            ),
+            SizedBox(width: 3),
+            Text(
+              s.runtimeType.toString(),
+              style: GoogleFonts.lexend(
+                color: defaultPalette.extras[0],
+                letterSpacing: -1,
+                fontSize: 10,
+              ),
+              maxLines: 1,
+            ),
+            SizedBox(width: 3),
+          ],
+        ),
+      ),
+    );
+                                      
+  }
+  
   SheetTable buildDefaultTable({
     required String tableId,
     required String parentId,
