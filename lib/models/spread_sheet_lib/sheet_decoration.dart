@@ -136,6 +136,13 @@ class ItemDecoration extends SheetDecoration {
     Map<String, dynamic>? pinned,
   }) : pinned = pinned ?? defaultPins();
 
+
+  
+
+
+
+
+
   // ✅ Convert the ItemDecoration to JSON
   Map<String, dynamic> toJson() {
     return {
