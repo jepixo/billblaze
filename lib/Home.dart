@@ -10,6 +10,7 @@ import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/llama_provider.dart';
@@ -4435,7 +4436,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     .where((l) => l.name.endsWith('-revised'))
                     .map((l) => l.name.replaceAll('-revised', ''))
                     .toSet();
-
+                // print('hello');
                 // Now filter the layouts
                 final layouts = allLayouts.where((layout) {
                   final name = layout.name;
@@ -4452,14 +4453,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                   try {
                     for (final label in layout.labelList) {
+                      // print(label.indexPath);
                       if (label.indexPath.index == -951) continue;
 
                       final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
+                      // print(item);
                       if (item is! SheetTextBox) continue;
+                      // print(item.inputBlocks);
 
                       final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
                       final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
-
+                      // print('ghghh'+cleaned.toString());
                       if (label.name == 'totalPayable') {
                         totalPayable = cleaned;
                         if (type == SheetType.creditNote) {
@@ -5679,9 +5683,12 @@ String buildCombinedTextFromBlocks(List<InputBlock> inputBlocks, List<SheetListB
 
   for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
     final block = inputBlocks[blockIdx];
-
+   
     if (block.function != null) {
-      final result = block.function!.result(getItemAtPath);
+      //  print((block.function as ColumnFunction).inputBlocks);
+      //  print('result: ');
+      final result = block.function!.result(getItemAtPath, spreadSheet: spreadSheetList);
+      // print('result: '+ result.toString());
       if (result is num || result is String) {
         final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
         mergedDelta.push(Operation.insert(text));

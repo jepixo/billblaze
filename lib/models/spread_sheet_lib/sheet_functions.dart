@@ -2,6 +2,9 @@
 
 import 'dart:convert';
 
+import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/input_block.dart';
@@ -16,10 +19,13 @@ class SheetFunction {
   @HiveField(1)
   final String name;
   
+  
 
   SheetFunction(this.returnType, this.name);
 
-  dynamic result(Function getItemAtPath) {
+  dynamic result(Function getItemAtPath, {
+    List<SheetListBox>? spreadSheet,
+  }) {
     throw UnimplementedError('Subclasses must override result()');
   }
   Map<String, dynamic> toMap() {
@@ -53,38 +59,59 @@ class SumFunction extends SheetFunction {
   SumFunction(this.inputBlocks) : super(1, 'sum');
 
   @override
-  dynamic result(Function getItemAtPath) {
-    double sum = 0;
+dynamic result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
+  double sum = 0;
 
-    for (final block in inputBlocks) {
-      final item = getItemAtPath(block.indexPath);
+  for (final block in inputBlocks) {
+    dynamic item;
 
-      if (item == null) continue;
-
-      // If the block is directly tied to a function, call its result
-      if (block.function != null) {
-        final value = block.function!.result(getItemAtPath);
-        if (value is num) {
-          sum += value.toDouble();
-        }
-        // skip if it's a string/bool/anything else
-        continue;
-      }
-
-      // Handle raw items: check type and apply if it's numeric
-      if (item is SheetText) {
-        final text = item.textEditorConfigurations.controller.document.toPlainText().trim();
-        final parsed = double.tryParse(text);
-        if (parsed != null) {
-          sum += parsed;
-        }
-      }
-
-      // Extend here if you want to handle other SheetItem types like SheetListBox, SheetTableCell, etc.
+    if (spreadSheet == null) {
+      item = getItemAtPath(block.indexPath);
+    } else {
+      item = getItemAtPath(block.indexPath, spreadSheet);
     }
 
-    return sum;
+    if (item == null) continue;
+
+    // If the block is directly tied to a function, evaluate it
+    if (block.function != null) {
+      final value = block.function!.result(getItemAtPath, spreadSheet: spreadSheet);
+      if (value is num) {
+        sum += value.toDouble();
+      }
+      continue;
+    }
+
+    // 🟡 Handle SheetText from live controller (in editor)
+    if (item is SheetText) {
+      final text = item.textEditorConfigurations.controller.document
+          .toPlainText()
+          .trim();
+      final parsed = double.tryParse(text);
+      if (parsed != null) sum += parsed;
+    }
+
+    // 🔵 Handle SheetTextBox from loaded JSON delta
+    else if (item is SheetTextBox) {
+      try {
+        final json = item.textEditorController;
+        if (json is List) {
+          final delta = Delta.fromJson(json);
+          final doc = Document.fromDelta(delta);
+          final text = doc.toPlainText().trim();
+          final parsed = double.tryParse(text);
+          if (parsed != null) sum += parsed;
+        }
+      } catch (e, st) {
+        print('⚠️ Failed to parse SheetTextBox content: $e\n$st');
+      }
+    }
+
+    // Extend for other types if needed
   }
+
+  return sum;
+}
 
   @override
   Map<String, dynamic> toMap() => {
@@ -113,45 +140,21 @@ class ColumnFunction extends SheetFunction {
   ColumnFunction({required this.inputBlocks, required this.func}) : super(0, 'column');
 
   @override
-  dynamic result(Function getItemAtPath) {
+  dynamic result(Function getItemAtPath, {
+    List<SheetListBox>? spreadSheet,
+  }) {
     switch (func) {
       case 'sum':
-        return SumFunction(inputBlocks).result(getItemAtPath);
+      // print(inputBlocks);
+      var sumfunc = SumFunction(inputBlocks);
+        // print(sumfunc.result(getItemAtPath, spreadSheet: spreadSheet).toString());
+        return SumFunction(inputBlocks).result(getItemAtPath, spreadSheet: spreadSheet);
       
       case 'count':
-        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath);
+        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath, spreadSheet: spreadSheet);
       default:
+      return 0;
     }
-    double sum = 0;
-
-    for (final block in inputBlocks) {
-      final item = getItemAtPath(block.indexPath);
-
-      if (item == null) continue;
-
-      // If the block is directly tied to a function, call its result
-      if (block.function != null) {
-        final value = block.function!.result(getItemAtPath);
-        if (value is num) {
-          sum += value.toDouble();
-        }
-        // skip if it's a string/bool/anything else
-        continue;
-      }
-
-      // Handle raw items: check type and apply if it's numeric
-      if (item is SheetText) {
-        final text = item.textEditorConfigurations.controller.document.toPlainText().trim();
-        final parsed = double.tryParse(text);
-        if (parsed != null) {
-          sum += parsed;
-        }
-      }
-
-      // Extend here if you want to handle other SheetItem types like SheetListBox, SheetTableCell, etc.
-    }
-
-    return sum;
   }
 
   @override
@@ -181,7 +184,7 @@ class CountFunction extends SheetFunction {
   List<InputBlock> inputBlocks;
 
   @override
-  result(Function getItemAtPath) {
+  result(Function getItemAtPath,{List<SheetListBox>? spreadSheet,}) {
     return inputBlocks.length;
   }
 
