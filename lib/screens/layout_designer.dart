@@ -241,11 +241,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<DocumentProperties> documentPropertiesList = [];
   // List<SheetDecoration> sheetDecorationList = [];
   Map<String, SheetDecoration> sheetDecorationMap ={};
-  FocusNode marginAllFocus = FocusNode();
-  FocusNode marginTopFocus = FocusNode();
-  FocusNode marginBottomFocus = FocusNode();
-  FocusNode marginLeftFocus = FocusNode();
-  FocusNode marginRightFocus = FocusNode();
+  List<FocusNode> pageMarginFocusNodes = List.generate(5, (e)=>FocusNode());
   final FocusNode layoutNamefocusNode = FocusNode();
   final FocusNode decorationNameFocusNode = FocusNode();
   final FocusNode itemDecorationNameFocusNode = FocusNode();
@@ -15066,7 +15062,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       fontTextControllers[4].text,
                                                       textAlign: TextAlign.end,
                                                       style: GoogleFonts.lexend(
-                                                      letterSpacing: -1,
+                                                      letterSpacing: -0.6,
                                                       fontWeight: FontWeight.w500,
                                                       fontSize: 14,
                                                       height: 0.8,
@@ -17782,7 +17778,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     cursor: SystemMouseCursors.resizeLeftRight,
                     child: GestureDetector(
                       onHorizontalDragCancel: () {
-                        marginAllFocus.unfocus();
+                        pageMarginFocusNodes[s].unfocus();
                       },
                       onHorizontalDragUpdate: (details) {
                         var multiplier = HardwareKeyboard.instance.isControlPressed
@@ -17869,9 +17865,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     child: SizedBox(
                       height: 12,
                       child: TextFormField(
-                        onTapOutside: (event) => marginAllFocus.unfocus(),
+                        onTapOutside: (event) => pageMarginFocusNodes[s].unfocus(),
                         obscureText: s==0? documentPropertiesList[currentPageIndex].useIndividualMargins: false,
-                        focusNode: marginAllFocus,
+                        focusNode: pageMarginFocusNodes[s],
                         controller: pageMarginControllers[s],
                         inputFormatters: [
                           NumericInputFormatter(allowNegative: true),

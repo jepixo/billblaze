@@ -97,6 +97,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   DateTime dateTimeNow = DateTime.now();
   bool isLayoutTileView = false;
   bool isTemplateView = false;
+  bool isLlmProcessing = false;
   TextEditingController layoutSearchController = TextEditingController();
   FocusNode layoutSearchFocusNode = FocusNode();
   late List<LayoutModel> filteredLayoutBox;
@@ -108,6 +109,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   late AnimationController sliderFadeAnimationController;
   late AnimationController sliderController;
   late AnimationController titleFontFadeController;
+  TextEditingController chatTextController = TextEditingController();
+  FocusNode chatFocusNode = FocusNode();
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
@@ -893,65 +896,131 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               Positioned.fill(
                                 left: 25, right:25, top:25, bottom:25,
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(25),
-                                  child: SingleChildScrollView(
-                                    padding: EdgeInsets.all(10),
-                                    child: Text( ref.watch(aiTokenProvider))),
-                                )),
-                              Positioned.fill(
-                              left: 25, right:25, top:25, bottom:25,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(25),
-                                child: Column(
-                                  children: [
-                                    MouseRegion(
-                                      cursor: SystemMouseCursors.click,
-                                      child: GestureDetector(
-                                        onTap: () async {
-                                          final receivePort = ReceivePort();
-
-                                          final prompt = ChatHistory()
-                                            ..addMessage(
-                                              role: Role.system,
-                                              content: """"" You are a concise, analytical assistant.
-                                            Always focus directly on asnwering the user's prompt, 
-                                            keep responses short and precise, and never include unnecessary elaboration. 
-                                            Only generate the answer and stop. Never answer with information about geography, history, or unrelated trivia.
-                                            Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. 
-                                            Do not generate questions or mention unrelated topics. """)
-                                            ..addMessage(role: Role.user, content: "what time is it?")
-                                            ..addMessage(role: Role.assistant, content: "");
-
-                                          final modelPath = "C:/Users/ANTEC/Downloads/Compressed/LFM2-1.2B-Q4_K_M.gguf";
-
-                                          // ✅ Pass only data, not Flutter state
-                                          await Isolate.spawn(runLlamaModel, {
-                                            'sendPort': receivePort.sendPort,
-                                            'prompt': prompt.exportFormat(ChatFormat.chatml, leaveLastAssistantOpen: true),
-                                            'modelPath': modelPath,
-                                          });
-
-                                          final buffer = StringBuffer();
-                                          await for (final token in receivePort) {
-                                            if (token == null) break;
-                                            buffer.write(token);
-                                            ref.read(aiTokenProvider.notifier).state += token;
-                                          }
-
-                                          print("✅ Final Response: ${buffer.toString()}");
-                                        },
-                                        // onTap: () async => await LlamaRepository.llamaRun(ref, 'What time is it?'),
-                                        child: Container(
-                                          width: 100,
-                                          height:100,
-                                          alignment: Alignment(0,0),
-                                          decoration: BoxDecoration(color:defaultPalette.tertiary.withOpacity(0.4)),
-                                        ),
+                                  borderRadius: BorderRadius.circular(0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          padding: EdgeInsets.all(10),
+                                          child: Text( ref.watch(aiTokenProvider), style: GoogleFonts.lexend(
+                                                    fontSize: mapValueDimensionBasedLockOnDesync(15, 20, sWidth, sHeight),
+                                                    color: defaultPalette.extras[0],
+                                                    fontWeight: FontWeight.w500,
+                                                    letterSpacing: -0.8),)),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              )),
+                                      Row(
+                                        children: [
+                                          MouseRegion(
+                                            cursor: SystemMouseCursors.click,
+                                            child: GestureDetector(
+                                              onTap:  () async {
+                                              if (!isLlmProcessing) {
+                                                setState(() {
+                                                  isLlmProcessing = true;
+                                                });
+                                                final receivePort = ReceivePort();
+                                                                                            
+                                                final prompt = ChatHistory()
+                                                  ..addMessage(
+                                                    role: Role.system,
+                                                    content: """"" You are a concise, analytical assistant.
+                                              Always focus directly on asnwering the user's prompt, 
+                                              keep responses short and precise. 
+                                              Only generate the answer and stop.
+                                              Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
+                                              Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
+                                              
+                                               Here's the BillBlaze Data: $typeStats, Current Date: ${DateFormat('dddd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
+                                               Payable means our total revenue.
+                                               """)
+                                                  ..addMessage(role: Role.user, content: chatTextController.text)
+                                                  ..addMessage(role: Role.assistant, content: "");
+                                                                                            
+                                                // final modelPath = "assets/models/LFM2-1.2B-Q4_K_M.gguf";
+                                                final modelPath = "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
+                                                                                            
+                                                // ✅ Pass only data, not Flutter state
+                                                await Isolate.spawn(runLlamaModel, {
+                                                  'sendPort': receivePort.sendPort,
+                                                  'prompt': prompt.exportFormat(ChatFormat.chatml, leaveLastAssistantOpen: true),
+                                                  'modelPath': modelPath,
+                                                });
+                                                ref.read(aiTokenProvider.notifier).state ='';
+                                                                                            
+                                                final buffer = StringBuffer();
+                                                await for (final token in receivePort) {
+                                                  if (token == null) break;
+                                                  buffer.write(token);
+                                                  ref.read(aiTokenProvider.notifier).state += token;
+                                                }
+                                                                                            
+                                                print("✅ Final Response: ${buffer.toString()}");
+                                                setState(() {
+                                                  isLlmProcessing = false;
+                                                });
+                                              }
+                                            },
+                                              child: Container(
+                                                width: mapValueDimensionBasedLockOnDesync(40, 45, sWidth, sHeight),
+                                                height: mapValueDimensionBasedLockOnDesync(45, 50, sWidth, sHeight),
+                                                decoration: BoxDecoration(
+                                                  color:defaultPalette.tertiary,
+                                                  borderRadius: BorderRadius.circular(15),
+                                                  border:Border.all(width:2)
+                                                  ),
+                                                child:Transform.rotate(
+                                                  angle:-pi/2,
+                                                  child: Icon(isLlmProcessing?TablerIcons.loader: TablerIcons.send_2, color:defaultPalette.primary))
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width:5),
+                                          Expanded(
+                                            child: Container(
+                                              // padding: EdgeInsets.only(left:15, top:5, bottom:5),
+                                              decoration:BoxDecoration(
+                                                color:defaultPalette.secondary,
+                                                borderRadius: BorderRadius.circular(20),
+                                                border:Border.all(width:2)
+                                              ),
+                                              child: TextFormField(
+                                                onTapOutside: (event) => chatFocusNode.unfocus(),
+                                                focusNode: chatFocusNode,
+                                                controller: chatTextController,
+                                                cursorColor: defaultPalette.tertiary,
+                                                keyboardType: TextInputType.multiline,
+                                                textInputAction: TextInputAction.newline,
+                                                selectionControls: NoMenuTextSelectionControls(),
+                                                textAlign: TextAlign.start,
+                                                textAlignVertical: TextAlignVertical(y: -1),
+                                                maxLines: 5,
+                                                minLines: 1,
+                                                decoration: InputDecoration(
+                                                  contentPadding: const EdgeInsets.only(left:15, top:5, bottom:5),
+                                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                  fillColor: defaultPalette.transparent,
+                                                  border: InputBorder.none,
+                                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                                  focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                                ),
+                                                style: GoogleFonts.lexend(
+                                                    fontSize: mapValueDimensionBasedLockOnDesync(15, 20, sWidth, sHeight),
+                                                    color: defaultPalette.extras[0],
+                                                    fontWeight: FontWeight.w400,
+                                                    letterSpacing: -1),
+                                                onFieldSubmitted: (value) {
+                                                  
+                                                },
+                                              ),
+                                            ),
+                                          ),
+
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                )),
                             ],
                           );
                         },

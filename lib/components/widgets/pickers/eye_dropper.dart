@@ -129,7 +129,7 @@ class _EyeDropperState extends State<EyeDropper> {
                   // ),
                   boxShadow: [
                     BoxShadow(
-                      color: defaultPalette.extras[0].withOpacity(0.5),
+                      color: defaultPalette.extras[0].withOpacity(0.1),
                       blurRadius: 50,
                       spreadRadius: 20,
                     ),
@@ -154,8 +154,8 @@ class _EyeDropperState extends State<EyeDropper> {
                       child: Text(
                         _colorNotifier.value == null
                           ? ''
-                          : '#'+colorToHex(_colorNotifier.value!),
-                          maxLines: 1,
+                          : '${ColorTools.nameThatColor(_colorNotifier.value!)}\n#'+colorToHex(_colorNotifier.value!),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.lexend(
                               fontSize: 15,
