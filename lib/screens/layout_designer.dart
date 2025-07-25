@@ -241,11 +241,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<DocumentProperties> documentPropertiesList = [];
   // List<SheetDecoration> sheetDecorationList = [];
   Map<String, SheetDecoration> sheetDecorationMap ={};
-  FocusNode marginAllFocus = FocusNode();
-  FocusNode marginTopFocus = FocusNode();
-  FocusNode marginBottomFocus = FocusNode();
-  FocusNode marginLeftFocus = FocusNode();
-  FocusNode marginRightFocus = FocusNode();
+  List<FocusNode> pageMarginFocusNodes = List.generate(5, (e)=>FocusNode());
   final FocusNode layoutNamefocusNode = FocusNode();
   final FocusNode decorationNameFocusNode = FocusNode();
   final FocusNode itemDecorationNameFocusNode = FocusNode();
@@ -3131,7 +3127,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   parent: spreadSheetList[currentPageIndex].indexPath,
                                                   index: spreadSheetList[currentPageIndex].length);
                                             spreadSheetList[currentPageIndex].add(
-                                              generateInvoiceTable(SheetType.values[lm!.type], newId, spreadSheetList[currentPageIndex].id, newDecoration, newIndexPath)
+                                              buildInvoiceTable(
+                                                type: SheetType.values[lm!.type],
+                                                tableId: newId, 
+                                                parentId: spreadSheetList[currentPageIndex].id, 
+                                                decoration: newDecoration,
+                                                indexPath:  newIndexPath)
                                             );
                                           });
                                           assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
@@ -3579,7 +3580,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           ),
                                                                           child: GestureDetector(
                                                                             onTap: () {
-                                                                              if (item.id != 'yo' || item.id != '' ) {
+                                                                              if ((item.id != 'yo' || item.id != '') ) {
                                                                                 
                                                                                 if (label.name !='itemSheet' && label.indexPath.index ==-951) {
                                                                                   setState(() {
@@ -7342,7 +7343,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             ],
           ),
       
-          if(sheetText.inputBlocks.length>1)
+          if(sheetText.inputBlocks.length>1|| sheetText.inputBlocks[0].id != sheetText.id)
           Row(
             children: [
               SizedBox(width:4),
@@ -8324,7 +8325,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 borderRadius: BorderRadius.circular(2),
                                                               ),
                                                               margin: const EdgeInsets.all(1),
-                                                              child: buildSheetTableTextWidget(cell.sheetItem as SheetText),
+                                                              child: buildSheetTableTextWidget(cell, sheetTable),
                                                             ),
                                                           ),
                                                         )
@@ -8357,83 +8358,155 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       );
   }
 
-  Widget buildSheetTableTextWidget(SheetText sheetText) {
-    return Container(
-    decoration: BoxDecoration(
-      color: defaultPalette.primary,
-      border: Border.fromBorderSide(
-            ( panelIndex.id ==
-                  sheetText.id || selectedIndexPaths[sheetText.id]!=null)
-                ?
-            BorderSide( 
-            strokeAlign:
-                BorderSide.strokeAlignInside,
-            width:  2,
-            color:defaultPalette.tertiary,): BorderSide.none,),
-      borderRadius:
-          BorderRadius.circular(0),
-    ),
-    child: Column(
+  Widget buildSheetTableTextWidget(SheetTableCell sheetTableCell, SheetTable sheetTable) {
+    final sheetText = sheetTableCell.sheetItem as SheetText;
+    /// Returns whether the given side of [sheetTableCell] is “selected”:
+    /// 0 = top, 1 = bottom, 2 = left, 3 = right.
+    bool checkSideSelection(int s) {
+      final label = sheetTableCell.id;                // e.g. "C4"
+      final match = RegExp(r"^([A-Z]+)(\d+)$").firstMatch(label);
+      if (match == null) return false;
 
+      final colLabel = match.group(1)!;               // e.g. "C"
+      final rowNum = int.parse(match.group(2)!);      // e.g. 4
+
+      final maxRows = sheetTable.cellData.length; 
+      final maxCols = sheetTable.cellData.isNotEmpty
+          ? sheetTable.cellData.first.length
+          : 0;
+
+      // zero‑based column index
+      final colIdx0 = columnLabelToNumber(colLabel);
+
+      String neighborLabel;
+
+      switch (s) {
+        case 0: // top
+          if (rowNum == 1) return true;                  // edge
+          neighborLabel = '$colLabel${rowNum - 1}';
+          break;
+        case 1: // bottom
+          if (rowNum == maxRows) return true;            // edge
+          neighborLabel = '$colLabel${rowNum + 1}';
+          break;
+        case 2: // left
+          if (colIdx0 == 0) return true;                 // edge
+          // numberToColumnLabel expects 1-based
+          neighborLabel = '${numberToColumnLabel(colIdx0)}$rowNum';
+          break;
+        case 3: // right
+          if (colIdx0 == maxCols - 1) return true;       // edge
+          neighborLabel = '${numberToColumnLabel(colIdx0 + 2)}$rowNum';
+          break;
+        default:
+          return false;
+      }
+
+      // Look up that neighbor cell
+      final neighborCell = sheetTable.getCellFromLabel(neighborLabel);
+      if (neighborCell == null) return true;           
+
+      // Check if *its* SheetText is selected
+      final neighborItemId = (neighborCell.sheetItem as SheetText).id;
+      return selectedIndexPaths[neighborItemId] == null;
+    }
+    BorderSide borderSide = BorderSide(
+      width:2,
+      color:defaultPalette.tertiary,
+    );
+
+    return Stack(
       children: [
-        
-        Expanded(
-          child: Row(
-            children: [
-               Icon(sheetText.locked?
-                 TablerIcons.lock:
-                TablerIcons.cursor_text,
-                size: 14,
-              ),
-              Expanded(
-                child: KeyedSubtree(
-                  key: ValueKey(sheetText.id),
-                  child: QuillEditor(
-                    configurations: sheetText
-                        .textEditorConfigurations,
-                    focusNode:
-                        sheetText.focusNode,
-                    scrollController:
-                        ScrollController(),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        Container(
+        decoration: BoxDecoration(
+          color: defaultPalette.primary,
+          border:(panelIndex.id ==sheetText.id || selectedIndexPaths[sheetText.id]!=null)
+            ?Border(
+              top: checkSideSelection(0)? borderSide:BorderSide.none,
+              bottom: checkSideSelection(1)? borderSide:BorderSide.none,
+              left: checkSideSelection(2)? borderSide:BorderSide.none,
+              right: checkSideSelection(3)? borderSide:BorderSide.none,
+             )
+            : Border.fromBorderSide( BorderSide.none,),
+          borderRadius:
+              BorderRadius.circular(0),
         ),
-        if( sheetText.inputBlocks.length>1 || sheetText.inputBlocks[0].id != sheetText.id)
-         Expanded(
-           child: Row(
-            children: [
-              const Icon(
-                TablerIcons.math_integral,
-                size: 14,
-              ),
-              Expanded(
-                child: Container(
-                  padding:EdgeInsets.symmetric(horizontal:4),
-                  margin: EdgeInsets.all(2),
-                  decoration:BoxDecoration(
-                    color:defaultPalette.secondary,
-                    borderRadius:BorderRadius.circular(5)
+        child: Column(
+        
+          children: [
+            
+            Expanded(
+              child: Row(
+                children: [
+                   Icon(sheetText.locked?
+                     TablerIcons.lock:
+                    TablerIcons.cursor_text,
+                    size: 14,
                   ),
-                  child: Transform.scale(
-                    scale:0.8,
-                    child: QuillEditor(
-                      configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
-                      focusNode: FocusNode(),
-                      scrollController:
-                          ScrollController(),
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: ValueKey(sheetText.id),
+                      child: QuillEditor(
+                        configurations: sheetText
+                            .textEditorConfigurations,
+                        focusNode:
+                            sheetText.focusNode,
+                        scrollController:
+                            ScrollController(),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
+            if( sheetText.inputBlocks.length>1 || sheetText.inputBlocks[0].id != sheetText.id)
+             Expanded(
+               child: Row(
+                children: [
+                  const Icon(
+                    TablerIcons.math_integral,
+                    size: 14,
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding:EdgeInsets.symmetric(horizontal:4),
+                      margin: EdgeInsets.all(2),
+                      decoration:BoxDecoration(
+                        color:defaultPalette.secondary,
+                        borderRadius:BorderRadius.circular(5)
+                      ),
+                      child: Transform.scale(
+                        scale:0.8,
+                        child: QuillEditor(
+                          configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
+                          focusNode: FocusNode(),
+                          scrollController:
+                              ScrollController(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+             ),
+          ],
+        ),
           ),
-         ),
+        if(panelIndex.id == sheetText.id)
+        Positioned(
+          bottom:4,
+          right:4,
+
+          child: MouseRegion(
+            cursor: SystemMouseCursors.allScroll,
+            child: GestureDetector(
+              child: Container(height:10,width:10,decoration:BoxDecoration( 
+                borderRadius: BorderRadius.circular(3),
+                color:defaultPalette.extras[0])),
+            ),
+          ))
       ],
-    ),
-  );
+    );
                                        
   }
 
@@ -14989,7 +15062,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       fontTextControllers[4].text,
                                                       textAlign: TextAlign.end,
                                                       style: GoogleFonts.lexend(
-                                                      letterSpacing: -1,
+                                                      letterSpacing: -0.6,
                                                       fontWeight: FontWeight.w500,
                                                       fontSize: 14,
                                                       height: 0.8,
@@ -17705,7 +17778,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     cursor: SystemMouseCursors.resizeLeftRight,
                     child: GestureDetector(
                       onHorizontalDragCancel: () {
-                        marginAllFocus.unfocus();
+                        pageMarginFocusNodes[s].unfocus();
                       },
                       onHorizontalDragUpdate: (details) {
                         var multiplier = HardwareKeyboard.instance.isControlPressed
@@ -17792,9 +17865,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     child: SizedBox(
                       height: 12,
                       child: TextFormField(
-                        onTapOutside: (event) => marginAllFocus.unfocus(),
+                        onTapOutside: (event) => pageMarginFocusNodes[s].unfocus(),
                         obscureText: s==0? documentPropertiesList[currentPageIndex].useIndividualMargins: false,
-                        focusNode: marginAllFocus,
+                        focusNode: pageMarginFocusNodes[s],
                         controller: pageMarginControllers[s],
                         inputFormatters: [
                           NumericInputFormatter(allowNegative: true),
@@ -19240,7 +19313,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     if ( superDecoration ==null) {
       return child;
     } else if (superDecoration.id == 'yo') {
-      print('SuperDecoration with id "yo" detected, returning child without decoration.');
+      // print('SuperDecoration with id "yo" detected, returning child without decoration.');
       return child; // Return the child directly if it's a placeholder
     }
     // Check for cycle and update visited list only if not already in it
@@ -27189,138 +27262,153 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     });
   }
 
-  SheetTable generateInvoiceTable(
-    SheetType type,
-    String newId,
-    String parentId,
-    SuperDecoration newDecoration,
-    IndexPath newIndexPath,
-  ) {
-    // 1) Get your headers
-    final headers = getInvoiceColumns(type);
+  // 1) Top‐level entry point
+SheetTable buildInvoiceTable({
+  required SheetType type,
+  required String tableId,
+  required String parentId,
+  required SuperDecoration decoration,
+  required IndexPath indexPath,
+}) {
+  // a) headers & counts
+  final headers = _getInvoiceHeaders(type);
+  final rowCount = 2;
+  final colCount = headers.length;
 
-    // 2) Create your empty rowData and columnData first
-    final rowData = List.generate(
-      2,
-      (i) => SheetTableRow(
-        id: 'RW-${Uuid().v4()}',
-        parentId: newId,
-        size: i == 0 ? 30 : 35,
-        rowDecoration: newDecoration.id,
-        indexPath: IndexPath(parent: newIndexPath, index: i),
-        rowInputBlocks: <InputBlock>[], // will be filled later
-      ),
+  // b) skeleton rows & columns
+  final rowData = List.generate(rowCount, (r) {
+    return SheetTableRow(
+      id:             'RW-${Uuid().v4()}',
+      parentId:       tableId,
+      size:           r == 0 ? 30 : 35,
+      rowDecoration:  decoration.id,
+      indexPath:      IndexPath(parent: indexPath, index: r),
+      rowInputBlocks: <InputBlock>[],
     );
+  });
 
-    final columnData = List.generate(
-      headers.length,
-      (c) {
-        final isHiddenProfit = c >= headers.length - 3;
-        return SheetTableColumn(
-          id: 'CL-${Uuid().v4()}',
-          parentId: newId,
-          size: 100,
-          columnDecoration: newDecoration.id,
-          indexPath: IndexPath(parent: newIndexPath, index: c),
-          hide: isHiddenProfit,
-          columnInputBlocks: <InputBlock>[], // will be filled later
-        );
-      },
+  final columnData = List.generate(colCount, (c) {
+    final isHidden = c >= colCount - 3;
+    return SheetTableColumn(
+      id:               'CL-${Uuid().v4()}',
+      parentId:         tableId,
+      size:             100,
+      columnDecoration: decoration.id,
+      indexPath:        IndexPath(parent: indexPath, index: c),
+      hide:             isHidden,
+      columnInputBlocks:<InputBlock>[],
     );
+  });
 
-    // 3) Build the cells and let it populate rowData/columnData.inputBlocks
-    final cellData = generateInvoiceCellData(
-      parentId: newId,
-      sheetTableDecoration: newDecoration,
-      tableIndexPath: newIndexPath,
-      rowData: rowData,
-      columnData: columnData,
-      headers: headers,
-    );
+  // c) cells + hook up input-blocks
+  final cellData = _generateInvoiceCellData(
+    parentId:          tableId,
+    decoration:        decoration,
+    tableIndexPath:    indexPath,
+    headers:           headers,
+    rowData:           rowData,
+    columnData:        columnData,
+  );
 
-    // 4) Construct and return the table
-    return SheetTable(
-      id: newId,
-      parentId: parentId,
-      name: 'itemSheet',
-      cellData: cellData,
-      columnData: columnData,
-      rowData: rowData,
-      pinnedColumns: 1,
-      pinnedRows: 1,
-      sheetTableDecoration: newDecoration,
-      sheetTablebgDecoration: newSuperDecoration(placeholder: false),
-      indexPath: newIndexPath,
-    );
+  // d) assemble
+  return SheetTable(
+    id:                    tableId,
+    parentId:              parentId,
+    name:                  'itemSheet',
+    cellData:              cellData,
+    rowData:               rowData,
+    columnData:            columnData,
+    pinnedRows:            1,
+    pinnedColumns:         1,
+    sheetTableDecoration:  decoration,
+    sheetTablebgDecoration:newSuperDecoration(placeholder: false),
+    indexPath:             indexPath,
+  );
+}
+
+// 2) headers chooser
+List<String> _getInvoiceHeaders(SheetType type) {
+  const hidden = ['Cost Price','Profit','Profit %'];
+  switch (type) {
+    case SheetType.taxInvoice:    return [ 'Item Description','HSN Code','Quantity','Unit','Rate','Discount','Taxable Value','CGST %','CGST Amt','SGST %','SGST Amt','Total', ...hidden ];
+    case SheetType.billOfSupply:  return [ 'Item Description','HSN/SAC Code','Quantity','Unit','Rate','Discount','Total', ...hidden ];
+    case SheetType.creditNote:
+    case SheetType.debitNote:     return [ 'Item Description','Original Invoice No','Original Date','HSN/SAC','Qty','Rate','Taxable Value','CGST','SGST','IGST','Total Difference', ...hidden ];
+    case SheetType.proformaInvoice: return [ 'Item Description','Quantity','Unit','Rate','Amount','Remarks', ...hidden ];
+    default:                       return [ 'Item','Qty','Rate','Total', ...hidden ];
+  }
+}
+
+// 3) cell generator (hooks blocks into rowData/columnData)
+List<List<SheetTableCell>> _generateInvoiceCellData({
+  required String                      parentId,
+  required SuperDecoration             decoration,
+  required IndexPath                   tableIndexPath,
+  required List<String>                headers,
+  required List<SheetTableRow>         rowData,
+  required List<SheetTableColumn>      columnData,
+}) {
+  final rows = rowData.length;
+  final cols = headers.length;
+
+  // temporary block‐lists
+  final rowInputLists = List.generate(rows, (_) => <InputBlock>[]);
+  final colInputLists = List.generate(cols, (_) => <InputBlock>[]);
+
+  final cells = List.generate(rows, (r) {
+    final rowIP = IndexPath(parent: tableIndexPath, index: r);
+    return List.generate(cols, (c) {
+      final isHeader = r == 0;
+      final cellIP = IndexPath(parent: rowIP, index: c);
+      final newId  = 'TX-${Uuid().v4()}';
+
+      // single block per cell
+      final ib = InputBlock(
+        id:         newId,
+        indexPath:  cellIP,
+        blockIndex: [-2],
+      );
+      rowInputLists[r].add(ib);
+      colInputLists[c].add(ib);
+
+      // prepare initial delta
+      final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
+      final sheetText = addTextField(
+        id:                         newId,
+        parentId:                   parentId,
+        docString:                  docDelta.toJson(),
+        findItem:                   _findItem,
+        textFieldTapDown:           textFieldTapDown,
+        getReplaceTextFunctionForType: getReplaceTextFunctionForType,
+        textDecoration:             decoration,
+        hide:                       false,
+        name:                       '${numberToColumnLabel(c+1)}${r+1}',
+        indexPath:                  cellIP,
+        inputBlocks:               [ ib ],
+        locked:                     isHeader,
+      );
+
+      return SheetTableCell(
+        id:        '${numberToColumnLabel(c+1)}${r+1}',
+        parentId:  parentId,
+        sheetItem: sheetText,
+        rowSpan:   1,
+        colSpan:   1,
+        indexPath: rowIP,
+      );
+    });
+  });
+
+  // inject back into your rowData & columnData
+  for (var r = 0; r < rows; r++) {
+    rowData[r].rowInputBlocks = rowInputLists[r];
+  }
+  for (var c = 0; c < cols; c++) {
+    columnData[c].columnInputBlocks = colInputLists[c];
   }
 
-  List<String> getInvoiceColumns(SheetType type) {
-    final hiddenProfitCols = ['Cost Price', 'Profit', 'Profit %'];
-
-    switch (type) {
-      case SheetType.taxInvoice:
-        return [
-          'Item Description',
-          'HSN Code',
-          'Quantity',
-          'Unit',
-          'Rate',
-          'Discount',
-          'Taxable Value',
-          'CGST %',
-          'CGST Amt',
-          'SGST %',
-          'SGST Amt',
-          'Total',
-          ...hiddenProfitCols, // 👈 Append hidden columns
-        ];
-      case SheetType.billOfSupply:
-        return [
-          'Item Description',
-          'HSN/SAC Code',
-          'Quantity',
-          'Unit',
-          'Rate',
-          'Discount',
-          'Total',
-          ...hiddenProfitCols,
-        ];
-      case SheetType.creditNote:
-      case SheetType.debitNote:
-        return [
-          'Item Description',
-          'Original Invoice No',
-          'Original Date',
-          'HSN/SAC',
-          'Qty',
-          'Rate',
-          'Taxable Value',
-          'CGST',
-          'SGST',
-          'IGST',
-          'Total Difference',
-          ...hiddenProfitCols,
-        ];
-      case SheetType.proformaInvoice:
-        return [
-          'Item Description',
-          'Quantity',
-          'Unit',
-          'Rate',
-          'Amount',
-          'Remarks',
-          ...hiddenProfitCols,
-        ];
-      default:
-        return [
-          'Item',
-          'Qty',
-          'Rate',
-          'Total',
-          ...hiddenProfitCols,
-        ];
-    }
-  }
+  return cells;
+}
 
   List<SheetTableColumn> generateInvoiceColumns(
     String parentId,
@@ -27342,70 +27430,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     });
   }
 
-  List<List<SheetTableCell>> generateInvoiceCellData({
-    required String parentId,
-    required SuperDecoration sheetTableDecoration,
-    required IndexPath tableIndexPath,
-    required List<SheetTableRow> rowData,
-    required List<SheetTableColumn> columnData,
-    required List<String> headers,
-  }) {
-    final rows = rowData.length;
-    final cols = headers.length;
-    final rowInputLists = List.generate(rows, (_) => <InputBlock>[]);
-    final colInputLists = List.generate(cols, (_) => <InputBlock>[]);
-
-    final cells = List.generate(rows, (r) {
-      final rowIndexPath = IndexPath(parent: tableIndexPath, index: r);
-      return List.generate(cols, (c) {
-        final isHeader = r == 0;
-        final newId = 'TX-${Uuid().v4()}';
-        final cellIndexPath = IndexPath(parent: rowIndexPath, index: c);
-        final ib = InputBlock(
-          indexPath: cellIndexPath,
-          blockIndex: [-2],
-          id: newId,
-        );
-        rowInputLists[r].add(ib);
-        colInputLists[c].add(ib);
-
-        final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
-        final sheetText = addTextField(
-          id: newId,
-          parentId: parentId,
-          docString: docDelta.toJson(),
-          findItem: _findItem,
-          textFieldTapDown: textFieldTapDown,
-          getReplaceTextFunctionForType: getReplaceTextFunctionForType,
-          textDecoration: sheetTableDecoration,
-          hide: false,
-          name: '${numberToColumnLabel(c + 1)}${r + 1}',
-          indexPath: cellIndexPath,
-          inputBlocks: [ib],
-          locked: isHeader,
-        );
-
-        return SheetTableCell(
-          id: '${numberToColumnLabel(c + 1)}${r + 1}',
-          parentId: parentId,
-          sheetItem: sheetText,
-          rowSpan: 1,
-          colSpan: 1,
-          indexPath: cellIndexPath,
-        );
-      });
-    });
-
-    // Inject back into rowData and columnData
-    for (var r = 0; r < rows; r++) {
-      rowData[r].rowInputBlocks = rowInputLists[r];
-    }
-    for (var c = 0; c < cols; c++) {
-      columnData[c].columnInputBlocks = colInputLists[c];
-    }
-
-    return cells;
-  }
 
   void applySpans(SheetTable sheetTable) {
       final rows = sheetTable.cellData.length;

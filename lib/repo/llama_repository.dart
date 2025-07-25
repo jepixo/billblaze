@@ -1,121 +1,6 @@
-import 'dart:io';
+
 import 'dart:isolate';
-
-import 'package:billblaze/home.dart';
-import 'package:billblaze/providers/llama_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:llama_cpp_dart/llama_cpp_dart.dart';
-
-class LlamaRepository {
-  
-  static Future<void> init(WidgetRef ref) async {
-  final llama = ref.read(llamaProvider);
-
-  if (llama.status == LlamaStatus.ready) {
-    print("✅ Model already initialized.");
-    return;
-  }
-
-  if (llama.status == LlamaStatus.loading) {
-    print("⏳ Model is already loading.");
-    return;
-  }
-
-  try {
-    print("llama initializing...");
-    await llama.init().catchError((e) async {
-      print("❌ Model load failed: $e");
-      await llama.dispose();
-      ref.read(llamaProvider.notifier).state = llama;
-    });
-    if (llama.status == LlamaStatus.ready) print("✅ Model initialized!");
-  } catch (e) {
-    print("❌ Error initializing model: $e");
-  }
-}
-
-  
-  static Future<void> llamaRun(WidgetRef ref, String prompt) async {
-  final llama = ref.read(llamaProvider);
-
-  if (llama.status != LlamaStatus.ready) {
-    print("! Model not ready. Waiting...");
-    await init(ref);
-    int attempts = 0;
-    const maxAttempts = 200;
-    while (llama.status != LlamaStatus.ready && attempts < maxAttempts) {
-      await Future.delayed(const Duration(milliseconds: 200));
-      attempts++;
-    }
-
-    if (llama.status != LlamaStatus.ready) {
-      print("❌ Timeout: Model still not ready.");
-
-      return;
-    }
-
-    print("✅ Model became ready. Proceeding with prompt.");
-  }
-
-  // Reset AI response
-  ref.read(aiTokenProvider.notifier).state = '';
-
-  // Update chat history
-  final chatHistory = ref.read(chatHistoryProvider);
-  chatHistory.addMessage(role: Role.user, content: prompt);
-  ref.read(chatHistoryProvider.notifier).state = chatHistory;
-
-  print("🚀 Sending prompt...");
-
-  await llama.sendPrompt(chatHistory.exportFormat(ChatFormat.chatml));
-
-  final currentResponse = StringBuffer();
-
-  // Listen to token stream
-  llama.stream.listen((token) {
-    ref.read(aiTokenProvider.notifier).state += token;
-    currentResponse.write(token);
-  });
-
-  // Listen to completion events
-  llama.completions.listen((event) {
-    if (event.success) {
-      final history = ref.read(chatHistoryProvider.notifier).state;
-      history.messages.last = Message(role: Role.assistant, content: currentResponse.toString());
-      ref.read(chatHistoryProvider.notifier).state = history;
-      print("✅ Response complete.");
-    } else {
-      print("❌ Completion failed: ${event.promptId}");
-    }
-  });
-}
-
-  static Future<String> _buildSummary(
-  WidgetRef ref,
-  List<Message> older,
-  ) async {
-    final history = ChatHistory();
-    // Prepare summarization instructions
-    for (var i = 0; i < 2; i++) {
-      history.addMessage(role: older[i].role, content: older[i].content);
-    }
-    history.addMessage(role: Role.user, content: "Summarize the following conversation in ≤7 concise lines:");
-    
-    // Send prompt and collect tokens
-    await ref.read(llamaProvider.notifier).state.sendPrompt(history.exportFormat(ChatFormat.gemini));
-    
-    final sb = StringBuffer();
-    await for (final token in ref.read(llamaProvider).stream) {
-      sb.write(token);
-    }
-    return sb.toString().trim();
-  }
-
-
-  
-  
-
-}
 
 void runLlamaModel(Map args) async {
   final sendPort = args['sendPort'] as SendPort;
@@ -123,7 +8,7 @@ void runLlamaModel(Map args) async {
   final modelPath = args['modelPath'] as String;
 
   final contextParams = ContextParams()
-    ..nPredict = 64
+    ..nPredict = 128
     ..nCtx = 8192
     ..nBatch = 512;
   print(contextParams);
@@ -133,7 +18,7 @@ void runLlamaModel(Map args) async {
     ..topP = 0.95
     ..penaltyRepeat = 1.1;
 
-  //TODO for release turn this into llama.dll only since it will be in the root 
+  //TODO: for release turn this into llama.dll only since it will be in the root 
   Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
   final llama = Llama(modelPath, ModelParams(), contextParams, samplerParams, false);
   print(llama.status);

@@ -48,7 +48,7 @@ class SheetTableBox extends SheetItem {
   }): sheetTablebgDecoration = sheetTablebgDecoration ?? sheetTableDecoration;
 
   SheetTable toSheetTable(Function findItem, Function textFieldTapDown, bool Function(int index, int length, Object? data) getReplaceTextFunctionForType(int i, QuillController q),) {
-    print('toSheetTable : ${super.id}');
+    // print('toSheetTable : ${super.id}');
     return SheetTable(
       id: super.id, 
       parentId: super.parentId,
@@ -64,6 +64,8 @@ class SheetTableBox extends SheetItem {
       expand:expand,
       );
   }
+
+  
   
   @override
   Map<String, dynamic> toMap() {
@@ -170,6 +172,22 @@ class SheetTable extends SheetItem {
       name: name,
       expand: expand,
       );
+  }
+  
+  // 🧠 Private cache map
+  Map<String, SheetTableCell>? _cellLookupMap;
+
+  // ⚡️ Build once, lazy init
+  Map<String, SheetTableCell> get _lookupMap {
+    return _cellLookupMap ??= {
+      for (final row in cellData)
+        for (final cell in row) cell.id: cell
+    };
+  }
+
+  // ✅ Public access method
+  SheetTableCell? getCellFromLabel(String label) {
+    return _lookupMap[label];
   }
 
 }
