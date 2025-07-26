@@ -292,9 +292,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   bool isListDecorationPropertiesToggled = false;
   bool isListDecorationLibraryToggled = false;
   bool showDecorationLayers = true;
-  bool showSheetTextLibrary = false;
-  bool isTableDecorationModeDropped = false;
+  // bool showSheetTextLibrary = false;
   bool isMathFunctionLibraryToggled = false;
+  bool isFormulaMode = false;
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
   // List<bool> // inputBlockExpansionList =[false];
   SheetText item = SheetText(
@@ -8412,98 +8412,172 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
     BorderSide borderSide = BorderSide(
       width:2,
-      color:defaultPalette.tertiary,
+      color:isFormulaMode? defaultPalette.extras[0]:defaultPalette.tertiary,
     );
 
     return Stack(
       children: [
-        Container(
-        decoration: BoxDecoration(
-          color: defaultPalette.primary,
-          border:(panelIndex.id ==sheetText.id || selectedIndexPaths[sheetText.id]!=null)
-            ?Border(
-              top: checkSideSelection(0)? borderSide:BorderSide.none,
-              bottom: checkSideSelection(1)? borderSide:BorderSide.none,
-              left: checkSideSelection(2)? borderSide:BorderSide.none,
-              right: checkSideSelection(3)? borderSide:BorderSide.none,
-             )
-            : Border.fromBorderSide( BorderSide.none,),
-          borderRadius:
-              BorderRadius.circular(0),
-        ),
-        child: Column(
-        
-          children: [
-            
-            Expanded(
-              child: Row(
-                children: [
-                   Icon(sheetText.locked?
-                     TablerIcons.lock:
-                    TablerIcons.cursor_text,
-                    size: 14,
-                  ),
-                  Expanded(
-                    child: KeyedSubtree(
-                      key: ValueKey(sheetText.id),
-                      child: QuillEditor(
-                        configurations: sheetText
-                            .textEditorConfigurations,
-                        focusNode:
-                            sheetText.focusNode,
-                        scrollController:
-                            ScrollController(),
-                      ),
+        MouseRegion(
+          onEnter: (event) {
+              if (isFormulaMode) {
+                print(sheetTableCell.id);
+                setState(() {
+                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null) {
+                    selectedIndexPaths.addAll({
+                      sheetTableCell.sheetItem.id: 
+                      PanelIndex(
+                        id: sheetTableCell.sheetItem.id, 
+                        parentId:sheetTableCell.sheetItem.parentId,
+                        itemIndexPath: sheetTableCell.sheetItem.indexPath, 
+                        parentIndexPath: sheetTableCell.indexPath.parent
+                        )
+                    });
+                  }
+                });
+              }
+            },
+          child: Container(
+          decoration: BoxDecoration(
+            color: defaultPalette.primary,
+            border:(panelIndex.id ==sheetText.id || selectedIndexPaths[sheetText.id]!=null)
+              ?Border(
+                top: checkSideSelection(0)? borderSide:BorderSide.none,
+                bottom: checkSideSelection(1)? borderSide:BorderSide.none,
+                left: checkSideSelection(2)? borderSide:BorderSide.none,
+                right: checkSideSelection(3)? borderSide:BorderSide.none,
+               )
+              : Border.fromBorderSide( BorderSide.none,),
+            borderRadius:
+                BorderRadius.circular(0),
+          ),
+          child: Column(
+          
+            children: [
+              
+              Expanded(
+                child: Row(
+                  children: [
+                     Icon(sheetText.locked?
+                       TablerIcons.lock:
+                      TablerIcons.cursor_text,
+                      size: 14,
                     ),
-                  ),
-                ],
-              ),
-            ),
-            if( sheetText.inputBlocks.length>1 || sheetText.inputBlocks[0].id != sheetText.id)
-             Expanded(
-               child: Row(
-                children: [
-                  const Icon(
-                    TablerIcons.math_integral,
-                    size: 14,
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding:EdgeInsets.symmetric(horizontal:4),
-                      margin: EdgeInsets.all(2),
-                      decoration:BoxDecoration(
-                        color:defaultPalette.secondary,
-                        borderRadius:BorderRadius.circular(5)
-                      ),
-                      child: Transform.scale(
-                        scale:0.8,
+                    Expanded(
+                      child: KeyedSubtree(
+                        key: ValueKey(sheetText.id),
                         child: QuillEditor(
-                          configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
-                          focusNode: FocusNode(),
+                          configurations: sheetText
+                              .textEditorConfigurations,
+                          focusNode:
+                              sheetText.focusNode,
                           scrollController:
                               ScrollController(),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-             ),
-          ],
-        ),
+              if( sheetText.inputBlocks.length>1 || sheetText.inputBlocks[0].id != sheetText.id)
+               Expanded(
+                 child: Row(
+                  children: [
+                    const Icon(
+                      TablerIcons.math_integral,
+                      size: 14,
+                    ),
+                    Expanded(
+                      child: Container(
+                        padding:EdgeInsets.symmetric(horizontal:4),
+                        margin: EdgeInsets.all(2),
+                        decoration:BoxDecoration(
+                          color:defaultPalette.secondary,
+                          borderRadius:BorderRadius.circular(5)
+                        ),
+                        child: Transform.scale(
+                          scale:0.8,
+                          child: QuillEditor(
+                            configurations: buildCombinedQuillConfiguration(sheetText.inputBlocks),
+                            focusNode: FocusNode(),
+                            scrollController:
+                                ScrollController(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+               ),
+            ],
           ),
+            ),
+        ),
         if(panelIndex.id == sheetText.id)
         Positioned(
-          bottom:4,
+          bottom:5,
           right:4,
 
           child: MouseRegion(
             cursor: SystemMouseCursors.allScroll,
             child: GestureDetector(
-              child: Container(height:10,width:10,decoration:BoxDecoration( 
-                borderRadius: BorderRadius.circular(3),
-                color:defaultPalette.extras[0])),
-            ),
+              behavior: HitTestBehavior.opaque,
+              onTap: () => print('tap'),
+              onLongPress: () => print('updating'),
+              onHorizontalDragStart:(_) { 
+                setState(() {
+                  isFormulaMode = true;
+                  selectedIndexPaths = {
+                    sheetTableCell.sheetItem.id:PanelIndex(
+                      id: sheetTableCell.sheetItem.id,
+                      parentId:sheetTableCell.sheetItem.parentId,
+                      itemIndexPath: sheetTableCell.sheetItem.indexPath, 
+                      parentIndexPath: sheetTableCell.indexPath.parent
+                      )
+                  };
+                });
+                print('start');
+              
+              },
+              onVerticalDragStart:(_){ 
+                setState(() {
+                  isFormulaMode = true;
+                  selectedIndexPaths = {
+                    sheetTableCell.sheetItem.id:PanelIndex(
+                      id: sheetTableCell.sheetItem.id,
+                      parentId:sheetTableCell.sheetItem.parentId,
+                      itemIndexPath: sheetTableCell.sheetItem.indexPath, 
+                      parentIndexPath: sheetTableCell.indexPath.parent
+                      )
+                  };
+                });
+                print('start');
+              
+              },
+              onHorizontalDragEnd:(_) { 
+                setState(() {
+                  isFormulaMode = false;
+
+                });
+                print('End');
+              
+              },
+              onVerticalDragEnd:(_){ 
+                setState(() {
+                  isFormulaMode = false;
+                });
+                print('End');
+              
+              },
+              child: SizedBox(
+                width: 15,
+                height: 15,
+                child: Transform.rotate(
+                  angle: 0,
+                  child: Icon(TablerIcons.medical_cross_filled, size: 15, color: defaultPalette.extras[0]),
+                ),
+              ),
+            )
+
           ))
       ],
     );
@@ -10603,6 +10677,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
                                                                         func: 'sum',
+                                                                        axisLabel: numberToColumnLabel(el.key+1),
                                                                       ),
                                                                       ));
                                                                   // }
@@ -10617,6 +10692,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
                                                                         func:  'sum',
+                                                                        axisLabel: numberToColumnLabel(el.key+1),
                                                                       ),
                                                                     )
                                                                   );
@@ -10676,6 +10752,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
                                                                         func:  'sum',
+                                                                        axisLabel: (elm.key+1).toString(),
                                                                       ),
                                                                     )
                                                                     );
@@ -10691,6 +10768,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
                                                                         func:  'sum',
+                                                                        axisLabel: (elm.key+1).toString(),
                                                                       ),
                                                                     )
                                                                     );
@@ -12706,7 +12784,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              inputBlock[index].function!.name,
+                                              (double.tryParse((inputBlock[index].function! as ColumnFunction).axisLabel)!=null?'row':'column')+' '+(inputBlock[index].function! as ColumnFunction).axisLabel,
                                               textAlign: TextAlign.end,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -13472,7 +13550,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           child: GestureDetector(
                                             onTapDown:(d){
                                               setState(() {
-                                                isTableDecorationModeDropped= !isTableDecorationModeDropped;
                                                 // final entries = buildContextMenuEntries(sheetText.textEditorController, index, sheetText, sheetList);
                                                   ContextMenu(
                                                       entries: [
@@ -15079,8 +15156,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 child: GestureDetector(
                                                   onTapDown:(d){
                                                     setState(() {
-                                                      isTableDecorationModeDropped= !isTableDecorationModeDropped;
-                                                      // final entries = buildContextMenuEntries(sheetText.textEditorController, index, sheetText, sheetList);
+                                                     // final entries = buildContextMenuEntries(sheetText.textEditorController, index, sheetText, sheetList);
                                                         ContextMenu(
                                                             entries: [
                                                               typeChangeItem('string',0),

@@ -10,7 +10,7 @@ void runLlamaModel(Map args) async {
   final contextParams = ContextParams()
     ..nPredict = 128
     ..nCtx = 8192
-    ..nBatch = 512;
+    ..nBatch = 2048;
   print(contextParams);
   final samplerParams = SamplerParams()
     ..temp = 0.7
