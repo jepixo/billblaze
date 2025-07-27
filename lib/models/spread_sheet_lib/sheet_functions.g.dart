@@ -162,3 +162,44 @@ class CountFunctionAdapter extends TypeAdapter<CountFunction> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class InputBlockFunctionAdapter extends TypeAdapter<InputBlockFunction> {
+  @override
+  final int typeId = 21;
+
+  @override
+  InputBlockFunction read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return InputBlockFunction(
+      inputBlocks: (fields[2] as List).cast<InputBlock>(),
+      label: fields[3] as String,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, InputBlockFunction obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(2)
+      ..write(obj.inputBlocks)
+      ..writeByte(3)
+      ..write(obj.label)
+      ..writeByte(0)
+      ..write(obj.returnType)
+      ..writeByte(1)
+      ..write(obj.name);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is InputBlockFunctionAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

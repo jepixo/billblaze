@@ -2589,16 +2589,45 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       final block = inputBlocks[blockIdx];
       // print(block.toString());
       if (block.function != null) {
-        final result = block.function!.result(getItemAtPath);
-        if (result is num || result is String) {
+        var result;
+        if(block.function is InputBlockFunction){
+          // final config = (block.function as InputBlockFunction)
+          //     .getConfigurations(buildCombinedQuillConfiguration);
+
+          // // ⬇️ Extract the delta from the config's controller
+          // final ops = config.controller.document.toDelta().toList();
+
+          // // Only trim the trailing \n if this block is NOT the last one
+          // final isLastBlock = blockIdx == inputBlocks.length - 1;
+
+          // if (!isLastBlock && ops.isNotEmpty) {
+          //   final last = ops.last;
+          //   if (last.data is String) {
+          //     final String data = last.data as String;
+          //     if (data == '\n') {
+          //       ops.removeLast();
+          //     } else if (data.endsWith('\n')) {
+          //       final trimmed = data.substring(0, data.length - 1);
+          //       ops[ops.length - 1] = Operation.insert(trimmed, last.attributes);
+          //     }
+          //   }
+          // }
+
+          // // Now push remaining ops into the merged delta
+          // for (final op in ops) {
+          //   mergedDelta.push(op);
+          // }
+
+        } else {
+          result = block.function!.result(getItemAtPath);
+          if (result is num || result is String) {
+          
           if (blockIdx == inputBlocks.length-1) {
             mergedDelta.push(Operation.insert('$result\n'));
           } else {
             mergedDelta.push(Operation.insert('$result'));
           }
         }
-
-        // Optional back-patching
         if (block.indexPath.index != -77) {
           final targetItem = getItemAtPath(block.indexPath);
           if (targetItem != null && targetItem is SheetText) {
@@ -2611,7 +2640,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             );
           }
         }
-        continue; // Skip normal SheetText processing for function-driven blocks
+        continue;
+        }
+
+        // Optional back-patching
+         // Skip normal SheetText processing for function-driven blocks
       }
       if((getItemAtPath(block.indexPath).id == 'yo' || getItemAtPath(block.indexPath).id != block.id) && block.function == null){
           print('this should be running');
@@ -8422,7 +8455,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               if (isFormulaMode) {
                 print(sheetTableCell.id);
                 setState(() {
-                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null) {
+                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null && !HardwareKeyboard.instance.isControlPressed) {
                     selectedIndexPaths.addAll({
                       sheetTableCell.sheetItem.id: 
                       PanelIndex(
@@ -8432,10 +8465,33 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         parentIndexPath: sheetTableCell.indexPath.parent
                         )
                     });
+                  } else if( HardwareKeyboard.instance.isControlPressed && panelIndex.id != sheetTableCell.sheetItem.id) {
+                    selectedIndexPaths.remove(sheetTableCell.sheetItem.id);
                   }
                 });
               }
             },
+          onHover: (event) {
+            if (isFormulaMode) {
+                print(sheetTableCell.id);
+                setState(() {
+                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null && !HardwareKeyboard.instance.isControlPressed) {
+                    selectedIndexPaths.addAll({
+                      sheetTableCell.sheetItem.id: 
+                      PanelIndex(
+                        id: sheetTableCell.sheetItem.id, 
+                        parentId:sheetTableCell.sheetItem.parentId,
+                        itemIndexPath: sheetTableCell.sheetItem.indexPath, 
+                        parentIndexPath: sheetTableCell.indexPath.parent
+                        )
+                    });
+                  } else if( HardwareKeyboard.instance.isControlPressed && panelIndex.id != sheetTableCell.sheetItem.id) {
+                    selectedIndexPaths.remove(sheetTableCell.sheetItem.id);
+                  }
+                });
+              }
+            
+          },
           child: Container(
           decoration: BoxDecoration(
             color: defaultPalette.primary,
@@ -10522,7 +10578,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             item.inputBlocks.add(InputBlock(
                                               indexPath: sheetItem.indexPath, 
                                               blockIndex: [-2],
-                                              id: sheetItem.id
+                                              id: sheetItem.id,
+                                              useConst: true,
+                                              function: InputBlockFunction(inputBlocks: sheetItem.inputBlocks, label: sheetItem.name),
                                               ));
                                             // inputBlockExpansionList.add(false); 
                                           } else {
@@ -10530,6 +10588,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               InputBlock(
                                               indexPath: sheetItem.indexPath, 
                                               blockIndex: [-2],
+                                              useConst: true,
+                                              function: InputBlockFunction(inputBlocks: sheetItem.inputBlocks, label: sheetItem.name),
                                               id: sheetItem.id)
                                             );
                                           }
@@ -11305,12 +11365,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock){
                     var funcBlock = inputBlock[index];
                     var funcInputBlocks;
-
+                    print(inputBlock[index].function);
                     if (inputBlock[index].function is SumFunction) {
                      funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
                     } else if (inputBlock[index].function is ColumnFunction) {
                       funcInputBlocks =  (inputBlock[index].function as ColumnFunction).inputBlocks;
-                    }
+                    } else if (inputBlock[index].function! is InputBlockFunction) {
+                      funcInputBlocks =  (inputBlock[index].function! as InputBlockFunction).inputBlocks;
+                    } 
                     ////
                     ////
                         Widget sumFunctionInputBlocks(List<InputBlock> inBlock, int inx){
@@ -12429,7 +12491,516 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             ),
                           );
                         }
+                        Widget inputBlockFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                          if (inx < 0 || inx >= inBlock.length) {
+                            return SizedBox.shrink(
+                            key: ValueKey(inx),
+                          );
+                          }
+                          final block = inBlock[inx];
+                          // If the block has a function, don't try to fetch an item at the indexPath
+                          final hasFunction = block.function != null;
+                          SheetFunction? sheetFunction;
+                          int length =2;
+                          
+                          if (hasFunction) {
+                            sheetFunction =(inBlock[inx].function as  InputBlockFunction);
+                            length = (inBlock[inx].function as  InputBlockFunction).inputBlocks.length;
+                          }
+                          String? delta;
+                          SheetText? itemAtPath;
+                          print('useConst: '+inBlock[inx].useConst.toString());
+                          if (!hasFunction || inBlock[inx].useConst) {
+                            try {
+                              final item = getItemAtPath(block.indexPath);
+                              if (item is SheetText) {
+                                itemAtPath = item;
+                                delta = itemAtPath.textEditorConfigurations.controller.document.toPlainText();
+                              } else {
+                                throw Exception("Item is not SheetText");
+                              }
+                            } catch (e) {
+                              return const SizedBox.shrink(); // fail-safe
+                            }
+                          }
+                          return ReorderableDragStartListener(
+                            key: ValueKey(inx),
+                            index: inx,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      // const SizedBox(height: 45),
+                                      if (inBlock[inx].useConst)
+                                      ...[
+                                        Container(
+                                          // margin: const EdgeInsets.only(top: 10),
+                                          padding: EdgeInsets.symmetric(vertical: 2),
+                                          height: 60,
+                                          width: width+13,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(0),
+                                            color: defaultPalette.tertiary,
+                                          ),
+                                          margin:EdgeInsets.only(bottom:1),
+                                          child: Column(
+                                            children: [
+                                              //title for function
+                                              Row(
+                                                children: [
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                      inx.toString(),
+                                                      textAlign: TextAlign.end,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 18,
+                                                        color: defaultPalette.primary,
+                                                      ),
+                                                    ),
+                                                  // the number inside the field display
+                                                  Expanded(
+                                                    flex: 4,
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        color: defaultPalette.secondary,
+                                                      ),
+                                                      padding: EdgeInsets.symmetric(horizontal:4),
+                                                      margin: EdgeInsets.all(4).copyWith(bottom: 4),
+                                                      child: Text(
+                                                          delta!,
+                                                          textAlign: TextAlign.end,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: GoogleFonts.lexend(
+                                                            letterSpacing: -1,
+                                                            fontWeight: FontWeight.w500,
+                                                            fontSize: 14,
+                                                            color: defaultPalette.extras[0],
+                                                          ),
+                                                        ),
+                                                    ),
+                                                  ),  
+                                                  Expanded(
+                                                    flex: 5,
+                                                    child: Text(
+                                                      itemAtPath!.name,
+                                                      textAlign: TextAlign.end,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 18,
+                                                        color: defaultPalette.primary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                  ClipRRect(
+                                                    borderRadius: BorderRadius.circular(99999),
+                                                    child: Material(
+                                                      color: defaultPalette.transparent,
+                                                      child: InkWell(
+                                                        hoverColor: defaultPalette.primary,
+                                                        splashColor: defaultPalette.primary,
+                                                        highlightColor: defaultPalette.primary,
+                                                        onTap: () {
+                                                          setState(() {
+                                                            inBlock.removeAt(inx);
+                                                          });
+                                                        },
+                                                        child: Icon(
+                                                          TablerIcons.x,
+                                                          size: 18,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                ],
+                                              ),
+                                              //sum cumulative and individual index
+                                              Container(
+                                                margin: EdgeInsets.all(2).copyWith(top:4),
+                                                padding: EdgeInsets.all(3),
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(5),
+                                                  color: defaultPalette.extras[0],
+                                                ),
+                                                child: Row(
+                                                children: [
+                                                  const SizedBox(width: 3),
+                                                  Expanded(
+                                                    child: RichText(
+                                                      text: TextSpan(
+                                                        style: GoogleFonts.lexend(
+                                                          letterSpacing: -1,
+                                                          fontWeight: FontWeight.w400,
+                                                          fontSize: 12,
+                                                          color: defaultPalette.extras[0],
+                                                        ),
+                                                        children: [
+                                                          TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                          TextSpan(
+                                                            text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                            style: TextStyle(color:defaultPalette.primary),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: RichText(
+                                                      text: TextSpan(
+                                                        style: GoogleFonts.lexend(
+                                                          letterSpacing: -1,
+                                                          fontWeight: FontWeight.w400,
+                                                          fontSize: 12,
+                                                          color: defaultPalette.extras[0],
+                                                        ),
+                                                        children: [
+                                                          TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                          TextSpan(
+                                                            text: '${(inx).clamp(0, double.infinity)}',
+                                                            style: TextStyle(color:defaultPalette.primary),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                ],
+                                                        ),
+                                              )
+                                
+                                            ],
+                                          ),
+                                        ),
+                                      ],
 
+                                      if(!inBlock[inx].useConst)
+                                      GestureDetector(
+                                        onTap:(){
+                                          setState(() {
+                                            
+                                              selectedInputBlocks =(sheetFunction as  InputBlockFunction).inputBlocks;
+                                            
+                                          });
+                                        },
+                                        child: Stack(
+                                          children:[
+                                            if(inBlock[inx].isExpanded)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top:28.0),
+                                              child: buildFunctionTile(inx, width,inBlock)[0],
+                                            ),
+                                            AnimatedMeshGradient(
+                                              colors: [
+                                                  // defaultPalette.extras[0],
+                                                  defaultPalette.primary,
+                                                  defaultPalette.primary,
+                                                  defaultPalette.primary,
+                                                  defaultPalette.primary,
+                                                ],
+                                              options: AnimatedMeshGradientOptions(
+                                                  amplitude: 5,
+                                                  grain: 0.1,
+                                                  frequency: 15,
+                                                  
+                                                ),
+                                              child: Container(
+                                                // margin: const EdgeInsets.only(top: 10, bottom: 5),
+                                                width: width,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(0),
+                                                  // color: defaultPalette.primary,
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    //the title of function
+                                                    Row(
+                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                      children: [
+                                                        const SizedBox(width: 4),
+                                                        //inx
+                                                        Text(
+                                                            inx.toString(),
+                                                            textAlign: TextAlign.end,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 18,
+                                                              foreground: Paint()
+                                                              ..color = defaultPalette.primary
+                                                              ..blendMode = BlendMode.difference
+                                                            ),
+                                                          ),
+                                                        //delta
+                                                        Expanded(
+                                                          flex:4,
+                                                          child: Container(
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(5),
+                                                              color: defaultPalette.extras[0],
+                                                            ),
+                                                            padding: EdgeInsets.symmetric(horizontal:4,vertical: 2),
+                                                            margin: EdgeInsets.all(4).copyWith(bottom: 2),
+                                                            child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 14,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                if(sheetFunction is SumFunction)
+                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                if(sheetFunction is ColumnFunction)
+                                                                TextSpan(text: ' ${sheetFunction.func}: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                
+                                                                TextSpan(
+                                                                  text: '${block.function!.result(getItemAtPath).toString()}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                          ),
+                                                        ),    
+                                                        //label
+                                                        Expanded(
+                                                          flex:5,
+                                                          child: Text(
+                                                            sheetFunction?.name ??'',
+                                                            textAlign: TextAlign.end,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 18,
+                                                              height: 1,
+                                                              foreground: Paint()
+                                                              ..color = defaultPalette.primary
+                                                              ..blendMode = BlendMode.difference
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                        //remove function button 
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top:4),
+                                                          child: ClipRRect(
+                                                            borderRadius: BorderRadius.circular(99999),
+                                                            child: Material(
+                                                              color: defaultPalette.transparent,
+                                                              child: InkWell(
+                                                                hoverColor: defaultPalette.primary,
+                                                                splashColor: defaultPalette.primary,
+                                                                highlightColor: defaultPalette.primary,
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    inBlock.removeAt(inx);
+                                                                    // inputBlockExpansionList.removeAt(index);
+                                                                  });
+                                                                },
+                                                                child: Icon(
+                                                                  TablerIcons.x,
+                                                                  size: 17,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                      ],
+                                                    ),
+                                                    //index 0-0
+                                                    Row(
+                                                      children: [
+                                                        const SizedBox(width: 4),
+                                                        //inx invis
+                                                        Text(
+                                                            inx.toString(),
+                                                            textAlign: TextAlign.end,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 18,
+                                                              // color: defaultPalette.primary,
+                                                              foreground: Paint()
+                                                              ..blendMode = BlendMode.dst
+                                                            ),
+                                                          ),
+                                                        
+                                                        Expanded(
+                                                          flex:4,
+                                                          child: Container(
+                                                            margin: EdgeInsets.all(2).copyWith(top:0, left:4),
+                                                            padding: EdgeInsets.all(2),
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(5),
+                                                              color: defaultPalette.extras[0],
+                                                            ),
+                                                            child: Row(
+                                                            children: [
+                                                              const SizedBox(width: 3),
+                                                              
+                                                              Expanded(
+                                                                child: RichText(
+                                                                  text: TextSpan(
+                                                                    style: GoogleFonts.lexend(
+                                                                      letterSpacing: -1,
+                                                                      fontWeight: FontWeight.w400,
+                                                                      fontSize: 14,
+                                                                      color: defaultPalette.extras[0],
+                                                                    ),
+                                                                    children: [
+                                                                      TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                      TextSpan(
+                                                                        text: '0 - ${(length - 1).clamp(0, double.infinity)}',
+                                                                        style: TextStyle(color:defaultPalette.primary),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  maxLines: 1,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 3),
+                                                            ],
+                                                          ),
+                                                          ),
+                                                        ),
+                                                        Expanded(
+                                                          flex:5,
+                                                          child: SizedBox()),
+                                                        SizedBox(width:30),
+                                                      ],
+                                                    ),
+                                                    
+                                                    //sum cumulative and individual index
+                                                    Container(
+                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:38,bottom: 4),
+                                                      padding: EdgeInsets.all(3),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(5),
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      child: Row(
+                                                      children: [
+                                                        const SizedBox(width: 3),
+                                                        Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                TextSpan(
+                                                                  text: '${(inx).clamp(0, double.infinity)}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                      ],
+                                                              ),
+                                                    ),
+                                                                          
+                                                    
+                                                    
+                                                    ],
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top:54,
+                                              child: ElevatedLayerButton(
+                                                  isTapped: inBlock[inx].isExpanded,
+                                                  borderRadius: const BorderRadius.only(
+                                                    topRight: Radius.circular(5),
+                                                    topLeft: Radius.circular(5),
+                                                    bottomRight: Radius.circular(5),
+                                                    bottomLeft: Radius.circular(5),
+                                                  ),
+                                                  animationDuration: const Duration(milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: defaultPalette.primary,
+                                                    border: Border.all(color: defaultPalette.extras[0]),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    children: [
+                                                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
+                                                      // Expanded(
+                                                      //   child: Text(
+                                                      //     ' edit',
+                                                      //     maxLines: 1,
+                                                      //     style: GoogleFonts.bungee(
+                                                      //       fontSize: 12,
+                                                      //       color: defaultPalette.extras[0],
+                                                      //       // letterSpacing: -1,
+                                                      //       fontWeight: FontWeight.w500,
+                                                      //     ),
+                                                      //   ),
+                                                      // ),
+                                                    ],
+                                                  ),
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    border: Border.all(color: defaultPalette.extras[0]),
+                                                  ),
+                                                  depth: 2,
+                                                  subfac: 5,
+                                                  buttonHeight: 24,
+                                                  buttonWidth: 35,
+                                                  onClick: () {
+                                                    setState(() {
+                                                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+                                                      inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
+                                                    });
+                                                  },
+                                                ),
+                                            ),
+                        
+                                            
+                                            ]
+                                          
+                                          ))
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                       
+                        }
                     ////
                     ////
                     // return for funtionTileBlock
@@ -13021,10 +13592,325 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           ),
                           
                         ];
+                      
+                      case InputBlockFunction:
+                        return [
+                          if(funcBlock.isExpanded)
+                          Container(
+                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration:BoxDecoration(
+                                    color:defaultPalette.transparent,
+                                    // border:Border.all()
+                                  ),
+                                  //reorderable for functioninputblockchildren
+                                  child: ScrollConfiguration(
+                                    behavior: ScrollBehavior().copyWith(scrollbars: false),
+                                    child: DynMouseScroll(
+                                      durationMS: 500,
+                                      scrollSpeed: 1,
+                                      builder: (context, controller, physics) {
+                                        return ListView.builder(
+                                          shrinkWrap: true,
+                                          scrollDirection: Axis.vertical,
+                                          controller:controller,
+                                          physics:physics,
+                                          itemCount: funcInputBlocks.length,
+                                            itemBuilder: (context, inx) {
+                                              return inputBlockFunctionInputBlocks(funcInputBlocks, inx);
+                                              
+                                          });
+                                        }
+                                      ),
+                                    ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10, bottom: 5),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8).copyWith(
+                                      bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+                                      bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+                                    ),
+                              child: AnimatedMeshGradient(
+                                  colors: [
+                                      // defaultPalette.extras[0],
+                                      defaultPalette.primary,
+                                      defaultPalette.primary,
+                                      defaultPalette.primary,
+                                      selectedInputBlocks ==(inputBlock[index].function as InputBlockFunction).inputBlocks? defaultPalette.extras[0]: defaultPalette.primary,
+                                    ],
+                                  options: AnimatedMeshGradientOptions(
+                                      amplitude: 5,
+                                      grain: 0.1,
+                                      frequency: 15,
+                                      
+                                    ),
+                                child: Container(
+                                  width: width,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8).copyWith(
+                                      bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+                                      bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      //the title of function
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              (inputBlock[index].function! as InputBlockFunction).label,
+                                              textAlign: TextAlign.end,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.lexend(
+                                                letterSpacing: -1,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 18,
+                                                height: 1,
+                                                color: defaultPalette.extras[0],
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 3),
+                                          //remove function button 
+                                          Padding(
+                                            padding: const EdgeInsets.only(top:4),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(99999),
+                                              child: Material(
+                                                color: defaultPalette.transparent,
+                                                child: InkWell(
+                                                  hoverColor: defaultPalette.primary,
+                                                  splashColor: defaultPalette.primary,
+                                                  highlightColor: defaultPalette.primary,
+                                                  onTap: () {
+                                                    setState(() {
+                                                      inputBlock.removeAt(index);
+                                                      // inputBlockExpansionList.removeAt(index);
+                                                    });
+                                                  },
+                                                  child: Icon(
+                                                    TablerIcons.x,
+                                                    size: 17,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 3),
+                                        ],
+                                      ),
+                                      
+                                      //sum/count and index
+                                      Row(
+                                        children: [
+                                          const SizedBox(width: 3),
+                                         
+                                          Expanded(
+                                            child: Container(
+                                              margin: EdgeInsets.all(2),
+                                              padding: EdgeInsets.all(1),
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(5),
+                                                color: defaultPalette.extras[0],
+                                              ),
+                                              child: Row(
+                                              children: [
+                                                const SizedBox(width: 3),
+                                                
+                                                Expanded(
+                                                  child: RichText(
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 14,
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      children: [
+                                                        // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                        TextSpan(
+                                                          text: '${inputBlock[index].function!.result(getItemAtPath)}',
+                                                          style: TextStyle(color:defaultPalette.primary),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: RichText(
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 14,
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      children: [
+                                                        TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                        TextSpan(
+                                                          text: '0-${((inputBlock[index].function! as InputBlockFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                          style: TextStyle(color:defaultPalette.primary),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 3),
+                                              ],
+                                            ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                      
+                                      ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          ElevatedLayerButton(
+                            
+                            isTapped: funcBlock.isExpanded,
+                            borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(5),
+                              topLeft: Radius.circular(5),
+                              bottomRight: Radius.circular(10),
+                              bottomLeft: Radius.circular(10),
+                            ),
+                            animationDuration: const Duration(milliseconds: 100),
+                            animationCurve: Curves.ease,
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.primary,
+                              border: Border.all(color: defaultPalette.extras[0]),
+                            ),
+                            topLayerChild: Row(
+                              children: [
+                                const SizedBox(width: 10),
+                                Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0]),
+                                Expanded(
+                                  child: Text(
+                                    ' edit',
+                                    maxLines: 1,
+                                    style: GoogleFonts.bungee(
+                                      fontSize: 12,
+                                      color: defaultPalette.extras[0],
+                                      // letterSpacing: -1,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            baseDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(color: defaultPalette.extras[0]),
+                            ),
+                            depth: 2,
+                            subfac: 2,
+                            buttonHeight: 24,
+                            buttonWidth: 80,
+                            onClick: () {
+                              setState(() {
+                                // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+                                inputBlock[index].isExpanded =!inputBlock[index].isExpanded;
+                              });
+                            },
+                          ),
+                          if (funcBlock.id !=item.id) 
+                          Positioned(
+                            left:80,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                    
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    funcBlock.useConst= !funcBlock.useConst;
+                                  });
+                                },
+                              ),
+                          ),
+                        ];
+                      
+                      
                       default:
+                        return [
+                       ElevatedLayerButton(
+                           borderRadius: const BorderRadius.only(
+                             topRight: Radius.circular(5),
+                             topLeft: Radius.circular(5),
+                             bottomRight: Radius.circular(10),
+                             bottomLeft: Radius.circular(10),
+                           ),
+                           animationDuration: const Duration(milliseconds: 100),
+                           animationCurve: Curves.ease,
+                           topDecoration: BoxDecoration(
+                             color: defaultPalette.primary,
+                             border: Border.all(color: defaultPalette.extras[0]),
+                           ),
+                           topLayerChild: Row(
+                             children: [
+                               const SizedBox(width: 2),
+                               Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.function, size: 12, color: defaultPalette.extras[0]),
+                               
+                             ],
+                           ),
+                           baseDecoration: BoxDecoration(
+                             color: defaultPalette.extras[0],
+                             border: Border.all(color: defaultPalette.extras[0]),
+                           ),
+                           depth: 2,
+                           subfac: 2,
+                           buttonHeight: 24,
+                           buttonWidth: 20,
+                           onClick: () {
+                             setState(() {
+                               inputBlock[index].useConst= !inputBlock[index].useConst;
+                             });
+                           },
+                         ),
+                                                  
+                    ];
                     }
                     
-                    return [];
                   }
 
                   //Return for inputBlock
@@ -13069,7 +13955,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       
                                   Delta? delta;
                                   SheetText? itemAtPath;
-                                  if (!hasFunction) {
+                                  if (!hasFunction || inputBlock[index].useConst) {
                                     try {
                                       final item = getItemAtPath(block.indexPath);
                                       if (item is SheetText) {
@@ -13082,6 +13968,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       return const SizedBox.shrink(); // fail-safe
                                     }
                                   }
+                                  print(inputBlock[index].useConst);
                       
                                   final json = delta?.toJson();
                                     return ReorderableDragStartListener(
@@ -13094,7 +13981,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           Expanded(
                                             child: Stack(
                                               children: [
-                                                if (!hasFunction)
+                                                if (inputBlock[index].useConst)
                                                 ...[
                                                   if (inputBlock[index].isExpanded)
                                                   buildStyledJsonBlock(json!),
@@ -13109,9 +13996,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     ),
                                                     child: Row(
                                                       children: [
+
                                                         Expanded(
                                                           child: Text(
-                                                            itemAtPath!.name,
+                                                            itemAtPath?.name??'lol',
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
@@ -13193,9 +14081,48 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         });
                                                       },
                                                     ),
+                                                  if (inputBlock[index].id !=item.id) 
+                                                  Positioned(
+                                                    left:80,
+                                                    child: ElevatedLayerButton(
+                                                        borderRadius: const BorderRadius.only(
+                                                          topRight: Radius.circular(5),
+                                                          topLeft: Radius.circular(5),
+                                                          bottomRight: Radius.circular(10),
+                                                          bottomLeft: Radius.circular(10),
+                                                        ),
+                                                        animationDuration: const Duration(milliseconds: 100),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: defaultPalette.primary,
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        topLayerChild: Row(
+                                                          children: [
+                                                            const SizedBox(width: 2),
+                                                            Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.function, size: 12, color: defaultPalette.extras[0]),
+                                                            
+                                                          ],
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        depth: 2,
+                                                        subfac: 2,
+                                                        buttonHeight: 24,
+                                                        buttonWidth: 20,
+                                                        onClick: () {
+                                                          setState(() {
+                                                            inputBlock[index].useConst= !inputBlock[index].useConst;
+                                                          });
+                                                        },
+                                                      ),
+                                                  ),
+                                                  
                                                 ],
                                                             
-                                                if(hasFunction)
+                                                if(!inputBlock[index].useConst)
                                                 GestureDetector(
                                                   onTap:(){
                                                     setState(() {

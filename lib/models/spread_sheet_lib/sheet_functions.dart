@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:billblaze/home.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -40,6 +41,8 @@ class SheetFunction {
         return ColumnFunction.fromMap(map);
       case 'count':
         return CountFunction.fromMap(map);
+      case 'inputBlock':
+        return InputBlockFunction.fromMap(map);
       // Add more subclasses here if needed
       default:
         throw Exception('Unknown SheetFunction type: ${map['type']}');
@@ -210,6 +213,50 @@ class CountFunction extends SheetFunction {
             .map((e) => InputBlock.fromMap(e))
             .toList(),
       );
+
+}
+
+@HiveType(typeId: 21)
+class InputBlockFunction extends SheetFunction {
+  @HiveField(2)
+  List<InputBlock> inputBlocks;
+  @HiveField(3)
+  String label;
+
+  InputBlockFunction(
+    {
+      required this.inputBlocks,
+      required this.label,
+    }
+  ):super(0,'inputBlock');
+
+  @override
+  result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
+    if (spreadSheet!=null) {
+      return buildCombinedTextFromBlocks(inputBlocks, spreadSheet);
+    }
+  }
+
+  QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration) {
+    return buildCombinedQuillConfiguration(inputBlocks);
+  }
+  
+  @override
+  Map<String, dynamic> toMap() => {
+        'name': name,
+        'returnType': returnType,
+        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+        'label': label
+
+      };
+
+  factory InputBlockFunction.fromMap(Map<String, dynamic> map) => InputBlockFunction(
+        inputBlocks: (map['inputBlocks'] as List)
+            .map((e) => InputBlock.fromMap(e))
+            .toList(),
+        label: map['label'],
+      );
+
 }
 
 class IfFunction extends SheetFunction {
