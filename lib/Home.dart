@@ -893,6 +893,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
+                              //AI CHAT INTERFACE
                               Positioned.fill(
                                 left: 25, right:25, top:25, bottom:25,
                                 child: ClipRRect(
@@ -930,10 +931,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               Only generate the answer and stop.
                                               Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
                                               Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
-                                              
-                                               Here's the BillBlaze Data: $typeStats, Current Date: ${DateFormat('dddd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                               Payable means our total revenue.
-                                               """)
+                                              Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
+                                              Payable means our total revenue.
+                                              """)
                                                   ..addMessage(role: Role.user, content: chatTextController.text)
                                                   ..addMessage(role: Role.assistant, content: "");
                                                                                             
@@ -969,9 +969,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   borderRadius: BorderRadius.circular(15),
                                                   border:Border.all(width:2)
                                                   ),
-                                                child:Transform.rotate(
+                                                child:isLlmProcessing?
+                                                Padding(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: LoadingIndicator(
+                                                    colors: [defaultPalette.primary],
+                                                    indicatorType: Indicator.values[0 + math.Random().nextInt((Indicator.values.length-1) - 0 + 1)]),
+                                                ):
+                                                Transform.rotate(
                                                   angle:-pi/2,
-                                                  child: Icon(isLlmProcessing?TablerIcons.loader: TablerIcons.send_2, color:defaultPalette.primary))
+                                                  child: Icon(TablerIcons.send_2, color:defaultPalette.primary))
                                               ),
                                             ),
                                           ),
@@ -994,7 +1001,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 selectionControls: NoMenuTextSelectionControls(),
                                                 textAlign: TextAlign.start,
                                                 textAlignVertical: TextAlignVertical(y: -1),
-                                                maxLines: 5,
+                                                maxLines: 2,
                                                 minLines: 1,
                                                 decoration: InputDecoration(
                                                   contentPadding: const EdgeInsets.only(left:15, top:5, bottom:5),
@@ -1886,7 +1893,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     final existing = box.get(id);
                                     
 
-                                    if (existing != null && incoming.modifiedAt.isBefore(existing.modifiedAt)) {
+                                    if (existing != null && (incoming.modifiedAt.isBefore(existing.modifiedAt) ||incoming.createdAt.isBefore(existing.createdAt) )) {
                                       if (!mounted) return;
 
                                       final shouldOverwrite = await showDialog<int>(
@@ -2095,6 +2102,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           );
                                         box.put(newId, newlm);
                                       }
+                                    } else if (existing ==null){
+                                      box.put(id, incoming.copyWith(pdf: []));
                                     }
 
                                   }

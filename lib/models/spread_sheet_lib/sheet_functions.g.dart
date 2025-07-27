@@ -94,17 +94,20 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
     return ColumnFunction(
       inputBlocks: (fields[2] as List).cast<InputBlock>(),
       func: fields[3] as String,
+      axisLabel: fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, ColumnFunction obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(2)
       ..write(obj.inputBlocks)
       ..writeByte(3)
       ..write(obj.func)
+      ..writeByte(4)
+      ..write(obj.axisLabel)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)
