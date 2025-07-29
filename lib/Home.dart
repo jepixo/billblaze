@@ -3783,6 +3783,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 // Now filter the layouts
                 final layouts = allLayouts.where((layout) {
                   final name = layout.name;
+                  if (layout.id.startsWith('LY-')) return false;
                   if (name.endsWith('-old')) return false;
                   if (revisedNames.contains(name)) return false; // exclude if revised version exists
                   return true;
@@ -4518,6 +4519,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 // Now filter the layouts
                 final layouts = allLayouts.where((layout) {
                   final name = layout.name;
+                  if (layout.id.startsWith('LY-')) return false;
                   if (name.endsWith('-old')) return false;
                   if (revisedNames.contains(name)) return false; // exclude if revised version exists
                   return true;
@@ -5756,54 +5758,90 @@ List<PieChartSectionData> showingSections({
   return outMin + (outMax - outMin) * frozenProgress;
 }
 
-String buildCombinedTextFromBlocks(List<InputBlock> inputBlocks, List<SheetListBox> spreadSheetList) {
+String buildCombinedTextFromBlocks(
+  List<InputBlock> inputBlocks,
+  List<SheetListBox> spreadSheetList, {
+  Map<String, int>? visited,
+}) {
   final mergedDelta = Delta();
+  visited ??= {};
 
   for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
     final block = inputBlocks[blockIdx];
-   
-    if (block.function != null) {
-      //  print((block.function as ColumnFunction).inputBlocks);
-      //  print('result: ');
-      final result = block.function!.result(getItemAtPath, spreadSheet: spreadSheetList);
-      // print('result: '+ result.toString());
-      if (result is num || result is String) {
-        final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
-        mergedDelta.push(Operation.insert(text));
-      }
 
-      // Optional back-patching
-      if (block.indexPath.index != -77) {
-        final targetItem = getItemAtPath(block.indexPath, spreadSheetList);
-        if (targetItem is SheetText) {
-          final controller = targetItem.textEditorConfigurations.controller;
-          controller.replaceText(
-            0,
-            controller.document.length,
-            '$result',
-            TextSelection.collapsed(offset: '$result'.length),
-          );
-        }
+    if (block.useConst == false) {
+      visited[block.id] = (visited[block.id] ?? 0) + 1;
+      if (visited[block.id]! > 50) {
+        return 'recursion detected';
       }
-      continue;
+    }
+
+    if (block.function != null) {
+      if (block.function is InputBlockFunction && block.useConst == false) {
+        // Recursive call with updated visited map
+        final result = buildCombinedTextFromBlocks(
+          (block.function as InputBlockFunction).inputBlocks,
+          spreadSheetList,
+          visited: visited,
+        );
+
+        mergedDelta.push(Operation.insert(
+          '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}',
+        ));
+
+        // Back-patch result if needed
+        if (block.indexPath.index != -77) {
+          final targetItem = getItemAtPath(block.indexPath, spreadSheetList);
+          if (targetItem is SheetText) {
+            final controller = targetItem.textEditorConfigurations.controller;
+            controller.replaceText(
+              0,
+              controller.document.length,
+              result,
+              TextSelection.collapsed(offset: result.length),
+            );
+          }
+        }
+
+        continue;
+      } else {
+        final result = block.function!.result(getItemAtPath, spreadSheet: spreadSheetList);
+        if (result is num || result is String) {
+          final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
+          mergedDelta.push(Operation.insert(text));
+        }
+
+        if (block.indexPath.index != -77) {
+          final targetItem = getItemAtPath(block.indexPath, spreadSheetList);
+          if (targetItem is SheetText) {
+            final controller = targetItem.textEditorConfigurations.controller;
+            controller.replaceText(
+              0,
+              controller.document.length,
+              '$result',
+              TextSelection.collapsed(offset: '$result'.length),
+            );
+          }
+        }
+
+        continue;
+      }
     }
 
     final item = getItemAtPath(block.indexPath, spreadSheetList);
     Delta delta;
 
     if (item is SheetTextBox) {
-      // Convert from List<Map<String, dynamic>> → Delta
       delta = Delta.fromJson(item.textEditorController);
     } else if (item is SheetText) {
       delta = item.textEditorConfigurations.controller.document.toDelta();
     } else {
-      continue; // Unknown or null item
+      continue;
     }
 
     final ops = delta.toList();
     final isLastBlock = blockIdx == inputBlocks.length - 1;
 
-    // Trim trailing newline if not last block
     if (!isLastBlock && ops.isNotEmpty) {
       final last = ops.last;
       if (last.data is String) {
@@ -5819,8 +5857,8 @@ String buildCombinedTextFromBlocks(List<InputBlock> inputBlocks, List<SheetListB
 
     if (block.blockIndex.isNotEmpty && block.blockIndex.first == -2) {
       for (final op in ops) {
-            mergedDelta.push(op);
-          }
+        mergedDelta.push(op);
+      }
     } else {
       for (final i in block.blockIndex) {
         if (i >= 0 && i < ops.length) {
@@ -5835,7 +5873,7 @@ String buildCombinedTextFromBlocks(List<InputBlock> inputBlocks, List<SheetListB
   }
 
   final doc = Document.fromDelta(mergedDelta);
-  return doc.toPlainText().trimRight(); // Remove trailing newlines
+  return doc.toPlainText().trimRight();
 }
 
 

@@ -114,7 +114,7 @@ class SumFunction extends SheetFunction {
 
     // Extend for other types if needed
   }
-  print('sum: '+sum.toString());
+  // print('sum: '+sum.toString());
   return sum;
 }
 
@@ -239,7 +239,10 @@ class InputBlockFunction extends SheetFunction {
     }
   }
 
-  QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration) {
+  QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet}) {
+    if (spreadSheet !=null) {
+      return buildCombinedQuillConfiguration(inputBlocks, spreadSheet,);
+    }
     return buildCombinedQuillConfiguration(inputBlocks);
   }
   

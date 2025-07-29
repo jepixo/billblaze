@@ -10746,6 +10746,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       indexPath: IndexPath(index: -1277), 
                                                                       blockIndex: [-2], 
                                                                       id: 'yo',
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
                                                                         func: 'sum',
@@ -10761,6 +10762,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       indexPath: IndexPath(index: -1277), 
                                                                       blockIndex: [-2], 
                                                                       id: 'yo',
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
                                                                         func:  'sum',
@@ -10821,6 +10823,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       indexPath: IndexPath(index: -1277), 
                                                                       blockIndex: [-2], 
                                                                       id: 'yo',
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
                                                                         func:  'sum',
@@ -10837,6 +10840,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       indexPath: IndexPath(index: -1277), 
                                                                       blockIndex: [-2], 
                                                                       id: 'yo',
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
                                                                         func:  'sum',
@@ -11418,7 +11422,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return const SizedBox.shrink(); // fail-safe
+                              return SizedBox.shrink(
+                                key: ValueKey(inx),
+                              ); // fail-safe
                             }
                           }
                           print('SUMFUNCTIONINPUTTILE');
@@ -12028,7 +12034,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return const SizedBox.shrink(); // fail-safe
+                              return SizedBox.shrink(
+                                key: ValueKey(inx),
+                              ); // fail-safe
                             }
                           }
                           return ReorderableDragStartListener(
@@ -12546,7 +12554,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return const SizedBox.shrink(); // fail-safe
+                              return SizedBox.shrink(
+                                key: ValueKey(inx),
+                              ); // fail-safe
                             }
                           }
                           return ReorderableDragStartListener(
@@ -13961,7 +13971,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         throw Exception("Item is not SheetText");
                                       }
                                     } catch (e) {
-                                      return const SizedBox.shrink(); // fail-safe
+                                      return SizedBox.shrink(
+                                        key: ValueKey(index),
+                                      ); // fail-safe
                                     }
                                   }
                                   print(inputBlock[index].useConst);
