@@ -58,6 +58,7 @@ Future<void> main() async {
   Hive.registerAdapter(RequiredTextAdapter());
   Hive.registerAdapter(ColumnFunctionAdapter());
   Hive.registerAdapter(CountFunctionAdapter());
+  Hive.registerAdapter(InputBlockFunctionAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');

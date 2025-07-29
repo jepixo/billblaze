@@ -2220,7 +2220,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
       setState(() {
         categorizedFonts = tempCategories;
-        // print(categorizedFonts);
+        // prnt(categorizedFonts);
       });
     } else {
       print('Failed to fetch fonts: ${response.statusCode}');
@@ -2251,7 +2251,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           whichPropertyTabIsClicked = 2;
         }
         
-      // print(selectedIndexPaths);
+      // prnt(selectedIndexPaths);
       // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
       if (item.textDecoration.id == 'yo' || sheetDecorationMap[item.textDecoration.id] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
         textDecorationNameController.text = '[Unassigned]';
@@ -2291,8 +2291,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         // sheetListItem = _sheetListIterator(
         //     panelIndex.parentId, spreadSheetList[currentPageIndex]);
         sheetListItem = getItemAtPath(panelIndex.parentIndexPath!) as SheetList;
-            // print('sheetDecorationVariables hello.');
-            // print(sheetListItem.parentId);
+            // prnt('sheetDecorationVariables hello.');
+            // prnt(sheetListItem.parentId);
         
           if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
             if (selectedIndexPaths[sheetListItem.id] == null)  {
@@ -2317,11 +2317,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         decorationIndex = -1;
         updateSheetDecorationvariables(sheetDecorationMap[sheetListItem.listDecoration] as SuperDecoration);
         }
-        // print('sheetDecorationVariables initiated.');
-        // print(sheetListItem.listDecoration.id);
-        // print(sheetListItem.listDecoration.itemDecorationList);
-        // print(sheetDecorationVariables);
-        // print(sheetDecorationVariables[0].isExpanded);
+        // prnt('sheetDecorationVariables initiated.');
+        // prnt(sheetListItem.listDecoration.id);
+        // prnt(sheetListItem.listDecoration.itemDecorationList);
+        // prnt(sheetDecorationVariables);
+        // prnt(sheetDecorationVariables[0].isExpanded);
         listDecorationPath = [sheetListItem.listDecoration];
       });    
       } else {
@@ -2460,7 +2460,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
         );
       },).toList();
-    // print(sheetDecorationVariables[0].listShadowFocusNodes2.toString());
+    // pint(sheetDecorationVariables[0].listShadowFocusNodes2.toString());
     });
   }
   
@@ -2542,7 +2542,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   SheetItem getItemAtPath(IndexPath indexPath) {
     List<int> path = indexPath.toList();
     SheetItem? current;
-    // print(indexPath.toString());
+    // prnt(indexPath.toString());
     notfound(){
       print('not found '+indexPath.toString());
       return SheetItem(id: 'yo', parentId: '', indexPath: IndexPath(index: -1));
@@ -2581,40 +2581,84 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     return current ?? notfound();
   }
 
-  QuillEditorConfigurations buildCombinedQuillConfiguration(List<InputBlock> inputBlocks) {
+  QuillEditorConfigurations buildCombinedQuillConfiguration(List<InputBlock> inputBlocks, {Map<String, int>? visited}) {
     final mergedDelta = Delta();
 
     for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
       
       final block = inputBlocks[blockIdx];
-      // print(block.toString());
+      
+      
       if (block.function != null) {
-        final result = block.function!.result(getItemAtPath);
-        if (result is num || result is String) {
-          if (blockIdx == inputBlocks.length-1) {
-            mergedDelta.push(Operation.insert('$result\n'));
-          } else {
-            mergedDelta.push(Operation.insert('$result'));
+        var result;
+        //  (block.function.runtimeType.toString()+(!block.useConst).toString());
+        if(block.function is InputBlockFunction && !block.useConst){
+          // pri('elloo');
+          if (visited == null) visited = {};
+          visited[block.id] = (visited[block.id] ?? 0) + 1;
+
+          if (visited[block.id]! > 50) {
+            mergedDelta.push(Operation.insert('recursion detected\n'));
+            continue;
           }
-        }
+
+          final config = (block.function as InputBlockFunction)
+              .getConfigurations((ib) => buildCombinedQuillConfiguration(ib, visited: Map.from(visited!)));
+          final ops = config.controller.document.toDelta().toList();
+          final isLastBlock = blockIdx == inputBlocks.length - 1;
+
+          if (!isLastBlock && ops.isNotEmpty) {
+            final last = ops.last;
+            if (last.data is String) {
+              final String data = last.data as String;
+              if (data == '\n') {
+                ops.removeLast();
+              } else if (data.endsWith('\n')) {
+                final trimmed = data.substring(0, data.length - 1);
+                ops[ops.length - 1] = Operation.insert(trimmed, last.attributes);
+              }
+            }
+          }
+
+          for (final op in ops) {
+            mergedDelta.push(op);
+          }
+
+        } else if( block.function is! InputBlockFunction){
+            print('function Type: '+block.function.runtimeType.toString());
+            result = block.function!.result(getItemAtPath);
+
+            if (result is num || result is String) {
+            
+            if (blockIdx == inputBlocks.length-1) {
+              mergedDelta.push(Operation.insert('$result\n'));
+            } else {
+              mergedDelta.push(Operation.insert('$result'));
+            }
+            }
+            if (block.indexPath.index != -77) {
+              final targetItem = getItemAtPath(block.indexPath);
+              if (targetItem != null && targetItem is SheetText) {
+                final controller = targetItem.textEditorConfigurations.controller;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  controller.replaceText(
+                    0,
+                    controller.document.length - 1,
+                    '$result',
+                    TextSelection.collapsed(offset: '$result'.length),
+                  );
+                });
+
+              }
+            }
+            continue;
+          }
 
         // Optional back-patching
-        if (block.indexPath.index != -77) {
-          final targetItem = getItemAtPath(block.indexPath);
-          if (targetItem != null && targetItem is SheetText) {
-            final controller = targetItem.textEditorConfigurations.controller;
-            controller.replaceText(
-              0,
-              controller.document.length,
-              '$result',
-              TextSelection.collapsed(offset: '$result'.length),
-            );
-          }
-        }
-        continue; // Skip normal SheetText processing for function-driven blocks
+         // Skip normal SheetText processing for function-driven blocks
       }
       if((getItemAtPath(block.indexPath).id == 'yo' || getItemAtPath(block.indexPath).id != block.id) && block.function == null){
-          print('this should be running');
+          // prnt('this should be running');
           var blkindexPath = _sheetItemIterator(block.id, spreadSheetList[currentPageIndex],shouldReturn: true).indexPath;
           block.indexPath.parent = blkindexPath.parent;
           block.indexPath.index = blkindexPath.index;
@@ -2631,7 +2675,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       
 
       final item = getItemAtPath(block.indexPath);
-      if (item is SheetText) {
+      if (item is SheetText && block.useConst) {
         final delta = item.textEditorConfigurations.controller.document.toDelta();
         final ops = delta.toList();
         // Determine if this is the last block
@@ -2670,6 +2714,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
     if (inputBlocks.isEmpty) mergedDelta.insert('\n');
     if (mergedDelta.isEmpty) mergedDelta.insert('\n');
+    if (!(mergedDelta.last.data as String).endsWith('\n')) mergedDelta.insert('\n');
 
     return QuillEditorConfigurations(
       controller: QuillController(
@@ -2760,11 +2805,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   ///BUILDDDDDDD
   @override
   Widget build(BuildContext context) {
-    // print('________BUILD LAYOUT STARTED LD_________');
+    // prit('________BUILD LAYOUT STARTED LD_________');
     double sHeight = MediaQuery.of(context).size.height;
     double sWidth = MediaQuery.of(context).size.width;
     Duration defaultDuration = const Duration(milliseconds: 300);
-    // print('Height of SpreadSheet in build: '+ (sHeight-40).toString());
+    // prit('Height of SpreadSheet in build: '+ (sHeight-40).toString());
     if (isLoading) {
       return Scaffold(
         backgroundColor: defaultPalette.tertiary,
@@ -8422,7 +8467,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               if (isFormulaMode) {
                 print(sheetTableCell.id);
                 setState(() {
-                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null) {
+                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null && !HardwareKeyboard.instance.isControlPressed) {
                     selectedIndexPaths.addAll({
                       sheetTableCell.sheetItem.id: 
                       PanelIndex(
@@ -8432,10 +8477,33 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         parentIndexPath: sheetTableCell.indexPath.parent
                         )
                     });
+                  } else if( HardwareKeyboard.instance.isControlPressed && panelIndex.id != sheetTableCell.sheetItem.id) {
+                    selectedIndexPaths.remove(sheetTableCell.sheetItem.id);
                   }
                 });
               }
             },
+          onHover: (event) {
+            if (isFormulaMode) {
+                print(sheetTableCell.id);
+                setState(() {
+                  if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null && !HardwareKeyboard.instance.isControlPressed) {
+                    selectedIndexPaths.addAll({
+                      sheetTableCell.sheetItem.id: 
+                      PanelIndex(
+                        id: sheetTableCell.sheetItem.id, 
+                        parentId:sheetTableCell.sheetItem.parentId,
+                        itemIndexPath: sheetTableCell.sheetItem.indexPath, 
+                        parentIndexPath: sheetTableCell.indexPath.parent
+                        )
+                    });
+                  } else if( HardwareKeyboard.instance.isControlPressed && panelIndex.id != sheetTableCell.sheetItem.id) {
+                    selectedIndexPaths.remove(sheetTableCell.sheetItem.id);
+                  }
+                });
+              }
+            
+          },
           child: Container(
           decoration: BoxDecoration(
             color: defaultPalette.primary,
@@ -10522,7 +10590,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             item.inputBlocks.add(InputBlock(
                                               indexPath: sheetItem.indexPath, 
                                               blockIndex: [-2],
-                                              id: sheetItem.id
+                                              id: sheetItem.id,
+                                              useConst: true,
+                                              function: InputBlockFunction(inputBlocks: sheetItem.inputBlocks, label: sheetItem.name),
                                               ));
                                             // inputBlockExpansionList.add(false); 
                                           } else {
@@ -10530,6 +10600,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               InputBlock(
                                               indexPath: sheetItem.indexPath, 
                                               blockIndex: [-2],
+                                              useConst: true,
+                                              function: InputBlockFunction(inputBlocks: sheetItem.inputBlocks, label: sheetItem.name),
                                               id: sheetItem.id)
                                             );
                                           }
@@ -11305,12 +11377,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock){
                     var funcBlock = inputBlock[index];
                     var funcInputBlocks;
-
+                    print(inputBlock[index].function);
                     if (inputBlock[index].function is SumFunction) {
                      funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
                     } else if (inputBlock[index].function is ColumnFunction) {
                       funcInputBlocks =  (inputBlock[index].function as ColumnFunction).inputBlocks;
-                    }
+                    } else if (inputBlock[index].function! is InputBlockFunction) {
+                      funcInputBlocks =  (inputBlock[index].function! as InputBlockFunction).inputBlocks;
+                    } 
+                    print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
                     ////
                     ////
                         Widget sumFunctionInputBlocks(List<InputBlock> inBlock, int inx){
@@ -11333,7 +11408,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           }
                           String? delta;
                           SheetText? itemAtPath;
-                          if (!hasFunction) {
+                          if (!hasFunction || inBlock[inx].useConst) {
                             try {
                               final item = getItemAtPath(block.indexPath);
                               if (item is SheetText) {
@@ -11346,8 +11421,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               return const SizedBox.shrink(); // fail-safe
                             }
                           }
+                          print('SUMFUNCTIONINPUTTILE');
                           return ReorderableDragStartListener(
-                            key: ValueKey(inx),
+                            key: ValueKey(inx+2),
                             index: inx,
                             child: Row(
                               children: [
@@ -11355,13 +11431,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   child: Stack(
                                     children: [
                                       // const SizedBox(height: 45),
-                                      if (!hasFunction)
+                                      if (inBlock[inx].useConst)
                                       ...[
                                         Container(
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
                                           height: 60,
-                                          width: width+13,
+                                          width: width+10,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
                                             color: defaultPalette.tertiary,
@@ -11396,7 +11472,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       padding: EdgeInsets.symmetric(horizontal:4),
                                                       margin: EdgeInsets.all(4).copyWith(bottom: 4),
                                                       child: Text(
-                                                          delta!,
+                                                          delta,
                                                           textAlign: TextAlign.end,
                                                           maxLines: 1,
                                                           overflow: TextOverflow.ellipsis,
@@ -11471,7 +11547,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         children: [
                                                           TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                           TextSpan(
-                                                            text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                            text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath, spreadSheet: null)}',
                                                             style: TextStyle(color:defaultPalette.primary),
                                                           ),
                                                         ],
@@ -11511,7 +11587,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                       ],
 
-                                      if(hasFunction)
+                                      if (!inBlock[inx].useConst)
                                       GestureDetector(
                                         onTap:(){
                                           setState(() {
@@ -11519,7 +11595,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               selectedInputBlocks =(sheetFunction as SumFunction).inputBlocks;
                                             } else if (sheetFunction is ColumnFunction) {
                                               selectedInputBlocks =(sheetFunction as ColumnFunction).inputBlocks;
-                                            }
+                                            } else if (sheetFunction is InputBlockFunction) {
+                                              selectedInputBlocks =(sheetFunction as InputBlockFunction).inputBlocks;
+                                            } 
                                             
                                           });
                                         },
@@ -11600,7 +11678,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 if(sheetFunction is ColumnFunction)
                                                                 TextSpan(text: ' ${sheetFunction.func}: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                
+                                                                if(sheetFunction is InputBlockFunction)
+                                                                TextSpan(text: ' ${sheetFunction.label}: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
                                                                   text: '${block.function!.result(getItemAtPath).toString()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
@@ -12429,7 +12508,495 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             ),
                           );
                         }
+                        Widget inputBlockFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                          if (inx < 0 || inx >= inBlock.length) {
+                            return SizedBox.shrink(
+                              key: ValueKey(inx),
+                            );
+                          }
+                          final block = inBlock[inx];
+                          // If the block has a function, don't try to fetch an item at the indexPath
+                          final hasFunction = block.function != null;
+                          SheetFunction? sheetFunction;
+                          int length =2;
+                          
+                          if (hasFunction) {
+                            if (sheetFunction is SumFunction) {
+                              sheetFunction =(inBlock[inx].function as  SumFunction);
+                              length = (inBlock[inx].function as  SumFunction).inputBlocks.length;
+                            } else if (sheetFunction is ColumnFunction) {
+                              sheetFunction =(inBlock[inx].function as  ColumnFunction);
+                              length = (inBlock[inx].function as  ColumnFunction).inputBlocks.length;
+                            } else if (sheetFunction is InputBlockFunction) {
+                              sheetFunction =(inBlock[inx].function as  InputBlockFunction);
+                              length = (inBlock[inx].function as  InputBlockFunction).inputBlocks.length;
+                            } 
+                            
+                          }
+                          String? delta;
+                          SheetText? itemAtPath;
+                          print('useConst: '+inBlock[inx].useConst.toString());
+                          if (!hasFunction || inBlock[inx].useConst) {
+                            try {
+                              final item = getItemAtPath(block.indexPath);
+                              if (item is SheetText) {
+                                itemAtPath = item;
+                                delta = itemAtPath.textEditorConfigurations.controller.document.toPlainText();
+                              } else {
+                                throw Exception("Item is not SheetText");
+                              }
+                            } catch (e) {
+                              return const SizedBox.shrink(); // fail-safe
+                            }
+                          }
+                          return ReorderableDragStartListener(
+                            key: ValueKey(inx),
+                            index: inx,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      // const SizedBox(height: 45),
+                                      if (inBlock[inx].useConst)
+                                      ...[
+                                        Container(
+                                          // margin: const EdgeInsets.only(top: 10),
+                                          padding: EdgeInsets.symmetric(vertical: 2),
+                                          height: 60,
+                                          width: width,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(0),
+                                            color: defaultPalette.tertiary,
+                                          ),
+                                          margin:EdgeInsets.only(bottom:1),
+                                          child: Column(
+                                            children: [
+                                              //title for function
+                                              Row(
+                                                children: [
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    inx.toString(),
+                                                    textAlign: TextAlign.end,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.lexend(
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w500,
+                                                      fontSize: 18,
+                                                      color: defaultPalette.primary,
+                                                    ),
+                                                  ),
+                                                  
+                                                  Expanded(
+                                                    flex: 5,
+                                                    child: Text(
+                                                      itemAtPath!.name,
+                                                      textAlign: TextAlign.end,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 18,
+                                                        color: defaultPalette.primary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                  ClipRRect(
+                                                    borderRadius: BorderRadius.circular(99999),
+                                                    child: Material(
+                                                      color: defaultPalette.transparent,
+                                                      child: InkWell(
+                                                        hoverColor: defaultPalette.primary,
+                                                        splashColor: defaultPalette.primary,
+                                                        highlightColor: defaultPalette.primary,
+                                                        onTap: () {
+                                                          setState(() {
+                                                            inBlock.removeAt(inx);
+                                                          });
+                                                        },
+                                                        child: Icon(
+                                                          TablerIcons.x,
+                                                          size: 18,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                ],
+                                              ),
+                                              Row(
+                                                children:[
+                                                  // the number inside the field display
+                                                  Expanded(
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        color: defaultPalette.secondary,
+                                                      ),
+                                                      padding: EdgeInsets.symmetric(horizontal:4),
+                                                      margin: EdgeInsets.all(4).copyWith(bottom: 4),
+                                                      child: Text(
+                                                        delta!,
+                                                        textAlign: TextAlign.end,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.lexend(
+                                                          letterSpacing: -1,
+                                                          fontWeight: FontWeight.w500,
+                                                          fontSize: 14,
+                                                          color: defaultPalette.extras[0],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),  
+                                                ]
+                                              )
+                                
+                                            ],
+                                          ),
+                                        ),
+                                      ],
 
+                                      if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction))
+                                      sumFunctionInputBlocks(inBlock, inx),
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
+                                      GestureDetector(
+                                        onTap:(){
+                                          setState(() {
+                                            if (inBlock[inx].function is SumFunction) {
+                                              selectedInputBlocks =(inBlock[inx].function as SumFunction).inputBlocks;
+                                            } else if (inBlock[inx].function is ColumnFunction) {
+                                              selectedInputBlocks =(inBlock[inx].function as ColumnFunction).inputBlocks;
+                                            } else if (inBlock[inx].function is InputBlockFunction) {
+                                              selectedInputBlocks =(inBlock[inx].function as InputBlockFunction).inputBlocks;
+                                            } 
+                                          });
+                                        },
+                                        child: Stack(
+                                          
+                                          children:[
+                                            if(inBlock[inx].isExpanded)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top:28.0),
+                                              child: buildFunctionTile(inx, width,inBlock)[0],
+                                            ),
+                                            AnimatedMeshGradient(
+                                              colors: [
+                                                  // defaultPalette.extras[0],
+                                                  defaultPalette.primary,
+                                                  defaultPalette.primary,
+                                                  defaultPalette.primary,
+                                                  defaultPalette.primary,
+                                                ],
+                                              options: AnimatedMeshGradientOptions(
+                                                  amplitude: 5,
+                                                  grain: 0.1,
+                                                  frequency: 15,
+                                                  
+                                                ),
+                                              child: Container(
+                                                // margin: const EdgeInsets.only(top: 10, bottom: 5),
+                                                width: width,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(0),
+                                                  // color: defaultPalette.primary,
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    //the title of function
+                                                    Row(
+                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                      children: [
+                                                        const SizedBox(width: 4),
+                                                        //inx
+                                                        Text(
+                                                            inx.toString(),
+                                                            textAlign: TextAlign.end,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 18,
+                                                              foreground: Paint()
+                                                              ..color = defaultPalette.primary
+                                                              ..blendMode = BlendMode.difference
+                                                            ),
+                                                          ),
+                                                        //delta
+                                                        Expanded(
+                                                          flex:4,
+                                                          child: Container(
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(5),
+                                                              color: defaultPalette.extras[0],
+                                                            ),
+                                                            padding: EdgeInsets.symmetric(horizontal:4,vertical: 2),
+                                                            margin: EdgeInsets.all(4).copyWith(bottom: 2),
+                                                            child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 14,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                if(inBlock[inx].function is SumFunction)
+                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                if(inBlock[inx].function is ColumnFunction)
+                                                                TextSpan(text: ' ${(inBlock[inx].function as ColumnFunction).func}: ',style: TextStyle(color:defaultPalette.primary),),
+                                                                if(inBlock[inx].function is InputBlockFunction)
+                                                                TextSpan(text: ' ${(inBlock[inx].function as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                if(inBlock[inx].function is! InputBlockFunction)
+                                                                TextSpan(
+                                                                  text: '${inBlock[inx].function!.result(getItemAtPath).toString()}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                          ),
+                                                        ),    
+                                                        //label
+                                                        Expanded(
+                                                          flex:5,
+                                                          child: Text(
+                                                            inBlock[inx].function?.name ??'',
+                                                            textAlign: TextAlign.end,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 18,
+                                                              height: 1,
+                                                              foreground: Paint()
+                                                              ..color = defaultPalette.primary
+                                                              ..blendMode = BlendMode.difference
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                        //remove function button 
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top:4),
+                                                          child: ClipRRect(
+                                                            borderRadius: BorderRadius.circular(99999),
+                                                            child: Material(
+                                                              color: defaultPalette.transparent,
+                                                              child: InkWell(
+                                                                hoverColor: defaultPalette.primary,
+                                                                splashColor: defaultPalette.primary,
+                                                                highlightColor: defaultPalette.primary,
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    inBlock.removeAt(inx);
+                                                                    // inputBlockExpansionList.removeAt(index);
+                                                                  });
+                                                                },
+                                                                child: Icon(
+                                                                  TablerIcons.x,
+                                                                  size: 17,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                      ],
+                                                    ),
+                                                    //index 0-0
+                                                    Row(
+                                                      children: [
+                                                        const SizedBox(width: 4),
+                                                        //inx invis
+                                                        Text(
+                                                            inx.toString(),
+                                                            textAlign: TextAlign.end,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w500,
+                                                              fontSize: 18,
+                                                              // color: defaultPalette.primary,
+                                                              foreground: Paint()
+                                                              ..blendMode = BlendMode.dst
+                                                            ),
+                                                          ),
+                                                        
+                                                        Expanded(
+                                                          flex:4,
+                                                          child: Container(
+                                                            margin: EdgeInsets.all(2).copyWith(top:0, left:4),
+                                                            padding: EdgeInsets.all(2),
+                                                            decoration: BoxDecoration(
+                                                              borderRadius: BorderRadius.circular(5),
+                                                              color: defaultPalette.extras[0],
+                                                            ),
+                                                            child: Row(
+                                                            children: [
+                                                              const SizedBox(width: 3),
+                                                              
+                                                              Expanded(
+                                                                child: RichText(
+                                                                  text: TextSpan(
+                                                                    style: GoogleFonts.lexend(
+                                                                      letterSpacing: -1,
+                                                                      fontWeight: FontWeight.w400,
+                                                                      fontSize: 14,
+                                                                      color: defaultPalette.extras[0],
+                                                                    ),
+                                                                    children: [
+                                                                      TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                      TextSpan(
+                                                                        text: '0 - ${(length - 1).clamp(0, double.infinity)}',
+                                                                        style: TextStyle(color:defaultPalette.primary),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  maxLines: 1,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 3),
+                                                            ],
+                                                          ),
+                                                          ),
+                                                        ),
+                                                        Expanded(
+                                                          flex:5,
+                                                          child: SizedBox()),
+                                                        SizedBox(width:30),
+                                                      ],
+                                                    ),
+                                                    
+                                                    //sum cumulative and individual index
+                                                    Container(
+                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:38,bottom: 4),
+                                                      padding: EdgeInsets.all(3),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(5),
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      child: Row(
+                                                      children: [
+                                                        const SizedBox(width: 3),
+                                                        if(inBlock[inx].function is SumFunction)
+                                                               Expanded(
+                                                                child: RichText(
+                                                                  text: TextSpan(
+                                                                    style: GoogleFonts.lexend(
+                                                                      letterSpacing: -1,
+                                                                      fontWeight: FontWeight.w400,
+                                                                      fontSize: 12,
+                                                                      color: defaultPalette.extras[0],
+                                                                    ),
+                                                                    children: [
+                                                                      TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                      TextSpan(
+                                                                        text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                                        style: TextStyle(color:defaultPalette.primary),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  maxLines: 1,
+                                                                ),
+                                                              ),
+                                                        Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                
+                                                                TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                TextSpan(
+                                                                  text: '${(inx).clamp(0, double.infinity)}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                      ],
+                                                      ),
+                                                    ),
+                                                                          
+                                                    
+                                                    
+                                                    ],
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top:54,
+                                              child: ElevatedLayerButton(
+                                                  isTapped: inBlock[inx].isExpanded,
+                                                  borderRadius: const BorderRadius.only(
+                                                    topRight: Radius.circular(5),
+                                                    topLeft: Radius.circular(5),
+                                                    bottomRight: Radius.circular(5),
+                                                    bottomLeft: Radius.circular(5),
+                                                  ),
+                                                  animationDuration: const Duration(milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: defaultPalette.primary,
+                                                    border: Border.all(color: defaultPalette.extras[0]),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    children: [
+                                                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
+                                                      
+                                                    ],
+                                                  ),
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    border: Border.all(color: defaultPalette.extras[0]),
+                                                  ),
+                                                  depth: 2,
+                                                  subfac: 5,
+                                                  buttonHeight: 24,
+                                                  buttonWidth: 35,
+                                                  onClick: () {
+                                                    setState(() {
+                                                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+                                                      inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
+                                                    });
+                                                  },
+                                                ),
+                                            ),
+                        
+                                            
+                                            ]
+                                          
+                                          ))
+                                    
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                       
+                        }
+                        
                     ////
                     ////
                     // return for funtionTileBlock
@@ -12473,7 +13040,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           },
                                           proxyDecorator: (child, index, animation) {
                                             return Container(child: child); },
-                                            itemBuilder: (context, inx) {
+                                          itemBuilder: (context, inx) {
                                               return sumFunctionInputBlocks(funcInputBlocks, inx);
                                           });
                                         }
@@ -12992,7 +13559,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0]),
                                 Expanded(
                                   child: Text(
-                                    ' edit',
+                                    ' view',
                                     maxLines: 1,
                                     style: GoogleFonts.bungee(
                                       fontSize: 12,
@@ -13021,12 +13588,327 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           ),
                           
                         ];
+                      
+                      case InputBlockFunction:
+                        return [
+                          if(funcBlock.isExpanded)
+                          Container(
+                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration:BoxDecoration(
+                                    color:defaultPalette.transparent,
+                                    // border:Border.all()
+                                  ),
+                                  //reorderable for functioninputblockchildren
+                                  child: ScrollConfiguration(
+                                    behavior: ScrollBehavior().copyWith(scrollbars: false),
+                                    child: DynMouseScroll(
+                                      durationMS: 500,
+                                      scrollSpeed: 1,
+                                      builder: (context, controller, physics) {
+                                        return ListView.builder(
+                                          shrinkWrap: true,
+                                          scrollDirection: Axis.vertical,
+                                          controller:controller,
+                                          physics:physics,
+                                          itemCount: funcInputBlocks.length,
+                                            itemBuilder: (context, inx) {
+                                              return inputBlockFunctionInputBlocks(funcInputBlocks, inx);
+                                              
+                                          });
+                                        }
+                                      ),
+                                    ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10, bottom: 5),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8).copyWith(
+                                      bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+                                      bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+                                    ),
+                              child: AnimatedMeshGradient(
+                                  colors: [
+                                      // defaultPalette.extras[0],
+                                      defaultPalette.primary,
+                                      defaultPalette.primary,
+                                      defaultPalette.primary,
+                                      selectedInputBlocks ==(inputBlock[index].function as InputBlockFunction).inputBlocks? defaultPalette.extras[0]: defaultPalette.primary,
+                                    ],
+                                  options: AnimatedMeshGradientOptions(
+                                      amplitude: 5,
+                                      grain: 0.1,
+                                      frequency: 15,
+                                      
+                                    ),
+                                child: Container(
+                                  width: width,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8).copyWith(
+                                      bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+                                      bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      //the title of function
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              (inputBlock[index].function! as InputBlockFunction).label,
+                                              textAlign: TextAlign.end,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.lexend(
+                                                letterSpacing: -1,
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 18,
+                                                height: 1,
+                                                color: defaultPalette.extras[0],
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 3),
+                                          //remove function button 
+                                          Padding(
+                                            padding: const EdgeInsets.only(top:4),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(99999),
+                                              child: Material(
+                                                color: defaultPalette.transparent,
+                                                child: InkWell(
+                                                  hoverColor: defaultPalette.primary,
+                                                  splashColor: defaultPalette.primary,
+                                                  highlightColor: defaultPalette.primary,
+                                                  onTap: () {
+                                                    setState(() {
+                                                      inputBlock.removeAt(index);
+                                                      // inputBlockExpansionList.removeAt(index);
+                                                    });
+                                                  },
+                                                  child: Icon(
+                                                    TablerIcons.x,
+                                                    size: 17,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 3),
+                                        ],
+                                      ),
+                                      
+                                      //sum/count and index
+                                      Row(
+                                        children: [
+                                          const SizedBox(width: 3),
+                                         
+                                          Expanded(
+                                            child: Container(
+                                              margin: EdgeInsets.all(2),
+                                              padding: EdgeInsets.all(1),
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(5),
+                                                color: defaultPalette.extras[0],
+                                              ),
+                                              child: Row(
+                                              children: [
+                                                const SizedBox(width: 3),
+                                                
+                                                Expanded(
+                                                  child: RichText(
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 14,
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      children: [
+                                                        // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                        // TextSpan(
+                                                        //   text: '${inputBlock[index].function!.result(getItemAtPath)}',
+                                                        //   style: TextStyle(color:defaultPalette.primary),
+                                                        // ),
+                                                      ],
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: RichText(
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        letterSpacing: -1,
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 14,
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      children: [
+                                                        TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                        TextSpan(
+                                                          text: '0-${((inputBlock[index].function! as InputBlockFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                          style: TextStyle(color:defaultPalette.primary),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 3),
+                                              ],
+                                            ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                      
+                                      ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          ElevatedLayerButton(
+                            
+                            isTapped: funcBlock.isExpanded,
+                            borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(5),
+                              topLeft: Radius.circular(5),
+                              bottomRight: Radius.circular(10),
+                              bottomLeft: Radius.circular(10),
+                            ),
+                            animationDuration: const Duration(milliseconds: 100),
+                            animationCurve: Curves.ease,
+                            topDecoration: BoxDecoration(
+                              color: defaultPalette.primary,
+                              border: Border.all(color: defaultPalette.extras[0]),
+                            ),
+                            topLayerChild: Row(
+                              children: [
+                                const SizedBox(width: 10),
+                                Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0]),
+                                Expanded(
+                                  child: Text(
+                                    ' view',
+                                    maxLines: 1,
+                                    style: GoogleFonts.bungee(
+                                      fontSize: 12,
+                                      color: defaultPalette.extras[0],
+                                      // letterSpacing: -1,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            baseDecoration: BoxDecoration(
+                              color: defaultPalette.extras[0],
+                              border: Border.all(color: defaultPalette.extras[0]),
+                            ),
+                            depth: 2,
+                            subfac: 2,
+                            buttonHeight: 24,
+                            buttonWidth: 80,
+                            onClick: () {
+                              setState(() {
+                                // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+                                inputBlock[index].isExpanded =!inputBlock[index].isExpanded;
+                              });
+                            },
+                          ),
+                          if (funcBlock.id !=item.id) 
+                          Positioned(
+                            left:80,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                    
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    funcBlock.useConst= !funcBlock.useConst;
+                                  });
+                                },
+                              ),
+                          ),
+                        ];
+                      
+                      
                       default:
+                        return [
+                       ElevatedLayerButton(
+                           borderRadius: const BorderRadius.only(
+                             topRight: Radius.circular(5),
+                             topLeft: Radius.circular(5),
+                             bottomRight: Radius.circular(10),
+                             bottomLeft: Radius.circular(10),
+                           ),
+                           animationDuration: const Duration(milliseconds: 100),
+                           animationCurve: Curves.ease,
+                           topDecoration: BoxDecoration(
+                             color: defaultPalette.primary,
+                             border: Border.all(color: defaultPalette.extras[0]),
+                           ),
+                           topLayerChild: Row(
+                             children: [
+                               const SizedBox(width: 2),
+                               Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.function, size: 12, color: defaultPalette.extras[0]),
+                               
+                             ],
+                           ),
+                           baseDecoration: BoxDecoration(
+                             color: defaultPalette.extras[0],
+                             border: Border.all(color: defaultPalette.extras[0]),
+                           ),
+                           depth: 2,
+                           subfac: 2,
+                           buttonHeight: 24,
+                           buttonWidth: 20,
+                           onClick: () {
+                             setState(() {
+                               inputBlock[index].useConst= !inputBlock[index].useConst;
+                             });
+                           },
+                         ),
+                                                  
+                    ];
                     }
                     
-                    return [];
                   }
-
+                  // print('inputTile'+inputBlock[index].function.runtimeType.toString());
                   //Return for inputBlock
                   return Column(
                     children: [
@@ -13069,7 +13951,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       
                                   Delta? delta;
                                   SheetText? itemAtPath;
-                                  if (!hasFunction) {
+                                  if (!hasFunction || inputBlock[index].useConst) {
                                     try {
                                       final item = getItemAtPath(block.indexPath);
                                       if (item is SheetText) {
@@ -13082,6 +13964,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       return const SizedBox.shrink(); // fail-safe
                                     }
                                   }
+                                  print(inputBlock[index].useConst);
                       
                                   final json = delta?.toJson();
                                     return ReorderableDragStartListener(
@@ -13094,7 +13977,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           Expanded(
                                             child: Stack(
                                               children: [
-                                                if (!hasFunction)
+                                                if (inputBlock[index].useConst)
                                                 ...[
                                                   if (inputBlock[index].isExpanded)
                                                   buildStyledJsonBlock(json!),
@@ -13109,9 +13992,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     ),
                                                     child: Row(
                                                       children: [
+
                                                         Expanded(
                                                           child: Text(
-                                                            itemAtPath!.name,
+                                                            itemAtPath?.name??'lol',
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
@@ -13193,9 +14077,48 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         });
                                                       },
                                                     ),
+                                                  if (inputBlock[index].id !=item.id) 
+                                                  Positioned(
+                                                    left:80,
+                                                    child: ElevatedLayerButton(
+                                                        borderRadius: const BorderRadius.only(
+                                                          topRight: Radius.circular(5),
+                                                          topLeft: Radius.circular(5),
+                                                          bottomRight: Radius.circular(10),
+                                                          bottomLeft: Radius.circular(10),
+                                                        ),
+                                                        animationDuration: const Duration(milliseconds: 100),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: defaultPalette.primary,
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        topLayerChild: Row(
+                                                          children: [
+                                                            const SizedBox(width: 2),
+                                                            Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.function, size: 12, color: defaultPalette.extras[0]),
+                                                            
+                                                          ],
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        depth: 2,
+                                                        subfac: 2,
+                                                        buttonHeight: 24,
+                                                        buttonWidth: 20,
+                                                        onClick: () {
+                                                          setState(() {
+                                                            inputBlock[index].useConst= !inputBlock[index].useConst;
+                                                          });
+                                                        },
+                                                      ),
+                                                  ),
+                                                  
                                                 ],
                                                             
-                                                if(hasFunction)
+                                                if(!inputBlock[index].useConst)
                                                 GestureDetector(
                                                   onTap:(){
                                                     setState(() {
@@ -13246,7 +14169,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       ),
                     ],
                   );
-                  
                 }
 
                 TextEditingController hexController = TextEditingController()..text ='${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
@@ -15329,6 +16251,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                               indexPath: IndexPath(index: -1277), 
                                                                               blockIndex: [-2], 
                                                                               id: 'yo',
+                                                                              useConst: false,
                                                                               function: SumFunction([])
                                                                               ));
                                                                           }
@@ -19713,7 +20636,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       ];
     }
     var itinx = '';
-    print(sheetTableVariables.rowLayerIndex);
+    // prit(sheetTableVariables.rowLayerIndex);
     if(decorationIndex !=-1){
       // itinx = int.tryParse((sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex].substring((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex].indexOf('/') + 1))??-7;
       itinx = (sheetDecorationMap[itemDecorationPath.last] as SuperDecoration).itemDecorationList[decorationIndex];                              
