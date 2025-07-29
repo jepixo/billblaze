@@ -34,6 +34,7 @@ class SheetFunction {
   }
 
   static SheetFunction fromMap(Map<String, dynamic> map) {
+    print('SheetFunction type: '+map['type']);
     switch (map['type']) {
       case 'sum':
         return SumFunction.fromMap(map);
@@ -43,6 +44,7 @@ class SheetFunction {
         return CountFunction.fromMap(map);
       case 'inputBlock':
         return InputBlockFunction.fromMap(map);
+
       // Add more subclasses here if needed
       default:
         throw Exception('Unknown SheetFunction type: ${map['type']}');
@@ -62,7 +64,7 @@ class SumFunction extends SheetFunction {
   SumFunction(this.inputBlocks) : super(1, 'sum');
 
   @override
-dynamic result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
+  dynamic result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
   double sum = 0;
 
   for (final block in inputBlocks) {
@@ -77,7 +79,7 @@ dynamic result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
     if (item == null) continue;
 
     // If the block is directly tied to a function, evaluate it
-    if (block.function != null) {
+    if (block.function != null && !block.useConst) {
       final value = block.function!.result(getItemAtPath, spreadSheet: spreadSheet);
       if (value is num) {
         sum += value.toDouble();
@@ -112,7 +114,7 @@ dynamic result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
 
     // Extend for other types if needed
   }
-
+  print('sum: '+sum.toString());
   return sum;
 }
 
@@ -243,8 +245,9 @@ class InputBlockFunction extends SheetFunction {
   
   @override
   Map<String, dynamic> toMap() => {
-        'name': name,
+        'type': 'inputBlock',
         'returnType': returnType,
+        'name': name,
         'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
         'label': label
 
@@ -255,10 +258,14 @@ class InputBlockFunction extends SheetFunction {
             .map((e) => InputBlock.fromMap(e))
             .toList(),
         label: map['label'],
+        
       );
 
 }
-
+///
+///
+///
+///
 class IfFunction extends SheetFunction {
   IfFunction():super(1,'if');
 }
