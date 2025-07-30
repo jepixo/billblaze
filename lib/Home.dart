@@ -5805,7 +5805,7 @@ String buildCombinedTextFromBlocks(
 
         continue;
       } else {
-        final result = block.function!.result(getItemAtPath, spreadSheet: spreadSheetList);
+        final result = block.function!.result(getItemAtPath, buildCombinedTextFromBlocks, spreadSheet: spreadSheetList);
         if (result is num || result is String) {
           final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
           mergedDelta.push(Operation.insert(text));

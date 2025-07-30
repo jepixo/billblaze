@@ -24,7 +24,9 @@ class SheetFunction {
 
   SheetFunction(this.returnType, this.name);
 
-  dynamic result(Function getItemAtPath, {
+  dynamic result(Function getItemAtPath,
+   Function buildCombinedQuillConfiguration,
+  {
     List<SheetListBox>? spreadSheet,
   }) {
     throw UnimplementedError('Subclasses must override result()');
@@ -64,59 +66,80 @@ class SumFunction extends SheetFunction {
   SumFunction(this.inputBlocks) : super(1, 'sum');
 
   @override
-  dynamic result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
-  double sum = 0;
+  dynamic result(
+      Function getItemAtPath, 
+      Function buildCombinedQuillConfiguration,
+      {
+      List<SheetListBox>? spreadSheet,
+    }) {
+    double sum = 0;
 
-  for (final block in inputBlocks) {
-    dynamic item;
+    for (final block in inputBlocks) {
+      dynamic item;
 
-    if (spreadSheet == null) {
-      item = getItemAtPath(block.indexPath);
-    } else {
-      item = getItemAtPath(block.indexPath, spreadSheet);
-    }
-
-    if (item == null) continue;
-
-    // If the block is directly tied to a function, evaluate it
-    if (block.function != null && !block.useConst) {
-      final value = block.function!.result(getItemAtPath, spreadSheet: spreadSheet);
-      if (value is num) {
-        sum += value.toDouble();
+      if (spreadSheet == null) {
+        item = getItemAtPath(block.indexPath);
+      } else {
+        item = getItemAtPath(block.indexPath, spreadSheet);
       }
-      continue;
-    }
 
-    // 🟡 Handle SheetText from live controller (in editor)
-    if (item is SheetText) {
-      final text = item.textEditorConfigurations.controller.document
-          .toPlainText()
-          .trim();
-      final parsed = double.tryParse(text);
-      if (parsed != null) sum += parsed;
-    }
+      if (item == null) continue;
 
-    // 🔵 Handle SheetTextBox from loaded JSON delta
-    else if (item is SheetTextBox) {
-      try {
-        final json = item.textEditorController;
-        if (json is List) {
-          final delta = Delta.fromJson(json);
-          final doc = Document.fromDelta(delta);
-          final text = doc.toPlainText().trim();
+      // 1) If it's a nested Sheet‐formula
+      if (block.function != null && !block.useConst) {
+        // a) InputBlockFunction: grab its editor, read text, parse
+        if (block.function is InputBlockFunction) {
+          final ibf = block.function as InputBlockFunction;
+          final config = ibf.getConfigurations( buildCombinedQuillConfiguration, spreadSheet: spreadSheet,
+          );
+          final text = config.controller.document
+              .toPlainText()
+              .trim();
           final parsed = double.tryParse(text);
           if (parsed != null) sum += parsed;
         }
-      } catch (e, st) {
-        print('⚠️ Failed to parse SheetTextBox content: $e\n$st');
+        // b) Any other formula: call its .result recursively
+        else {
+          final value = block.function!.result(
+            getItemAtPath,
+            buildCombinedQuillConfiguration,
+            spreadSheet: spreadSheet,
+          );
+          if (value is num) sum += value.toDouble();
+        }
+        continue;
       }
+
+      // 2) Live SheetText in editor
+      if (item is SheetText) {
+        final text = item.textEditorConfigurations.controller.document
+            .toPlainText()
+            .trim();
+        final parsed = double.tryParse(text);
+        if (parsed != null) sum += parsed;
+      }
+      // 3) SheetTextBox (loaded JSON)
+      else if (item is SheetTextBox) {
+        try {
+          final json = item.textEditorController;
+          if (json is List) {
+            final delta = Delta.fromJson(json);
+            final doc = Document.fromDelta(delta);
+            final text = doc.toPlainText().trim();
+            final parsed = double.tryParse(text);
+            if (parsed != null) sum += parsed;
+          }
+        } catch (e, st) {
+          print('⚠️ Failed to parse SheetTextBox content: $e\n$st');
+        }
+      }
+
+      // 4) (optional) other types…
     }
 
-    // Extend for other types if needed
+    return sum;
   }
-  // print('sum: '+sum.toString());
-  return sum;
-}
+
 
   @override
   Map<String, dynamic> toMap() => {
@@ -148,7 +171,9 @@ class ColumnFunction extends SheetFunction {
   ColumnFunction({required this.inputBlocks, required this.func, required this.axisLabel}) : super(0, 'column');
 
   @override
-  dynamic result(Function getItemAtPath, {
+  dynamic result(Function getItemAtPath,
+   Function buildCombinedQuillConfiguration,
+   {
     List<SheetListBox>? spreadSheet,
   }) {
     switch (func) {
@@ -156,10 +181,10 @@ class ColumnFunction extends SheetFunction {
       // print(inputBlocks);
       var sumfunc = SumFunction(inputBlocks);
         // print(sumfunc.result(getItemAtPath, spreadSheet: spreadSheet).toString());
-        return SumFunction(inputBlocks).result(getItemAtPath, spreadSheet: spreadSheet);
+        return SumFunction(inputBlocks).result(getItemAtPath, buildCombinedQuillConfiguration, spreadSheet: spreadSheet);
       
       case 'count':
-        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath, spreadSheet: spreadSheet);
+        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: spreadSheet);
       default:
       return 0;
     }
@@ -194,7 +219,7 @@ class CountFunction extends SheetFunction {
   List<InputBlock> inputBlocks;
 
   @override
-  result(Function getItemAtPath,{List<SheetListBox>? spreadSheet,}) {
+  result(Function getItemAtPath, Function buildCombinedQuillConfiguration,{List<SheetListBox>? spreadSheet,}) {
     return inputBlocks.length;
   }
 
@@ -233,7 +258,7 @@ class InputBlockFunction extends SheetFunction {
   ):super(0,'inputBlock');
 
   @override
-  result(Function getItemAtPath, {List<SheetListBox>? spreadSheet}) {
+  result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet}) {
     if (spreadSheet!=null) {
       return buildCombinedTextFromBlocks(inputBlocks, spreadSheet);
     }

@@ -437,6 +437,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // panelIndex.parentId = spreadSheetList[currentPageIndex].id;
       // sheetListItem = spreadSheetList[currentPageIndex];
     });
+    await relinkIndexPathsInInputBlocks();
     setState(() => isLoading = false);
     _renderPagePreviewOnProperties();
     assignIndexPathsAndDisambiguate(labelList,spreadSheetList);
@@ -2626,7 +2627,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
         } else if( block.function is! InputBlockFunction){
             print('function Type: '+block.function.runtimeType.toString());
-            result = block.function!.result(getItemAtPath);
+            result = block.function!.result(getItemAtPath, buildCombinedQuillConfiguration,);
 
             if (result is num || result is String) {
             
@@ -8450,9 +8451,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // Look up that neighbor cell
       final neighborCell = sheetTable.getCellFromLabel(neighborLabel);
       if (neighborCell == null) return true;           
-
+      print(neighborLabel);
+      
       // Check if *its* SheetText is selected
       final neighborItemId = (neighborCell.sheetItem as SheetText).id;
+      print(selectedIndexPaths[neighborItemId]);
       return selectedIndexPaths[neighborItemId] == null;
     }
     BorderSide borderSide = BorderSide(
@@ -9680,6 +9683,177 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
   }
 
+  Future<void> relinkIndexPathsInInputBlocks() async {
+    /// Try the fast path first, then fallback to your iterator.
+    SheetItem _resolveItem(InputBlock b) {
+      final maybe = getItemAtPath(b.indexPath);
+      if (maybe == null || maybe.id == 'yo' || maybe.id != b.id) {
+        // fallback: heavy search
+        return _sheetItemIterator(b.id, spreadSheetList.first, shouldReturn:true);
+      }
+      return maybe;
+    }
+    /// Your existing recursive table‐finder, untouched:
+    SheetTable? _searchTable(SheetList list, String blockId) {
+      for (final item in list.sheetList) {
+        if (item is SheetTable) {
+          for (final row in item.cellData) {
+            for (final cell in row) {
+              if (cell.sheetItem is SheetText) {
+                if ((cell.sheetItem as SheetText)
+                        .inputBlocks
+                        .any((blk) => blk.id == blockId)) {
+                  return item;
+                }
+              }
+            }
+          }
+        } else if (item is SheetList) {
+          final sub = _searchTable(item, blockId);
+          if (sub != null) return sub;
+        }
+      }
+      return null;
+    }
+    /// Given an InputBlock b whose indexPath = (tableIndexPath)→rowIndex→colIndex,
+/// b.indexPath.parent → rowIndexPath
+/// b.indexPath.parent.parent → tableIndexPath
+    SheetTable _findParentTableForBlock(InputBlock b) {
+      print('path: '+b.indexPath.toString());
+      print('path: '+b.id);
+      // Fast path: climb up two levels in the indexPath
+      // final rowIndexPath   = b.indexPath.parent!;
+      // final tableIndexPath = rowIndexPath.parent!;
+      try {
+        print(b.indexPath);
+        final candidate = getItemAtPath(b.indexPath);
+        if (candidate is SheetTable) {
+          return candidate;
+        }
+      } catch (_) {
+        // ignore and fall through
+      }
+
+      // Fallback: expensive global search by id if our fast path failed
+      for (final list in spreadSheetList) {
+        final found = _searchTable(list, b.id);
+        if (found != null) return found;
+      }
+      throw StateError('Could not locate parent SheetTable for block ${b.id}');
+    }
+
+
+
+
+    /// Recursively fix a single InputBlock (and any nested functions).
+    void _relinkBlock(InputBlock b, [Map<String,int>? visited]) {
+      visited ??= <String,int>{};
+      visited[b.id] = (visited[b.id] ?? 0) + 1;
+
+      // If we've seen this block > 50 times in one chain, cut it off:
+      if (visited[b.id]! > 15) {
+        // you could log or even reset b.function = null here
+        print('⚠️ recursion detected on block ${b.id}, stopping relink.');
+        return;
+      }
+      final target = _resolveItem(b);
+      b.indexPath = target.indexPath;
+
+      // 2) if it has a function, recurse into *that* function’s blocks:
+      final fn = b.function;
+      if (fn is InputBlockFunction) {
+        print('is InputBlockFunction');
+        for (final inner in fn.inputBlocks) {
+          _relinkBlock(inner, Map<String,int>.from(visited));
+        }
+      }
+      else if (fn is SumFunction) {
+        print('is SumFunction');
+        for (final inner in fn.inputBlocks) {
+          _relinkBlock(inner,Map<String,int>.from(visited));
+        }
+      }
+      else if (fn is CountFunction) {
+        for (final inner in fn.inputBlocks) {
+          _relinkBlock(inner,Map<String,int>.from(visited));
+        }
+      }
+      else if (fn is ColumnFunction) {
+        // pick the right row/column list by axisLabel:
+        print('is ColumnFunction');
+        final table = _findParentTableForBlock(b);
+
+        int axis;
+        try {
+          axis = int.parse(fn.axisLabel) - 1;
+          if (axis < table.rowData.length) {
+            fn.inputBlocks =table.rowData[axis].rowInputBlocks;
+          } else {
+            fn.inputBlocks = 
+              table.rowData[axis - table.rowData.length].rowInputBlocks;
+            
+          }
+          // now recurse into those newly‑assigned blocks too:
+          for (final inner in fn.inputBlocks) {
+            _relinkBlock(inner,Map<String,int>.from(visited));
+          }
+        } catch (_) {
+          axis = columnLabelToNumber(fn.axisLabel);
+          if (axis < table.columnData.length) {
+            fn.inputBlocks = table.columnData[axis].columnInputBlocks;
+          } else {
+            fn.inputBlocks = 
+              table.columnData[axis - table.columnData.length].columnInputBlocks;
+          }
+          // now recurse into those newly‑assigned blocks too:
+          for (final inner in fn.inputBlocks) {
+            _relinkBlock(inner,Map<String,int>.from(visited));
+          }
+          }
+        
+      }
+    }
+    
+    
+    void _relinkInList(SheetList list) {
+      for (final item in list.sheetList) {
+        if (item is SheetText) {
+          // fix *all* of its inputBlocks
+          for (final b in item.inputBlocks) {
+            _relinkBlock(b);
+          }
+        }
+        else if (item is SheetTable) {
+          print('is SheetTable');
+          // descend into every cell
+          for (final row in item.cellData) {
+            for (final cell in row) {
+              if (cell.sheetItem is SheetText) {
+                for (final b in (cell.sheetItem as SheetText).inputBlocks) {
+                  _relinkBlock(b);
+                }
+              }
+              if (cell.sheetItem is SheetList) {
+                _relinkInList(cell.sheetItem as SheetList);
+              }
+              if (cell.sheetItem is SheetTable) {
+                // you could also recurse into nested tables if you have them
+              }
+            }
+          }
+        }
+        else if (item is SheetList) {
+          _relinkInList(item);
+        }
+      }
+    }
+
+    // finally, drive it:
+    for (final top in spreadSheetList) {
+      _relinkInList(top);
+    }
+  }
+
   _getProperTiesCards() {
     switch (whichPropertyTabIsClicked) {
       case 2:
@@ -10687,21 +10861,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           highlightColor:defaultPalette.extras[0],
                                                           onTap:(){
                                                             setState(() {
-                                                              // if (inputBlocks == null) {
-                                                              //   item.inputBlocks.add(InputBlock(
-                                                              //     indexPath: sheetCellItem.indexPath, 
-                                                              //     blockIndex: [-2],
-                                                              //     id: sheetCellItem.id
-                                                              //     ));
-                                                              //   // inputBlockExpansionList.add(false); 
-                                                              // } else {
-                                                              //   inputBlocks.add(
-                                                              //     InputBlock(
-                                                              //     indexPath: sheetCellItem.indexPath, 
-                                                              //     blockIndex: [-2],
-                                                              //     id: sheetCellItem.id)
-                                                              //   );
-                                                              // }
                                                             });
                                                           },
                                                           child: Text(
@@ -10743,9 +10902,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 if (inputBlocks == null) {
                                                                   // for (var i = 0; i < sheetItem.cellData.length; i++) {
                                                                     item.inputBlocks.add(InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
                                                                       useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
@@ -10757,11 +10916,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   
                                                                   // inputBlockExpansionList.add(false); 
                                                                 } else {
-                                                                  for (var i = 0; i < sheetItem.cellData.length; i++) {
+                                                                  
                                                                     inputBlocks.add( InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
                                                                       useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
@@ -10770,7 +10929,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       ),
                                                                     )
                                                                   );
-                                                                  }
+                                                                  
                                                                 }
                                                               });
                                                             },
@@ -10820,9 +10979,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   
                                                                     item.inputBlocks.add(
                                                                       InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
                                                                       useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
@@ -10837,9 +10996,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 } else {
                                                                   
                                                                     inputBlocks.add( InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
                                                                       useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
@@ -11381,6 +11540,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock){
                     var funcBlock = inputBlock[index];
                     var funcInputBlocks;
+                    Widget Function(List<InputBlock> inBlock, int inx) sumFunctionInputBlocks;
+                    Widget Function(List<InputBlock> inBlock, int inx) countFunctionInputBlocks;
+                    Widget Function(List<InputBlock> inBlock, int inx) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx)=> Container(color:defaultPalette.extras[1]);
                     print(inputBlock[index].function);
                     if (inputBlock[index].function is SumFunction) {
                      funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
@@ -11392,7 +11554,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
                     ////
                     ////
-                        Widget sumFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                        sumFunctionInputBlocks = (List<InputBlock> inBlock, int inx){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                             key: ValueKey(inx),
@@ -11422,8 +11584,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return SizedBox.shrink(
+                              return Container(
                                 key: ValueKey(inx),
+                                color:defaultPalette.extras[1]
                               ); // fail-safe
                             }
                           }
@@ -11443,7 +11606,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
                                           height: 60,
-                                          width: width+10,
+                                          width: width,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
                                             color: defaultPalette.tertiary,
@@ -11531,61 +11694,115 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ],
                                               ),
                                               //sum cumulative and individual index
-                                              Container(
-                                                margin: EdgeInsets.all(2).copyWith(top:4),
-                                                padding: EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(5),
-                                                  color: defaultPalette.extras[0],
-                                                ),
-                                                child: Row(
+                                              Row(
                                                 children: [
-                                                  const SizedBox(width: 3),
-                                                  Expanded(
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.lexend(
-                                                          letterSpacing: -1,
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          color: defaultPalette.extras[0],
-                                                        ),
+
+                                                  if (inBlock[inx].useConst !=item.id) 
+                                                  ...[
+                                                    const SizedBox(width: 3),
+                                                    ElevatedLayerButton(
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(5),
+                                                        topLeft: Radius.circular(5),
+                                                        bottomRight: Radius.circular(10),
+                                                        bottomLeft: Radius.circular(10),
+                                                      ),
+                                                      animationDuration: const Duration(milliseconds: 100),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: defaultPalette.primary,
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      topLayerChild: Row(
                                                         children: [
-                                                          TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                          TextSpan(
-                                                            text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath, spreadSheet: null)}',
-                                                            style: TextStyle(color:defaultPalette.primary),
-                                                          ),
+                                                          const SizedBox(width: 2),
+                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                                          
                                                         ],
                                                       ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.lexend(
-                                                          letterSpacing: -1,
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          color: defaultPalette.extras[0],
-                                                        ),
-                                                        children: [
-                                                          TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
-                                                          TextSpan(
-                                                            text: '${(inx).clamp(0, double.infinity)}',
-                                                            style: TextStyle(color:defaultPalette.primary),
-                                                          ),
-                                                        ],
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(color: defaultPalette.extras[0]),
                                                       ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
+                                                      depth: 2,
+                                                      subfac: 2,
+                                                      buttonHeight: 24,
+                                                      buttonWidth: 20,
+                                                      onClick: () {
+                                                        setState(() {
+                                                          inBlock[inx].useConst= !inBlock[inx].useConst;
+                                                          print(inBlock);
+                                                          print(sheetTableItem);
+                                                          for (final row in sheetTableItem.rowData) {
+                                                            for (final ib in row.rowInputBlocks) {
+                                                              print('useConst: ${ib.useConst}, row: $row, cell: ${ib.id}');
+                                                                
+                                                            }
+                                                          }
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                  Expanded(
+                                                    child: Container(
+                                                      margin: EdgeInsets.all(2).copyWith(top:4),
+                                                      padding: EdgeInsets.all(3),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(5),
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      child: Row(
+                                                      children: [
+                                                        const SizedBox(width: 3),
+                                                        
+                                                        Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                TextSpan(
+                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null)}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                TextSpan(
+                                                                  text: '${(inx).clamp(0, double.infinity)}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                      ],
+                                                              ),
                                                     ),
                                                   ),
-                                                  const SizedBox(width: 3),
                                                 ],
-                                                        ),
                                               )
                                 
                                             ],
@@ -11593,7 +11810,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                       ],
 
-                                      if (!inBlock[inx].useConst)
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
+                                      inputBlockFunctionInputBlocks(inBlock, inx),
+                                      if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction))
                                       GestureDetector(
                                         onTap:(){
                                           setState(() {
@@ -11687,7 +11906,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 if(sheetFunction is InputBlockFunction)
                                                                 TextSpan(text: ' ${sheetFunction.label}: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${block.function!.result(getItemAtPath).toString()}',
+                                                                  text: '${block.function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toString()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11888,7 +12107,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     style: GoogleFonts.lexend(
                                                                       letterSpacing: -0.5,
                                                                       fontWeight: FontWeight.w400,
-                                                                      fontSize: 14,
+                                                                      fontSize: 12,
                                                                       color: defaultPalette.extras[8],
                                                                     ),),
                                                                   const SizedBox(width: 3),
@@ -11911,7 +12130,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 if(sheetFunction is SumFunction)
                                                                 TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration,)}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11971,18 +12190,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   topLayerChild: Row(
                                                     children: [
                                                       Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
-                                                      // Expanded(
-                                                      //   child: Text(
-                                                      //     ' edit',
-                                                      //     maxLines: 1,
-                                                      //     style: GoogleFonts.bungee(
-                                                      //       fontSize: 12,
-                                                      //       color: defaultPalette.extras[0],
-                                                      //       // letterSpacing: -1,
-                                                      //       fontWeight: FontWeight.w500,
-                                                      //     ),
-                                                      //   ),
-                                                      // ),
+                                                      
                                                     ],
                                                   ),
                                                   baseDecoration: BoxDecoration(
@@ -12012,8 +12220,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               ],
                             ),
                           );
-                        }
-                        Widget countFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                        };
+                        countFunctionInputBlocks = (List<InputBlock> inBlock, int inx){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                             key: ValueKey(inx),
@@ -12034,9 +12242,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return SizedBox.shrink(
+                              return Container(
                                 key: ValueKey(inx),
-                              ); // fail-safe
+                                color:defaultPalette.extras[1]
+                              );  // fail-safe
                             }
                           }
                           return ReorderableDragStartListener(
@@ -12140,7 +12349,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         children: [
                                                           TextSpan(text: ' count: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                           TextSpan(
-                                                            text: '${CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                            text: '${CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration,)}',
                                                             style: TextStyle(color:defaultPalette.primary),
                                                           ),
                                                         ],
@@ -12267,7 +12476,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               children: [
                                                                 TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${block.function!.result(getItemAtPath).toString()}',
+                                                                  text: '${block.function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toString()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -12414,7 +12623,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               children: [
                                                                 TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration,)}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -12515,8 +12724,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               ],
                             ),
                           );
-                        }
-                        Widget inputBlockFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                        };
+                        inputBlockFunctionInputBlocks = (List<InputBlock> inBlock, int inx){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                               key: ValueKey(inx),
@@ -12554,8 +12763,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return SizedBox.shrink(
+                              return Container(
                                 key: ValueKey(inx),
+                                color:defaultPalette.extras[1]
                               ); // fail-safe
                             }
                           }
@@ -12757,14 +12967,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               ),
                                                               children: [
                                                                 if(inBlock[inx].function is SumFunction)
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                TextSpan(text: ' sum: ',style: TextStyle(color:defaultPalette.primary),),
                                                                 if(inBlock[inx].function is ColumnFunction)
                                                                 TextSpan(text: ' ${(inBlock[inx].function as ColumnFunction).func}: ',style: TextStyle(color:defaultPalette.primary),),
                                                                 if(inBlock[inx].function is InputBlockFunction)
                                                                 TextSpan(text: ' ${(inBlock[inx].function as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 if(inBlock[inx].function is! InputBlockFunction)
                                                                 TextSpan(
-                                                                  text: '${inBlock[inx].function!.result(getItemAtPath).toString()}',
+                                                                  text: '${inBlock[inx].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toString()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -12778,7 +12988,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         Expanded(
                                                           flex:5,
                                                           child: Text(
-                                                            inBlock[inx].function?.name ??'',
+                                                            (inBlock[inx].function as InputBlockFunction).label ??'',
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
@@ -12890,7 +13100,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     
                                                     //sum cumulative and individual index
                                                     Container(
-                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:38,bottom: 4),
+                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:50,bottom: 4),
                                                       padding: EdgeInsets.all(3),
                                                       decoration: BoxDecoration(
                                                         borderRadius: BorderRadius.circular(5),
@@ -12899,7 +13109,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
-                                                        if(inBlock[inx].function is SumFunction)
+                                                        
                                                                Expanded(
                                                                 child: RichText(
                                                                   text: TextSpan(
@@ -12910,9 +13120,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       color: defaultPalette.extras[0],
                                                                     ),
                                                                     children: [
-                                                                      TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                      
+                                                                      TextSpan(text:inBlock[inx].function is SumFunction
+                                                                      ? ' sum: '
+                                                                      : ' str: '
+                                                                      ,style: TextStyle(color:Color(0xffB388EB)),),
                                                                       TextSpan(
-                                                                        text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                                        text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration,)}',
                                                                         style: TextStyle(color:defaultPalette.primary),
                                                                       ),
                                                                     ],
@@ -12956,41 +13170,85 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             ),
                                             Positioned(
                                               top:54,
-                                              child: ElevatedLayerButton(
-                                                  isTapped: inBlock[inx].isExpanded,
-                                                  borderRadius: const BorderRadius.only(
-                                                    topRight: Radius.circular(5),
-                                                    topLeft: Radius.circular(5),
-                                                    bottomRight: Radius.circular(5),
-                                                    bottomLeft: Radius.circular(5),
-                                                  ),
-                                                  animationDuration: const Duration(milliseconds: 100),
-                                                  animationCurve: Curves.ease,
-                                                  topDecoration: BoxDecoration(
-                                                    color: defaultPalette.primary,
-                                                    border: Border.all(color: defaultPalette.extras[0]),
-                                                  ),
-                                                  topLayerChild: Row(
-                                                    children: [
-                                                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
-                                                      
-                                                    ],
-                                                  ),
-                                                  baseDecoration: BoxDecoration(
-                                                    color: defaultPalette.extras[0],
-                                                    border: Border.all(color: defaultPalette.extras[0]),
-                                                  ),
-                                                  depth: 2,
-                                                  subfac: 5,
-                                                  buttonHeight: 24,
-                                                  buttonWidth: 35,
-                                                  onClick: () {
-                                                    setState(() {
-                                                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
-                                                      inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
-                                                    });
-                                                  },
-                                                ),
+                                              child: Row(
+                                                children: [
+                                                  if (inBlock[inx].useConst !=item.id) 
+                                                  ...[
+                                                    const SizedBox(width: 3),
+                                                    ElevatedLayerButton(
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(5),
+                                                        topLeft: Radius.circular(5),
+                                                        bottomRight: Radius.circular(10),
+                                                        bottomLeft: Radius.circular(10),
+                                                      ),
+                                                      animationDuration: const Duration(milliseconds: 100),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: defaultPalette.primary,
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      topLayerChild: Row(
+                                                        children: [
+                                                          const SizedBox(width: 2),
+                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                                          
+                                                        ],
+                                                      ),
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      depth: 2,
+                                                      subfac: 2,
+                                                      buttonHeight: 24,
+                                                      buttonWidth: 20,
+                                                      onClick: () {
+                                                        setState(() {
+                                                          inBlock[inx].useConst= !inBlock[inx].useConst;
+                                                          // rint(inBlock);
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                  const SizedBox(width: 3),
+                                                  ElevatedLayerButton(
+                                                      isTapped: inBlock[inx].isExpanded,
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(5),
+                                                        topLeft: Radius.circular(5),
+                                                        bottomRight: Radius.circular(10),
+                                                        bottomLeft: Radius.circular(10),
+                                                      ),
+                                                      animationDuration: const Duration(milliseconds: 100),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: defaultPalette.primary,
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      topLayerChild: Row(
+                                                        children: [
+                                                          const SizedBox(width: 2),
+                                                          Icon(TablerIcons.medical_cross_filled, size: 12, color: defaultPalette.extras[0]),
+                                                          
+                                                        ],
+                                                      ),
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      depth: 2,
+                                                      subfac: 2,
+                                                      buttonHeight: 24,
+                                                      buttonWidth: 20,
+                                                      onClick: () {
+                                                        setState(() {
+                                                          inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
+                                                        });
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
                                             ),
                         
                                             
@@ -13005,7 +13263,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             ),
                           );
                        
-                        }
+                        };
                         
                     ////
                     ////
@@ -13188,7 +13446,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 children: [
                                                   TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                   TextSpan(
-                                                    text: '${inputBlock[index].function!.result(getItemAtPath)}',
+                                                    text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,)}',
                                                     style: TextStyle(color:defaultPalette.primary),
                                                   ),
                                                 ],
@@ -13504,7 +13762,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       children: [
                                                         // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                         TextSpan(
-                                                          text: '${inputBlock[index].function!.result(getItemAtPath)}',
+                                                          text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,)}',
                                                           style: TextStyle(color:defaultPalette.primary),
                                                         ),
                                                       ],
@@ -13718,7 +13976,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       //sum/count and index
                                       Row(
                                         children: [
-                                          const SizedBox(width: 3),
+                                          // const SizedBox(width: 3),
                                          
                                           Expanded(
                                             child: Container(
@@ -13742,11 +14000,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         color: defaultPalette.extras[0],
                                                       ),
                                                       children: [
-                                                        // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                        // TextSpan(
-                                                        //   text: '${inputBlock[index].function!.result(getItemAtPath)}',
-                                                        //   style: TextStyle(color:defaultPalette.primary),
-                                                        // ),
+                                                        TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                        TextSpan(
+                                                          text: '0-${((inputBlock[index].function! as InputBlockFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                          style: TextStyle(color:defaultPalette.primary),
+                                                        ),
                                                       ],
                                                     ),
                                                     overflow: TextOverflow.ellipsis,
@@ -13763,9 +14021,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         color: defaultPalette.extras[0],
                                                       ),
                                                       children: [
-                                                        TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                        // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                         TextSpan(
-                                                          text: '0-${((inputBlock[index].function! as InputBlockFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                          text: '${(inputBlock[index].function! as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}',
                                                           style: TextStyle(color:defaultPalette.primary),
                                                         ),
                                                       ],
@@ -13874,6 +14132,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 },
                               ),
                           ),
+                        
                         ];
                       
                       
@@ -13971,9 +14230,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         throw Exception("Item is not SheetText");
                                       }
                                     } catch (e) {
-                                      return SizedBox.shrink(
+                                      return Container(
                                         key: ValueKey(index),
-                                      ); // fail-safe
+                                        color:defaultPalette.extras[1]
+                                      );  // fail-safe
                                     }
                                   }
                                   print(inputBlock[index].useConst);
@@ -15816,15 +16076,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     )),
                                             Positioned(
                                               top: 2,
-                                              left: 60,
+                                              left: 70,
                                               child: Text('Library',
                                                   textAlign: TextAlign.start,
-                                                  style: GoogleFonts.mrDafoe(
+                                                  style: GoogleFonts.leagueSpartan(
                                                     height: 1,
                                                     letterSpacing:-0.5,
                                                     color: defaultPalette.extras[0],
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 22)
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 25)
                                                     )),
                                             Row(
                                             children: [
@@ -17265,17 +17525,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         id: newId,
                                       );
 
-                                      // 1) Link into this new row
-                                      rowInputBlocks.add(inputBlock);
-
-                                      // 2) Also link into the existing column
-                                      final column = sheetTableItem.columnData[colIndex];
-                                      // if (!column.columnInputBlocks.any((b) => b.id == inputBlock.id)) {
-                                        column.columnInputBlocks.add(inputBlock);
-                                      // }
-
-
-                                      return SheetTableCell(
+                                      var sheetTableCell = SheetTableCell(
                                         id: '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
                                         parentId: sheetTableItem.id,
                                         indexPath: rowIndexPath,
@@ -17293,6 +17543,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
                                         ),
                                       );
+                                      var ib = inputBlock.copyWith(
+                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );
+                                      // 1) Link into this new row
+                                      rowInputBlocks.add(ib);
+
+                                      // 2) Also link into the existing column
+                                      final column = sheetTableItem.columnData[colIndex];
+                                        column.columnInputBlocks.add(ib);
+                                      // }
+
+
+                                      return sheetTableCell;
                                     }),
                                   );
 
@@ -17348,17 +17611,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       blockIndex: [-2],
                                       id: newId,
                                     );
-
-                                    // link into the new column
-                                    colInputBlocks.add(inputBlock);
-
-                                    // link into the existing row
-                                    sheetTableItem.rowData[rowIndex]
-                                        .rowInputBlocks
-                                        .add(inputBlock);
-
-                                    sheetTableItem.cellData[rowIndex].add(
-                                      SheetTableCell(
+                                    var sheetTableCell =SheetTableCell(
                                         id:
                                             '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
                                         parentId: sheetTableItem.id,
@@ -17376,24 +17629,61 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
                                           indexPath:itemIndexPath,
                                         ),
-                                      ),
+                                      );
+                                    // inputBlock.function = InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name);
+                                     var ib = inputBlock.copyWith(
+                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      ); 
+                                    // link into the new column
+                                    colInputBlocks.add(ib);
+
+                                    // link into the existing row
+                                    sheetTableItem.rowData[rowIndex]
+                                        .rowInputBlocks
+                                        .add(ib);
+
+                                    sheetTableItem.cellData[rowIndex].add(
+                                      sheetTableCell
                                     );
                                   }
                                 }
-                                for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
-                                  for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
+                                //when you clear blocks it will also clear the useConst data, every other field can be relinked but useConst would be lost
+                                final Map<String, bool> useConstById = {};
+                                // Rows
+                                for (final row in sheetTableItem.rowData) {
+                                  for (final ib in row.rowInputBlocks) {
+                                    useConstById[ib.id] = ib.useConst;
+                                    print('useConst: ${useConstById[ib.id]}, row: $row, cell: ${ib.id}');
+                                      
+                                  }
+                                }
+                                print('========');
+                                      
+
+                                // Columns
+                                for (final col in sheetTableItem.columnData) {
+                                  for (final ib in col.columnInputBlocks) {
+                                    useConstById[ib.id] = ib.useConst;
+                                  }
+                                }
+                                // for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
+                                for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
 
                                   for (int r = 0; r < sheetTableItem.cellData.length; r++) {
                                     for (int c = 0; c < sheetTableItem.cellData[r].length; c++) {
                                       final cell = sheetTableItem.cellData[r][c];
-                                      print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                      // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                       
                                       if (cell.sheetItem is! SheetText) continue;
-                                        sheetTableItem.rowData[r].rowInputBlocks.add(
-                                          InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
-                                        sheetTableItem.columnData[c].columnInputBlocks.add(
-                                          InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
-                                      print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                      print('useConst: ${useConstById[cell.sheetItem.id]}, row: $r, cell: ${cell.id}');
+                                      // sheetTableItem.rowData[r].rowInputBlocks.add(
+                                      //   InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                                      //   function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                                      //   ));
+                                      sheetTableItem.columnData[c].columnInputBlocks.add(
+                                        InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                                        function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)));
+                                      // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                       
 
                                     }
@@ -17584,53 +17874,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         child: ReorderableListView(
                                           onReorder: (oldIndex, newIndex) {
                                             setState(() {
-                                              // print(oldIndex.toString() +
-                                              //     ' ' +
-                                              //     newIndex.toString());
-                                              // final shadowList =
-                                              //     currentItemDecoration
-                                              //             .decoration
-                                              //             .boxShadow ??
-                                              //         [];
-                                              // final shadow = shadowList
-                                              //     .removeAt(oldIndex);
-                                              // if ((newIndex !=
-                                              //     shadowList.length + 1)) {
-                                              //   print('hah' +
-                                              //       shadowList.length
-                                              //           .toString() +
-                                              //       ' ' +
-                                              //       newIndex.toString());
-                                              //   shadowList.insert(
-                                              //       newIndex, shadow);
-                                              //   if (oldIndex < newIndex) {
-                                              //     shadowLayerIndex =
-                                              //         newIndex - 1;
-                                              //   } else {
-                                              //     shadowLayerIndex =
-                                              //         newIndex;
-                                              //   }
-                                              //   print('hah' +
-                                              //       shadowLayerIndex
-                                              //           .toString() +
-                                              //       ' ' +
-                                              //       newIndex.toString());
-                                              // } else {
-                                              //   shadowList.add(shadow);
-                                              //   shadowLayerIndex =
-                                              //       shadowList.length - 1;
-                                              //   print(oldIndex.toString() +
-                                              //       ' ' +
-                                              //       newIndex.toString());
-                                              // }
-                                              // currentItemDecoration =
-                                              //     currentItemDecoration.copyWith(
-                                              //         decoration:
-                                              //             currentItemDecoration
-                                              //                 .decoration
-                                              //                 .copyWith(
-                                              //                     boxShadow:
-                                              //                         shadowList));
+                                              
                                             });
                                           },
                                           proxyDecorator:
@@ -17739,6 +17983,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       onTap: () async {
                                         print('yo is this even Wokring');
                                         setState(() {
+                                          final Map<String, bool> useConstById = {};
                                           FocusManager.instance.primaryFocus?.unfocus();
                                           Future.delayed(Duration(milliseconds: 30));
                                           if(sheetTableVariables.columnLayerIndex == item.indexPath.index || sheetTableVariables.rowLayerIndex == item.indexPath.parent?.index){
@@ -17746,6 +17991,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             panelIndex.itemIndexPath = sheetTableItem.cellData[0][0].sheetItem.indexPath;
                                           }
                                            if (axis == 0 && sheetTableItem.rowData.length>1 ) {
+                                            
+                                            // Rows
+                                            for (final row in sheetTableItem.rowData) {
+                                              for (final ib in row.rowInputBlocks) {
+                                                useConstById[ib.id] = ib.useConst;
+                                              }
+                                            }
+
+                                            // Columns
+                                            for (final col in sheetTableItem.columnData) {
+                                              for (final ib in col.columnInputBlocks) {
+                                                useConstById[ib.id] = ib.useConst;
+                                              }
+                                            }
                                           sheetTableItem.rowData.removeAt(sheetTableVariables.rowLayerIndex);
                                           sheetTableItem.cellData.removeAt(sheetTableVariables.rowLayerIndex);
                                           
@@ -17775,6 +18034,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           }
 
                                          } else if(axis == 1 &&sheetTableItem.columnData.length>1 ){
+                                          // Rows
+                                          for (final row in sheetTableItem.rowData) {
+                                            for (final ib in row.rowInputBlocks) {
+                                              useConstById[ib.id] = ib.useConst;
+                                            }
+                                          }
+
+                                          // Columns
+                                          for (final col in sheetTableItem.columnData) {
+                                            for (final ib in col.columnInputBlocks) {
+                                              useConstById[ib.id] = ib.useConst;
+                                            }
+                                          }
                                           sheetTableItem.columnData.removeAt(sheetTableVariables.columnLayerIndex);
                                           for (var i = 0; i < sheetTableItem.rowData.length; i++) {
                                             sheetTableItem.cellData[i].removeAt(sheetTableVariables.columnLayerIndex);
@@ -17800,6 +18072,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           }
 
                                          }
+                                         
+                                          
                                          for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
                                           for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
 
@@ -17810,9 +18084,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               
                                               if (cell.sheetItem is! SheetText) continue;
                                                 sheetTableItem.rowData[r].rowInputBlocks.add(
-                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id,useConst: useConstById[cell.sheetItem.id] ?? true,
+                                                  function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                                                  ));
                                                 sheetTableItem.columnData[c].columnInputBlocks.add(
-                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id,useConst: useConstById[cell.sheetItem.id] ?? true,
+                                                  function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                                                  ));
                                               // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                               
 
@@ -28121,11 +28399,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           indexPath:  textIndexPath,
           blockIndex: [-2],
         );
-        rowData[r].rowInputBlocks.add(inputBlock);
-        columnData[c].columnInputBlocks.add(inputBlock);
-
-        // finally, the cell
-        return SheetTableCell(
+        var sheetTableCell = SheetTableCell(
           id:        '${numberToColumnLabel(c+1)}${r+1}',
           parentId:  parentId,
           sheetItem: addTextField(
@@ -28147,6 +28421,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           colSpan:   1,
           indexPath: cellIndexPath,
         );
+        var ib = inputBlock.copyWith( function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );
+        rowData[r].rowInputBlocks.add(ib);
+        columnData[c].columnInputBlocks.add(ib);
+
+        // finally, the cell
+        return sheetTableCell;
       });
     });
 
@@ -28192,14 +28473,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           blockIndex: [-2],
           id: newId,
         );
-
-        // 2) Link it into that row’s list
-        rowInputLists[r].add(ib);
-        // 3) Link it into that column’s list
-        colInputLists[c].add(ib);
-
-        // Build the actual SheetTableCell
-        return SheetTableCell(
+        var sheetTableCell = SheetTableCell(
           id: '${numberToColumnLabel(c + 1)}${r + 1}',
           parentId: parentId,
           data: 'Cell ${String.fromCharCode(65 + c)}${r + 1}',
@@ -28221,6 +28495,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           colSpan: 1,
           indexPath: rowIndexPath,
         );
+       var ibl = ib.copyWith(function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );                             
+        // 2) Link it into that row’s list
+        rowInputLists[r].add(ibl);
+        // 3) Link it into that column’s list
+        colInputLists[c].add(ibl);
+
+        // Build the actual SheetTableCell
+        return sheetTableCell;
       });
     });
 
@@ -28379,8 +28662,7 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         indexPath:  cellIP,
         blockIndex: [-2],
       );
-      rowInputLists[r].add(ib);
-      colInputLists[c].add(ib);
+      
 
       // prepare initial delta
       final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
@@ -28398,8 +28680,7 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         inputBlocks:               [ ib ],
         locked:                     isHeader,
       );
-
-      return SheetTableCell(
+      var sheetTableCell = SheetTableCell(
         id:        '${numberToColumnLabel(c+1)}${r+1}',
         parentId:  parentId,
         sheetItem: sheetText,
@@ -28407,6 +28688,12 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         colSpan:   1,
         indexPath: rowIP,
       );
+      var ibl = ib.copyWith(
+                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );  
+      rowInputLists[r].add(ibl);
+      colInputLists[c].add(ibl);
+      return sheetTableCell;
     });
   });
 
@@ -28473,12 +28760,12 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
 
   void rebuildSheetTextItems(SheetTable sheetTable) {
     // 1) Clear out the old block-lists on rows & columns
-    for (final row in sheetTable.rowData) {
-      row.rowInputBlocks.clear();
-    }
-    for (final col in sheetTable.columnData) {
-      col.columnInputBlocks.clear();
-    }
+    // for (final row in sheetTable.rowData) {
+    //   row.rowInputBlocks.clear();
+    // }
+    // for (final col in sheetTable.columnData) {
+    //   col.columnInputBlocks.clear();
+    // }
 
     // 2) Walk every cell, reassign IDs & paths (only index!) and repopulate row/col blocks
     for (int rowIdx = 0; rowIdx < sheetTable.cellData.length; rowIdx++) {
@@ -28513,10 +28800,11 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
           // }
 
           // Hand that same block to row & column
-          for (final blk in sheetText.inputBlocks) {
-            sheetTable.rowData[rowIdx].rowInputBlocks.add(blk);
-            sheetTable.columnData[colIdx].columnInputBlocks.add(blk);
-          }
+          // for (final blk in sheetText.inputBlocks) {
+
+          //   sheetTable.rowData[rowIdx].rowInputBlocks.add(blk);
+          //   sheetTable.columnData[colIdx].columnInputBlocks.add(blk);
+          // }
         }
       }
     }

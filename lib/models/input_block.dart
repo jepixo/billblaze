@@ -1,10 +1,11 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/index_path.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
+
 part 'input_block.g.dart';
 
 @HiveType(typeId: 15)
@@ -34,7 +35,7 @@ class InputBlock {
   @override
   String toString() {
     // TODO: implement toString
-    return '${indexPath.toString()}, ${blockIndex.toString()}, $id, ${function.runtimeType.toString()}, $isExpanded';
+    return '|${indexPath.toString()}, ${blockIndex.toString()}, $id, ${function.runtimeType.toString()}, $isExpanded, $useConst |';
   }
   Map<String, dynamic> toMap() {
     var map = {
@@ -70,4 +71,22 @@ class InputBlock {
   String toJson() => jsonEncode(toMap());
   factory InputBlock.fromJson(String json) =>
       InputBlock.fromMap(jsonDecode(json));
+
+  InputBlock copyWith({
+    IndexPath? indexPath,
+    List<int>? blockIndex,
+    String? id,
+    bool? isExpanded,
+    SheetFunction? function,
+    bool? useConst,
+  }) {
+    return InputBlock(
+      indexPath:indexPath ?? this.indexPath,
+      blockIndex :blockIndex ?? this.blockIndex,
+      id:id ?? this.id,
+      isExpanded:isExpanded ?? this.isExpanded,
+      function:function ?? this.function,
+      useConst:useConst ?? this.useConst,
+    );
+  }
 }
