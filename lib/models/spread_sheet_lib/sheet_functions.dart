@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:billblaze/home.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
@@ -28,6 +29,7 @@ class SheetFunction {
    Function buildCombinedQuillConfiguration,
   {
     List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
   }) {
     throw UnimplementedError('Subclasses must override result()');
   }
@@ -67,14 +69,23 @@ class SumFunction extends SheetFunction {
 
   @override
   dynamic result(
-      Function getItemAtPath, 
-      Function buildCombinedQuillConfiguration,
-      {
-      List<SheetListBox>? spreadSheet,
-    }) {
+    Function getItemAtPath,
+    Function buildCombinedQuillConfiguration, {
+    List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
+  }) {
     double sum = 0;
-
+    visited ??= {};
+    visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
+      if (visited[inputBlocks]! > 2) {
+        return 'recursion detected';
+      }
     for (final block in inputBlocks) {
+      // Recursion detection
+      // if (!block.useConst) {
+        
+      // }
+
       dynamic item;
 
       if (spreadSheet == null) {
@@ -85,32 +96,34 @@ class SumFunction extends SheetFunction {
 
       if (item == null) continue;
 
-      // 1) If it's a nested Sheet‐formula
+      // Case 1: Function block
       if (block.function != null && !block.useConst) {
-        // a) InputBlockFunction: grab its editor, read text, parse
         if (block.function is InputBlockFunction) {
           final ibf = block.function as InputBlockFunction;
-          final config = ibf.getConfigurations( buildCombinedQuillConfiguration, spreadSheet: spreadSheet,
+
+          final config = ibf.getConfigurations(
+            buildCombinedQuillConfiguration,
+            spreadSheet: spreadSheet,
+            visited: Map<List<InputBlock>, int>.from(visited),
           );
-          final text = config.controller.document
-              .toPlainText()
-              .trim();
+
+          final text = config.controller.document.toPlainText().trim();
           final parsed = double.tryParse(text);
           if (parsed != null) sum += parsed;
-        }
-        // b) Any other formula: call its .result recursively
-        else {
+        } else {
           final value = block.function!.result(
             getItemAtPath,
             buildCombinedQuillConfiguration,
             spreadSheet: spreadSheet,
+            visited: Map.from(visited),
           );
           if (value is num) sum += value.toDouble();
         }
+
         continue;
       }
 
-      // 2) Live SheetText in editor
+      // Case 2: Live SheetText
       if (item is SheetText) {
         final text = item.textEditorConfigurations.controller.document
             .toPlainText()
@@ -118,7 +131,8 @@ class SumFunction extends SheetFunction {
         final parsed = double.tryParse(text);
         if (parsed != null) sum += parsed;
       }
-      // 3) SheetTextBox (loaded JSON)
+
+      // Case 3: SheetTextBox
       else if (item is SheetTextBox) {
         try {
           final json = item.textEditorController;
@@ -134,12 +148,11 @@ class SumFunction extends SheetFunction {
         }
       }
 
-      // 4) (optional) other types…
+      // Optional: extend for other item types
     }
 
     return sum;
   }
-
 
   @override
   Map<String, dynamic> toMap() => {
@@ -175,16 +188,17 @@ class ColumnFunction extends SheetFunction {
    Function buildCombinedQuillConfiguration,
    {
     List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
   }) {
     switch (func) {
       case 'sum':
       // print(inputBlocks);
       var sumfunc = SumFunction(inputBlocks);
         // print(sumfunc.result(getItemAtPath, spreadSheet: spreadSheet).toString());
-        return SumFunction(inputBlocks).result(getItemAtPath, buildCombinedQuillConfiguration, spreadSheet: spreadSheet);
+        return SumFunction(inputBlocks).result(getItemAtPath, buildCombinedQuillConfiguration, spreadSheet: spreadSheet, visited: visited);
       
       case 'count':
-        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: spreadSheet);
+        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: spreadSheet,visited: visited);
       default:
       return 0;
     }
@@ -219,7 +233,7 @@ class CountFunction extends SheetFunction {
   List<InputBlock> inputBlocks;
 
   @override
-  result(Function getItemAtPath, Function buildCombinedQuillConfiguration,{List<SheetListBox>? spreadSheet,}) {
+  result(Function getItemAtPath, Function buildCombinedQuillConfiguration,{List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
     return inputBlocks.length;
   }
 
@@ -258,17 +272,19 @@ class InputBlockFunction extends SheetFunction {
   ):super(0,'inputBlock');
 
   @override
-  result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet}) {
+  result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
     if (spreadSheet!=null) {
       return buildCombinedTextFromBlocks(inputBlocks, spreadSheet);
     }
   }
 
-  QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet}) {
+  QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
     if (spreadSheet !=null) {
-      return buildCombinedQuillConfiguration(inputBlocks, spreadSheet,);
+      var rawText = buildCombinedQuillConfiguration(inputBlocks, spreadSheet, visited:visited==null?null: Map<List<InputBlock>, int>.from(visited));
+
+      return QuillEditorConfigurations(controller: QuillController(document: Document()..insert(0, rawText), selection: TextSelection.collapsed(offset: 0)));
     }
-    return buildCombinedQuillConfiguration(inputBlocks);
+    return buildCombinedQuillConfiguration(inputBlocks, visited: visited==null?null: Map<List<InputBlock>, int>.from(visited) );
   }
   
   @override

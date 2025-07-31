@@ -5761,30 +5761,31 @@ List<PieChartSectionData> showingSections({
 String buildCombinedTextFromBlocks(
   List<InputBlock> inputBlocks,
   List<SheetListBox> spreadSheetList, {
-  Map<String, int>? visited,
+  Map<List<InputBlock>, int>? visited,
 }) {
   final mergedDelta = Delta();
   visited ??= {};
-
+  visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
+    if (visited[inputBlocks]! > 50) {
+      
+      return '';
+    }
+  // print('build');
   for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
     final block = inputBlocks[blockIdx];
-
-    if (block.useConst == false) {
-      visited[block.id] = (visited[block.id] ?? 0) + 1;
-      if (visited[block.id]! > 50) {
-        return 'recursion detected';
-      }
-    }
-
+    // print(block);
+    
+    // if(block.function is InputBlockFunction) print(block.useConst);
     if (block.function != null) {
       if (block.function is InputBlockFunction && block.useConst == false) {
         // Recursive call with updated visited map
+        //  print('hello');
         final result = buildCombinedTextFromBlocks(
           (block.function as InputBlockFunction).inputBlocks,
           spreadSheetList,
           visited: visited,
         );
-
+        // print(result);
         mergedDelta.push(Operation.insert(
           '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}',
         ));
@@ -5804,7 +5805,7 @@ String buildCombinedTextFromBlocks(
         }
 
         continue;
-      } else {
+      } else if (block.function is! InputBlockFunction){
         final result = block.function!.result(getItemAtPath, buildCombinedTextFromBlocks, spreadSheet: spreadSheetList);
         if (result is num || result is String) {
           final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
