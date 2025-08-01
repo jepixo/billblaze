@@ -437,6 +437,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // panelIndex.parentId = spreadSheetList[currentPageIndex].id;
       // sheetListItem = spreadSheetList[currentPageIndex];
     });
+    await relinkIndexPathsInInputBlocks();
     setState(() => isLoading = false);
     _renderPagePreviewOnProperties();
     assignIndexPathsAndDisambiguate(labelList,spreadSheetList);
@@ -2581,29 +2582,37 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     return current ?? notfound();
   }
 
-  QuillEditorConfigurations buildCombinedQuillConfiguration(List<InputBlock> inputBlocks, {Map<String, int>? visited}) {
+  QuillEditorConfigurations buildCombinedQuillConfiguration(List<InputBlock> inputBlocks, {Map<List<InputBlock>, int>? visited}) {
     final mergedDelta = Delta();
+    visited ??= {};
+    visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
 
+    
     for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
-      
+      if (visited[inputBlocks]! > 50) {
+        mergedDelta.push(Operation.insert('recursion detected\n'));
+        continue;
+      }
       final block = inputBlocks[blockIdx];
-      
+      if (block.useConst == false) {
+        
+      }
       
       if (block.function != null) {
         var result;
         //  (block.function.runtimeType.toString()+(!block.useConst).toString());
         if(block.function is InputBlockFunction && !block.useConst){
           // pri('elloo');
-          if (visited == null) visited = {};
-          visited[block.id] = (visited[block.id] ?? 0) + 1;
+          // if (visited == null) visited = {};
+          // visited[block.id] = (visited[block.id] ?? 0) + 1;
 
-          if (visited[block.id]! > 50) {
-            mergedDelta.push(Operation.insert('recursion detected\n'));
-            continue;
-          }
+          // if (visited[block.id]! > 50) {
+          //   mergedDelta.push(Operation.insert('recursion detected\n'));
+          //   continue;
+          // }
 
           final config = (block.function as InputBlockFunction)
-              .getConfigurations((ib) => buildCombinedQuillConfiguration(ib, visited: Map.from(visited!)));
+              .getConfigurations(buildCombinedQuillConfiguration, visited: visited==null?null:Map<List<InputBlock>, int>.from(visited));
           final ops = config.controller.document.toDelta().toList();
           final isLastBlock = blockIdx == inputBlocks.length - 1;
 
@@ -2624,35 +2633,55 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             mergedDelta.push(op);
           }
 
-        } else if( block.function is! InputBlockFunction){
-            print('function Type: '+block.function.runtimeType.toString());
-            result = block.function!.result(getItemAtPath);
+        } else if (block.function is! InputBlockFunction) {
+          final raw = block.function!
+              .result(getItemAtPath, buildCombinedQuillConfiguration, visited: Map.from(visited!));
 
-            if (result is num || result is String) {
-            
-            if (blockIdx == inputBlocks.length-1) {
-              mergedDelta.push(Operation.insert('$result\n'));
-            } else {
-              mergedDelta.push(Operation.insert('$result'));
-            }
-            }
-            if (block.indexPath.index != -77) {
-              final targetItem = getItemAtPath(block.indexPath);
-              if (targetItem != null && targetItem is SheetText) {
-                final controller = targetItem.textEditorConfigurations.controller;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  controller.replaceText(
-                    0,
-                    controller.document.length - 1,
-                    '$result',
-                    TextSelection.collapsed(offset: '$result'.length),
-                  );
-                });
-
+          // 1) If it’s a Quill Document, pull in its Delta ops (with styling!)
+          if (raw is Document) {
+            final docDelta = raw.toDelta().toList();
+            // drop a trailing newline if you’re not the last block
+            final isLast = blockIdx == inputBlocks.length - 1;
+            for (var op in docDelta) {
+              if (!isLast && op.data is String && (op.data as String).endsWith('\n')) {
+                final txt = (op.data as String).substring(0, (op.data as String).length - 1);
+                mergedDelta.push(Operation.insert(txt, op.attributes));
+              } else {
+                mergedDelta.push(op);
               }
             }
-            continue;
           }
+          // 2) Otherwise if it’s a number or string, just insert as before
+          else if (raw is num || raw is String) {
+            final txt = raw.toString();
+            if (blockIdx == inputBlocks.length - 1) {
+              mergedDelta.push(Operation.insert('$txt\n'));
+            } else {
+              mergedDelta.push(Operation.insert(txt));
+            }
+          }
+
+          // 3) Optional back-patch into the cell, unchanged
+          if (block.indexPath.index != -77) {
+            final target = getItemAtPath(block.indexPath);
+            if (target is SheetText) {
+              final ctl = target.textEditorConfigurations.controller;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ctl.replaceText(
+                  0,
+                  ctl.document.length - 1,
+                  raw is Document ? raw.toPlainText() : raw.toString(),
+                  TextSelection.collapsed(offset: raw is Document
+                      ? raw.toPlainText().length
+                      : raw.toString().length),
+                );
+              });
+            }
+          }
+
+          continue;
+        }
+
 
         // Optional back-patching
          // Skip normal SheetText processing for function-driven blocks
@@ -7391,12 +7420,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           if(sheetText.inputBlocks.length>1|| sheetText.inputBlocks[0].id != sheetText.id)
           Row(
             children: [
-              SizedBox(width:4),
+              // SizedBox(width:4),
               const Icon(
-                TablerIcons.math_integral_x,
+                TablerIcons.math_integral,
                 size: 15,
               ),
-              SizedBox(width:4),
+              // SizedBox(width:4),
               Expanded(
                 child: Container(
                   padding:EdgeInsets.symmetric(horizontal:4),
@@ -7423,7 +7452,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
   List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
   var entries = <ContextMenuEntry>[];
-
+  var style = GoogleFonts.lexend(
+    color: defaultPalette.extras[0],
+    fontWeight: FontWeight.w400,
+    letterSpacing: -0.5,
+    
+  );
   bool hasSelection = textEditorController
         .selection.start !=
     textEditorController.selection.end;
@@ -7433,6 +7467,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Cut',
     icon: TablerIcons.cut,
+    style:  style,
     onSelected: () {
       var selectedText =
           textEditorController.document
@@ -7463,6 +7498,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Copy',
     icon: TablerIcons.copy,
+    style:  style,
     onSelected: () {
       var selectedText =
           textEditorController.document
@@ -7482,6 +7518,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
   label: 'Paste',
   icon: TablerIcons.clipboard,
+  style:  style,
   onSelected: () async {
     var data = await Clipboard.getData(
         'text/plain');
@@ -7517,6 +7554,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
   label: 'Select All',
   icon: TablerIcons.select_all,
+  style:  style,
   onSelected: () {
     textEditorController
         .updateSelection(
@@ -7537,14 +7575,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Undo',
     icon: TablerIcons.corner_up_left,
+    style:  style,
     onSelected: () {
       textEditorController.undo();
     },
   ));
   } else {
-  entries.add(const MenuItem(
+  entries.add( MenuItem(
     label: 'Undo',
     icon: TablerIcons.corner_up_left,
+    style:  style,
     onSelected: null,
   ));
   }
@@ -7554,14 +7594,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Redo',
     icon: TablerIcons.corner_down_right,
+    style:  style,
     onSelected: () {
       textEditorController.redo();
     },
   ));
   } else {
-  entries.add(const MenuItem(
+  entries.add( MenuItem(
     label: 'Redo',
     icon: TablerIcons.corner_down_right,
+    style:  style,
     onSelected: null,
   ));
   }
@@ -7571,17 +7613,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem.submenu(
       label: 'Add',
       icon: TablerIcons.new_section,
+      style:  style,
       items: [
         MenuItem.submenu(
             label: 'Text',
             icon: TablerIcons
                 .text_recognition,
+            style:  style,
             items: [
               //add text before the selected one
               MenuItem(
                 label: 'Before',
                 icon: TablerIcons
                     .row_insert_top,
+                style:  style,
                 onSelected: () {
                   setState(() {
                     var newId = 'TX-${Uuid().v4()}';
@@ -7604,6 +7649,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'After',
                 icon: TablerIcons
                     .row_insert_bottom,
+                style:  style,
                 onSelected: () {
                   setState(() {
                     var newId = 'TX-${Uuid().v4()}';
@@ -7634,6 +7680,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'In a New List',
                 icon: TablerIcons
                     .code_plus,
+                style:  style,
                 onSelected: () {
                   setState(() {
                     var newId ='LI-${ const Uuid().v4()}';
@@ -7673,12 +7720,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             label: 'List',
             icon: TablerIcons
                 .brackets_contain_start,
+            style:  style,
             items: [
               //add row before the selected one
               MenuItem(
                 label: 'Row Before',
                 icon: TablerIcons
                     .row_insert_top,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid()
@@ -7706,6 +7755,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'Row After',
                 icon: TablerIcons
                     .row_insert_bottom,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid()
@@ -7752,6 +7802,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'Column Before',
                 icon: TablerIcons
                     .row_insert_top,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid()
@@ -7780,6 +7831,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'Column After',
                 icon: TablerIcons
                     .row_insert_bottom,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid().v4()}';
@@ -7825,10 +7877,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem.submenu(
       label: 'Wrap',
       icon: TablerIcons.brackets_contain,
+      style:  style,
       items: [
         MenuItem(
           label: 'In a Row',
           icon: TablerIcons.layout_rows ,
+          style:  style,
           onSelected: () {
             setState(() {
               
@@ -7841,6 +7895,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           label: 'In a Column',
           icon: TablerIcons
               .layout_columns,
+          style:  style,
           onSelected: () {
             setState(() {
               
@@ -7856,6 +7911,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem(
     label: 'Clear',
     icon: TablerIcons.square_rounded_x,
+    style:  style,
     onSelected: () async {
       await showAdaptiveDialog(
         context: context,
@@ -7894,6 +7950,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem(
     label: 'Delete',
     icon: TablerIcons.trash,
+    style:  style,
     onSelected: () async {
       await showAdaptiveDialog(
         context: context,
@@ -8450,9 +8507,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // Look up that neighbor cell
       final neighborCell = sheetTable.getCellFromLabel(neighborLabel);
       if (neighborCell == null) return true;           
-
+      print(neighborLabel);
+      
       // Check if *its* SheetText is selected
       final neighborItemId = (neighborCell.sheetItem as SheetText).id;
+      print(selectedIndexPaths[neighborItemId]);
       return selectedIndexPaths[neighborItemId] == null;
     }
     BorderSide borderSide = BorderSide(
@@ -9680,6 +9739,177 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
   }
 
+  Future<void> relinkIndexPathsInInputBlocks() async {
+    /// Try the fast path first, then fallback to your iterator.
+    SheetItem _resolveItem(InputBlock b) {
+      final maybe = getItemAtPath(b.indexPath);
+      if (maybe == null || maybe.id == 'yo' || maybe.id != b.id) {
+        // fallback: heavy search
+        return _sheetItemIterator(b.id, spreadSheetList.first, shouldReturn:true);
+      }
+      return maybe;
+    }
+    /// Your existing recursive table‐finder, untouched:
+    SheetTable? _searchTable(SheetList list, String blockId) {
+      for (final item in list.sheetList) {
+        if (item is SheetTable) {
+          for (final row in item.cellData) {
+            for (final cell in row) {
+              if (cell.sheetItem is SheetText) {
+                if ((cell.sheetItem as SheetText)
+                        .inputBlocks
+                        .any((blk) => blk.id == blockId)) {
+                  return item;
+                }
+              }
+            }
+          }
+        } else if (item is SheetList) {
+          final sub = _searchTable(item, blockId);
+          if (sub != null) return sub;
+        }
+      }
+      return null;
+    }
+    /// Given an InputBlock b whose indexPath = (tableIndexPath)→rowIndex→colIndex,
+/// b.indexPath.parent → rowIndexPath
+/// b.indexPath.parent.parent → tableIndexPath
+    SheetTable _findParentTableForBlock(InputBlock b) {
+      print('path: '+b.indexPath.toString());
+      print('path: '+b.id);
+      // Fast path: climb up two levels in the indexPath
+      // final rowIndexPath   = b.indexPath.parent!;
+      // final tableIndexPath = rowIndexPath.parent!;
+      try {
+        print(b.indexPath);
+        final candidate = getItemAtPath(b.indexPath);
+        if (candidate is SheetTable) {
+          return candidate;
+        }
+      } catch (_) {
+        // ignore and fall through
+      }
+
+      // Fallback: expensive global search by id if our fast path failed
+      for (final list in spreadSheetList) {
+        final found = _searchTable(list, b.id);
+        if (found != null) return found;
+      }
+      throw StateError('Could not locate parent SheetTable for block ${b.id}');
+    }
+
+
+
+
+    /// Recursively fix a single InputBlock (and any nested functions).
+    void _relinkBlock(InputBlock b, [Map<String,int>? visited]) {
+      visited ??= <String,int>{};
+      visited[b.id] = (visited[b.id] ?? 0) + 1;
+
+      // If we've seen this block > 50 times in one chain, cut it off:
+      if (visited[b.id]! > 15) {
+        // you could log or even reset b.function = null here
+        print('⚠️ recursion detected on block ${b.id}, stopping relink.');
+        return;
+      }
+      final target = _resolveItem(b);
+      b.indexPath = target.indexPath;
+
+      // 2) if it has a function, recurse into *that* function’s blocks:
+      final fn = b.function;
+      if (fn is InputBlockFunction) {
+        print('is InputBlockFunction');
+        for (final inner in fn.inputBlocks) {
+          _relinkBlock(inner, Map<String,int>.from(visited));
+        }
+      }
+      else if (fn is SumFunction) {
+        print('is SumFunction');
+        for (final inner in fn.inputBlocks) {
+          _relinkBlock(inner,Map<String,int>.from(visited));
+        }
+      }
+      else if (fn is CountFunction) {
+        for (final inner in fn.inputBlocks) {
+          _relinkBlock(inner,Map<String,int>.from(visited));
+        }
+      }
+      else if (fn is ColumnFunction) {
+        // pick the right row/column list by axisLabel:
+        print('is ColumnFunction');
+        final table = _findParentTableForBlock(b);
+
+        int axis;
+        try {
+          axis = int.parse(fn.axisLabel) - 1;
+          if (axis < table.rowData.length) {
+            fn.inputBlocks =table.rowData[axis].rowInputBlocks;
+          } else {
+            fn.inputBlocks = 
+              table.rowData[axis - table.rowData.length].rowInputBlocks;
+            
+          }
+          // now recurse into those newly‑assigned blocks too:
+          for (final inner in fn.inputBlocks) {
+            _relinkBlock(inner,Map<String,int>.from(visited));
+          }
+        } catch (_) {
+          axis = columnLabelToNumber(fn.axisLabel);
+          if (axis < table.columnData.length) {
+            fn.inputBlocks = table.columnData[axis].columnInputBlocks;
+          } else {
+            fn.inputBlocks = 
+              table.columnData[axis - table.columnData.length].columnInputBlocks;
+          }
+          // now recurse into those newly‑assigned blocks too:
+          for (final inner in fn.inputBlocks) {
+            _relinkBlock(inner,Map<String,int>.from(visited));
+          }
+          }
+        
+      }
+    }
+    
+    
+    void _relinkInList(SheetList list) {
+      for (final item in list.sheetList) {
+        if (item is SheetText) {
+          // fix *all* of its inputBlocks
+          for (final b in item.inputBlocks) {
+            _relinkBlock(b);
+          }
+        }
+        else if (item is SheetTable) {
+          print('is SheetTable');
+          // descend into every cell
+          for (final row in item.cellData) {
+            for (final cell in row) {
+              if (cell.sheetItem is SheetText) {
+                for (final b in (cell.sheetItem as SheetText).inputBlocks) {
+                  _relinkBlock(b);
+                }
+              }
+              if (cell.sheetItem is SheetList) {
+                _relinkInList(cell.sheetItem as SheetList);
+              }
+              if (cell.sheetItem is SheetTable) {
+                // you could also recurse into nested tables if you have them
+              }
+            }
+          }
+        }
+        else if (item is SheetList) {
+          _relinkInList(item);
+        }
+      }
+    }
+
+    // finally, drive it:
+    for (final top in spreadSheetList) {
+      _relinkInList(top);
+    }
+  }
+
   _getProperTiesCards() {
     switch (whichPropertyTabIsClicked) {
       case 2:
@@ -10058,9 +10288,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   
                   return MenuItem(
                     label: s,
+                    icon: index==0
+                    ? TablerIcons.cursor_text
+                    : index==1
+                    ? TablerIcons.numbers
+                    : index==2
+                    ? TablerIcons.number_123
+                    : index==3
+                    ? TablerIcons.circuit_switch_open
+                    : index==4
+                    ? TablerIcons.calendar_event
+                    : index==5
+                    ? TablerIcons.clock_hour_4
+                    : TablerIcons.phone,
                     style:  GoogleFonts.lexend(
-                      color: defaultPalette.primary,
-                      fontWeight: FontWeight.w200,
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w400,
                       letterSpacing: -0.5,
                       
                     ),
@@ -10068,7 +10311,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       minWidth: 100,
                       minHeight: 30
                     ),
-                    hoverColor: defaultPalette.extras[0],
+                    // hoverColor: defaultPalette.extras[0],
                     onSelected: () {
                       setState(() {
 
@@ -10079,336 +10322,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           textItem: item,
                           );
                         item.type = SheetTextType.values[index];
-                        // item.type = SheetTextType.values[index];
-                        // switch (item.type) {
-                        //   case SheetTextType.number:
-                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //     final controller = item.textEditorConfigurations.controller;
-                        //     String oldText = controller.document.toPlainText();
-                        //     if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
-                        //     final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
-                        //     oldText = numericMatch?.group(0) ?? 'yo';
-                        //     // print(controller.document.toDelta());
-                        //     // Enforce reset if old text is not a valid number
-                        //     if (double.tryParse(oldText) == null) {
-                        //       oldText = '0';
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //       // print(controller.document.toDelta());
-                        //     } else {
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //     }
-
-                        //     item.textEditorConfigurations.controller.onReplaceText =
-                        //         (int index, int length, Object? data) {
-                        //       if (data is! String) return false;
-
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final oldText = controller.document.toPlainText();
-                        //       // print(controller.document.toDelta());
-                        //       // Simulate what the text would become after this replacement
-                        //       final newText = oldText.replaceRange(index, index + length, data);
-
-                        //       // Allow empty string (so user can delete everything)
-                        //       if (newText.trim().isEmpty) return true;
-
-                        //       // Try parsing as a number
-                        //       final parsed = double.tryParse(newText);
-                        //       final isValid = parsed != null;
-
-                        //       if (isValid) {
-                        //         return true; // Allow valid number
-                        //       } else {
-                        //         // Reject and restore selection
-                        //         controller.updateSelection(
-                        //           TextSelection.collapsed(offset: index),
-                        //           ChangeSource.local,
-                        //         );
-                               
-                        //         CustomToastBar(
-                        //           autoDismiss:true,
-                        //         snackbarDuration: Duration(milliseconds: 3000),
-                        //         builder: (context) {
-                        //           return Container(
-                        //           padding: EdgeInsets.all(2),
-                        //           margin: const EdgeInsets.only(top:2, left:2, right:2),
-                        //           width: width+20,
-                        //           height: 50,
-                        //           decoration: BoxDecoration(
-                        //           color: defaultPalette.primary,
-                        //           borderRadius: BorderRadius.circular(20),
-                        //           border: Border.all(
-                        //             color: defaultPalette.extras[0], width: 2)),
-                        //           child: ClipRRect(
-                        //             borderRadius: BorderRadius.circular(20),
-                        //             child:Text('  ${newText.replaceAll(RegExp(r'\n'), '')} is not a valid number',
-                        //               maxLines:1,
-                        //               overflow:TextOverflow.ellipsis,
-                        //               style:  GoogleFonts.lexend(
-                        //               color: defaultPalette.extras[0],
-                        //               fontWeight: FontWeight.w400,
-                        //               letterSpacing: -1,
-                        //             ),),
-                        //             )
-                        //           );
-                        //         }
-                        //         ).show(context);
-                        //         return false; // Block invalid input
-                        //       }
-                        //     };
-                        //     break;
-
-                        //   case SheetTextType.integer:
-                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //     final controller = item.textEditorConfigurations.controller;
-                        //     String oldText = controller.document.toPlainText();
-                        //     if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
-                        //     final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
-                        //     oldText = numericMatch?.group(0) ?? 'yo';
-                        //     // Enforce reset if old text is not a valid number
-                        //     if (int.tryParse(oldText) == null) {
-                        //       if (double.tryParse(oldText) == null) {
-                        //       oldText = '0';
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //       } else {
-                        //         var d= double.tryParse(oldText);
-                        //         controller.replaceText(0, controller.document.length - 1, d!.round().toString(), const TextSelection.collapsed(offset: 1));
-                            
-                        //       }
-                        //     } else {
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //     }
-                        //     item.textEditorConfigurations.controller.onReplaceText =
-                        //         (int index, int length, Object? data) {
-                        //       if (data is! String) return false;
-
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final oldText = controller.document.toPlainText();
-                        //       final newText = oldText.replaceRange(index, index + length, data);
-
-                        //       if (newText.trim().isEmpty) return true;
-
-                        //       final parsed = int.tryParse(newText.replaceAll(',', ''));
-                        //       if (parsed != null) return true;
-
-                        //       controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                        //       CustomToastBar(
-                        //         autoDismiss:true,
-                        //         snackbarDuration: Duration(milliseconds: 3000),
-                        //         builder: (context) {
-                        //           return buildInvalidToast('$newText is not a valid integer');
-                        //         },
-                        //       ).show(context);
-                        //       return false;
-                        //     };
-                        //     break;
-
-                        //   case SheetTextType.bool:
-                        //     final controller = item.textEditorConfigurations.controller;
-                        //     String oldText = controller.document.toPlainText().trim().toLowerCase();
-
-                        //     const trueValues = ['true', '1', 'yes', 'positive', 'ha', 'yup','haa'];
-                        //     const falseValues = ['false', '0', 'no', 'negative', 'na', 'nope', 'nah'];
-
-                        //     String normalized = 'false'; // default fallback
-                        //     if (trueValues.contains(oldText)) {
-                        //       normalized = 'true';
-                        //     } else if (falseValues.contains(oldText)) {
-                        //       normalized = 'false';
-                        //     }
-                        //     if (oldText != normalized) {
-                        //       controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //         controller.replaceText(
-                        //           0,
-                        //           controller.document.length - 1,
-                        //           normalized,
-                        //           const TextSelection.collapsed(offset: 1),
-                        //         );
-                        //     }
-
-                        //     item.textEditorConfigurations.controller.onReplaceText =
-                        //         (int index, int length, Object? data) {
-                        //       if (data is! String) return false;
-                        //       if(data =='true' || data == 'false') return true;
-
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final oldText = controller.document.toPlainText().trim().toLowerCase();
-                        //       bool isCurrentlyTrue = trueValues.contains(oldText);
-                        //       bool isCurrentlyFalse = falseValues.contains(oldText);
-
-                        //       final toggled = isCurrentlyTrue ? 'false' : 'true';
-
-                        //       // Replace full text with toggled value
-                        //       SchedulerBinding.instance.addPostFrameCallback((_) {
-                        //         controller.replaceText(
-                        //           0,
-                        //           controller.document.length - 1,
-                        //           toggled,
-                        //           TextSelection.collapsed(offset: toggled.length),
-                        //         );
-                        //       });
-                        //       data = '';
-
-                        //       return true;
-                        //     };
-                        //     break;
-                          
-                        //   // case SheetTextType.time:
-                        //   //   final controller = item.textEditorConfigurations.controller;
-                        //   //   final plainText = controller.document.toPlainText();
-                        //   //   final match = RegExp(r'(\d{1,2})\D+(\d{1,2})').firstMatch(plainText);
-                        //   //   if (match == null) {
-                        //   //     controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //   //     final now = TimeOfDay.now();
-                        //   //     final formatted = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                        //   //     final originalDelta = controller.document.toDelta();
-                        //   //     final attrs = originalDelta.isNotEmpty ? originalDelta.first.attributes : null;
-                        //   //     controller.replaceText(0, controller.document.length - 1, Delta()..insert(formatted, attrs), TextSelection.collapsed(offset: formatted.length));
-                        //   //   }
-                        //   //   item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) {
-                        //   //     // print('hey'+data.toString());
-                        //   //     if (data is! String) return false;
-                        //   //     if (data =='') {
-                        //   //       // print('backspace'+data.toString());
-                        //   //       return false;
-                        //   //     }
-                        //   //     final doc = controller.document;
-                        //   //     final plain = doc.toPlainText().trim();
-                        //   //     // print(plain+data.toString());
-                        //   //     final timeMatch = RegExp(r'(\d{2})\D+(\d{2})').firstMatch(plain+data.toString());
-                        //   //     if (timeMatch == null) return false;
-                        //   //     int hour = int.tryParse(timeMatch.group(1)!) ?? 0;
-                        //   //     int minute = int.tryParse(timeMatch.group(2)!) ?? 0;
-                        //   //     if (hour > 24) hour = 24;
-                        //   //     if (minute > 59) minute = 59;
-                        //   //     final newHour = hour.toString().padLeft(2, '0');
-                        //   //     final newMinute = minute.toString().padLeft(2, '0');
-                        //   //     final separator = plain.substring(timeMatch.start + 2, timeMatch.end - 2);
-                        //   //     final newTime = '$newHour$separator$newMinute';
-                        //   //     final attrs = doc.toDelta().slice(timeMatch.start, timeMatch.end).first.attributes ?? {};
-                        //   //     SchedulerBinding.instance.addPostFrameCallback((_) {
-                        //   //       controller.replaceText(
-                        //   //         timeMatch.start,
-                        //   //         timeMatch.end - timeMatch.start,
-                        //   //         Delta()..insert(newTime, attrs),
-                        //   //         TextSelection.collapsed(offset: timeMatch.start + newTime.length),
-                        //   //       );
-                        //   //     });
-                        //   //     return true;
-                        //   //   };
-                        //   //   break;
-
-                        //   case SheetTextType.phone:
-                        //     {
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final doc = controller.document;
-                        //       final delta = doc.toDelta();
-                        //       final plainText = doc.toPlainText();
-
-                        //       Map<String, dynamic>? getAttrsAt(int offset) {
-                        //         int current = 0;
-                        //         for (final op in delta.toList()) {
-                        //           final text = op.data is String ? op.data as String : '';
-                        //           if (current + text.length > offset) return op.attributes;
-                        //           current += text.length;
-                        //         }
-                        //         return null;
-                        //       }
-
-                        //       // Clean text
-                        //       final cleaned = plainText.trim();
-                        //       final digitsOnly = cleaned.replaceAll(RegExp(r'[^\d+]'), '');
-
-                        //       // Extract country code if present
-                        //       final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(digitsOnly);
-                        //       final countryCode = countryCodeMatch?.group(0) ?? '';
-                        //       final numberPart = digitsOnly.replaceFirst(RegExp(r'^\+\d{1,3}'), '');
-
-                        //       // Limit digits to 10
-                        //       final truncatedNumber = numberPart.replaceAll(RegExp(r'[^\d]'), '').substring(0, numberPart.length.clamp(0, 10));
-                        //       final formatted = [
-                        //         if (countryCode.isNotEmpty) countryCode,
-                        //         if (truncatedNumber.isNotEmpty) truncatedNumber,
-                        //       ].join(' ');
-
-                        //       final attrs = getAttrsAt(0);
-
-                        //       // Allow temporary replacement
-                        //       controller.onReplaceText = (int index, int length, Object? data) => true;
-
-                        //       controller.replaceText(
-                        //         0,
-                        //         controller.document.length - 1,
-                        //         Delta()..insert(formatted, attrs),
-                        //         TextSelection.collapsed(offset: formatted.length),
-                        //       );
-
-                        //       // Enforce rules for future edits
-                        //       controller.onReplaceText = (int index, int length, Object? data) {
-                        //         if (data is! String) return false;
-
-                        //         // Only allow digits, spaces, brackets, or plus
-                        //         if (!RegExp(r'^[\d\s\+\(\)]*$').hasMatch(data)) return false;
-
-                        //         final currentText = controller.document.toPlainText();
-                        //         final updatedText = currentText.replaceRange(index, index + length, data);
-
-                        //         final digits = updatedText.replaceAll(RegExp(r'[^\d]'), '');
-                        //         final hasPlus = updatedText.startsWith('+');
-                        //         final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(updatedText);
-                        //         final codeLength = countryCodeMatch?.group(1)?.length ?? 0;
-                        //         final numberDigits = hasPlus ? digits.length - codeLength : digits.length;
-
-                        //         // Total digits (excluding country code) must not exceed 10
-                        //         return numberDigits <= 10;
-                        //       };
-                        //     }
-                        //     break;
-
-                        //   // case SheetTextType.email:
-                        //   //   item.textEditorConfigurations.controller.onReplaceText =
-                        //   //       (int index, int length, Object? data) {
-                        //   //     if (data is! String) return false;
-                        //   //     final controller = item.textEditorConfigurations.controller;
-                        //   //     final oldText = controller.document.toPlainText();
-                        //   //     final newText = oldText.replaceRange(index, index + length, data).trim();
-                        //   //     if (newText.isEmpty || RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(newText)) return true;
-                        //   //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                        //   //     CustomToastBar(
-                        //   //       autoDismiss:true,
-                        //   //       snackbarDuration: Duration(milliseconds: 3000),
-                        //   //       builder: (context) {
-                        //   //         return buildInvalidToast('$newText is not a valid email');
-                        //   //       },
-                        //   //     ).show(context);
-                        //   //     return false;
-                        //   //   };
-                        //   //   break;
-                        //   // case SheetTextType.url:
-                        //   //   item.textEditorConfigurations.controller.onReplaceText =
-                        //   //       (int index, int length, Object? data) {
-                        //   //     if (data is! String) return false;
-                        //   //     final controller = item.textEditorConfigurations.controller;
-                        //   //     final oldText = controller.document.toPlainText();
-                        //   //     final newText = oldText.replaceRange(index, index + length, data).trim();
-                        //   //     final isValidUrl = Uri.tryParse(newText)?.hasAbsolutePath ?? false;
-                        //   //     if (newText.isEmpty || isValidUrl) return true;
-                        //   //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                        //   //     CustomToastBar(
-                        //   //       autoDismiss:true,
-                        //   //       snackbarDuration: Duration(milliseconds: 3000),
-                        //   //       builder: (context) {
-                        //   //         return buildInvalidToast('$newText is not a valid URL');
-                        //   //       },
-                        //   //     ).show(context);
-                        //   //     return false;
-                        //   //   };
-                        //   //   break;
-
-                        //   case SheetTextType.string:
-                        //   default:
-                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //     break;
-                        // }
+                        
                       });
                     },
                     );
@@ -10687,21 +10601,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           highlightColor:defaultPalette.extras[0],
                                                           onTap:(){
                                                             setState(() {
-                                                              // if (inputBlocks == null) {
-                                                              //   item.inputBlocks.add(InputBlock(
-                                                              //     indexPath: sheetCellItem.indexPath, 
-                                                              //     blockIndex: [-2],
-                                                              //     id: sheetCellItem.id
-                                                              //     ));
-                                                              //   // inputBlockExpansionList.add(false); 
-                                                              // } else {
-                                                              //   inputBlocks.add(
-                                                              //     InputBlock(
-                                                              //     indexPath: sheetCellItem.indexPath, 
-                                                              //     blockIndex: [-2],
-                                                              //     id: sheetCellItem.id)
-                                                              //   );
-                                                              // }
                                                             });
                                                           },
                                                           child: Text(
@@ -10743,9 +10642,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 if (inputBlocks == null) {
                                                                   // for (var i = 0; i < sheetItem.cellData.length; i++) {
                                                                     item.inputBlocks.add(InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
                                                                         func: 'sum',
@@ -10756,11 +10656,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   
                                                                   // inputBlockExpansionList.add(false); 
                                                                 } else {
-                                                                  for (var i = 0; i < sheetItem.cellData.length; i++) {
+                                                                  
                                                                     inputBlocks.add( InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.columnData[el.key].columnInputBlocks,
                                                                         func:  'sum',
@@ -10768,7 +10669,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       ),
                                                                     )
                                                                   );
-                                                                  }
+                                                                  
                                                                 }
                                                               });
                                                             },
@@ -10818,9 +10719,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   
                                                                     item.inputBlocks.add(
                                                                       InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
                                                                         func:  'sum',
@@ -10834,9 +10736,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 } else {
                                                                   
                                                                     inputBlocks.add( InputBlock(
-                                                                      indexPath: IndexPath(index: -1277), 
+                                                                      indexPath: sheetItem.indexPath, 
                                                                       blockIndex: [-2], 
-                                                                      id: 'yo',
+                                                                      id: sheetItem.id,
+                                                                      useConst: false,
                                                                       function: ColumnFunction(
                                                                         inputBlocks:  sheetItem.rowData[elm.key].rowInputBlocks,
                                                                         func:  'sum',
@@ -10888,7 +10791,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 item.inputBlocks.add(InputBlock(
                                                                   indexPath: sheetCellItem.indexPath, 
                                                                   blockIndex: [-2],
-                                                                  id: sheetCellItem.id
+                                                                  id: sheetCellItem.id,
+                                                                  function: InputBlockFunction(inputBlocks: sheetCellItem.inputBlocks, label: sheetCellItem.name)
                                                                   ));
                                                                 // inputBlockExpansionList.add(false); 
                                                               } else {
@@ -10896,7 +10800,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   InputBlock(
                                                                   indexPath: sheetCellItem.indexPath, 
                                                                   blockIndex: [-2],
-                                                                  id: sheetCellItem.id)
+                                                                  id: sheetCellItem.id,
+                                                                  function: InputBlockFunction(inputBlocks: sheetCellItem.inputBlocks, label: sheetCellItem.name)
+                                                                  )
                                                                 );
                                                               }
                                                             });
@@ -11374,21 +11280,35 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     overlay.insert(dismissEntry, below: entry);
                   }
                   
-                  List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock){
+                  List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock, {Map<List<InputBlock>, int>? visited}){
                     var funcBlock = inputBlock[index];
                     var funcInputBlocks;
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) sumFunctionInputBlocks;
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent})=> Container(color:defaultPalette.extras[1]);
                     print(inputBlock[index].function);
                     if (inputBlock[index].function is SumFunction) {
                      funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
                     } else if (inputBlock[index].function is ColumnFunction) {
                       funcInputBlocks =  (inputBlock[index].function as ColumnFunction).inputBlocks;
-                    } else if (inputBlock[index].function! is InputBlockFunction) {
+                    } else if (inputBlock[index].function is InputBlockFunction) {
                       funcInputBlocks =  (inputBlock[index].function! as InputBlockFunction).inputBlocks;
-                    } 
-                    print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
+                    } else if (inputBlock[index].function is CountFunction) {
+                      funcInputBlocks =  (inputBlock[index].function! as CountFunction).inputBlocks;
+                    }
+                    // print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
+                    visited ??={};
+                    visited[inputBlock] = (visited[inputBlock]??0)+1;
+                    if((visited[inputBlock]??0)>5){
+                      funcBlock.useConst = !funcBlock.useConst;
+                      return [
+                        Text(
+                          '⚠️ Recursion detected'
+                        )
+                      ];
+                    }
                     ////
                     ////
-                        Widget sumFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                        sumFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {SheetFunction? parent}){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                             key: ValueKey(inx),
@@ -11405,7 +11325,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           } else if (inBlock[inx].function is ColumnFunction) {
                             sheetFunction =(inBlock[inx].function as ColumnFunction);
                             length = (inBlock[inx].function as ColumnFunction).inputBlocks.length;
+                          } else if (inBlock[inx].function is CountFunction) {
+                            sheetFunction =(inBlock[inx].function as CountFunction);
+                            length = (inBlock[inx].function as CountFunction).inputBlocks.length;
                           }
+                          // print(inBlock[inx].function.runtimeType);
+                          // print('parent: ${parent}');
                           String? delta;
                           SheetText? itemAtPath;
                           if (!hasFunction || inBlock[inx].useConst) {
@@ -11418,10 +11343,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return const SizedBox.shrink(); // fail-safe
+                              return Container(
+                                key: ValueKey(inx),
+                                color:defaultPalette.extras[1]
+                              ); // fail-safe
                             }
                           }
-                          print('SUMFUNCTIONINPUTTILE');
+                          // print('SUMFUNCTIONINPUTTILE');
                           return ReorderableDragStartListener(
                             key: ValueKey(inx+2),
                             index: inx,
@@ -11436,8 +11364,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         Container(
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
-                                          height: 60,
-                                          width: width+10,
+                                          height: parent is! CountFunction?60:32,
+                                          width: width,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
                                             color: defaultPalette.tertiary,
@@ -11462,6 +11390,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                     ),
                                                   // the number inside the field display
+                                                  if(parent is! CountFunction)
                                                   Expanded(
                                                     flex: 4,
                                                     child: Container(
@@ -11525,61 +11454,116 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ],
                                               ),
                                               //sum cumulative and individual index
-                                              Container(
-                                                margin: EdgeInsets.all(2).copyWith(top:4),
-                                                padding: EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(5),
-                                                  color: defaultPalette.extras[0],
-                                                ),
-                                                child: Row(
+                                              if(parent is! CountFunction)
+                                              Row(
                                                 children: [
-                                                  const SizedBox(width: 3),
-                                                  Expanded(
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.lexend(
-                                                          letterSpacing: -1,
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          color: defaultPalette.extras[0],
-                                                        ),
+
+                                                  if (inBlock[inx].id !=item.id) 
+                                                  ...[
+                                                    const SizedBox(width: 3),
+                                                    ElevatedLayerButton(
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(5),
+                                                        topLeft: Radius.circular(5),
+                                                        bottomRight: Radius.circular(10),
+                                                        bottomLeft: Radius.circular(10),
+                                                      ),
+                                                      animationDuration: const Duration(milliseconds: 100),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: defaultPalette.primary,
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      topLayerChild: Row(
                                                         children: [
-                                                          TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                          TextSpan(
-                                                            text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath, spreadSheet: null)}',
-                                                            style: TextStyle(color:defaultPalette.primary),
-                                                          ),
+                                                          const SizedBox(width: 2),
+                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                                          
                                                         ],
                                                       ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.lexend(
-                                                          letterSpacing: -1,
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          color: defaultPalette.extras[0],
-                                                        ),
-                                                        children: [
-                                                          TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
-                                                          TextSpan(
-                                                            text: '${(inx).clamp(0, double.infinity)}',
-                                                            style: TextStyle(color:defaultPalette.primary),
-                                                          ),
-                                                        ],
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(color: defaultPalette.extras[0]),
                                                       ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
+                                                      depth: 2,
+                                                      subfac: 2,
+                                                      buttonHeight: 24,
+                                                      buttonWidth: 20,
+                                                      onClick: () {
+                                                        setState(() {
+                                                          inBlock[inx].useConst= !inBlock[inx].useConst;
+                                                          print(inBlock);
+                                                          // print(sheetTableItem);
+                                                          // for (final row in sheetTableItem.rowData) {
+                                                          //   for (final ib in row.rowInputBlocks) {
+                                                          //     print('useConst: ${ib.useConst}, row: $row, cell: ${ib.id}');
+                                                                
+                                                          //   }
+                                                          // }
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                  Expanded(
+                                                    child: Container(
+                                                      margin: EdgeInsets.all(2).copyWith(top:4),
+                                                      padding: EdgeInsets.all(3),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(5),
+                                                        color: defaultPalette.extras[0],
+                                                      ),
+                                                      child: Row(
+                                                      children: [
+                                                        const SizedBox(width: 3),
+                                                        
+                                                        Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(text: parent is ColumnFunction? ' ${parent.func}: ': ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                TextSpan(
+                                                                  text: '${(parent is ColumnFunction && parent.func == 'count')? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() :SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                TextSpan(
+                                                                  text: '${(inx).clamp(0, double.infinity)}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 3),
+                                                      ],
+                                                              ),
                                                     ),
                                                   ),
-                                                  const SizedBox(width: 3),
                                                 ],
-                                                        ),
                                               )
                                 
                                             ],
@@ -11587,7 +11571,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                       ],
 
-                                      if (!inBlock[inx].useConst)
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
+                                      inputBlockFunctionInputBlocks(inBlock, inx,parent : parent),
+                                      if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction|| inBlock[inx].function is CountFunction))
                                       GestureDetector(
                                         onTap:(){
                                           setState(() {
@@ -11597,6 +11583,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               selectedInputBlocks =(sheetFunction as ColumnFunction).inputBlocks;
                                             } else if (sheetFunction is InputBlockFunction) {
                                               selectedInputBlocks =(sheetFunction as InputBlockFunction).inputBlocks;
+                                            } else if (sheetFunction is CountFunction) {
+                                              selectedInputBlocks =(sheetFunction as CountFunction).inputBlocks;
                                             } 
                                             
                                           });
@@ -11606,7 +11594,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             if(inBlock[inx].isExpanded)
                                             Padding(
                                               padding: const EdgeInsets.only(top:28.0),
-                                              child: buildFunctionTile(inx, width,inBlock)[0],
+                                              child: buildFunctionTile(inx, width,inBlock, visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
                                               colors: [
@@ -11627,7 +11615,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   
                                                 ),
                                               child: Container(
-                                                // margin: const EdgeInsets.only(top: 10, bottom: 5),
                                                 width: width,
                                                 decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(0),
@@ -11665,37 +11652,124 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             ),
                                                             padding: EdgeInsets.symmetric(horizontal:4,vertical: 2),
                                                             margin: EdgeInsets.all(4).copyWith(bottom: 2),
-                                                            child: RichText(
-                                                            text: TextSpan(
-                                                              style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w400,
-                                                                fontSize: 14,
-                                                                color: defaultPalette.extras[0],
-                                                              ),
+                                                            child: Row(
                                                               children: [
-                                                                if(sheetFunction is SumFunction)
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 if(sheetFunction is ColumnFunction)
-                                                                TextSpan(text: ' ${sheetFunction.func}: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                if(sheetFunction is InputBlockFunction)
-                                                                TextSpan(text: ' ${sheetFunction.label}: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                TextSpan(
-                                                                  text: '${block.function!.result(getItemAtPath).toString()}',
-                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                            Material(
+                                                              color: defaultPalette.transparent,
+                                                              child: InkWell(
+                                                                hoverColor: defaultPalette.primary.withOpacity(0.05),
+                                                                highlightColor: defaultPalette.primary.withOpacity(0.05),
+                                                                splashColor: defaultPalette.primary.withOpacity(0.05),
+                                                                onTapDown:(d){
+                                                                  ContextMenu(
+                                                                    entries: [
+                                                                      MenuItem(
+                                                                        label: 'sum',
+                                                                        icon: TablerIcons.sum,
+                                                                        style: GoogleFonts.lexend(
+                                                                          fontWeight: FontWeight.w300,
+                                                                          color: defaultPalette.primary,
+                                                                        ),
+                                                                        hoverColor: defaultPalette.extras[0],
+                                                                      onSelected: () {
+                                                                        setState(() {
+                                                                          (sheetFunction as ColumnFunction).func = 'sum';
+                                                                        });
+                                                                        
+                                                                      },
+                                                                      ),
+                                                                      MenuItem(label: 'count',
+                                                                      icon: TablerIcons.tallymarks,
+                                                                      style: GoogleFonts.lexend(
+                                                                          fontWeight: FontWeight.w300,
+                                                                          color: defaultPalette.primary,
+                                                                        ),
+                                                                      hoverColor: defaultPalette.extras[0],
+                                                                      onSelected: () {
+                                                                        setState(() {
+                                                                          (sheetFunction as ColumnFunction).func = 'count';
+                                                                        });
+                                                                      },
+                                                                      ),
+                                                                    ],
+                                                                    boxDecoration: BoxDecoration(
+                                                                        boxShadow: [
+                                                                          BoxShadow(
+                                                                            color: defaultPalette
+                                                                                .black,
+                                                                            blurRadius: 2,
+                                                                          )
+                                                                        ],
+                                                                        color: defaultPalette.extras[0],
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(
+                                                                                10)),
+                                                                    position: Offset(
+                                                                        d.globalPosition.dx,
+                                                                        d.globalPosition.dy+20))
+                                                                .show(context);
+                                                                  },
+                                                                  child: Row(
+                                                                    children: [
+                                                                      Icon(
+                                                                        TablerIcons.caret_down_filled,
+                                                                        size: 12,
+                                                                        color: defaultPalette.primary,
+                                                                      ),
+                                                                      if(width>220)
+                                                                      Text(
+                                                                        '${(sheetFunction as ColumnFunction).func}:',
+                                                                        maxLines: 1,
+                                                                        overflow:TextOverflow.ellipsis,
+                                                                        style: GoogleFonts.lexend(
+                                                                          letterSpacing: -0.5,
+                                                                          fontWeight: FontWeight.w400,
+                                                                          fontSize: 12,
+                                                                          color: defaultPalette.extras[8],
+                                                                        ),),
+                                                                      const SizedBox(width: 3),
+                                                                    ],
+                                                                  ),
+                                                                  
+                                                                  )
+                                                                ),
+                                                                // if(sheetFunction is! ColumnFunction)
+                                                                Expanded(
+                                                                  child: RichText(
+                                                                  text: TextSpan(
+                                                                    style: GoogleFonts.lexend(
+                                                                      letterSpacing: -1,
+                                                                      fontWeight: FontWeight.w400,
+                                                                      fontSize: 14,
+                                                                      color: defaultPalette.extras[0],
+                                                                    ),
+                                                                    children: [
+                                                                      if(sheetFunction is SumFunction)
+                                                                      TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                      if(sheetFunction is CountFunction)
+                                                                      TextSpan(text: ' count: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                      TextSpan(
+                                                                        text: '${block.function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
+                                                                        style: TextStyle(color:defaultPalette.primary),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  maxLines: 1,
+                                                                  ),
                                                                 ),
                                                               ],
                                                             ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                            maxLines: 1,
-                                                          ),
                                                           ),
                                                         ),    
                                                         //label
                                                         Expanded(
                                                           flex:5,
                                                           child: Text(
-                                                            sheetFunction?.name ??'',
+                                                            sheetFunction is! ColumnFunction
+                                                            ? sheetFunction?.name ??''
+                                                            : (double.tryParse((sheetFunction as ColumnFunction).axisLabel) ==null? 'column ': 'row ')+ (sheetFunction).axisLabel,
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
@@ -11725,7 +11799,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 onTap: () {
                                                                   setState(() {
                                                                     inBlock.removeAt(inx);
-                                                                    // inputBlockExpansionList.removeAt(index);
                                                                   });
                                                                 },
                                                                 child: Icon(
@@ -11800,8 +11873,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         ),
                                                         Expanded(
                                                           flex:5,
-                                                          child: SizedBox()),
-                                                        SizedBox(width:30),
+                                                          child:sheetFunction is! ColumnFunction?
+                                                           SizedBox():
+                                                           Text(
+                                                            (getItemAtPath(inBlock[inx].indexPath) as SheetTable).name,
+                                                            textAlign: TextAlign.end,
+                                                            maxLines:1,
+                                                            overflow:TextOverflow.ellipsis,
+                                                            style: GoogleFonts.lexend(
+                                                              letterSpacing: -1,
+                                                              fontWeight: FontWeight.w400,
+                                                              fontSize: 14,
+                                                              color: defaultPalette.extras[0],
+                                                            ),
+                                                           )
+                                                           ),
+                                                        SizedBox(width:23),
                                                       ],
                                                     ),
                                                     
@@ -11816,82 +11903,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
-                                                        if(sheetFunction is ColumnFunction)
-                                                        Material(
-                                                          color: defaultPalette.transparent,
-                                                          child: InkWell(
-                                                            hoverColor: defaultPalette.primary.withOpacity(0.05),
-                                                            highlightColor: defaultPalette.primary.withOpacity(0.05),
-                                                            splashColor: defaultPalette.primary.withOpacity(0.05),
-                                                            onTapDown:(d){
-                                                              ContextMenu(
-                                                                entries: [
-                                                                  MenuItem(
-                                                                    label: 'sum',
-                                                                    style: GoogleFonts.lexend(
-                                                                      fontWeight: FontWeight.w300,
-                                                                      color: defaultPalette.primary,
-                                                                    ),
-                                                                    hoverColor: defaultPalette.extras[0],
-                                                                  onSelected: () {
-                                                                    setState(() {
-                                                                      (sheetFunction as ColumnFunction).func = 'sum';
-                                                                    });
-                                                                    
-                                                                  },
-                                                                  ),
-                                                                  MenuItem(label: 'count',
-                                                                  style: GoogleFonts.lexend(
-                                                                      fontWeight: FontWeight.w300,
-                                                                      color: defaultPalette.primary,
-                                                                    ),
-                                                                  hoverColor: defaultPalette.extras[0],
-                                                                  onSelected: () {
-                                                                    setState(() {
-                                                                      (sheetFunction as ColumnFunction).func = 'count';
-                                                                    });
-                                                                  },
-                                                                  ),
-                                                                ],
-                                                                boxDecoration: BoxDecoration(
-                                                                    boxShadow: [
-                                                                      BoxShadow(
-                                                                        color: defaultPalette
-                                                                            .black,
-                                                                        blurRadius: 2,
-                                                                      )
-                                                                    ],
-                                                                    color: defaultPalette.extras[0],
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            10)),
-                                                                position: Offset(
-                                                                    d.globalPosition.dx,
-                                                                    d.globalPosition.dy+20))
-                                                            .show(context);
-                                                              },
-                                                              child: Row(
-                                                                children: [
-                                                                  Icon(
-                                                                    TablerIcons.caret_down_filled,
-                                                                    size: 12,
-                                                                    color: defaultPalette.primary,
-                                                                  ),
-                                                                  Text(
-                                                                    '${(sheetFunction as ColumnFunction).func}:',
-                                                                    style: GoogleFonts.lexend(
-                                                                      letterSpacing: -0.5,
-                                                                      fontWeight: FontWeight.w400,
-                                                                      fontSize: 14,
-                                                                      color: defaultPalette.extras[8],
-                                                                    ),),
-                                                                  const SizedBox(width: 3),
-                                                                ],
-                                                              ),
-                                                              
-                                                              )
-                                                            ),
-                                                        const SizedBox(width: 3),
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -11902,10 +11913,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                if(sheetFunction is SumFunction)
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                TextSpan(text: parent is SumFunction || (parent is ColumnFunction && parent.func =='sum')
+                                                                ? 'sum: '
+                                                                : parent is CountFunction || (parent is ColumnFunction && parent.func =='count')
+                                                                  ? 'count: '
+                                                                  : parent is InputBlockFunction
+                                                                    ? 'str: ':'',
+                                                                style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                                  text: '${(((parent is ColumnFunction && parent.func == 'count')|| parent is CountFunction)? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)): SumFunction(inBlock.sublist(0,inx+1))).result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11937,7 +11953,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         ),
                                                         const SizedBox(width: 3),
                                                       ],
-                                                              ),
+                                                    ),
                                                     ),
                                                                           
                                                     
@@ -11965,18 +11981,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   topLayerChild: Row(
                                                     children: [
                                                       Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
-                                                      // Expanded(
-                                                      //   child: Text(
-                                                      //     ' edit',
-                                                      //     maxLines: 1,
-                                                      //     style: GoogleFonts.bungee(
-                                                      //       fontSize: 12,
-                                                      //       color: defaultPalette.extras[0],
-                                                      //       // letterSpacing: -1,
-                                                      //       fontWeight: FontWeight.w500,
-                                                      //     ),
-                                                      //   ),
-                                                      // ),
+                                                      
                                                     ],
                                                   ),
                                                   baseDecoration: BoxDecoration(
@@ -12006,509 +12011,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               ],
                             ),
                           );
-                        }
-                        Widget countFunctionInputBlocks(List<InputBlock> inBlock, int inx){
-                          if (inx < 0 || inx >= inBlock.length) {
-                            return SizedBox.shrink(
-                            key: ValueKey(inx),
-                          );
-                          }
-                          final block = inBlock[inx];
-                          // If the block has a function, don't try to fetch an item at the indexPath
-                          final hasFunction = block.function != null;
-                          String? delta;
-                          SheetText? itemAtPath;
-                          if (!hasFunction) {
-                            try {
-                              final item = getItemAtPath(block.indexPath);
-                              if (item is SheetText) {
-                                itemAtPath = item;
-                                delta = itemAtPath.textEditorConfigurations.controller.document.toPlainText();
-                              } else {
-                                throw Exception("Item is not SheetText");
-                              }
-                            } catch (e) {
-                              return const SizedBox.shrink(); // fail-safe
-                            }
-                          }
-                          return ReorderableDragStartListener(
-                            key: ValueKey(inx),
-                            index: inx,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Stack(
-                                    children: [
-                                      // const SizedBox(height: 45),
-                                      if (!hasFunction)
-                                      ...[
-                                        Container(
-                                          // margin: const EdgeInsets.only(top: 10),
-                                          padding: EdgeInsets.symmetric(vertical: 2),
-                                          height: 60,
-                                          width: width,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(0),
-                                            color: defaultPalette.tertiary,
-                                          ),
-                                          margin:EdgeInsets.only(bottom:1),
-                                          child: Column(
-                                            children: [
-                                              //title for function
-                                              Row(
-                                                children: [
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                      inx.toString(),
-                                                      textAlign: TextAlign.end,
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
-                                                        letterSpacing: -1,
-                                                        fontWeight: FontWeight.w500,
-                                                        fontSize: 18,
-                                                        color: defaultPalette.primary,
-                                                      ),
-                                                    ),
-                                                  Expanded(
-                                                    flex: 5,
-                                                    child: Text(
-                                                      itemAtPath!.name,
-                                                      textAlign: TextAlign.end,
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
-                                                        letterSpacing: -1,
-                                                        fontWeight: FontWeight.w500,
-                                                        fontSize: 18,
-                                                        color: defaultPalette.primary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 3),
-                                                  ClipRRect(
-                                                    borderRadius: BorderRadius.circular(99999),
-                                                    child: Material(
-                                                      color: defaultPalette.transparent,
-                                                      child: InkWell(
-                                                        hoverColor: defaultPalette.primary,
-                                                        splashColor: defaultPalette.primary,
-                                                        highlightColor: defaultPalette.primary,
-                                                        onTap: () {
-                                                          setState(() {
-                                                            inBlock.removeAt(inx);
-                                                          });
-                                                        },
-                                                        child: Icon(
-                                                          TablerIcons.x,
-                                                          size: 18,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 3),
-                                                ],
-                                              ),
-                                              //sum cumulative and individual index
-                                              Container(
-                                                margin: EdgeInsets.all(2).copyWith(top:4),
-                                                padding: EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(5),
-                                                  color: defaultPalette.extras[0],
-                                                ),
-                                                child: Row(
-                                                children: [
-                                                  const SizedBox(width: 3),
-                                                  Expanded(
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.lexend(
-                                                          letterSpacing: -1,
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          color: defaultPalette.extras[0],
-                                                        ),
-                                                        children: [
-                                                          TextSpan(text: ' count: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                          TextSpan(
-                                                            text: '${CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
-                                                            style: TextStyle(color:defaultPalette.primary),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: RichText(
-                                                      text: TextSpan(
-                                                        style: GoogleFonts.lexend(
-                                                          letterSpacing: -1,
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          color: defaultPalette.extras[0],
-                                                        ),
-                                                        children: [
-                                                          TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
-                                                          TextSpan(
-                                                            text: '${(inx).clamp(0, double.infinity)}',
-                                                            style: TextStyle(color:defaultPalette.primary),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      overflow: TextOverflow.ellipsis,
-                                                      maxLines: 1,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 3),
-                                                ],
-                                                ),
-                                              )
-                                
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-
-                                      if(hasFunction)
-                                      GestureDetector(
-                                        onTap:(){
-                                          setState(() {
-                                            if (inBlock[inx].function is SumFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as SumFunction).inputBlocks;
-                                            } else if (inBlock[inx].function is ColumnFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as ColumnFunction).inputBlocks;
-                                            }
-                                            
-                                          });
-                                        },
-                                        child: Stack(
-                                          children:[
-                                            if(inBlock[inx].isExpanded)
-                                            Padding(
-                                              padding: const EdgeInsets.only(top:28.0),
-                                              child: buildFunctionTile(inx, width,inBlock)[0],
-                                            ),
-                                            AnimatedMeshGradient(
-                                              colors: [
-                                                  // defaultPalette.extras[0],
-                                                  defaultPalette.primary,
-                                                  defaultPalette.primary,
-                                                  defaultPalette.primary,
-                                                  inBlock[inx].function is SumFunction
-                                                    ? selectedInputBlocks ==(inBlock[inx].function as SumFunction).inputBlocks 
-                                                      ? defaultPalette.extras[0]
-                                                      : defaultPalette.primary
-                                                      : defaultPalette.primary,
-                                                ],
-                                              options: AnimatedMeshGradientOptions(
-                                                  amplitude: 5,
-                                                  grain: 0.1,
-                                                  frequency: 15,
-                                                  
-                                                ),
-                                              child: Container(
-                                                // margin: const EdgeInsets.only(top: 10, bottom: 5),
-                                                width: width,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(0),
-                                                  // color: defaultPalette.primary,
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    //the title of function
-                                                    Row(
-                                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                                      children: [
-                                                        const SizedBox(width: 4),
-                                                        //inx
-                                                        Text(
-                                                            inx.toString(),
-                                                            textAlign: TextAlign.end,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              fontSize: 18,
-                                                              foreground: Paint()
-                                                              ..color = defaultPalette.primary
-                                                              ..blendMode = BlendMode.difference
-                                                            ),
-                                                          ),
-                                                        //delta
-                                                        Expanded(
-                                                          flex:4,
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                              borderRadius: BorderRadius.circular(5),
-                                                              color: defaultPalette.extras[0],
-                                                            ),
-                                                            padding: EdgeInsets.symmetric(horizontal:4,vertical: 2),
-                                                            margin: EdgeInsets.all(4).copyWith(bottom: 2),
-                                                            child: RichText(
-                                                            text: TextSpan(
-                                                              style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w400,
-                                                                fontSize: 14,
-                                                                color: defaultPalette.extras[0],
-                                                              ),
-                                                              children: [
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                TextSpan(
-                                                                  text: '${block.function!.result(getItemAtPath).toString()}',
-                                                                  style: TextStyle(color:defaultPalette.primary),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                            maxLines: 1,
-                                                          ),
-                                                          ),
-                                                        ),    
-                                                        //label
-                                                        Expanded(
-                                                          flex:5,
-                                                          child: Text(
-                                                            inBlock[inx].function!.name,
-                                                            textAlign: TextAlign.end,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              fontSize: 18,
-                                                              height: 1,
-                                                              foreground: Paint()
-                                                              ..color = defaultPalette.primary
-                                                              ..blendMode = BlendMode.difference
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 3),
-                                                        //remove function button 
-                                                        Padding(
-                                                          padding: const EdgeInsets.only(top:4),
-                                                          child: ClipRRect(
-                                                            borderRadius: BorderRadius.circular(99999),
-                                                            child: Material(
-                                                              color: defaultPalette.transparent,
-                                                              child: InkWell(
-                                                                hoverColor: defaultPalette.primary,
-                                                                splashColor: defaultPalette.primary,
-                                                                highlightColor: defaultPalette.primary,
-                                                                onTap: () {
-                                                                  setState(() {
-                                                                    inBlock.removeAt(inx);
-                                                                    // inputBlockExpansionList.removeAt(index);
-                                                                  });
-                                                                },
-                                                                child: Icon(
-                                                                  TablerIcons.x,
-                                                                  size: 17,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 3),
-                                                      ],
-                                                    ),
-                                                    //index 0-0
-                                                    Row(
-                                                      children: [
-                                                        const SizedBox(width: 4),
-                                                        //inx invis
-                                                        Text(
-                                                            inx.toString(),
-                                                            textAlign: TextAlign.end,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              fontSize: 18,
-                                                              // color: defaultPalette.primary,
-                                                              foreground: Paint()
-                                                              ..blendMode = BlendMode.dst
-                                                            ),
-                                                          ),
-                                                        
-                                                        Expanded(
-                                                          flex:4,
-                                                          child: Container(
-                                                            margin: EdgeInsets.all(2).copyWith(top:0, left:4),
-                                                            padding: EdgeInsets.all(2),
-                                                            decoration: BoxDecoration(
-                                                              borderRadius: BorderRadius.circular(5),
-                                                              color: defaultPalette.extras[0],
-                                                            ),
-                                                            child: Row(
-                                                            children: [
-                                                              const SizedBox(width: 3),
-                                                              
-                                                              Expanded(
-                                                                child: RichText(
-                                                                  text: TextSpan(
-                                                                    style: GoogleFonts.lexend(
-                                                                      letterSpacing: -1,
-                                                                      fontWeight: FontWeight.w400,
-                                                                      fontSize: 14,
-                                                                      color: defaultPalette.extras[0],
-                                                                    ),
-                                                                    children: [
-                                                                      TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
-                                                                      TextSpan(
-                                                                        text: '0 - ${((inBlock[inx].function! as SumFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
-                                                                        style: TextStyle(color:defaultPalette.primary),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                  overflow: TextOverflow.ellipsis,
-                                                                  maxLines: 1,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(width: 3),
-                                                            ],
-                                                          ),
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          flex:5,
-                                                          child: SizedBox()),
-                                                        SizedBox(width:30),
-                                                      ],
-                                                    ),
-                                                    
-                                                    //sum cumulative and individual index
-                                                    Container(
-                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:38,bottom: 4),
-                                                      padding: EdgeInsets.all(3),
-                                                      decoration: BoxDecoration(
-                                                        borderRadius: BorderRadius.circular(5),
-                                                        color: defaultPalette.extras[0],
-                                                      ),
-                                                      child: Row(
-                                                      children: [
-                                                        const SizedBox(width: 3),
-                                                        Expanded(
-                                                          child: RichText(
-                                                            text: TextSpan(
-                                                              style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w400,
-                                                                fontSize: 12,
-                                                                color: defaultPalette.extras[0],
-                                                              ),
-                                                              children: [
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                TextSpan(
-                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
-                                                                  style: TextStyle(color:defaultPalette.primary),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                            maxLines: 1,
-                                                          ),
-                                                        ),
-                                                        Expanded(
-                                                          child: RichText(
-                                                            text: TextSpan(
-                                                              style: GoogleFonts.lexend(
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w400,
-                                                                fontSize: 12,
-                                                                color: defaultPalette.extras[0],
-                                                              ),
-                                                              children: [
-                                                                TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
-                                                                TextSpan(
-                                                                  text: '${(inx).clamp(0, double.infinity)}',
-                                                                  style: TextStyle(color:defaultPalette.primary),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                            maxLines: 1,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 3),
-                                                      ],
-                                                              ),
-                                                    ),
-                                                                          
-                                                    
-                                                    
-                                                    ],
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              top:54,
-                                              child: ElevatedLayerButton(
-                                                  isTapped: inBlock[inx].isExpanded,
-                                                  borderRadius: const BorderRadius.only(
-                                                    topRight: Radius.circular(5),
-                                                    topLeft: Radius.circular(5),
-                                                    bottomRight: Radius.circular(5),
-                                                    bottomLeft: Radius.circular(5),
-                                                  ),
-                                                  animationDuration: const Duration(milliseconds: 100),
-                                                  animationCurve: Curves.ease,
-                                                  topDecoration: BoxDecoration(
-                                                    color: defaultPalette.primary,
-                                                    border: Border.all(color: defaultPalette.extras[0]),
-                                                  ),
-                                                  topLayerChild: Row(
-                                                    children: [
-                                                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
-                                                      // Expanded(
-                                                      //   child: Text(
-                                                      //     ' edit',
-                                                      //     maxLines: 1,
-                                                      //     style: GoogleFonts.bungee(
-                                                      //       fontSize: 12,
-                                                      //       color: defaultPalette.extras[0],
-                                                      //       // letterSpacing: -1,
-                                                      //       fontWeight: FontWeight.w500,
-                                                      //     ),
-                                                      //   ),
-                                                      // ),
-                                                    ],
-                                                  ),
-                                                  baseDecoration: BoxDecoration(
-                                                    color: defaultPalette.extras[0],
-                                                    border: Border.all(color: defaultPalette.extras[0]),
-                                                  ),
-                                                  depth: 2,
-                                                  subfac: 5,
-                                                  buttonHeight: 24,
-                                                  buttonWidth: 35,
-                                                  onClick: () {
-                                                    setState(() {
-                                                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
-                                                      inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
-                                                    });
-                                                  },
-                                                ),
-                                            ),
-                        
-                                            
-                                            ]
-                                          
-                                          ))
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        Widget inputBlockFunctionInputBlocks(List<InputBlock> inBlock, int inx){
+                        };
+                        inputBlockFunctionInputBlocks = (List<InputBlock> inBlock, int inx,{SheetFunction? parent}){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                               key: ValueKey(inx),
@@ -12546,7 +12050,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 throw Exception("Item is not SheetText");
                               }
                             } catch (e) {
-                              return const SizedBox.shrink(); // fail-safe
+                              return Container(
+                                key: ValueKey(inx),
+                                color:defaultPalette.extras[1]
+                              ); // fail-safe
                             }
                           }
                           return ReorderableDragStartListener(
@@ -12661,8 +12168,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                       ],
 
-                                      if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction))
-                                      sumFunctionInputBlocks(inBlock, inx),
+                                      if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction || inBlock[inx].function is CountFunction))
+                                      sumFunctionInputBlocks(inBlock, inx,parent:parent ),
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       GestureDetector(
                                         onTap:(){
@@ -12681,8 +12188,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:28.0),
-                                              child: buildFunctionTile(inx, width,inBlock)[0],
+                                              padding: const EdgeInsets.only(top:23.0),
+                                              child: buildFunctionTile(inx, width,inBlock,visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
                                               colors: [
@@ -12746,17 +12253,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                if(inBlock[inx].function is SumFunction)
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                if(inBlock[inx].function is ColumnFunction)
-                                                                TextSpan(text: ' ${(inBlock[inx].function as ColumnFunction).func}: ',style: TextStyle(color:defaultPalette.primary),),
+                                                                TextSpan(text: 'str: ',
+                                                                style: TextStyle(color:Color(0xffB388EB)),),
                                                                 if(inBlock[inx].function is InputBlockFunction)
-                                                                TextSpan(text: ' ${(inBlock[inx].function as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                                if(inBlock[inx].function is! InputBlockFunction)
-                                                                TextSpan(
-                                                                  text: '${inBlock[inx].function!.result(getItemAtPath).toString()}',
-                                                                  style: TextStyle(color:defaultPalette.primary),
-                                                                ),
+                                                                TextSpan(text: '${(inBlock[inx].function as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}: ',
+                                                                style: TextStyle(color:defaultPalette.primary),),
+                                                                
                                                               ],
                                                             ),
                                                             overflow: TextOverflow.ellipsis,
@@ -12768,7 +12270,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         Expanded(
                                                           flex:5,
                                                           child: Text(
-                                                            inBlock[inx].function?.name ??'',
+                                                            (getItemAtPath(inBlock[inx].indexPath) as SheetText).name ??'',
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
@@ -12880,7 +12382,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     
                                                     //sum cumulative and individual index
                                                     Container(
-                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:38,bottom: 4),
+                                                      margin: EdgeInsets.all(2).copyWith(top:0, left:50,bottom: 4),
                                                       padding: EdgeInsets.all(3),
                                                       decoration: BoxDecoration(
                                                         borderRadius: BorderRadius.circular(5),
@@ -12889,7 +12391,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
-                                                        if(inBlock[inx].function is SumFunction)
+                                                        
                                                                Expanded(
                                                                 child: RichText(
                                                                   text: TextSpan(
@@ -12900,9 +12402,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       color: defaultPalette.extras[0],
                                                                     ),
                                                                     children: [
-                                                                      TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                      
+                                                                      TextSpan(text: parent is SumFunction || (parent is ColumnFunction && parent.func =='sum')
+                                                                      ? ' sum: '
+                                                                      : parent is CountFunction || (parent is ColumnFunction && parent.func =='count')
+                                                                        ? ' count: '
+                                                                        : ' str: '
+                                                                      ,style: TextStyle(color:Color(0xffB388EB)),),
                                                                       TextSpan(
-                                                                        text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath)}',
+                                                                        text: '${(parent is ColumnFunction && parent.func == 'count')
+                                                                        ? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() 
+                                                                        : SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
                                                                         style: TextStyle(color:defaultPalette.primary),
                                                                       ),
                                                                     ],
@@ -12946,41 +12456,85 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             ),
                                             Positioned(
                                               top:54,
-                                              child: ElevatedLayerButton(
-                                                  isTapped: inBlock[inx].isExpanded,
-                                                  borderRadius: const BorderRadius.only(
-                                                    topRight: Radius.circular(5),
-                                                    topLeft: Radius.circular(5),
-                                                    bottomRight: Radius.circular(5),
-                                                    bottomLeft: Radius.circular(5),
-                                                  ),
-                                                  animationDuration: const Duration(milliseconds: 100),
-                                                  animationCurve: Curves.ease,
-                                                  topDecoration: BoxDecoration(
-                                                    color: defaultPalette.primary,
-                                                    border: Border.all(color: defaultPalette.extras[0]),
-                                                  ),
-                                                  topLayerChild: Row(
-                                                    children: [
-                                                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
-                                                      
-                                                    ],
-                                                  ),
-                                                  baseDecoration: BoxDecoration(
-                                                    color: defaultPalette.extras[0],
-                                                    border: Border.all(color: defaultPalette.extras[0]),
-                                                  ),
-                                                  depth: 2,
-                                                  subfac: 5,
-                                                  buttonHeight: 24,
-                                                  buttonWidth: 35,
-                                                  onClick: () {
-                                                    setState(() {
-                                                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
-                                                      inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
-                                                    });
-                                                  },
-                                                ),
+                                              child: Row(
+                                                children: [
+                                                  if (inBlock[inx].useConst !=item.id) 
+                                                  ...[
+                                                    const SizedBox(width: 3),
+                                                    ElevatedLayerButton(
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(5),
+                                                        topLeft: Radius.circular(5),
+                                                        bottomRight: Radius.circular(10),
+                                                        bottomLeft: Radius.circular(10),
+                                                      ),
+                                                      animationDuration: const Duration(milliseconds: 100),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: defaultPalette.primary,
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      topLayerChild: Row(
+                                                        children: [
+                                                          const SizedBox(width: 2),
+                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                                          
+                                                        ],
+                                                      ),
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      depth: 2,
+                                                      subfac: 2,
+                                                      buttonHeight: 22,
+                                                      buttonWidth: 20,
+                                                      onClick: () {
+                                                        setState(() {
+                                                          inBlock[inx].useConst= !inBlock[inx].useConst;
+                                                          // rint(inBlock);
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                  const SizedBox(width: 3),
+                                                  ElevatedLayerButton(
+                                                      isTapped: inBlock[inx].isExpanded,
+                                                      borderRadius: const BorderRadius.only(
+                                                        topRight: Radius.circular(5),
+                                                        topLeft: Radius.circular(5),
+                                                        bottomRight: Radius.circular(10),
+                                                        bottomLeft: Radius.circular(10),
+                                                      ),
+                                                      animationDuration: const Duration(milliseconds: 100),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: defaultPalette.primary,
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      topLayerChild: Row(
+                                                        children: [
+                                                          const SizedBox(width: 2),
+                                                          Icon(TablerIcons.medical_cross_filled, size: 12, color: defaultPalette.extras[0]),
+                                                          
+                                                        ],
+                                                      ),
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(color: defaultPalette.extras[0]),
+                                                      ),
+                                                      depth: 2,
+                                                      subfac: 2,
+                                                      buttonHeight: 22,
+                                                      buttonWidth: 20,
+                                                      onClick: () {
+                                                        setState(() {
+                                                          inBlock[inx].isExpanded =!inBlock[inx].isExpanded;
+                                                        });
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
                                             ),
                         
                                             
@@ -12995,13 +12549,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             ),
                           );
                        
-                        }
+                        };
                         
                     ////
                     ////
                     // return for funtionTileBlock
                     switch (funcBlock.function.runtimeType) {
-                      case SumFunction:
+                      case SumFunction || CountFunction:
                         return [ 
                           if(funcBlock.isExpanded)
                           Container(
@@ -13010,10 +12564,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             child: Column(
                               children: [
                                 Container(
-                                  decoration:BoxDecoration(
-                                    color:defaultPalette.transparent,
-                                    // border:Border.all()
-                                  ),
+                                  color:defaultPalette.transparent,
                                   //reorderable for functioninputblockchildren
                                   child: ScrollConfiguration(
                                     behavior: ScrollBehavior().copyWith(scrollbars: false),
@@ -13041,7 +12592,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           proxyDecorator: (child, index, animation) {
                                             return Container(child: child); },
                                           itemBuilder: (context, inx) {
-                                              return sumFunctionInputBlocks(funcInputBlocks, inx);
+                                              return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function );
                                           });
                                         }
                                       ),
@@ -13089,7 +12640,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       defaultPalette.primary,
                                       defaultPalette.primary,
                                       defaultPalette.primary,
-                                      selectedInputBlocks ==(inputBlock[index].function as SumFunction).inputBlocks? defaultPalette.extras[0]: defaultPalette.primary,
+                                      selectedInputBlocks ==funcInputBlocks? defaultPalette.extras[0]: defaultPalette.primary,
                                     ],
                                   options: AnimatedMeshGradientOptions(
                                       amplitude: 5,
@@ -13176,9 +12727,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   color: defaultPalette.extras[0],
                                                 ),
                                                 children: [
-                                                  TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                  TextSpan(text:(funcBlock.function is SumFunction? ' sum: ':' count: '),style: TextStyle(color:Color(0xffB388EB)),),
                                                   TextSpan(
-                                                    text: '${inputBlock[index].function!.result(getItemAtPath)}',
+                                                    text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                     style: TextStyle(color:defaultPalette.primary),
                                                   ),
                                                 ],
@@ -13199,7 +12750,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 children: [
                                                   TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
                                                   TextSpan(
-                                                    text: '0-${((inputBlock[index].function! as SumFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                    text: '0-${(funcInputBlocks.length - 1).clamp(0, double.infinity)}',
                                                     style: TextStyle(color:defaultPalette.primary),
                                                   ),
                                                 ],
@@ -13210,7 +12761,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           ),
                                           const SizedBox(width: 3),
                                         ],
-                                                ),
+                                      ),
                                       )
                                       
                                       ],
@@ -13269,7 +12820,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           ),
                                   
                         ];
-
+    
                       case ColumnFunction:
                         return [
                           if(funcBlock.isExpanded)
@@ -13299,13 +12850,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               print('FUNCCCC:'+(funcBlock.function as ColumnFunction).func);
                                               switch ((funcBlock.function as ColumnFunction).func) {
                                                 case 'sum':
-                                                  return sumFunctionInputBlocks(funcInputBlocks, inx);
+                                                  return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function);
                                                 case 'count':
-                                                  return countFunctionInputBlocks(funcInputBlocks, inx);  
+                                                  return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function);  
                                                 
                                                 default:
                                               }
-                                              return sumFunctionInputBlocks(funcInputBlocks, inx);
+                                              return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function);
                                           });
                                         }
                                       ),
@@ -13494,7 +13045,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       children: [
                                                         // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                         TextSpan(
-                                                          text: '${inputBlock[index].function!.result(getItemAtPath)}',
+                                                          text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                           style: TextStyle(color:defaultPalette.primary),
                                                         ),
                                                       ],
@@ -13615,7 +13166,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           physics:physics,
                                           itemCount: funcInputBlocks.length,
                                             itemBuilder: (context, inx) {
-                                              return inputBlockFunctionInputBlocks(funcInputBlocks, inx);
+                                              return inputBlockFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function );
                                               
                                           });
                                         }
@@ -13662,7 +13213,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              (inputBlock[index].function! as InputBlockFunction).label,
+                                              (getItemAtPath(inputBlock[index].indexPath) as SheetText).name,
                                               textAlign: TextAlign.end,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -13708,7 +13259,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       //sum/count and index
                                       Row(
                                         children: [
-                                          const SizedBox(width: 3),
+                                          // const SizedBox(width: 3),
                                          
                                           Expanded(
                                             child: Container(
@@ -13733,10 +13284,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                       children: [
                                                         // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
-                                                        // TextSpan(
-                                                        //   text: '${inputBlock[index].function!.result(getItemAtPath)}',
-                                                        //   style: TextStyle(color:defaultPalette.primary),
-                                                        // ),
+                                                        TextSpan(
+                                                          text: '${(inputBlock[index].function! as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}',
+                                                          style: TextStyle(color:defaultPalette.primary),
+                                                        ),
                                                       ],
                                                     ),
                                                     overflow: TextOverflow.ellipsis,
@@ -13864,6 +13415,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 },
                               ),
                           ),
+                        
                         ];
                       
                       
@@ -13885,7 +13437,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                            topLayerChild: Row(
                              children: [
                                const SizedBox(width: 2),
-                               Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.function, size: 12, color: defaultPalette.extras[0]),
+                               Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
                                
                              ],
                            ),
@@ -13961,7 +13513,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         throw Exception("Item is not SheetText");
                                       }
                                     } catch (e) {
-                                      return const SizedBox.shrink(); // fail-safe
+                                      return Container(
+                                        key: ValueKey(index),
+                                        color:defaultPalette.extras[1]
+                                      );  // fail-safe
                                     }
                                   }
                                   print(inputBlock[index].useConst);
@@ -14124,7 +13679,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     setState(() {
                                                       if (inputBlock[index].function is SumFunction) {
                                                          selectedInputBlocks = (inputBlock[index].function as SumFunction).inputBlocks;
+                                                      } else if (inputBlock[index].function is CountFunction) {
+                                                         selectedInputBlocks = (inputBlock[index].function as CountFunction).inputBlocks;
+                                                      } else if (inputBlock[index].function is ColumnFunction) {
+                                                         selectedInputBlocks = (inputBlock[index].function as ColumnFunction).inputBlocks;
+                                                      } else if (inputBlock[index].function is InputBlockFunction) {
+                                                         selectedInputBlocks = (inputBlock[index].function as InputBlockFunction).inputBlocks;
                                                       }
+                                                     
+                                                      
                                                      
                                                     });
                                                   },
@@ -14495,7 +14058,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               blurRadius: 2,
                                                             )
                                                           ],
-                                                          color: defaultPalette.extras[0],
+                                                          color: defaultPalette.primary,
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                   10)),
@@ -15804,15 +15367,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     )),
                                             Positioned(
                                               top: 2,
-                                              left: 60,
+                                              left: 70,
                                               child: Text('Library',
                                                   textAlign: TextAlign.start,
-                                                  style: GoogleFonts.mrDafoe(
+                                                  style: GoogleFonts.leagueSpartan(
                                                     height: 1,
                                                     letterSpacing:-0.5,
                                                     color: defaultPalette.extras[0],
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 22)
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 25)
                                                     )),
                                             Row(
                                             children: [
@@ -16097,7 +15660,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     blurRadius: 2,
                                                                   )
                                                                 ],
-                                                                color: defaultPalette.extras[0],
+                                                                color: defaultPalette.primary,
                                                                 borderRadius:
                                                                     BorderRadius.circular(
                                                                         10)),
@@ -16232,55 +15795,96 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             children:[
                                                               SizedBox(height:30),
                                                               if (selectedInputBlocks !=null) 
-                                                              Container(
-                                                                width: width,
-                                                                height:30,
-                                                                margin:EdgeInsets.all(4),
-                                                                child: ClipRRect(
-                                                                  borderRadius:BorderRadius.circular(5),
-                                                                  child: Material(
-                                                                    color:defaultPalette.extras[0],
-                                                                    child: InkWell(
-                                                                      hoverColor: defaultPalette.primary.withOpacity(0.1),
-                                                                      highlightColor: defaultPalette.primary.withOpacity(0.1),
-                                                                      splashColor: defaultPalette.primary.withOpacity(0.1),
-                                                                      onTap:(){
-                                                                        setState(() {
-                                                                          if (selectedInputBlocks !=null) {
-                                                                            selectedInputBlocks!.add(InputBlock(
-                                                                              indexPath: IndexPath(index: -1277), 
-                                                                              blockIndex: [-2], 
-                                                                              id: 'yo',
-                                                                              useConst: false,
-                                                                              function: SumFunction([])
-                                                                              ));
-                                                                          }
-                                                                          // inputBlockExpansionList.add(true);
-                                                                        
-                                                                      });
-                                                                      },
-                                                                      child: Row(
-                                                                        children:[
-                                                                          SizedBox(width:8),
-                                                                          Expanded(child: 
-                                                                          Text(
-                                                                            'sum',
-                                                                            maxLines: 1,
-                                                                            overflow: TextOverflow.ellipsis,
-                                                                            style: GoogleFonts.lexend(
-                                                                              height: 0.9,
-                                                                              fontSize:18,
-                                                                              color: Colors.white,
-                                                                              letterSpacing: -1,
-                                                                              fontWeight: FontWeight.w500),
-                                                                            ),
-                                                                          )
-                                                                        ]
-                                                                      ),
+                                                              MouseRegion(
+                                                                cursor:SystemMouseCursors.click,
+                                                                child: GestureDetector(
+                                                                  onTap:(){
+                                                                    setState(() {
+                                                                      if (selectedInputBlocks !=null) {
+                                                                        selectedInputBlocks!.add(InputBlock(
+                                                                          indexPath: IndexPath(index: -1277), 
+                                                                          blockIndex: [-2], 
+                                                                          id: 'yo',
+                                                                          useConst: false,
+                                                                          function: SumFunction([])
+                                                                          ));
+                                                                      }
+                                                                      // inputBlockExpansionList.add(true);
+                                                                    
+                                                                  });
+                                                                  },
+                                                                  child: Container(
+                                                                    width: width,
+                                                                    height:30,
+                                                                    margin:EdgeInsets.all(4),
+                                                                    decoration: BoxDecoration(color:defaultPalette.extras[0],
+                                                                    borderRadius:BorderRadius.circular(5),),
+                                                                    child: Row(
+                                                                      children:[
+                                                                        SizedBox(width:8),
+                                                                        Expanded(child: 
+                                                                        Text(
+                                                                          'sum',
+                                                                          maxLines: 1,
+                                                                          overflow: TextOverflow.ellipsis,
+                                                                          style: GoogleFonts.lexend(
+                                                                            height: 0.9,
+                                                                            fontSize:18,
+                                                                            color: Colors.white,
+                                                                            letterSpacing: -1,
+                                                                            fontWeight: FontWeight.w500),
+                                                                          ),
+                                                                        )
+                                                                      ]
                                                                     ),
                                                                   ),
                                                                 ),
-                                                              )
+                                                              ),
+                                                              MouseRegion(
+                                                                cursor:SystemMouseCursors.click,
+                                                                child: GestureDetector(
+                                                                  onTap:(){
+                                                                    setState(() {
+                                                                      if (selectedInputBlocks !=null) {
+                                                                        selectedInputBlocks!.add(InputBlock(
+                                                                          indexPath: IndexPath(index: -1277), 
+                                                                          blockIndex: [-2], 
+                                                                          id: 'yo',
+                                                                          useConst: false,
+                                                                          function: CountFunction(inputBlocks:[])
+                                                                          ));
+                                                                      }
+                                                                      // inputBlockExpansionList.add(true);
+                                                                    
+                                                                  });
+                                                                  },
+                                                                  child: Container(
+                                                                    width: width,
+                                                                    height:30,
+                                                                    margin:EdgeInsets.all(4),
+                                                                    decoration: BoxDecoration(color:defaultPalette.extras[0],
+                                                                    borderRadius:BorderRadius.circular(5),),
+                                                                    child: Row(
+                                                                      children:[
+                                                                        SizedBox(width:8),
+                                                                        Expanded(child: 
+                                                                        Text(
+                                                                          'count',
+                                                                          maxLines: 1,
+                                                                          overflow: TextOverflow.ellipsis,
+                                                                          style: GoogleFonts.lexend(
+                                                                            height: 0.9,
+                                                                            fontSize:18,
+                                                                            color: Colors.white,
+                                                                            letterSpacing: -1,
+                                                                            fontWeight: FontWeight.w500),
+                                                                          ),
+                                                                        )
+                                                                      ]
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
                                                             ]
                                                           )
                                                         ),
@@ -17253,17 +16857,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         id: newId,
                                       );
 
-                                      // 1) Link into this new row
-                                      rowInputBlocks.add(inputBlock);
-
-                                      // 2) Also link into the existing column
-                                      final column = sheetTableItem.columnData[colIndex];
-                                      // if (!column.columnInputBlocks.any((b) => b.id == inputBlock.id)) {
-                                        column.columnInputBlocks.add(inputBlock);
-                                      // }
-
-
-                                      return SheetTableCell(
+                                      var sheetTableCell = SheetTableCell(
                                         id: '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
                                         parentId: sheetTableItem.id,
                                         indexPath: rowIndexPath,
@@ -17281,6 +16875,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
                                         ),
                                       );
+                                      var ib = inputBlock.copyWith(
+                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );
+                                      // 1) Link into this new row
+                                      rowInputBlocks.add(ib);
+
+                                      // 2) Also link into the existing column
+                                      final column = sheetTableItem.columnData[colIndex];
+                                        column.columnInputBlocks.add(ib);
+                                      // }
+
+
+                                      return sheetTableCell;
                                     }),
                                   );
 
@@ -17336,17 +16943,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       blockIndex: [-2],
                                       id: newId,
                                     );
-
-                                    // link into the new column
-                                    colInputBlocks.add(inputBlock);
-
-                                    // link into the existing row
-                                    sheetTableItem.rowData[rowIndex]
-                                        .rowInputBlocks
-                                        .add(inputBlock);
-
-                                    sheetTableItem.cellData[rowIndex].add(
-                                      SheetTableCell(
+                                    var sheetTableCell =SheetTableCell(
                                         id:
                                             '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
                                         parentId: sheetTableItem.id,
@@ -17364,24 +16961,61 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
                                           indexPath:itemIndexPath,
                                         ),
-                                      ),
+                                      );
+                                    // inputBlock.function = InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name);
+                                     var ib = inputBlock.copyWith(
+                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      ); 
+                                    // link into the new column
+                                    colInputBlocks.add(ib);
+
+                                    // link into the existing row
+                                    sheetTableItem.rowData[rowIndex]
+                                        .rowInputBlocks
+                                        .add(ib);
+
+                                    sheetTableItem.cellData[rowIndex].add(
+                                      sheetTableCell
                                     );
                                   }
                                 }
-                                for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
-                                  for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
+                                //when you clear blocks it will also clear the useConst data, every other field can be relinked but useConst would be lost
+                                final Map<String, bool> useConstById = {};
+                                // Rows
+                                for (final row in sheetTableItem.rowData) {
+                                  for (final ib in row.rowInputBlocks) {
+                                    useConstById[ib.id] = ib.useConst;
+                                    // print('useConst: ${useConstById[ib.id]}, row: $row, cell: ${ib.id}');
+                                      
+                                  }
+                                }
+                                // print('========');
+                                      
+
+                                // Columns
+                                for (final col in sheetTableItem.columnData) {
+                                  for (final ib in col.columnInputBlocks) {
+                                    useConstById[ib.id] = ib.useConst;
+                                  }
+                                }
+                                // for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
+                                for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
 
                                   for (int r = 0; r < sheetTableItem.cellData.length; r++) {
                                     for (int c = 0; c < sheetTableItem.cellData[r].length; c++) {
                                       final cell = sheetTableItem.cellData[r][c];
-                                      print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                      // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                       
                                       if (cell.sheetItem is! SheetText) continue;
-                                        sheetTableItem.rowData[r].rowInputBlocks.add(
-                                          InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
-                                        sheetTableItem.columnData[c].columnInputBlocks.add(
-                                          InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
-                                      print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                                      // print('useConst: ${useConstById[cell.sheetItem.id]}, row: $r, cell: ${cell.id}');
+                                      // sheetTableItem.rowData[r].rowInputBlocks.add(
+                                      //   InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                                      //   function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                                      //   ));
+                                      sheetTableItem.columnData[c].columnInputBlocks.add(
+                                        InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                                        function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)));
+                                      // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                       
 
                                     }
@@ -17572,53 +17206,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         child: ReorderableListView(
                                           onReorder: (oldIndex, newIndex) {
                                             setState(() {
-                                              // print(oldIndex.toString() +
-                                              //     ' ' +
-                                              //     newIndex.toString());
-                                              // final shadowList =
-                                              //     currentItemDecoration
-                                              //             .decoration
-                                              //             .boxShadow ??
-                                              //         [];
-                                              // final shadow = shadowList
-                                              //     .removeAt(oldIndex);
-                                              // if ((newIndex !=
-                                              //     shadowList.length + 1)) {
-                                              //   print('hah' +
-                                              //       shadowList.length
-                                              //           .toString() +
-                                              //       ' ' +
-                                              //       newIndex.toString());
-                                              //   shadowList.insert(
-                                              //       newIndex, shadow);
-                                              //   if (oldIndex < newIndex) {
-                                              //     shadowLayerIndex =
-                                              //         newIndex - 1;
-                                              //   } else {
-                                              //     shadowLayerIndex =
-                                              //         newIndex;
-                                              //   }
-                                              //   print('hah' +
-                                              //       shadowLayerIndex
-                                              //           .toString() +
-                                              //       ' ' +
-                                              //       newIndex.toString());
-                                              // } else {
-                                              //   shadowList.add(shadow);
-                                              //   shadowLayerIndex =
-                                              //       shadowList.length - 1;
-                                              //   print(oldIndex.toString() +
-                                              //       ' ' +
-                                              //       newIndex.toString());
-                                              // }
-                                              // currentItemDecoration =
-                                              //     currentItemDecoration.copyWith(
-                                              //         decoration:
-                                              //             currentItemDecoration
-                                              //                 .decoration
-                                              //                 .copyWith(
-                                              //                     boxShadow:
-                                              //                         shadowList));
+                                              
                                             });
                                           },
                                           proxyDecorator:
@@ -17725,8 +17313,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       splashColor: defaultPalette.secondary,
                                       highlightColor: defaultPalette.secondary,
                                       onTap: () async {
-                                        print('yo is this even Wokring');
+                                        // print('yo is this even Wokring');
                                         setState(() {
+                                          final Map<String, bool> useConstById = {};
                                           FocusManager.instance.primaryFocus?.unfocus();
                                           Future.delayed(Duration(milliseconds: 30));
                                           if(sheetTableVariables.columnLayerIndex == item.indexPath.index || sheetTableVariables.rowLayerIndex == item.indexPath.parent?.index){
@@ -17734,6 +17323,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             panelIndex.itemIndexPath = sheetTableItem.cellData[0][0].sheetItem.indexPath;
                                           }
                                            if (axis == 0 && sheetTableItem.rowData.length>1 ) {
+                                            
+                                            // Rows
+                                            for (final row in sheetTableItem.rowData) {
+                                              for (final ib in row.rowInputBlocks) {
+                                                useConstById[ib.id] = ib.useConst;
+                                              }
+                                            }
+
+                                            // Columns
+                                            for (final col in sheetTableItem.columnData) {
+                                              for (final ib in col.columnInputBlocks) {
+                                                if (useConstById[ib.id] != false) {
+                                                  useConstById[ib.id] = ib.useConst;
+                                                }
+                                              }
+                                            }
                                           sheetTableItem.rowData.removeAt(sheetTableVariables.rowLayerIndex);
                                           sheetTableItem.cellData.removeAt(sheetTableVariables.rowLayerIndex);
                                           
@@ -17763,6 +17368,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           }
 
                                          } else if(axis == 1 &&sheetTableItem.columnData.length>1 ){
+                                          
+                                          // Columns
+                                          for (final col in sheetTableItem.columnData) {
+                                            for (final ib in col.columnInputBlocks) {
+                                              useConstById[ib.id] = ib.useConst;
+                                            }
+                                          }
+                                          // Rows
+                                          for (final row in sheetTableItem.rowData) {
+                                            for (final ib in row.rowInputBlocks) {
+                                              if (useConstById[ib.id] != false) {
+                                                useConstById[ib.id] = ib.useConst;
+                                              }
+                                            }
+                                          }
+
                                           sheetTableItem.columnData.removeAt(sheetTableVariables.columnLayerIndex);
                                           for (var i = 0; i < sheetTableItem.rowData.length; i++) {
                                             sheetTableItem.cellData[i].removeAt(sheetTableVariables.columnLayerIndex);
@@ -17788,19 +17409,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           }
 
                                          }
-                                         for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
-                                          for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
+                                         
+                                          
+                                         
+                                          if (sheetTableVariables.columnLayerIndex == sheetTableItem.columnData.length) {
+                                            sheetTableVariables.columnLayerIndex--;
+                                          }
+                                        reassignCellIds(sheetTableItem); 
+                                        for (final row in sheetTableItem.rowData) row.rowInputBlocks.clear();
+                                        for (final col in sheetTableItem.columnData) col.columnInputBlocks.clear();
 
-                                          for (int r = 0; r < sheetTableItem.cellData.length; r++) {
+                                         for (int r = 0; r < sheetTableItem.cellData.length; r++) {
                                             for (int c = 0; c < sheetTableItem.cellData[r].length; c++) {
                                               final cell = sheetTableItem.cellData[r][c];
                                               // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                               
                                               if (cell.sheetItem is! SheetText) continue;
                                                 sheetTableItem.rowData[r].rowInputBlocks.add(
-                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id,
+                                                  useConst: useConstById[cell.sheetItem.id] ?? true,
+                                                  function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                                                  ));
                                                 sheetTableItem.columnData[c].columnInputBlocks.add(
-                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id));
+                                                  InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id,useConst: useConstById[cell.sheetItem.id] ?? true,
+                                                  function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                                                  ));
                                               // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
                                               
 
@@ -17808,10 +17441,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           }
                                           for (final row in sheetTableItem.rowData) print('row :'+row.rowInputBlocks.toString());
                                           for (final col in sheetTableItem.columnData) print('col :'+col.columnInputBlocks.toString());
-                                         if (sheetTableVariables.columnLayerIndex == sheetTableItem.columnData.length) {
-                                            sheetTableVariables.columnLayerIndex--;
-                                          }
-                                         reassignCellIds(sheetTableItem); 
                                          
                                          _findItem();
                                          whichPropertyTabIsClicked = 4;
@@ -28109,11 +27738,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           indexPath:  textIndexPath,
           blockIndex: [-2],
         );
-        rowData[r].rowInputBlocks.add(inputBlock);
-        columnData[c].columnInputBlocks.add(inputBlock);
-
-        // finally, the cell
-        return SheetTableCell(
+        var sheetTableCell = SheetTableCell(
           id:        '${numberToColumnLabel(c+1)}${r+1}',
           parentId:  parentId,
           sheetItem: addTextField(
@@ -28135,6 +27760,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           colSpan:   1,
           indexPath: cellIndexPath,
         );
+        var ib = inputBlock.copyWith( function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );
+        rowData[r].rowInputBlocks.add(ib);
+        columnData[c].columnInputBlocks.add(ib);
+
+        // finally, the cell
+        return sheetTableCell;
       });
     });
 
@@ -28180,14 +27812,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           blockIndex: [-2],
           id: newId,
         );
-
-        // 2) Link it into that row’s list
-        rowInputLists[r].add(ib);
-        // 3) Link it into that column’s list
-        colInputLists[c].add(ib);
-
-        // Build the actual SheetTableCell
-        return SheetTableCell(
+        var sheetTableCell = SheetTableCell(
           id: '${numberToColumnLabel(c + 1)}${r + 1}',
           parentId: parentId,
           data: 'Cell ${String.fromCharCode(65 + c)}${r + 1}',
@@ -28209,6 +27834,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           colSpan: 1,
           indexPath: rowIndexPath,
         );
+       var ibl = ib.copyWith(function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );                             
+        // 2) Link it into that row’s list
+        rowInputLists[r].add(ibl);
+        // 3) Link it into that column’s list
+        colInputLists[c].add(ibl);
+
+        // Build the actual SheetTableCell
+        return sheetTableCell;
       });
     });
 
@@ -28367,8 +28001,7 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         indexPath:  cellIP,
         blockIndex: [-2],
       );
-      rowInputLists[r].add(ib);
-      colInputLists[c].add(ib);
+      
 
       // prepare initial delta
       final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
@@ -28386,8 +28019,7 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         inputBlocks:               [ ib ],
         locked:                     isHeader,
       );
-
-      return SheetTableCell(
+      var sheetTableCell = SheetTableCell(
         id:        '${numberToColumnLabel(c+1)}${r+1}',
         parentId:  parentId,
         sheetItem: sheetText,
@@ -28395,6 +28027,12 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         colSpan:   1,
         indexPath: rowIP,
       );
+      var ibl = ib.copyWith(
+                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                      );  
+      rowInputLists[r].add(ibl);
+      colInputLists[c].add(ibl);
+      return sheetTableCell;
     });
   });
 
@@ -28458,63 +28096,6 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
         }
       }
     }
-
-  void rebuildSheetTextItems(SheetTable sheetTable) {
-    // 1) Clear out the old block-lists on rows & columns
-    for (final row in sheetTable.rowData) {
-      row.rowInputBlocks.clear();
-    }
-    for (final col in sheetTable.columnData) {
-      col.columnInputBlocks.clear();
-    }
-
-    // 2) Walk every cell, reassign IDs & paths (only index!) and repopulate row/col blocks
-    for (int rowIdx = 0; rowIdx < sheetTable.cellData.length; rowIdx++) {
-      // *Don’t* replace the object—just mutate its index
-      final rowPath = sheetTable.rowData[rowIdx].indexPath;
-      rowPath.index = rowIdx;
-
-      for (int colIdx = 0; colIdx < sheetTable.cellData[rowIdx].length; colIdx++) {
-        final cell = sheetTable.cellData[rowIdx][colIdx];
-
-        // Update the cell.id
-        cell.id = '${numberToColumnLabel(colIdx + 1)}${rowIdx + 1}';
-        print(cell.id);
-        // Mutate the existing IndexPath object:
-        final cellPath = cell.indexPath;
-        cellPath.index = rowIdx;
-        // leave cellPath.parent as-is
-
-        // If it’s a SheetText, update its name + its own path.index
-        if (cell.sheetItem is SheetText) {
-          final sheetText = cell.sheetItem as SheetText;
-          sheetText.name = cell.id;
-          sheetText.indexPath.index = colIdx; // just the index
-
-          // Also update its first InputBlock if it self-links
-          // if (sheetText.inputBlocks.isNotEmpty) {
-          //   final blk = sheetText.inputBlocks.first;
-          //   if (blk.id == sheetText.id) {
-          //     blk.indexPath.index = colIdx;
-          //     // blk.indexPath.parent remains correct
-          //   }
-          // }
-
-          // Hand that same block to row & column
-          for (final blk in sheetText.inputBlocks) {
-            sheetTable.rowData[rowIdx].rowInputBlocks.add(blk);
-            sheetTable.columnData[colIdx].columnInputBlocks.add(blk);
-          }
-        }
-      }
-    }
-
-
-    // 3) Finally, fix up each column’s index (not parent)
-    for (int colIdx = 0; colIdx < sheetTable.columnData.length; colIdx++) {
-      sheetTable.columnData[colIdx].indexPath.index = colIdx;
-    }
-  }
 
   void reassignCellIds(SheetTable sheetTable) {
     for (int row = 0; row < sheetTable.cellData.length; row++) {
