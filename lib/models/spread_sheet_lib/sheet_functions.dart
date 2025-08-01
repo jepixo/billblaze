@@ -64,8 +64,10 @@ class SheetFunction {
 class SumFunction extends SheetFunction {
   @HiveField(2)
   List<InputBlock> inputBlocks;
+  @HiveField(3)
+  List<Map<String, dynamic>> resultJson =[];
 
-  SumFunction(this.inputBlocks) : super(1, 'sum');
+  SumFunction( this.inputBlocks,[this.resultJson = const []]) : super(1, 'sum');
 
   @override
   dynamic result(
@@ -76,82 +78,80 @@ class SumFunction extends SheetFunction {
   }) {
     double sum = 0;
     visited ??= {};
+
+    // recursion guard
     visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
-      if (visited[inputBlocks]! > 2) {
-        return 'recursion detected';
-      }
+    if (visited[inputBlocks]! > 50) {
+      return 'recursion detected';
+    }
+
     for (final block in inputBlocks) {
-      // Recursion detection
-      // if (!block.useConst) {
-        
-      // }
+      dynamic raw;
 
-      dynamic item;
-
-      if (spreadSheet == null) {
-        item = getItemAtPath(block.indexPath);
-      } else {
-        item = getItemAtPath(block.indexPath, spreadSheet);
-      }
-
-      if (item == null) continue;
-
-      // Case 1: Function block
+      // 1) nested formula
       if (block.function != null && !block.useConst) {
         if (block.function is InputBlockFunction) {
-          final ibf = block.function as InputBlockFunction;
-
-          final config = ibf.getConfigurations(
+          raw = (block.function as InputBlockFunction).getConfigurations(
             buildCombinedQuillConfiguration,
             spreadSheet: spreadSheet,
-            visited: Map<List<InputBlock>, int>.from(visited),
-          );
-
-          final text = config.controller.document.toPlainText().trim();
-          final parsed = double.tryParse(text);
-          if (parsed != null) sum += parsed;
-        } else {
-          final value = block.function!.result(
+            visited: visited,
+            ).controller.document;
+        } else{
+          raw = block.function!.result(
             getItemAtPath,
             buildCombinedQuillConfiguration,
             spreadSheet: spreadSheet,
             visited: Map.from(visited),
           );
-          if (value is num) sum += value.toDouble();
         }
-
-        continue;
       }
+      else {
+        // 2) live editor text
+        final item = spreadSheet == null
+          ? getItemAtPath(block.indexPath)
+          : getItemAtPath(block.indexPath, spreadSheet);
 
-      // Case 2: Live SheetText
-      if (item is SheetText) {
-        final text = item.textEditorConfigurations.controller.document
+        if (item is SheetText) {
+          raw = item.textEditorConfigurations.controller
+            .document
             .toPlainText()
             .trim();
-        final parsed = double.tryParse(text);
-        if (parsed != null) sum += parsed;
-      }
-
-      // Case 3: SheetTextBox
-      else if (item is SheetTextBox) {
-        try {
-          final json = item.textEditorController;
-          if (json is List) {
-            final delta = Delta.fromJson(json);
-            final doc = Document.fromDelta(delta);
-            final text = doc.toPlainText().trim();
-            final parsed = double.tryParse(text);
-            if (parsed != null) sum += parsed;
-          }
-        } catch (e, st) {
-          print('⚠️ Failed to parse SheetTextBox content: $e\n$st');
+        } else if (item is SheetTextBox) {
+          raw = Document.fromDelta(
+            Delta.fromJson(item.textEditorController as List)
+          ).toPlainText().trim();
         }
       }
 
-      // Optional: extend for other item types
+      // now normalize whatever raw is
+      if (raw is num) {
+        sum += raw.toDouble();
+      } else if (raw is String) {
+        sum += double.tryParse(raw) ?? 0.0;
+      } else if (raw is Document) {
+        sum += double.tryParse(raw.toPlainText().trim()) ?? 0.0;
+      }
     }
 
-    return sum;
+    // ─── preserve styling in resultJson ─────────────────────────────────
+    final oldDelta = Delta.fromJson(resultJson);
+    // grab the first op’s attrs if any
+    final firstAttrs = oldDelta.isNotEmpty ? oldDelta.toList().first.attributes : null;
+
+    // build new one-op delta
+    final newDelta = Delta()..insert(
+      '${sum}\n',
+      firstAttrs,
+    );
+
+    final newJson = newDelta.toJson();
+    if (newJson != resultJson) {
+      resultJson = newJson;
+    }
+
+    // return the same type you were using (e.g. String or Document)
+    // if external code expects String, return resultJson; otherwise:
+    return Document.fromDelta(newDelta);
   }
 
   @override
@@ -160,12 +160,14 @@ class SumFunction extends SheetFunction {
         'returnType': returnType,
         'name': name,
         'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+        'resultJson': resultJson,
       };
 
   factory SumFunction.fromMap(Map<String, dynamic> map) => SumFunction(
         (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
+        map['resultJson']
       );
 
 }
@@ -181,7 +183,10 @@ class ColumnFunction extends SheetFunction {
   @HiveField(4)
   String axisLabel;
 
-  ColumnFunction({required this.inputBlocks, required this.func, required this.axisLabel}) : super(0, 'column');
+  @HiveField(5)
+  List<Map<String, dynamic>> resultJson =[];
+
+  ColumnFunction({required this.inputBlocks, required this.func, required this.axisLabel,this.resultJson = const []}) : super(0, 'column');
 
   @override
   dynamic result(Function getItemAtPath,
@@ -212,6 +217,7 @@ class ColumnFunction extends SheetFunction {
         'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
         'func': func,
         'axisLabel': axisLabel,
+        'resultJson': resultJson,
       };
 
   factory ColumnFunction.fromMap(Map<String, dynamic> map) => ColumnFunction(
@@ -221,7 +227,8 @@ class ColumnFunction extends SheetFunction {
             .toList(),
         func:
             map['func'],
-        axisLabel: map['axisLabel']
+        axisLabel: map['axisLabel'],
+        resultJson: map['resultJson'],
 
       );
 
@@ -231,14 +238,59 @@ class ColumnFunction extends SheetFunction {
 class CountFunction extends SheetFunction {
   @HiveField(2)
   List<InputBlock> inputBlocks;
+  @HiveField(3)
+  List<Map<String, dynamic>> resultJson =[];
 
   @override
-  result(Function getItemAtPath, Function buildCombinedQuillConfiguration,{List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
-    return inputBlocks.length;
+  dynamic result(
+    Function getItemAtPath,
+    Function buildCombinedQuillConfiguration, {
+    List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
+  }) {
+    int count = 0;
+
+    for (final block in inputBlocks) {
+      // Case A: nested ColumnFunction(…, func: 'count')
+      if (block.function is ColumnFunction &&
+          (block.function as ColumnFunction).func == 'count' &&
+          !block.useConst) {
+        final nested = (block.function as ColumnFunction).result(
+          getItemAtPath,
+          buildCombinedQuillConfiguration,
+          spreadSheet: spreadSheet,
+          visited: visited == null ? null : Map.from(visited),
+        );
+        if (double.tryParse(nested.toPlainText()) != null) {
+          count += double.tryParse(nested.toPlainText())!.toInt();
+          continue;
+        }
+      }
+
+      // Otherwise each block counts as 1
+      count += 1;
+    }
+
+    // ─── preserve styling in resultJson ─────────────────────────────────
+    // Build a one-op delta with the old attributes
+    final oldDelta = Delta.fromJson(resultJson);
+    final firstAttrs =
+        oldDelta.isNotEmpty ? oldDelta.toList().first.attributes : null;
+
+    final newDelta = Delta()..insert('$count\n', firstAttrs);
+    final newJson = newDelta.toJson();
+
+    if (newJson != resultJson) {
+      resultJson = newJson;
+    }
+
+    // Return the same type as your sum: a Quill Document
+    return Document.fromDelta(newDelta);
   }
 
+
   CountFunction(
-    {required this.inputBlocks,}
+    {required this.inputBlocks,this.resultJson = const []}
   ):super(1,'count');
 
    @override
@@ -247,12 +299,14 @@ class CountFunction extends SheetFunction {
         'returnType': returnType,
         'name': name,
         'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
+        'resultJson': resultJson,
       };
 
   factory CountFunction.fromMap(Map<String, dynamic> map) => CountFunction(
         inputBlocks: (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
+        resultJson: map['resultJson'],
       );
 
 }
@@ -281,7 +335,6 @@ class InputBlockFunction extends SheetFunction {
   QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
     if (spreadSheet !=null) {
       var rawText = buildCombinedQuillConfiguration(inputBlocks, spreadSheet, visited:visited==null?null: Map<List<InputBlock>, int>.from(visited));
-
       return QuillEditorConfigurations(controller: QuillController(document: Document()..insert(0, rawText), selection: TextSelection.collapsed(offset: 0)));
     }
     return buildCombinedQuillConfiguration(inputBlocks, visited: visited==null?null: Map<List<InputBlock>, int>.from(visited) );

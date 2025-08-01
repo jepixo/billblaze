@@ -5805,28 +5805,49 @@ String buildCombinedTextFromBlocks(
         }
 
         continue;
-      } else if (block.function is! InputBlockFunction){
-        final result = block.function!.result(getItemAtPath, buildCombinedTextFromBlocks, spreadSheet: spreadSheetList);
-        if (result is num || result is String) {
-          final text = '$result${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
-          mergedDelta.push(Operation.insert(text));
-        }
+      } else if (block.function is! InputBlockFunction) {
+          final raw = block.function!
+              .result(getItemAtPath, buildCombinedTextFromBlocks, spreadSheet: spreadSheetList);
 
-        if (block.indexPath.index != -77) {
-          final targetItem = getItemAtPath(block.indexPath, spreadSheetList);
-          if (targetItem is SheetText) {
-            final controller = targetItem.textEditorConfigurations.controller;
-            controller.replaceText(
-              0,
-              controller.document.length,
-              '$result',
-              TextSelection.collapsed(offset: '$result'.length),
-            );
+          // 1) If it’s a styled Quill Document, pull in its ops
+          if (raw is Document) {
+            final ops = raw.toDelta().toList();
+            final isLast = blockIdx == inputBlocks.length - 1;
+
+            for (var op in ops) {
+              if (!isLast && op.data is String && (op.data as String).endsWith('\n')) {
+                // trim stray newline on non-last blocks
+                final trimmed = (op.data as String).substring(0, (op.data as String).length - 1);
+                mergedDelta.push(Operation.insert(trimmed, op.attributes));
+              } else {
+                mergedDelta.push(op);
+              }
+            }
           }
+          // 2) Otherwise if it’s just a number or string, insert as before
+          else if (raw is num || raw is String) {
+            final text = '$raw${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
+            mergedDelta.push(Operation.insert(text));
+          }
+
+          // 3) Back-patch the cell’s controller with its plain text
+          if (block.indexPath.index != -77) {
+            final targetItem = getItemAtPath(block.indexPath, spreadSheetList);
+            if (targetItem is SheetText) {
+              final ctl = targetItem.textEditorConfigurations.controller;
+              final plain = raw is Document ? raw.toPlainText() : raw.toString();
+              ctl.replaceText(
+                0,
+                ctl.document.length,
+                plain,
+                TextSelection.collapsed(offset: plain.length),
+              );
+            }
+          }
+
+          continue;
         }
 
-        continue;
-      }
     }
 
     final item = getItemAtPath(block.indexPath, spreadSheetList);

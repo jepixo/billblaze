@@ -2633,35 +2633,55 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             mergedDelta.push(op);
           }
 
-        } else if( block.function is! InputBlockFunction){
-            print('function Type: '+block.function.runtimeType.toString());
-            result = block.function!.result(getItemAtPath, buildCombinedQuillConfiguration,visited: Map.from(visited!));
+        } else if (block.function is! InputBlockFunction) {
+          final raw = block.function!
+              .result(getItemAtPath, buildCombinedQuillConfiguration, visited: Map.from(visited!));
 
-            if (result is num || result is String) {
-            
-            if (blockIdx == inputBlocks.length-1) {
-              mergedDelta.push(Operation.insert('$result\n'));
-            } else {
-              mergedDelta.push(Operation.insert('$result'));
-            }
-            }
-            if (block.indexPath.index != -77) {
-              final targetItem = getItemAtPath(block.indexPath);
-              if (targetItem != null && targetItem is SheetText) {
-                final controller = targetItem.textEditorConfigurations.controller;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  controller.replaceText(
-                    0,
-                    controller.document.length - 1,
-                    '$result',
-                    TextSelection.collapsed(offset: '$result'.length),
-                  );
-                });
-
+          // 1) If it’s a Quill Document, pull in its Delta ops (with styling!)
+          if (raw is Document) {
+            final docDelta = raw.toDelta().toList();
+            // drop a trailing newline if you’re not the last block
+            final isLast = blockIdx == inputBlocks.length - 1;
+            for (var op in docDelta) {
+              if (!isLast && op.data is String && (op.data as String).endsWith('\n')) {
+                final txt = (op.data as String).substring(0, (op.data as String).length - 1);
+                mergedDelta.push(Operation.insert(txt, op.attributes));
+              } else {
+                mergedDelta.push(op);
               }
             }
-            continue;
           }
+          // 2) Otherwise if it’s a number or string, just insert as before
+          else if (raw is num || raw is String) {
+            final txt = raw.toString();
+            if (blockIdx == inputBlocks.length - 1) {
+              mergedDelta.push(Operation.insert('$txt\n'));
+            } else {
+              mergedDelta.push(Operation.insert(txt));
+            }
+          }
+
+          // 3) Optional back-patch into the cell, unchanged
+          if (block.indexPath.index != -77) {
+            final target = getItemAtPath(block.indexPath);
+            if (target is SheetText) {
+              final ctl = target.textEditorConfigurations.controller;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ctl.replaceText(
+                  0,
+                  ctl.document.length - 1,
+                  raw is Document ? raw.toPlainText() : raw.toString(),
+                  TextSelection.collapsed(offset: raw is Document
+                      ? raw.toPlainText().length
+                      : raw.toString().length),
+                );
+              });
+            }
+          }
+
+          continue;
+        }
+
 
         // Optional back-patching
          // Skip normal SheetText processing for function-driven blocks
@@ -7432,7 +7452,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
   List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
   var entries = <ContextMenuEntry>[];
-
+  var style = GoogleFonts.lexend(
+    color: defaultPalette.extras[0],
+    fontWeight: FontWeight.w400,
+    letterSpacing: -0.5,
+    
+  );
   bool hasSelection = textEditorController
         .selection.start !=
     textEditorController.selection.end;
@@ -7442,6 +7467,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Cut',
     icon: TablerIcons.cut,
+    style:  style,
     onSelected: () {
       var selectedText =
           textEditorController.document
@@ -7472,6 +7498,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Copy',
     icon: TablerIcons.copy,
+    style:  style,
     onSelected: () {
       var selectedText =
           textEditorController.document
@@ -7491,6 +7518,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
   label: 'Paste',
   icon: TablerIcons.clipboard,
+  style:  style,
   onSelected: () async {
     var data = await Clipboard.getData(
         'text/plain');
@@ -7526,6 +7554,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
   label: 'Select All',
   icon: TablerIcons.select_all,
+  style:  style,
   onSelected: () {
     textEditorController
         .updateSelection(
@@ -7546,14 +7575,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Undo',
     icon: TablerIcons.corner_up_left,
+    style:  style,
     onSelected: () {
       textEditorController.undo();
     },
   ));
   } else {
-  entries.add(const MenuItem(
+  entries.add( MenuItem(
     label: 'Undo',
     icon: TablerIcons.corner_up_left,
+    style:  style,
     onSelected: null,
   ));
   }
@@ -7563,14 +7594,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   entries.add(MenuItem(
     label: 'Redo',
     icon: TablerIcons.corner_down_right,
+    style:  style,
     onSelected: () {
       textEditorController.redo();
     },
   ));
   } else {
-  entries.add(const MenuItem(
+  entries.add( MenuItem(
     label: 'Redo',
     icon: TablerIcons.corner_down_right,
+    style:  style,
     onSelected: null,
   ));
   }
@@ -7580,17 +7613,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem.submenu(
       label: 'Add',
       icon: TablerIcons.new_section,
+      style:  style,
       items: [
         MenuItem.submenu(
             label: 'Text',
             icon: TablerIcons
                 .text_recognition,
+            style:  style,
             items: [
               //add text before the selected one
               MenuItem(
                 label: 'Before',
                 icon: TablerIcons
                     .row_insert_top,
+                style:  style,
                 onSelected: () {
                   setState(() {
                     var newId = 'TX-${Uuid().v4()}';
@@ -7613,6 +7649,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'After',
                 icon: TablerIcons
                     .row_insert_bottom,
+                style:  style,
                 onSelected: () {
                   setState(() {
                     var newId = 'TX-${Uuid().v4()}';
@@ -7643,6 +7680,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'In a New List',
                 icon: TablerIcons
                     .code_plus,
+                style:  style,
                 onSelected: () {
                   setState(() {
                     var newId ='LI-${ const Uuid().v4()}';
@@ -7682,12 +7720,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             label: 'List',
             icon: TablerIcons
                 .brackets_contain_start,
+            style:  style,
             items: [
               //add row before the selected one
               MenuItem(
                 label: 'Row Before',
                 icon: TablerIcons
                     .row_insert_top,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid()
@@ -7715,6 +7755,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'Row After',
                 icon: TablerIcons
                     .row_insert_bottom,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid()
@@ -7761,6 +7802,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'Column Before',
                 icon: TablerIcons
                     .row_insert_top,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid()
@@ -7789,6 +7831,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 label: 'Column After',
                 icon: TablerIcons
                     .row_insert_bottom,
+                style:  style,
                 onSelected: () {
                   setState(() {
                   var newId ='LI-${ const Uuid().v4()}';
@@ -7834,10 +7877,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem.submenu(
       label: 'Wrap',
       icon: TablerIcons.brackets_contain,
+      style:  style,
       items: [
         MenuItem(
           label: 'In a Row',
           icon: TablerIcons.layout_rows ,
+          style:  style,
           onSelected: () {
             setState(() {
               
@@ -7850,6 +7895,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           label: 'In a Column',
           icon: TablerIcons
               .layout_columns,
+          style:  style,
           onSelected: () {
             setState(() {
               
@@ -7865,6 +7911,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem(
     label: 'Clear',
     icon: TablerIcons.square_rounded_x,
+    style:  style,
     onSelected: () async {
       await showAdaptiveDialog(
         context: context,
@@ -7903,6 +7950,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   MenuItem(
     label: 'Delete',
     icon: TablerIcons.trash,
+    style:  style,
     onSelected: () async {
       await showAdaptiveDialog(
         context: context,
@@ -10240,9 +10288,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   
                   return MenuItem(
                     label: s,
+                    icon: index==0
+                    ? TablerIcons.cursor_text
+                    : index==1
+                    ? TablerIcons.numbers
+                    : index==2
+                    ? TablerIcons.number_123
+                    : index==3
+                    ? TablerIcons.circuit_switch_open
+                    : index==4
+                    ? TablerIcons.calendar_event
+                    : index==5
+                    ? TablerIcons.clock_hour_4
+                    : TablerIcons.phone,
                     style:  GoogleFonts.lexend(
-                      color: defaultPalette.primary,
-                      fontWeight: FontWeight.w200,
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w400,
                       letterSpacing: -0.5,
                       
                     ),
@@ -10250,7 +10311,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       minWidth: 100,
                       minHeight: 30
                     ),
-                    hoverColor: defaultPalette.extras[0],
+                    // hoverColor: defaultPalette.extras[0],
                     onSelected: () {
                       setState(() {
 
@@ -10261,336 +10322,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           textItem: item,
                           );
                         item.type = SheetTextType.values[index];
-                        // item.type = SheetTextType.values[index];
-                        // switch (item.type) {
-                        //   case SheetTextType.number:
-                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //     final controller = item.textEditorConfigurations.controller;
-                        //     String oldText = controller.document.toPlainText();
-                        //     if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
-                        //     final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
-                        //     oldText = numericMatch?.group(0) ?? 'yo';
-                        //     // print(controller.document.toDelta());
-                        //     // Enforce reset if old text is not a valid number
-                        //     if (double.tryParse(oldText) == null) {
-                        //       oldText = '0';
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //       // print(controller.document.toDelta());
-                        //     } else {
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //     }
-
-                        //     item.textEditorConfigurations.controller.onReplaceText =
-                        //         (int index, int length, Object? data) {
-                        //       if (data is! String) return false;
-
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final oldText = controller.document.toPlainText();
-                        //       // print(controller.document.toDelta());
-                        //       // Simulate what the text would become after this replacement
-                        //       final newText = oldText.replaceRange(index, index + length, data);
-
-                        //       // Allow empty string (so user can delete everything)
-                        //       if (newText.trim().isEmpty) return true;
-
-                        //       // Try parsing as a number
-                        //       final parsed = double.tryParse(newText);
-                        //       final isValid = parsed != null;
-
-                        //       if (isValid) {
-                        //         return true; // Allow valid number
-                        //       } else {
-                        //         // Reject and restore selection
-                        //         controller.updateSelection(
-                        //           TextSelection.collapsed(offset: index),
-                        //           ChangeSource.local,
-                        //         );
-                               
-                        //         CustomToastBar(
-                        //           autoDismiss:true,
-                        //         snackbarDuration: Duration(milliseconds: 3000),
-                        //         builder: (context) {
-                        //           return Container(
-                        //           padding: EdgeInsets.all(2),
-                        //           margin: const EdgeInsets.only(top:2, left:2, right:2),
-                        //           width: width+20,
-                        //           height: 50,
-                        //           decoration: BoxDecoration(
-                        //           color: defaultPalette.primary,
-                        //           borderRadius: BorderRadius.circular(20),
-                        //           border: Border.all(
-                        //             color: defaultPalette.extras[0], width: 2)),
-                        //           child: ClipRRect(
-                        //             borderRadius: BorderRadius.circular(20),
-                        //             child:Text('  ${newText.replaceAll(RegExp(r'\n'), '')} is not a valid number',
-                        //               maxLines:1,
-                        //               overflow:TextOverflow.ellipsis,
-                        //               style:  GoogleFonts.lexend(
-                        //               color: defaultPalette.extras[0],
-                        //               fontWeight: FontWeight.w400,
-                        //               letterSpacing: -1,
-                        //             ),),
-                        //             )
-                        //           );
-                        //         }
-                        //         ).show(context);
-                        //         return false; // Block invalid input
-                        //       }
-                        //     };
-                        //     break;
-
-                        //   case SheetTextType.integer:
-                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //     final controller = item.textEditorConfigurations.controller;
-                        //     String oldText = controller.document.toPlainText();
-                        //     if(oldText.trim().toLowerCase() == 'true'){oldText ='1';} else if (oldText.trim().toLowerCase() == 'false'){ oldText = '0';}
-                        //     final numericMatch = RegExp(r'-?\d+(\.\d+)?').firstMatch(oldText);
-                        //     oldText = numericMatch?.group(0) ?? 'yo';
-                        //     // Enforce reset if old text is not a valid number
-                        //     if (int.tryParse(oldText) == null) {
-                        //       if (double.tryParse(oldText) == null) {
-                        //       oldText = '0';
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //       } else {
-                        //         var d= double.tryParse(oldText);
-                        //         controller.replaceText(0, controller.document.length - 1, d!.round().toString(), const TextSelection.collapsed(offset: 1));
-                            
-                        //       }
-                        //     } else {
-                        //       controller.replaceText(0, controller.document.length - 1, oldText, const TextSelection.collapsed(offset: 1));
-                        //     }
-                        //     item.textEditorConfigurations.controller.onReplaceText =
-                        //         (int index, int length, Object? data) {
-                        //       if (data is! String) return false;
-
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final oldText = controller.document.toPlainText();
-                        //       final newText = oldText.replaceRange(index, index + length, data);
-
-                        //       if (newText.trim().isEmpty) return true;
-
-                        //       final parsed = int.tryParse(newText.replaceAll(',', ''));
-                        //       if (parsed != null) return true;
-
-                        //       controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                        //       CustomToastBar(
-                        //         autoDismiss:true,
-                        //         snackbarDuration: Duration(milliseconds: 3000),
-                        //         builder: (context) {
-                        //           return buildInvalidToast('$newText is not a valid integer');
-                        //         },
-                        //       ).show(context);
-                        //       return false;
-                        //     };
-                        //     break;
-
-                        //   case SheetTextType.bool:
-                        //     final controller = item.textEditorConfigurations.controller;
-                        //     String oldText = controller.document.toPlainText().trim().toLowerCase();
-
-                        //     const trueValues = ['true', '1', 'yes', 'positive', 'ha', 'yup','haa'];
-                        //     const falseValues = ['false', '0', 'no', 'negative', 'na', 'nope', 'nah'];
-
-                        //     String normalized = 'false'; // default fallback
-                        //     if (trueValues.contains(oldText)) {
-                        //       normalized = 'true';
-                        //     } else if (falseValues.contains(oldText)) {
-                        //       normalized = 'false';
-                        //     }
-                        //     if (oldText != normalized) {
-                        //       controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //         controller.replaceText(
-                        //           0,
-                        //           controller.document.length - 1,
-                        //           normalized,
-                        //           const TextSelection.collapsed(offset: 1),
-                        //         );
-                        //     }
-
-                        //     item.textEditorConfigurations.controller.onReplaceText =
-                        //         (int index, int length, Object? data) {
-                        //       if (data is! String) return false;
-                        //       if(data =='true' || data == 'false') return true;
-
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final oldText = controller.document.toPlainText().trim().toLowerCase();
-                        //       bool isCurrentlyTrue = trueValues.contains(oldText);
-                        //       bool isCurrentlyFalse = falseValues.contains(oldText);
-
-                        //       final toggled = isCurrentlyTrue ? 'false' : 'true';
-
-                        //       // Replace full text with toggled value
-                        //       SchedulerBinding.instance.addPostFrameCallback((_) {
-                        //         controller.replaceText(
-                        //           0,
-                        //           controller.document.length - 1,
-                        //           toggled,
-                        //           TextSelection.collapsed(offset: toggled.length),
-                        //         );
-                        //       });
-                        //       data = '';
-
-                        //       return true;
-                        //     };
-                        //     break;
-                          
-                        //   // case SheetTextType.time:
-                        //   //   final controller = item.textEditorConfigurations.controller;
-                        //   //   final plainText = controller.document.toPlainText();
-                        //   //   final match = RegExp(r'(\d{1,2})\D+(\d{1,2})').firstMatch(plainText);
-                        //   //   if (match == null) {
-                        //   //     controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //   //     final now = TimeOfDay.now();
-                        //   //     final formatted = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                        //   //     final originalDelta = controller.document.toDelta();
-                        //   //     final attrs = originalDelta.isNotEmpty ? originalDelta.first.attributes : null;
-                        //   //     controller.replaceText(0, controller.document.length - 1, Delta()..insert(formatted, attrs), TextSelection.collapsed(offset: formatted.length));
-                        //   //   }
-                        //   //   item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) {
-                        //   //     // print('hey'+data.toString());
-                        //   //     if (data is! String) return false;
-                        //   //     if (data =='') {
-                        //   //       // print('backspace'+data.toString());
-                        //   //       return false;
-                        //   //     }
-                        //   //     final doc = controller.document;
-                        //   //     final plain = doc.toPlainText().trim();
-                        //   //     // print(plain+data.toString());
-                        //   //     final timeMatch = RegExp(r'(\d{2})\D+(\d{2})').firstMatch(plain+data.toString());
-                        //   //     if (timeMatch == null) return false;
-                        //   //     int hour = int.tryParse(timeMatch.group(1)!) ?? 0;
-                        //   //     int minute = int.tryParse(timeMatch.group(2)!) ?? 0;
-                        //   //     if (hour > 24) hour = 24;
-                        //   //     if (minute > 59) minute = 59;
-                        //   //     final newHour = hour.toString().padLeft(2, '0');
-                        //   //     final newMinute = minute.toString().padLeft(2, '0');
-                        //   //     final separator = plain.substring(timeMatch.start + 2, timeMatch.end - 2);
-                        //   //     final newTime = '$newHour$separator$newMinute';
-                        //   //     final attrs = doc.toDelta().slice(timeMatch.start, timeMatch.end).first.attributes ?? {};
-                        //   //     SchedulerBinding.instance.addPostFrameCallback((_) {
-                        //   //       controller.replaceText(
-                        //   //         timeMatch.start,
-                        //   //         timeMatch.end - timeMatch.start,
-                        //   //         Delta()..insert(newTime, attrs),
-                        //   //         TextSelection.collapsed(offset: timeMatch.start + newTime.length),
-                        //   //       );
-                        //   //     });
-                        //   //     return true;
-                        //   //   };
-                        //   //   break;
-
-                        //   case SheetTextType.phone:
-                        //     {
-                        //       final controller = item.textEditorConfigurations.controller;
-                        //       final doc = controller.document;
-                        //       final delta = doc.toDelta();
-                        //       final plainText = doc.toPlainText();
-
-                        //       Map<String, dynamic>? getAttrsAt(int offset) {
-                        //         int current = 0;
-                        //         for (final op in delta.toList()) {
-                        //           final text = op.data is String ? op.data as String : '';
-                        //           if (current + text.length > offset) return op.attributes;
-                        //           current += text.length;
-                        //         }
-                        //         return null;
-                        //       }
-
-                        //       // Clean text
-                        //       final cleaned = plainText.trim();
-                        //       final digitsOnly = cleaned.replaceAll(RegExp(r'[^\d+]'), '');
-
-                        //       // Extract country code if present
-                        //       final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(digitsOnly);
-                        //       final countryCode = countryCodeMatch?.group(0) ?? '';
-                        //       final numberPart = digitsOnly.replaceFirst(RegExp(r'^\+\d{1,3}'), '');
-
-                        //       // Limit digits to 10
-                        //       final truncatedNumber = numberPart.replaceAll(RegExp(r'[^\d]'), '').substring(0, numberPart.length.clamp(0, 10));
-                        //       final formatted = [
-                        //         if (countryCode.isNotEmpty) countryCode,
-                        //         if (truncatedNumber.isNotEmpty) truncatedNumber,
-                        //       ].join(' ');
-
-                        //       final attrs = getAttrsAt(0);
-
-                        //       // Allow temporary replacement
-                        //       controller.onReplaceText = (int index, int length, Object? data) => true;
-
-                        //       controller.replaceText(
-                        //         0,
-                        //         controller.document.length - 1,
-                        //         Delta()..insert(formatted, attrs),
-                        //         TextSelection.collapsed(offset: formatted.length),
-                        //       );
-
-                        //       // Enforce rules for future edits
-                        //       controller.onReplaceText = (int index, int length, Object? data) {
-                        //         if (data is! String) return false;
-
-                        //         // Only allow digits, spaces, brackets, or plus
-                        //         if (!RegExp(r'^[\d\s\+\(\)]*$').hasMatch(data)) return false;
-
-                        //         final currentText = controller.document.toPlainText();
-                        //         final updatedText = currentText.replaceRange(index, index + length, data);
-
-                        //         final digits = updatedText.replaceAll(RegExp(r'[^\d]'), '');
-                        //         final hasPlus = updatedText.startsWith('+');
-                        //         final countryCodeMatch = RegExp(r'^\+(\d{1,3})').firstMatch(updatedText);
-                        //         final codeLength = countryCodeMatch?.group(1)?.length ?? 0;
-                        //         final numberDigits = hasPlus ? digits.length - codeLength : digits.length;
-
-                        //         // Total digits (excluding country code) must not exceed 10
-                        //         return numberDigits <= 10;
-                        //       };
-                        //     }
-                        //     break;
-
-                        //   // case SheetTextType.email:
-                        //   //   item.textEditorConfigurations.controller.onReplaceText =
-                        //   //       (int index, int length, Object? data) {
-                        //   //     if (data is! String) return false;
-                        //   //     final controller = item.textEditorConfigurations.controller;
-                        //   //     final oldText = controller.document.toPlainText();
-                        //   //     final newText = oldText.replaceRange(index, index + length, data).trim();
-                        //   //     if (newText.isEmpty || RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(newText)) return true;
-                        //   //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                        //   //     CustomToastBar(
-                        //   //       autoDismiss:true,
-                        //   //       snackbarDuration: Duration(milliseconds: 3000),
-                        //   //       builder: (context) {
-                        //   //         return buildInvalidToast('$newText is not a valid email');
-                        //   //       },
-                        //   //     ).show(context);
-                        //   //     return false;
-                        //   //   };
-                        //   //   break;
-                        //   // case SheetTextType.url:
-                        //   //   item.textEditorConfigurations.controller.onReplaceText =
-                        //   //       (int index, int length, Object? data) {
-                        //   //     if (data is! String) return false;
-                        //   //     final controller = item.textEditorConfigurations.controller;
-                        //   //     final oldText = controller.document.toPlainText();
-                        //   //     final newText = oldText.replaceRange(index, index + length, data).trim();
-                        //   //     final isValidUrl = Uri.tryParse(newText)?.hasAbsolutePath ?? false;
-                        //   //     if (newText.isEmpty || isValidUrl) return true;
-                        //   //     controller.updateSelection(TextSelection.collapsed(offset: index), ChangeSource.local);
-                        //   //     CustomToastBar(
-                        //   //       autoDismiss:true,
-                        //   //       snackbarDuration: Duration(milliseconds: 3000),
-                        //   //       builder: (context) {
-                        //   //         return buildInvalidToast('$newText is not a valid URL');
-                        //   //       },
-                        //   //     ).show(context);
-                        //   //     return false;
-                        //   //   };
-                        //   //   break;
-
-                        //   case SheetTextType.string:
-                        //   default:
-                        //     item.textEditorConfigurations.controller.onReplaceText = (int index, int length, Object? data) => true;
-                        //     break;
-                        // }
+                        
                       });
                     },
                     );
@@ -11059,7 +10791,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 item.inputBlocks.add(InputBlock(
                                                                   indexPath: sheetCellItem.indexPath, 
                                                                   blockIndex: [-2],
-                                                                  id: sheetCellItem.id
+                                                                  id: sheetCellItem.id,
+                                                                  function: InputBlockFunction(inputBlocks: sheetCellItem.inputBlocks, label: sheetCellItem.name)
                                                                   ));
                                                                 // inputBlockExpansionList.add(false); 
                                                               } else {
@@ -11067,7 +10800,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   InputBlock(
                                                                   indexPath: sheetCellItem.indexPath, 
                                                                   blockIndex: [-2],
-                                                                  id: sheetCellItem.id)
+                                                                  id: sheetCellItem.id,
+                                                                  function: InputBlockFunction(inputBlocks: sheetCellItem.inputBlocks, label: sheetCellItem.name)
+                                                                  )
                                                                 );
                                                               }
                                                             });
@@ -11548,17 +11283,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock, {Map<List<InputBlock>, int>? visited}){
                     var funcBlock = inputBlock[index];
                     var funcInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { Type parent }) sumFunctionInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { Type parent }) countFunctionInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { Type parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { Type parent =SumFunction})=> Container(color:defaultPalette.extras[1]);
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) sumFunctionInputBlocks;
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent})=> Container(color:defaultPalette.extras[1]);
                     print(inputBlock[index].function);
                     if (inputBlock[index].function is SumFunction) {
                      funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
                     } else if (inputBlock[index].function is ColumnFunction) {
                       funcInputBlocks =  (inputBlock[index].function as ColumnFunction).inputBlocks;
-                    } else if (inputBlock[index].function! is InputBlockFunction) {
+                    } else if (inputBlock[index].function is InputBlockFunction) {
                       funcInputBlocks =  (inputBlock[index].function! as InputBlockFunction).inputBlocks;
-                    } else if (inputBlock[index].function! is CountFunction) {
+                    } else if (inputBlock[index].function is CountFunction) {
                       funcInputBlocks =  (inputBlock[index].function! as CountFunction).inputBlocks;
                     }
                     // print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
@@ -11574,9 +11308,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     }
                     ////
                     ////
-                        sumFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {
-                          Type parent = SumFunction
-                        }){
+                        sumFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {SheetFunction? parent}){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                             key: ValueKey(inx),
@@ -11597,8 +11329,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             sheetFunction =(inBlock[inx].function as CountFunction);
                             length = (inBlock[inx].function as CountFunction).inputBlocks.length;
                           }
-                          print(inBlock[inx].function.runtimeType);
-                          print('parent: ${parent}');
+                          // print(inBlock[inx].function.runtimeType);
+                          // print('parent: ${parent}');
                           String? delta;
                           SheetText? itemAtPath;
                           if (!hasFunction || inBlock[inx].useConst) {
@@ -11632,7 +11364,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         Container(
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
-                                          height: parent == SumFunction?60:32,
+                                          height: parent is! CountFunction?60:32,
                                           width: width,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
@@ -11658,7 +11390,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                     ),
                                                   // the number inside the field display
-                                                  if(parent == SumFunction)
+                                                  if(parent is! CountFunction)
                                                   Expanded(
                                                     flex: 4,
                                                     child: Container(
@@ -11722,7 +11454,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ],
                                               ),
                                               //sum cumulative and individual index
-                                              if(parent == SumFunction)
+                                              if(parent is! CountFunction)
                                               Row(
                                                 children: [
 
@@ -11794,9 +11526,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                TextSpan(text: parent is ColumnFunction? ' ${parent.func}: ': ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null)}',
+                                                                  text: '${(parent is ColumnFunction && parent.func == 'count')? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() :SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11923,85 +11655,84 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             child: Row(
                                                               children: [
                                                                 if(sheetFunction is ColumnFunction)
-                                                            Expanded(
-                                                              child: Material(
-                                                                color: defaultPalette.transparent,
-                                                                child: InkWell(
-                                                                  hoverColor: defaultPalette.primary.withOpacity(0.05),
-                                                                  highlightColor: defaultPalette.primary.withOpacity(0.05),
-                                                                  splashColor: defaultPalette.primary.withOpacity(0.05),
-                                                                  onTapDown:(d){
-                                                                    ContextMenu(
-                                                                      entries: [
-                                                                        MenuItem(
-                                                                          label: 'sum',
-                                                                          style: GoogleFonts.lexend(
-                                                                            fontWeight: FontWeight.w300,
-                                                                            color: defaultPalette.primary,
-                                                                          ),
-                                                                          hoverColor: defaultPalette.extras[0],
-                                                                        onSelected: () {
-                                                                          setState(() {
-                                                                            (sheetFunction as ColumnFunction).func = 'sum';
-                                                                          });
-                                                                          
-                                                                        },
-                                                                        ),
-                                                                        MenuItem(label: 'count',
+                                                            Material(
+                                                              color: defaultPalette.transparent,
+                                                              child: InkWell(
+                                                                hoverColor: defaultPalette.primary.withOpacity(0.05),
+                                                                highlightColor: defaultPalette.primary.withOpacity(0.05),
+                                                                splashColor: defaultPalette.primary.withOpacity(0.05),
+                                                                onTapDown:(d){
+                                                                  ContextMenu(
+                                                                    entries: [
+                                                                      MenuItem(
+                                                                        label: 'sum',
+                                                                        icon: TablerIcons.sum,
                                                                         style: GoogleFonts.lexend(
-                                                                            fontWeight: FontWeight.w300,
-                                                                            color: defaultPalette.primary,
-                                                                          ),
-                                                                        hoverColor: defaultPalette.extras[0],
-                                                                        onSelected: () {
-                                                                          setState(() {
-                                                                            (sheetFunction as ColumnFunction).func = 'count';
-                                                                          });
-                                                                        },
-                                                                        ),
-                                                                      ],
-                                                                      boxDecoration: BoxDecoration(
-                                                                          boxShadow: [
-                                                                            BoxShadow(
-                                                                              color: defaultPalette
-                                                                                  .black,
-                                                                              blurRadius: 2,
-                                                                            )
-                                                                          ],
-                                                                          color: defaultPalette.extras[0],
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(
-                                                                                  10)),
-                                                                      position: Offset(
-                                                                          d.globalPosition.dx,
-                                                                          d.globalPosition.dy+20))
-                                                                  .show(context);
-                                                                    },
-                                                                    child: Row(
-                                                                      children: [
-                                                                        Icon(
-                                                                          TablerIcons.caret_down_filled,
-                                                                          size: 12,
+                                                                          fontWeight: FontWeight.w300,
                                                                           color: defaultPalette.primary,
                                                                         ),
-                                                                        Expanded(
-                                                                          child: Text(
-                                                                            '${(sheetFunction as ColumnFunction).func}:',
-                                                                            maxLines: 1,
-                                                                            overflow:TextOverflow.ellipsis,
-                                                                            style: GoogleFonts.lexend(
-                                                                              letterSpacing: -0.5,
-                                                                              fontWeight: FontWeight.w400,
-                                                                              fontSize: 12,
-                                                                              color: defaultPalette.extras[8],
-                                                                            ),),
+                                                                        hoverColor: defaultPalette.extras[0],
+                                                                      onSelected: () {
+                                                                        setState(() {
+                                                                          (sheetFunction as ColumnFunction).func = 'sum';
+                                                                        });
+                                                                        
+                                                                      },
+                                                                      ),
+                                                                      MenuItem(label: 'count',
+                                                                      icon: TablerIcons.tallymarks,
+                                                                      style: GoogleFonts.lexend(
+                                                                          fontWeight: FontWeight.w300,
+                                                                          color: defaultPalette.primary,
                                                                         ),
-                                                                        const SizedBox(width: 3),
-                                                                      ],
-                                                                    ),
-                                                                    
-                                                                    )
+                                                                      hoverColor: defaultPalette.extras[0],
+                                                                      onSelected: () {
+                                                                        setState(() {
+                                                                          (sheetFunction as ColumnFunction).func = 'count';
+                                                                        });
+                                                                      },
+                                                                      ),
+                                                                    ],
+                                                                    boxDecoration: BoxDecoration(
+                                                                        boxShadow: [
+                                                                          BoxShadow(
+                                                                            color: defaultPalette
+                                                                                .black,
+                                                                            blurRadius: 2,
+                                                                          )
+                                                                        ],
+                                                                        color: defaultPalette.extras[0],
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(
+                                                                                10)),
+                                                                    position: Offset(
+                                                                        d.globalPosition.dx,
+                                                                        d.globalPosition.dy+20))
+                                                                .show(context);
+                                                                  },
+                                                                  child: Row(
+                                                                    children: [
+                                                                      Icon(
+                                                                        TablerIcons.caret_down_filled,
+                                                                        size: 12,
+                                                                        color: defaultPalette.primary,
+                                                                      ),
+                                                                      if(width>220)
+                                                                      Text(
+                                                                        '${(sheetFunction as ColumnFunction).func}:',
+                                                                        maxLines: 1,
+                                                                        overflow:TextOverflow.ellipsis,
+                                                                        style: GoogleFonts.lexend(
+                                                                          letterSpacing: -0.5,
+                                                                          fontWeight: FontWeight.w400,
+                                                                          fontSize: 12,
+                                                                          color: defaultPalette.extras[8],
+                                                                        ),),
+                                                                      const SizedBox(width: 3),
+                                                                    ],
                                                                   ),
+                                                                  
+                                                                  )
                                                                 ),
                                                                 // if(sheetFunction is! ColumnFunction)
                                                                 Expanded(
@@ -12019,7 +11750,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       if(sheetFunction is CountFunction)
                                                                       TextSpan(text: ' count: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                       TextSpan(
-                                                                        text: '${block.function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toString()}',
+                                                                        text: '${block.function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                                         style: TextStyle(color:defaultPalette.primary),
                                                                       ),
                                                                     ],
@@ -12182,15 +11913,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                TextSpan(text: parent == SumFunction
+                                                                TextSpan(text: parent is SumFunction || (parent is ColumnFunction && parent.func =='sum')
                                                                 ? 'sum: '
-                                                                : parent == CountFunction
+                                                                : parent is CountFunction || (parent is ColumnFunction && parent.func =='count')
                                                                   ? 'count: '
-                                                                  : parent == InputBlockFunction
+                                                                  : parent is InputBlockFunction
                                                                     ? 'str: ':'',
                                                                 style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
-                                                                  text: '${(parent == CountFunction? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)): SumFunction(inBlock.sublist(0,inx+1))).result(getItemAtPath,buildCombinedQuillConfiguration,)}',
+                                                                  text: '${(((parent is ColumnFunction && parent.func == 'count')|| parent is CountFunction)? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)): SumFunction(inBlock.sublist(0,inx+1))).result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -12281,9 +12012,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             ),
                           );
                         };
-                        inputBlockFunctionInputBlocks = (List<InputBlock> inBlock, int inx,{
-                          Type parent = SumFunction
-                        }){
+                        inputBlockFunctionInputBlocks = (List<InputBlock> inBlock, int inx,{SheetFunction? parent}){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                               key: ValueKey(inx),
@@ -12440,7 +12169,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ],
 
                                       if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction || inBlock[inx].function is CountFunction))
-                                      sumFunctionInputBlocks(inBlock, inx,parent:InputBlockFunction ),
+                                      sumFunctionInputBlocks(inBlock, inx,parent:parent ),
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       GestureDetector(
                                         onTap:(){
@@ -12459,7 +12188,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:28.0),
+                                              padding: const EdgeInsets.only(top:23.0),
                                               child: buildFunctionTile(inx, width,inBlock,visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
@@ -12653,7 +12382,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     
                                                     //sum cumulative and individual index
                                                     Container(
-                                                      margin: EdgeInsets.all(2).copyWith(top:4, left:50,bottom: 4),
+                                                      margin: EdgeInsets.all(2).copyWith(top:0, left:50,bottom: 4),
                                                       padding: EdgeInsets.all(3),
                                                       decoration: BoxDecoration(
                                                         borderRadius: BorderRadius.circular(5),
@@ -12674,14 +12403,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     ),
                                                                     children: [
                                                                       
-                                                                      TextSpan(text: parent == SumFunction
+                                                                      TextSpan(text: parent is SumFunction || (parent is ColumnFunction && parent.func =='sum')
                                                                       ? ' sum: '
-                                                                      : parent == CountFunction
+                                                                      : parent is CountFunction || (parent is ColumnFunction && parent.func =='count')
                                                                         ? ' count: '
                                                                         : ' str: '
                                                                       ,style: TextStyle(color:Color(0xffB388EB)),),
                                                                       TextSpan(
-                                                                        text: '${SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration,)}',
+                                                                        text: '${(parent is ColumnFunction && parent.func == 'count')
+                                                                        ? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() 
+                                                                        : SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
                                                                         style: TextStyle(color:defaultPalette.primary),
                                                                       ),
                                                                     ],
@@ -12756,7 +12487,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                       depth: 2,
                                                       subfac: 2,
-                                                      buttonHeight: 24,
+                                                      buttonHeight: 22,
                                                       buttonWidth: 20,
                                                       onClick: () {
                                                         setState(() {
@@ -12794,7 +12525,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                       depth: 2,
                                                       subfac: 2,
-                                                      buttonHeight: 24,
+                                                      buttonHeight: 22,
                                                       buttonWidth: 20,
                                                       onClick: () {
                                                         setState(() {
@@ -12861,7 +12592,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           proxyDecorator: (child, index, animation) {
                                             return Container(child: child); },
                                           itemBuilder: (context, inx) {
-                                              return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function.runtimeType );
+                                              return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function );
                                           });
                                         }
                                       ),
@@ -12998,7 +12729,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 children: [
                                                   TextSpan(text:(funcBlock.function is SumFunction? ' sum: ':' count: '),style: TextStyle(color:Color(0xffB388EB)),),
                                                   TextSpan(
-                                                    text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,)}',
+                                                    text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                     style: TextStyle(color:defaultPalette.primary),
                                                   ),
                                                 ],
@@ -13119,13 +12850,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               print('FUNCCCC:'+(funcBlock.function as ColumnFunction).func);
                                               switch ((funcBlock.function as ColumnFunction).func) {
                                                 case 'sum':
-                                                  return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function.runtimeType );
+                                                  return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function);
                                                 case 'count':
-                                                  return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function.runtimeType );  
+                                                  return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function);  
                                                 
                                                 default:
                                               }
-                                              return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function.runtimeType );
+                                              return sumFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function);
                                           });
                                         }
                                       ),
@@ -13314,7 +13045,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       children: [
                                                         // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                         TextSpan(
-                                                          text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,)}',
+                                                          text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                           style: TextStyle(color:defaultPalette.primary),
                                                         ),
                                                       ],
@@ -13435,7 +13166,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           physics:physics,
                                           itemCount: funcInputBlocks.length,
                                             itemBuilder: (context, inx) {
-                                              return inputBlockFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function.runtimeType );
+                                              return inputBlockFunctionInputBlocks(funcInputBlocks, inx, parent:funcBlock.function );
                                               
                                           });
                                         }
@@ -13552,9 +13283,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         color: defaultPalette.extras[0],
                                                       ),
                                                       children: [
-                                                        TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                        // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                         TextSpan(
-                                                          text: '0-${((inputBlock[index].function! as InputBlockFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
+                                                          text: '${(inputBlock[index].function! as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}',
                                                           style: TextStyle(color:defaultPalette.primary),
                                                         ),
                                                       ],
@@ -13573,9 +13304,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         color: defaultPalette.extras[0],
                                                       ),
                                                       children: [
-                                                        // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                        TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
                                                         TextSpan(
-                                                          text: '${(inputBlock[index].function! as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}',
+                                                          text: '0-${((inputBlock[index].function! as InputBlockFunction).inputBlocks.length - 1).clamp(0, double.infinity)}',
                                                           style: TextStyle(color:defaultPalette.primary),
                                                         ),
                                                       ],
@@ -13706,7 +13437,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                            topLayerChild: Row(
                              children: [
                                const SizedBox(width: 2),
-                               Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.function, size: 12, color: defaultPalette.extras[0]),
+                               Icon(inputBlock[index].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
                                
                              ],
                            ),
@@ -14327,7 +14058,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               blurRadius: 2,
                                                             )
                                                           ],
-                                                          color: defaultPalette.extras[0],
+                                                          color: defaultPalette.primary,
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                   10)),
@@ -15929,7 +15660,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     blurRadius: 2,
                                                                   )
                                                                 ],
-                                                                color: defaultPalette.extras[0],
+                                                                color: defaultPalette.primary,
                                                                 borderRadius:
                                                                     BorderRadius.circular(
                                                                         10)),
