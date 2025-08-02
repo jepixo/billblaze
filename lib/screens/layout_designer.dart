@@ -276,27 +276,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   int whichListPropertyTabIsClicked = 0;
   int whichTablePropertyTabIsClicked = 0;
   int whichTableDecorationIsClicked = 0;
+  int itemInputBlockIndex =-1;
   SheetTableVariables sheetTableVariables = SheetTableVariables();
   Uint8List? cachedImageData;
   bool nameExists = false;
   bool hasRenderedOnce = false;
-  // bool addToTheLeft = false;
-  // bool addToTheRight = false;
-  // bool isListMarginExpanded = false;
-  // bool isListPaddingExpanded = false;
-  // bool isListBorderRadiusExpanded = false;
-  // bool isListBorderExpanded = true;
-  // bool isListColorExpanded = true;
-  // bool isListShadowExpanded = true;
-  // bool isListDecorationImageExpanded = true;
   bool isListDecorationPropertiesToggled = false;
   bool isListDecorationLibraryToggled = false;
   bool showDecorationLayers = true;
-  // bool showSheetTextLibrary = false;
   bool isMathFunctionLibraryToggled = false;
   bool isFormulaMode = false;
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
-  // List<bool> // inputBlockExpansionList =[false];
   SheetText item = SheetText(
     hide:true,
     name: 'yo',
@@ -5893,10 +5883,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   panelIndex.parentId = sheetList.id;
                   // panelIndex.runTimeType = sheetList.runtimeType;
                 });
+                var style = GoogleFonts.lexend(
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.5,
+                      
+                    );
                 
                 List<ContextMenuEntry> buildSheetListContextMenuEntries( SheetList sheetList) {
                   var entries = <ContextMenuEntry>[
-                    MenuHeader(text: 'SheetList Menu')
+                    MenuHeader(text: 'SheetList Menu', style: style)
                   ];
           
                   // Cut SheetList
@@ -6044,7 +6040,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   entries.add(const MenuDivider());
           
                   entries.addAll([
-                    const MenuHeader(text: 'ops'),
+                   MenuHeader(text: 'ops', style: style),
                   //ADD ITEMS
                   MenuItem.submenu(
                       label: 'Add',
@@ -7608,7 +7604,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   ));
   }
   entries.addAll([
-  const MenuHeader(text: 'ops'),
+  MenuHeader(text: 'ops', style: style),
   //ADD ITEMS
   MenuItem.submenu(
       label: 'Add',
@@ -10140,9 +10136,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               //     Attribute.size,
                               //     parsedValue.toString()),
                               // );
-                              updateSheetTextProperties((p0) {
+                             if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                 p0.updateFontSize( parsedValue);
-                              },);
+                              },);} else {
+                                item.inputBlocks[itemInputBlockIndex].updateFontSize( parsedValue,config.controller)
+                              }
                               break;
                             case 1:
                               // item.textEditorController
@@ -10150,9 +10148,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               //   LetterSpacingAttribute(
                               //       (parsedValue).toString()),
                               // );
-                               updateSheetTextProperties((p0) {
+                              if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                 p0.updateLetterSpacing( parsedValue);
-                              },);
+                              },);} else {
+                                item.inputBlocks[itemInputBlockIndex].toggleLock()
+                              }
                               break;
                             case 2:
                               // item.textEditorController
@@ -10160,9 +10160,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               //   WordSpacingAttribute(
                               //       (parsedValue).toString()),
                               // );
-                               updateSheetTextProperties((p0) {
+                              if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                 p0.updateWordSpacing( parsedValue);
-                              },);
+                              },);} else {
+                                item.inputBlocks[itemInputBlockIndex].toggleLock()
+                              }
                               break;
                             case 3:
                               // item.textEditorController
@@ -10170,9 +10172,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               //   LineHeightAttribute(
                               //       (parsedValue).toString()),
                               // );
-                               updateSheetTextProperties((p0) {
+                              if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                 p0.updateLineHeight( parsedValue);
-                              },);
+                              },);} else {
+                                item.inputBlocks[itemInputBlockIndex].toggleLock()
+                              }
                               break;    
                             default:
                           }
@@ -12553,6 +12557,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         
                     ////
                     ////
+                    var config; 
+                    if (funcBlock.function is SumFunction) {
+                      config = (funcBlock.function as SumFunction).getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);
+                    }
+                                              
                     // return for funtionTileBlock
                     switch (funcBlock.function.runtimeType) {
                       case SumFunction || CountFunction:
@@ -12706,6 +12715,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           const SizedBox(width: 3),
                                         ],
                                       ),
+                                      
                                       //sum and index
                                       Container(
                                         margin: EdgeInsets.all(2),
@@ -13841,6 +13851,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 durationMS: 500,
                                 scrollSpeed: 1,
                                 builder: (context, controller, physics) {
+                                  var ib;
+                                  QuillEditorConfigurations? config;
+                                  if (itemInputBlockIndex !=-1) {
+                                    try {
+                                      ib =item.inputBlocks[itemInputBlockIndex];
+                                      if(ib is SumFunction){config = ib.getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);}
+                                    } on Exception catch (e) {
+                                      itemInputBlockIndex = -1;
+                                      ib = null;
+                                      config = null;
+                                    }
+                                  }
                                   return SingleChildScrollView(
                                   controller: controller,
                                   physics: physics,
@@ -13896,12 +13918,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       borderRadius: BorderRadius.circular(15),
                                       border: Border.all(
                                         width: 2,
-                                        color: defaultPalette.extras[0])
+                                        color: defaultPalette.extras[0]
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Expanded(
+                                        (ib == null || ib is! SumFunction)
+                                        ? Expanded(
                                           child: Text(item.textEditorController.getPlainText(),
                                             textAlign: TextAlign.start,
                                             style: TextStyle(
@@ -13910,8 +13934,79 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               fontWeight: FontWeight.w800,        
                                               color: defaultPalette.extras[0],
                                               fontSize: 15)),
+                                        )
+                                        : Expanded(
+                                          child: QuillEditor(
+                                            configurations: config!,
+                                            focusNode: config.controller.editorFocusNode?? FocusNode(),
+                                            scrollController: ScrollController(),
+                                          ),
                                         ),
-                                          ],
+                                        MouseRegion(
+                                          cursor:SystemMouseCursors.click,
+                                          child: GestureDetector(
+                                            onTapDown:(d){
+                                              ContextMenu(
+                                                entries: [
+                                                  MenuHeader(
+                                                    text: 'blocks',
+                                                    disableUppercase: true,
+                                                    style:GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0],
+                                                      fontWeight: FontWeight.w200,
+                                                      letterSpacing: -0.2,
+                                                      height: 0.8,
+                                                    ),
+                                                  ),
+
+                                                  MenuItem(
+                                                    label: 'textField',
+                                                    style: GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0],
+                                                      fontWeight: FontWeight.w400,
+                                                      letterSpacing: -0.5,
+                                                    ),
+                                                    icon:TablerIcons.cursor_text,
+                                                    onSelected: () {
+                                                      _findItem();
+                                                    },
+                                                  ),
+                                                  for(var ibl in item.inputBlocks.asMap().entries.toList())
+                                                  if(ibl.value.function != null && ibl.value.function is! InputBlockFunction)
+                                                  MenuItem(
+                                                    label: ibl.value.function!.name ,
+                                                      style: GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0],
+                                                      fontWeight: FontWeight.w400,
+                                                      letterSpacing: -0.5,
+                                                    ),
+                                                    icon: ibl.value.function!.name == 'sum'? TablerIcons.sum:TablerIcons.tallymarks,
+                                                    onSelected: () {
+                                                      setState(() {
+                                                        itemInputBlockIndex = ibl.key;
+                                                      });
+                                                    },
+                                                  ),
+                                                ],
+                                                boxDecoration: BoxDecoration(
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: defaultPalette
+                                                            .black,
+                                                        blurRadius: 2,
+                                                      )
+                                                    ],
+                                                    color: defaultPalette.primary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10)),
+                                                position: Offset(
+                                                    d.globalPosition.dx,
+                                                    d.globalPosition.dy+20))
+                                              .show(context);
+                                            },
+                                            child: Icon(TablerIcons.cursor_text)))
+                                        ],
                                         ),
                                       ),
                                   //'label'
@@ -14038,6 +14133,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 // final entries = buildContextMenuEntries(sheetText.textEditorController, index, sheetText, sheetList);
                                                   ContextMenu(
                                                       entries: [
+                                                        MenuHeader(text: 'types',
+                                                        disableUppercase: true,
+                                                        style:  GoogleFonts.lexend(
+                                                          color: defaultPalette.extras[0],
+                                                          fontWeight: FontWeight.w200,
+                                                          letterSpacing: -0.2,
+                                                          height: 0.8,
+                                                        )),
                                                         typeChangeItem('string',0),
                                                         typeChangeItem('number',1),
                                                         typeChangeItem('integer',2),
@@ -14114,9 +14217,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       second: true,
                                       onChanged: (value) {
                                         setState(() {
-                                          updateSheetTextProperties((p0) {
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                             p0.toggleVisibility();
-                                          },);
+                                          },);} 
                                         });
                                       },
                                       animationCurve: Curves.easeInOutExpo,
@@ -14177,14 +14280,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           // } else {
                                           //   item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(item.type.index, item.textEditorConfigurations.controller);
                                           // }
-                                          updateSheetTextProperties((p0) {
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                             p0.toggleLock();
                                             if (p0.locked) {
                                                   p0.textEditorConfigurations.controller.onReplaceText = (int _,int_x, Object? _r) => false;
                                                 } else {
                                                   p0.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(p0.type.index, p0.textEditorConfigurations.controller);
                                                 }
-                                          },);
+                                          },);}
                                           FocusManager.instance.primaryFocus?.unfocus();
                                         });
                                       },
@@ -14327,26 +14430,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.bold),
                                         onClick: () {
-                                          // final currentValue = item
-                                          //     .textEditorController
-                                          //     .getSelectionStyle()
-                                          //     .attributes
-                                          //     .containsKey(
-                                          //         Attribute.bold
-                                          //             .key);
-                                          // item.textEditorController
-                                          //     .formatSelection(
-                                          //   currentValue
-                                          //       ? Attribute.clone(
-                                          //           Attribute
-                                          //               .bold,
-                                          //           null)
-                                          //       : Attribute
-                                          //           .bold,
-                                          // );
-                                          updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                             p0.toggleBold();
-                                          });
+                                          });}  else {
+                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                          }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.bold,
@@ -14365,9 +14453,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.italic),
                                       onClick: () {
-                                        updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                             p0.toggleItalic();
-                                          });
+                                          });} else {
+                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                          }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.italic,
@@ -14387,9 +14477,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 Attribute
                                                     .underline),
                                       onClick:  () {
-                                        updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                           p0.toggleUnderline();
-                                        });
+                                        });} else {
+                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                        }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.underline,
@@ -14408,9 +14500,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.strikeThrough),
                                       onClick: () {
-                                        updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                           p0.toggleStrikeThrough();
-                                        });
+                                        });} else {
+                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                        }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.strikethrough,
@@ -14436,9 +14530,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.leftAlignment),
                                         onClick:  () {
-                                            updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                               p0.alignLeft();
-                                            });
+                                            });} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                             },
                                         topLayerChild: const Icon(
                                           TablerIcons.align_left,
@@ -14457,9 +14553,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     .attributes,
                                                 Attribute.centerAlignment),
                                       onClick: () {
-                                        updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                           p0.alignCenter();
-                                        });
+                                        });} else {
+                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                        }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_center,
@@ -14478,9 +14576,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.rightAlignment),
                                       onClick:  () {
-                                            updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                               p0.alignRight();
-                                            });
+                                            });} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                             },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_right,
@@ -14499,9 +14599,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.justifyAlignment),
                                       onClick: () {
-                                          updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                             p0.alignJustify();
-                                          });
+                                          });} else {
+                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                          }
                                         },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_justified,
@@ -14534,9 +14636,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           // item.textEditorController.formatSelection(
                                           //   currentValue ? Attribute.clone(Attribute.blockQuote, null) : Attribute.blockQuote,
                                           // );
-                                          updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                           p0.toggleBlockQuote();
-                                        });
+                                        });} else {
+                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                        }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.quote,
@@ -14556,9 +14660,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 .attributes,
                                             Attribute.codeBlock),
                                         onClick: () {
-                                          updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                             p0.toggleCodeBlock();
-                                          });
+                                          });} else {
+                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                          }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.code,
@@ -14578,9 +14684,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.ul),
                                         onClick: () {
-                                          updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                           p0.toggleUnorderedList();
-                                        });
+                                        });} else {
+                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                        }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.list,
@@ -14600,9 +14708,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               .attributes,
                                           Attribute.ol),
                                         onClick: () {
-                                          updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                           p0.toggleOrderedList();
-                                        });
+                                        });} else {
+                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                        }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.list_numbers,
@@ -14630,9 +14740,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   .attributes,
                                               Attribute.subscript),
                                           onClick: () {
-                                            updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                               p0.toggleSubscript();
-                                            });
+                                            });} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                           },
                                           topLayerChild: Icon(
                                             TablerIcons.subscript,
@@ -14654,9 +14766,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   .superscript),
                                           onClick: () {
                                             
-                                            updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
                                               p0.toggleSuperscript();
-                                            });
+                                            });} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                           },
                                           
                                           topLayerChild: Icon(
@@ -14930,9 +15044,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 EyeDropper.enableEyeDropper(context, (p0) {
                                                   Color color = (p0?? hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value) );
                                                   setState(() {
-                                                    updateSheetTextProperties((p0) {
+                                                   if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                                       p0.updateColor(color);
-                                                    },);
+                                                    },);} else {
+                                                      item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                                    }
                                                   hexController.text =
                                                       '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                                 
@@ -14979,9 +15095,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                         onChanged: (value) {
                                           setState(() {
-                                            updateSheetTextProperties((p0) {
+                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                               p0.updateColor(value.toColor());
-                                            },);
+                                            },);} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                             hexController.text =
                                                 '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                           
@@ -15002,9 +15120,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                               onChanged: (HSVColor value) {
                                                 setState(() {
-                                                    updateSheetTextProperties((p0) {
+                                                   if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                               p0.updateColor(value.toColor());
-                                            },);
+                                            },);} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                                     hexController.text =
                                               '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                             });
@@ -15022,9 +15142,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         .alpha,
                                     onChanged: (int value) {
                                       setState(() {
-                                        updateSheetTextProperties((p0) {
+                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                               p0.updateColor(fontHex.withAlpha(value));
-                                            },);
+                                            },);} else {
+                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            }
                                         hexController.text =
                                             '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
                                       });
@@ -15186,9 +15308,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                     ),
                                                     onPressed: () {
-                                                      updateSheetTextProperties((p0) {
+                                                     if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                                         p0.updateFontFamily(GoogleFonts.getFont( fontName).fontFamily??'Clear');
-                                                      },);
+                                                      },);} else {
+                                                        item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                                      }
                                                       setState(() {});
                                                     },
                                                     child: Text(
@@ -15311,9 +15435,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           ),
                                                                     ),
                                                                     onPressed: () {
-                                                                      updateSheetTextProperties((p0) {
+                                                                     if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                                                         p0.updateFontFamily(fontName);
-                                                                      },);
+                                                                      },);} else {
+                                                                        item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                                                      }
                                                                       setState(() {});
                                                                     },
                                                                     child: Text(
@@ -18800,18 +18926,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   onTap: () {
                                                     setState(() {
                                                       if (currentPageIndex == 0) {
-                                                        // pdfScrollController.animateTo(
-                                                        //     currentPageIndex *
-                                                        //         ((1.41428571429 *
-                                                        //                 ((sWidth *
-                                                        //                     (1 -
-                                                        //                         vDividerPosition)))) +
-                                                        //             16),
-                                                        //     duration:
-                                                        //         const Duration(
-                                                        //             milliseconds:
-                                                        //                 100),
-                                                        //     curve: Curves.easeIn);
                                                         _renderPagePreviewOnProperties();
                                                         return;
                                                       }
@@ -18826,16 +18940,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   Durations.short1,
                                                               curve: Curves.linear);
                             
-                                                      // pdfScrollController.animateTo(
-                                                      //     currentPageIndex *
-                                                      //         ((1.41428571429 *
-                                                      //                 ((sWidth *
-                                                      //                     (1 -
-                                                      //                         vDividerPosition)))) +
-                                                      //             16),
-                                                      //     duration: const Duration(
-                                                      //         milliseconds: 100),
-                                                      //     curve: Curves.easeIn);
                                                       _renderPagePreviewOnProperties();
                                                     });
                                                   },
@@ -18851,16 +18955,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   onTap: () {
                                                     _confirmDeleteLayout(
                                                         deletePage: true);
-                                                    // pdfScrollController.animateTo(
-                                                    //     currentPageIndex *
-                                                    //         ((1.41428571429 *
-                                                    //                 ((sWidth *
-                                                    //                     (1 -
-                                                    //                         vDividerPosition)))) +
-                                                    //             16),
-                                                    //     duration: const Duration(
-                                                    //         milliseconds: 100),
-                                                    //     curve: Curves.easeIn);
                                                   },
                                                   child: Icon(
                                                     TablerIcons.trash,
@@ -18885,20 +18979,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     .short1,
                                                                 curve:
                                                                     Curves.linear);
-                            
-                                                        // pdfScrollController.animateTo(
-                                                        //     currentPageIndex *
-                                                        //         ((1.41428571429 *
-                                                        //                 ((sWidth *
-                                                        //                         (1 -
-                                                        //                             vDividerPosition)) -
-                                                        //                     6)) +
-                                                        //             6),
-                                                        //     duration:
-                                                        //         const Duration(
-                                                        //             milliseconds:
-                                                        //                 100),
-                                                        //     curve: Curves.easeIn);
                                                         _renderPagePreviewOnProperties();
                                                         return;
                                                       }
@@ -18912,17 +18992,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   Durations.short1,
                                                               curve: Curves.linear);
                             
-                                                      // pdfScrollController.animateTo(
-                                                      //     currentPageIndex *
-                                                      //         ((1.41428571429 *
-                                                      //                 ((sWidth *
-                                                      //                         (1 -
-                                                      //                             vDividerPosition)) -
-                                                      //                     6)) +
-                                                      //             6),
-                                                      //     duration: const Duration(
-                                                      //         milliseconds: 100),
-                                                      //     curve: Curves.easeIn);
                                                       _renderPagePreviewOnProperties();
                                                     });
                                                   },
@@ -18959,65 +19028,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             
                                   SizedBox(height:8),
                                   
-                                  // Container(
-                                  //   decoration: BoxDecoration(
-                                  //     // border: Border.all(),
-                                  //     borderRadius: BorderRadius.circular(16),
-                                  //   ),
-                                  //   child: AnimatedToggleSwitch<pw.PageOrientation>.dual(
-                                  //     current: documentPropertiesList[currentPageIndex].orientationController,
-                                  //     first: pw.PageOrientation.portrait,
-                                  //     second: pw.PageOrientation.landscape,
-                                  //     onChanged: (value) {
-                                  //       setState(() {
-                                  //         documentPropertiesList[currentPageIndex].orientationController = value;
-                                  //       });
-                                  //     },
-                                  //     animationCurve:
-                                  //         Curves.easeInOutExpo,
-                                  //     animationDuration:
-                                  //         Durations.medium4,
-                                  //     borderWidth:
-                                  //         2, // backgroundColor is set independently of the current selection
-                                  //     styleBuilder: (value) =>
-                                  //         ToggleStyle(
-                                  //             borderRadius:
-                                  //                 BorderRadius
-                                  //                     .circular(15),
-                                  //             indicatorBorderRadius:
-                                  //                 BorderRadius.circular(0),
-                                  //             indicatorBorder: Border.all(),
-                                  //             borderColor: defaultPalette.secondary,
-                                  //             backgroundColor: defaultPalette.secondary,
-                                  //             indicatorColor: defaultPalette.extras[0]), // indicatorColor changes and animates its value with the selection
-                                  //     iconBuilder: (value) {
-                                  //       return Icon(
-                                  //           value == pw.PageOrientation.portrait? TablerIcons
-                                  //                   .layout
-                                  //               : TablerIcons
-                                  //                   .template,
-                                  //           size:15,
-                                  //           color: defaultPalette.primary);
-                                  //     },
-                                  //     textBuilder: (value) {
-                                  //       return Text(
-                                  //         value == pw.PageOrientation.portrait? 'port\nrait'
-                                  //             : 'land\nscape',
-                                  //         maxLines: 2,
-                                  //         overflow: TextOverflow.ellipsis,
-                                  //         style:
-                                  //             GoogleFonts.lexend(
-                                  //                 fontSize: 15,
-                                  //                 fontWeight: FontWeight.w600,
-                                  //                 color:  defaultPalette.extras[0],
-                                  //                 ),
-                                  //       );
-                                  //     },
-                                  //     height:45,
-                                  //     spacing:(sWidth * wH2DividerPosition - 45),
-                                  //   ),
-                                  // ),
-                                  
                                   //
                                   //OPERATIONS BUTTONS
                                   Padding(
@@ -19026,304 +19036,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        // SizedBox(
-                                        //   width:
-                                        //       (sWidth * wH2DividerPosition - 45) /
-                                        //           2,
-                                        //   child: Row(
-                                        //     mainAxisAlignment:
-                                        //         MainAxisAlignment.spaceBetween,
-                                        //     children: [
-                                        //       //ADD PAGE BUTTON
-                                        //       PieMenu(
-                                        //         controller: opsAddPieController,
-                                        //         actions: [
-                                        //           getPieActionForAddMove(
-                                        //               'LEFT', true),
-                                        //           getPieActionForAddMove(
-                                        //               'RIGHT', true)
-                                        //         ],
-                                        //         onToggle: (menuOpen) {
-                                        //           if (!menuOpen) {
-                                        //             opsAddPieController.closeMenu();
-                                        //             opsMovePieController
-                                        //                 .closeMenu();
-                                        //             opsCopyPieController
-                                        //                 .closeMenu();
-                                        //             opsFormatPieController
-                                        //                 .closeMenu();
-                                        //           }
-                                        //         },
-                                        //         theme: PieTheme(
-                                        //             rightClickShowsMenu: true,
-                                        //             buttonSize:
-                                        //                 ((sWidth * wH2DividerPosition -
-                                        //                             65) /
-                                        //                         3)
-                                        //                     .clamp(40, 100),
-                                        //             spacing: 5,
-                                        //             radius:
-                                        //                 ((sWidth * wH2DividerPosition -
-                                        //                             65) /
-                                        //                         2)
-                                        //                     .clamp(50, 100),
-                                        //             customAngle: -20,
-                                        //             menuAlignment: Alignment.center,
-                                        //             pointerSize: 20,
-                                        //             menuDisplacement: Offset(0, 4),
-                                        //             tooltipPadding:
-                                        //                 EdgeInsets.all(5),
-                                        //             tooltipTextStyle:
-                                        //                 GoogleFonts.bungee(
-                                        //                     fontSize: 20),
-                                        //             buttonTheme: PieButtonTheme(
-                                        //                 backgroundColor:
-                                        //                     defaultPalette.tertiary,
-                                        //                 iconColor:
-                                        //                     defaultPalette.primary,
-                                        //                 decoration: BoxDecoration(
-                                        //                   border:
-                                        //                       Border.all(width: 1),
-                                        //                   borderRadius:
-                                        //                       BorderRadius.circular(
-                                        //                           200),
-                                        //                   color: defaultPalette
-                                        //                       .extras[0],
-                                        //                 ))),
-                                        //         child: Container(
-                                        //           margin: const EdgeInsets.only(
-                                        //               top: 8.0),
-                                        //           // padding: const EdgeInsets.all(1),
-                                        //           child: IconButton.filled(
-                                        //               style: IconButton.styleFrom(
-                                        //                 backgroundColor:
-                                        //                     defaultPalette.extras[
-                                        //                         0], // Background color
-                                        //                 foregroundColor: defaultPalette
-                                        //                     .primary, // Icon color
-                                        //                 // Elevation of the button
-                                        //                 padding: EdgeInsets.symmetric(
-                                        //                     vertical: 10.0,
-                                        //                     horizontal:
-                                        //                         2), // Padding around the icon
-                                        //                 shape:
-                                        //                     RoundedRectangleBorder(
-                                        //                   // Custom button shape
-                                        //                   borderRadius:
-                                        //                       BorderRadius.circular(
-                                        //                           5.0),
-                                        //                 ),
-                                        //               ),
-                                        //               constraints: BoxConstraints(
-                                        //                 minWidth: (sWidth *
-                                        //                             wH2DividerPosition -
-                                        //                         65) /
-                                        //                     6,
-                                        //                 minHeight: 42,
-                                        //               ), // Reduces the overall size further
-                                        //               visualDensity:
-                                        //                   VisualDensity.compact,
-                                        //               iconSize: 12,
-                                        //               onPressed: () {
-                                        //                 opsAddPieController
-                                        //                     .openMenu();
-                                        //               },
-                                        //               icon: Icon(TablerIcons.plus)),
-                                        //         ),
-                                        //       ),
-                                        //       //MOVE PAGE BUTTON
-                                        //       PieMenu(
-                                        //         controller: opsMovePieController,
-                                        //         actions: [
-                                        //           getPieActionForAddMove(
-                                        //               'LEFT', false),
-                                        //           getPieActionForAddMove(
-                                        //               'RIGHT', false),
-                                        //         ],
-                                        //         onToggle: (menuOpen) {
-                                        //           if (!menuOpen) {
-                                        //             opsAddPieController.closeMenu();
-                                        //             opsMovePieController
-                                        //                 .closeMenu();
-                                        //             opsCopyPieController
-                                        //                 .closeMenu();
-                                        //             opsFormatPieController
-                                        //                 .closeMenu();
-                                        //           }
-                                        //         },
-                                        //         theme: PieTheme(
-                                        //             rightClickShowsMenu: true,
-                                        //             buttonSize:
-                                        //                 ((sWidth * wH2DividerPosition -
-                                        //                             65) /
-                                        //                         3)
-                                        //                     .clamp(40, 100),
-                                        //             spacing: 10,
-                                        //             radius:
-                                        //                 ((sWidth * wH2DividerPosition -
-                                        //                             65) /
-                                        //                         2)
-                                        //                     .clamp(50, 100),
-                                        //             customAngle: -20,
-                                        //             menuAlignment: Alignment.center,
-                                        //             pointerSize: 20,
-                                        //             menuDisplacement: Offset(0, 4),
-                                        //             tooltipPadding:
-                                        //                 EdgeInsets.all(0),
-                                        //             tooltipTextStyle:
-                                        //                 GoogleFonts.bungee(
-                                        //                     fontSize: 20),
-                                        //             buttonTheme: PieButtonTheme(
-                                        //                 backgroundColor:
-                                        //                     defaultPalette.tertiary,
-                                        //                 iconColor:
-                                        //                     defaultPalette.primary,
-                                        //                 decoration: BoxDecoration(
-                                        //                   border:
-                                        //                       Border.all(width: 1),
-                                        //                   borderRadius:
-                                        //                       BorderRadius.circular(
-                                        //                           200),
-                                        //                   color: defaultPalette
-                                        //                       .extras[0],
-                                        //                 ))),
-                                        //         child: Container(
-                                        //           margin: const EdgeInsets.only(
-                                        //               top: 8.0),
-                                        //           // padding: const EdgeInsets.all(1),
-                                        //           child: IconButton.filled(
-                                        //               style: IconButton.styleFrom(
-                                        //                 backgroundColor:
-                                        //                     defaultPalette.extras[
-                                        //                         0], // Background color
-                                        //                 foregroundColor: defaultPalette
-                                        //                     .primary, // Icon color
-                                        //                 // Elevation of the button
-                                        //                 padding: EdgeInsets.symmetric(
-                                        //                     vertical:
-                                        //                         10.0), // Padding around the icon
-                                        //                 shape:
-                                        //                     RoundedRectangleBorder(
-                                        //                   // Custom button shape
-                                        //                   borderRadius:
-                                        //                       BorderRadius.circular(
-                                        //                           5.0),
-                                        //                 ),
-                                        //               ),
-                                        //               constraints: BoxConstraints(
-                                        //                 minWidth: (sWidth *
-                                        //                             wH2DividerPosition -
-                                        //                         65) /
-                                        //                     6.3,
-                                        //                 minHeight: 42,
-                                        //               ), // Reduces the overall size further
-                                        //               visualDensity:
-                                        //                   VisualDensity.compact,
-                                        //               iconSize: 15,
-                                        //               onPressed: () {
-                                        //                 opsMovePieController
-                                        //                     .openMenu();
-                                        //               },
-                                        //               icon: Icon(TablerIcons
-                                        //                   .arrows_move_vertical)),
-                                        //         ),
-                                        //       ),
-                                        //       //Duplicate PAGE BUTTON
-                                        //       PieMenu(
-                                        //         actions: [
-                                        //           getPieActionForDuplicate('LEFT'),
-                                        //           getPieActionForDuplicate('RIGHT')
-                                        //         ],
-                                        //         controller: opsCopyPieController,
-                                        //         onToggle: (menuOpen) {
-                                        //           if (!menuOpen) {
-                                        //             opsAddPieController.closeMenu();
-                                        //             opsMovePieController
-                                        //                 .closeMenu();
-                                        //             opsCopyPieController
-                                        //                 .closeMenu();
-                                        //             opsFormatPieController
-                                        //                 .closeMenu();
-                                        //           }
-                                        //         },
-                                        //         theme: PieTheme(
-                                        //             rightClickShowsMenu: true,
-                                        //             buttonSize:
-                                        //                 ((sWidth * wH2DividerPosition -
-                                        //                             65) /
-                                        //                         3)
-                                        //                     .clamp(40, 100),
-                                        //             spacing: 5,
-                                        //             radius:
-                                        //                 ((sWidth * wH2DividerPosition -
-                                        //                             65) /
-                                        //                         2)
-                                        //                     .clamp(50, 100),
-                                        //             customAngle: 20,
-                                        //             menuAlignment: Alignment.center,
-                                        //             pointerSize: 20,
-                                        //             menuDisplacement: Offset(0, 4),
-                                        //             tooltipPadding:
-                                        //                 EdgeInsets.all(5),
-                                        //             tooltipTextStyle:
-                                        //                 GoogleFonts.bungee(
-                                        //                     fontSize: 20),
-                                        //             buttonTheme: PieButtonTheme(
-                                        //                 backgroundColor:
-                                        //                     defaultPalette.tertiary,
-                                        //                 iconColor:
-                                        //                     defaultPalette.primary,
-                                        //                 decoration: BoxDecoration(
-                                        //                   border:
-                                        //                       Border.all(width: 1),
-                                        //                   borderRadius:
-                                        //                       BorderRadius.circular(
-                                        //                           200),
-                                        //                   color: defaultPalette
-                                        //                       .extras[0],
-                                        //                 ))),
-                                        //         child: Container(
-                                        //           margin: const EdgeInsets.only(
-                                        //               top: 8.0),
-                                        //           child: IconButton.filled(
-                                        //               style: IconButton.styleFrom(
-                                        //                 backgroundColor:
-                                        //                     defaultPalette
-                                        //                         .extras[0],
-                                        //                 foregroundColor:
-                                        //                     defaultPalette.primary,
-                                        //                 padding: const EdgeInsets
-                                        //                     .symmetric(
-                                        //                     vertical: 10.0),
-                                        //                 shape:
-                                        //                     RoundedRectangleBorder(
-                                        //                   borderRadius:
-                                        //                       BorderRadius.circular(
-                                        //                           5.0),
-                                        //                 ),
-                                        //               ),
-                                        //               constraints: BoxConstraints(
-                                        //                 minWidth: (sWidth *
-                                        //                             wH2DividerPosition -
-                                        //                         65) /
-                                        //                     5.5,
-                                        //                 minHeight: 42,
-                                        //               ), // Reduces the overall size further
-                                        //               visualDensity:
-                                        //                   VisualDensity.compact,
-                                        //               iconSize: 15,
-                                        //               onPressed: () {
-                                        //                 opsCopyPieController
-                                        //                     .openMenu();
-                                        //               },
-                                        //               icon: const Icon(TablerIcons
-                                        //                   .dots_vertical)),
-                                        //         ),
-                                        //       ),
-                                        //     ],
-                                        //   ),
-                                        // ),
-                                        Expanded(
+                                      Expanded(
                                           child: PieMenu(
                                             controller: currentPageIndex == index
                                                 ? opsFormatPieController
